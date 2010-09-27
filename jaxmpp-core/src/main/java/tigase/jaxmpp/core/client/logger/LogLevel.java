@@ -1,4 +1,4 @@
-package tigase.jaxmpp.core.logger;
+package tigase.jaxmpp.core.client.logger;
 
 public enum LogLevel {
 	ALL(-1),

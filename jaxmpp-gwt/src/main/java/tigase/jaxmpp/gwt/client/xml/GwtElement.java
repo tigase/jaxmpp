@@ -26,6 +26,11 @@ public class GwtElement implements Element {
 		this.xmlElement = xmlElement;
 	}
 
+	public static GwtElement parse(String data) {
+		com.google.gwt.xml.client.Element e = XMLParser.parse(data).getDocumentElement();
+		return new GwtElement(e);
+	}
+
 	@Override
 	public Element addChild(Element child) {
 		com.google.gwt.xml.client.Element a = XMLParser.parse(child.toString()).getDocumentElement();
