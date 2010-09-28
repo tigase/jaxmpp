@@ -25,8 +25,13 @@
 		</pluginManagement>
 		<resources>
 			<resource>
-				<directory>${basedir}/src/main/java</directory>
+				<directory>${basedir}/src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>src/main/java</directory>
 				<includes>
+					<include>**/client/**/*.java</include>
+					<include>**/shared/**/*.java</include>
 					<include>**/*.gwt.xml</include>
 				</includes>
 			</resource>

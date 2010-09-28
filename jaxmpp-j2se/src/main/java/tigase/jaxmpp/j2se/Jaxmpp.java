@@ -2,10 +2,10 @@ package tigase.jaxmpp.j2se;
 
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.logger.LogLevel;
-import tigase.jaxmpp.core.logger.Logger;
-import tigase.jaxmpp.core.logger.LoggerSpi;
-import tigase.jaxmpp.core.logger.LoggerSpiFactory;
+import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerSpi;
+import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 
 public class Jaxmpp {
 
