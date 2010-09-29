@@ -7,7 +7,7 @@ import java.util.Map;
 public interface Element {
 	Element addChild(Element child);
 
-	void addChildren(Collection<Element> children);
+//	List<Element> addChildren(Collection<Element> children);
 
 	String getAttribute(String attName);
 
@@ -15,9 +15,13 @@ public interface Element {
 
 	String getCData();
 
-	Element getChild(String name, String child_xmlns);
+	List<Element> getChildrenNS(String name, String xmlns);
 
 	List<Element> getChildren();
+
+	List<Element> getChildren(String name);
+
+        List<Element> getChildrenNS(String xmlns);
 
 	String getName();
 
@@ -33,7 +37,9 @@ public interface Element {
 
 	void setCData(String cData);
 
-	void setDefXMLNS(String xmlns);
+        String getAsString();
 
-	void setXMLNS(String xmlns);
+//	void setDefXMLNS(String xmlns);
+
+//	void setXMLNS(String xmlns);
 }
