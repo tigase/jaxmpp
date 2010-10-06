@@ -1,45 +1,154 @@
 package tigase.jaxmpp.core.client.xml;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public interface Element {
-	Element addChild(Element child);
 
-//	List<Element> addChildren(Collection<Element> children);
+    /**
+     * Add child element to tree and return the added element.
+     * @param child Child to add.
+     * @return Added child element.
+     * @throws XMLException
+     */
+    Element addChild(Element child) throws XMLException;
 
-	String getAttribute(String attName);
+    /**
+     * Get attribute by name.
+     * @param attName Name of attribute to fetch.
+     * @return Attribute value or null if no such element exist.
+     * @throws XMLException
+     */
+    String getAttribute(String attName) throws XMLException;
 
-	Map<String, String> getAttributes();
+    /**
+     * Get all attributes as a Map.
+     * @return Element's attributes.
+     * @throws XMLException
+     */
+    Map<String, String> getAttributes() throws XMLException;
 
-	String getCData();
+    /**
+     * Get element value.
+     * @return Concatenated string value of element or null if none.
+     * @throws XMLException
+     */
+    String getValue() throws XMLException;
 
-	List<Element> getChildrenNS(String name, String xmlns);
+    /**
+     * Get children by namespace.
+     * @param name Name of the children to get.
+     * @param xmlns Namespace of the children to get.
+     * @return A list of Elements with the given name and namespace.
+     * @throws XMLException
+     */
+    List<Element> getChildrenNS(String name, String xmlns) throws XMLException;
 
-	List<Element> getChildren();
+    /**
+     * Get all children of the element.
+     * @return A list containing all child elements.
+     * @throws XMLException
+     */
+    List<Element> getChildren() throws XMLException;
 
-	List<Element> getChildren(String name);
+    /**
+     * Get children by name.
+     * @param name Name of the children to get.
+     * @return A list of the Element with the given name.
+     * @throws XMLException
+     */
+    List<Element> getChildren(String name) throws XMLException;
 
-        List<Element> getChildrenNS(String xmlns);
+    /**
+     * Get children by namespace.
+     * @param xmlns Namespace of the children to get.
+     * @return A list of children with the given namespace.
+     * @throws XMLException
+     */
+    List<Element> getChildrenNS(String xmlns) throws XMLException;
 
-	String getName();
+    /**
+     * Get parent element of this element. Or null if no parent exist.
+     * @return Parent element.
+     * @throws XMLException
+     */
+    Element getParent() throws XMLException;
 
-	String getXMLNS();
+    /**
+     * Get the first child element of this element.
+     * @return First child element or null if no children.
+     * @throws XMLException
+     */
+    Element getFirstChild() throws XMLException;
 
-	void removeAttribute(String key);
+    /**
+     * Get next sibling to this element or null if no parent or no more siblings exist.
+     * @return Next sibling element.
+     * @throws XMLException
+     */
+    Element getNextSibling() throws XMLException;
 
-	void removeChild(Element child);
+    /**
+     * Get name of this element.
+     * @return Name of the element.
+     * @throws XMLException
+     */
+    String getName() throws XMLException;
 
-	void setAttribute(String key, String value);
+    /**
+     * Get namespace of this element. traverses up to find actual namespace.
+     * @return Namespace of this element.
+     * @throws XMLException
+     */
+    String getXMLNS() throws XMLException;
 
-	void setAttributes(Map<String, String> attrs);
+    /**
+     * Remove attribute from element.
+     * @param key Name of attribute to remove.
+     * @throws XMLException
+     */
+    void removeAttribute(String key) throws XMLException;
 
-	void setCData(String cData);
+    /**
+     * Remove child from element.
+     * @param child Child element to remove.
+     * @throws XMLException
+     */
+    void removeChild(Element child) throws XMLException;
 
-        String getAsString();
+    /**
+     * Set value of attribute. Add attribute if it does not exist.
+     * @param key Name of attribute to set.
+     * @param value Value of attribute to set.
+     * @throws XMLException
+     */
+    void setAttribute(String key, String value) throws XMLException;
 
-//	void setDefXMLNS(String xmlns);
+    /**
+     * Set a number of attributes. Add the ones which does not exist.
+     * @param attrs Attributes to set.
+     * @throws XMLException
+     */
+    void setAttributes(Map<String, String> attrs) throws XMLException;
 
-//	void setXMLNS(String xmlns);
+    /**
+     * Change the namespace of this element.
+     * @param xmlns Namespace to set.
+     * @throws XMLException
+     */
+    void setXMLNS(String xmlns) throws XMLException;
+
+    /**
+     * Set value of this element.
+     * @param value Value to set.
+     * @throws XMLException
+     */
+    void setValue(String value) throws XMLException;
+
+
+    /**
+     * Get this element as XML string.
+     * @return The normalized XML describing this element.
+     */
+    String getAsString();
 }
