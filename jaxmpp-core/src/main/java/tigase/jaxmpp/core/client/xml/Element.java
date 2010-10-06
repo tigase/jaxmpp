@@ -22,6 +22,15 @@ public interface Element {
     String getAttribute(String attName) throws XMLException;
 
     /**
+     * Get attribute by name and namespace.
+     * @param attName Name of attribute to fetch.
+     * @param xmlns Namespace of attribute to fetch.
+     * @return Attribute value or null if no such element exist.
+     * @throws XMLException
+     */
+    String getAttributeNS(String attName, String xmlns) throws XMLException;
+
+    /**
      * Get all attributes as a Map.
      * @return Element's attributes.
      * @throws XMLException
