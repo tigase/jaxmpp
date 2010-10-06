@@ -22,15 +22,6 @@ public interface Element {
     String getAttribute(String attName) throws XMLException;
 
     /**
-     * Get attribute by name and namespace.
-     * @param attName Name of attribute to fetch.
-     * @param xmlns Namespace of attribute to fetch.
-     * @return Attribute value or null if no such element exist.
-     * @throws XMLException
-     */
-    String getAttributeNS(String attName, String xmlns) throws XMLException;
-
-    /**
      * Get all attributes as a Map.
      * @return Element's attributes.
      * @throws XMLException
@@ -126,6 +117,21 @@ public interface Element {
     void removeChild(Element child) throws XMLException;
 
     /**
+     * Set element parent. Only to be used internally.
+     * @param parent The parent to set for this element.
+     * @throws XMLException
+     */
+    void setParent(Element parent) throws XMLException;
+
+    /**
+     * Gets the first child after specified child in children list. Only to be used internally.
+     * @param child The child to look up.
+     * @return The child after specific child.
+     * @throws XMLException
+     */
+    Element getChildAfter(Element child) throws XMLException;
+
+    /**
      * Set value of attribute. Add attribute if it does not exist.
      * @param key Name of attribute to set.
      * @param value Value of attribute to set.
@@ -159,5 +165,5 @@ public interface Element {
      * Get this element as XML string.
      * @return The normalized XML describing this element.
      */
-    String getAsString();
+    String getAsString() throws XMLException;
 }

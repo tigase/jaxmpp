@@ -1,122 +1,213 @@
 package tigase.jaxmpp.core.client.xml;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 public class DefaultElement implements Element {
 
-	private final HashMap<String, String> attributes = new HashMap<String, String>();
+    private String name;
+    private String value;
+    private String xmlns;
 
-	private String cData;
+    private Element parent;
+    private LinkedList<Element> children;
+    private Map<String, String> attributes;
 
-	private final ArrayList<Element> children = new ArrayList<Element>();
+    public DefaultElement(String name, String value, String xmlns) {
+        this.name = name;
+        this.value = value;
+        this.xmlns = xmlns;
 
-	private String name;
+        parent = null;
+        children = new LinkedList<Element>();
+        attributes = new HashMap<String, String>();
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public Element addChild(Element child) {
-		this.children.add(child);
-		return child;
-	}
+    @Override
+    public Element addChild(Element child) throws XMLException {
+        child.setParent(this);
+        children.add(child);
 
-	/** {@inheritDoc} */
-	@Override
-	public void addChildren(Collection<Element> children) {
-		this.children.addAll(children);
-	}
+        return child;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String getAttribute(String attName) {
-		return this.attributes.get(attName);
-	}
+    @Override
+    public String getAttribute(String attName) throws XMLException {
+        return attributes.get(attName);
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public Map<String, String> getAttributes() {
-		return this.attributes;
-	}
+    @Override
+    public Map<String, String> getAttributes() throws XMLException {
+        return attributes;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String getCData() {
-		return cData;
-	}
+    @Override
+    public String getValue() throws XMLException {
+        return value;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public Element getChild(String name, String childXmlns) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
+        List<Element> retval = new LinkedList<Element>();
 
-	/** {@inheritDoc} */
-	@Override
-	public List<Element> getChildren() {
-		return this.children;
-	}
+        for( Element element : children ) {
+            if( element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
+                retval.add(element);
+            }
+        }
 
-	/** {@inheritDoc} */
-	@Override
-	public String getName() {
-		return name;
-	}
+        return retval;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public String getXMLNS() {
-		return getAttribute("xmlns");
-	}
+    @Override
+    public List<Element> getChildren() throws XMLException {
+        return children;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public void removeAttribute(String attName) {
-		this.attributes.remove(attName);
-	}
+    @Override
+    public List<Element> getChildren(String name) throws XMLException {
+        List<Element> retval = new LinkedList<Element>();
 
-	/** {@inheritDoc} */
-	@Override
-	public void removeChild(Element child) {
-		this.children.remove(child);
-	}
+        for( Element element : children ) {
+            if( element.getName().equals(name)) {
+                retval.add(element);
+            }
+        }
 
-	/** {@inheritDoc} */
-	@Override
-	public void setAttribute(String attName, String value) {
-		this.attributes.put(attName, value);
-	}
+        return retval;
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public void setAttributes(Map<String, String> attrs) {
-		this.attributes.putAll(attrs);
-	}
+    @Override
+    public List<Element> getChildrenNS(String xmlns) throws XMLException {
+        List<Element> retval = new LinkedList<Element>();
 
-	/** {@inheritDoc} */
-	@Override
-	public void setCData(String cData) {
-		this.cData = cData;
-	}
+        for( Element element : children ) {
+            if( element.getXMLNS().equals(xmlns)) {
+                retval.add(element);
+            }
+        }
 
-	/** {@inheritDoc} */
-	@Override
-	public void setDefXMLNS(String xmlns) {
-		// TODO Auto-generated method stub
+        return retval;
+    }
 
-	}
+    @Override
+    public Element getParent() throws XMLException {
+        return parent;
+    }
 
-	public DefaultElement(String name) {
-		this.name = name;
-	}
+    @Override
+    public Element getFirstChild() throws XMLException {
+        return children.getFirst();
+    }
 
-	/** {@inheritDoc} */
-	@Override
-	public void setXMLNS(String xmlns) {
-		setAttribute("xmlns", xmlns);
-	}
+    @Override
+    public Element getNextSibling() throws XMLException {
+        return parent.getChildAfter(this);
+    }
 
+    @Override
+    public Element getChildAfter(Element child) throws XMLException {
+        int index = children.indexOf(child);
+
+        if( index == -1) {
+            throw new XMLException("Element not part of tree");
+        }
+
+        return children.get(index+1);
+    }
+
+    @Override
+    public String getName() throws XMLException {
+        return name;
+    }
+
+    @Override
+    public String getXMLNS() throws XMLException {
+        if( xmlns == null ) {
+            xmlns = parent.getXMLNS();
+        }
+        return xmlns;
+    }
+
+    @Override
+    public void removeAttribute(String key) throws XMLException {
+        attributes.remove(key);
+    }
+
+    @Override
+    public void removeChild(Element child) throws XMLException {
+        children.remove(child);
+    }
+
+    @Override
+    public void setParent(Element parent) throws XMLException {
+        //TODO This is specified in std. Should we support it?
+        if( parent != null ) {
+            throw new XMLException("Illegal action, moving child from another tree");
+        }
+
+        this.parent = parent;
+    }
+
+    @Override
+    public void setAttribute(String key, String value) throws XMLException {
+        attributes.put(key, value);
+    }
+
+    @Override
+    public void setAttributes(Map<String, String> attrs) throws XMLException {
+        attributes.putAll(attrs);
+    }
+
+    @Override
+    public void setXMLNS(String xmlns) throws XMLException {
+        this.xmlns = xmlns;
+    }
+
+    @Override
+    public void setValue(String value) throws XMLException {
+        if(! children.isEmpty() ) {
+            throw new XMLException("Unsupported mixed Element with children and value");
+        }
+        this.value = value;
+    }
+
+    @Override
+    public String getAsString() throws XMLException {
+        StringBuilder builder = new StringBuilder();
+        builder.append('<');
+        builder.append(name);
+        if(! parent.getXMLNS().equals(xmlns) ) {
+            builder.append(' ');
+            builder.append("xmlns=\"");
+            builder.append(xmlns);
+            builder.append('"');
+        }
+
+        for(Map.Entry<String, String> attr : attributes.entrySet() ) {
+            builder.append(' ');
+            builder.append(attr.getKey());
+            builder.append("=\"");
+            builder.append(attr.getValue());
+            builder.append('"');            
+        }
+
+        if( children.isEmpty() && value == null ) {
+            builder.append('/');
+        }
+        builder.append('>');
+        for( Element element : children ) {
+            builder.append(element.getAsString());
+        }
+        builder.append(value);
+        if(! (children.isEmpty() && value == null) ) {
+            builder.append("</");
+            builder.append(name);
+            builder.append('>');
+        }
+
+        return builder.toString();
+    }
 }
