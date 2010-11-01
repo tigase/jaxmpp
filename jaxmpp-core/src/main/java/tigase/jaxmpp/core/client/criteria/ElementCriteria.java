@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class ElementCriteria implements Criteria {
 
@@ -59,7 +60,7 @@ public class ElementCriteria implements Criteria {
 	 * 
 	 * @see tigase.criteria.Criteria#match(tigase.xml.Element)
 	 */
-	public boolean match(Element element) {
+	public boolean match(Element element) throws XMLException {
 		if (name != null && !name.equals(element.getName())) {
 			return false;
 		}

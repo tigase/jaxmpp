@@ -6,6 +6,8 @@ import tigase.jaxmpp.core.client.xml.Element;
 
 public class Processor {
 
+	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
+
 	private final SessionObject sessionObject;
 
 	private final PacketWriter writer;
@@ -14,8 +16,6 @@ public class Processor {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 	}
-
-	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 
 	public <T extends XmppModule> T add(T aplugin) {
 		this.modules.add(aplugin);

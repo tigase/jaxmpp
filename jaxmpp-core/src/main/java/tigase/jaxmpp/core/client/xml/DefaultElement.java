@@ -7,207 +7,209 @@ import java.util.Map;
 
 public class DefaultElement implements Element {
 
-    private String name;
-    private String value;
-    private String xmlns;
+	private Map<String, String> attributes;
+	private LinkedList<Element> children;
+	private String name;
 
-    private Element parent;
-    private LinkedList<Element> children;
-    private Map<String, String> attributes;
+	private Element parent;
+	private String value;
+	private String xmlns;
 
-    public DefaultElement(String name, String value, String xmlns) {
-        this.name = name;
-        this.value = value;
-        this.xmlns = xmlns;
+	public DefaultElement(String name, String value, String xmlns) {
+		this.name = name;
+		this.value = value;
+		this.xmlns = xmlns;
 
-        parent = null;
-        children = new LinkedList<Element>();
-        attributes = new HashMap<String, String>();
-    }
+		parent = null;
+		children = new LinkedList<Element>();
+		attributes = new HashMap<String, String>();
+	}
 
-    @Override
-    public Element addChild(Element child) throws XMLException {
-        child.setParent(this);
-        children.add(child);
+	@Override
+	public Element addChild(Element child) throws XMLException {
+		child.setParent(this);
+		children.add(child);
 
-        return child;
-    }
+		return child;
+	}
 
-    @Override
-    public String getAttribute(String attName) throws XMLException {
-        return attributes.get(attName);
-    }
+	@Override
+	public String getAsString() throws XMLException {
+		StringBuilder builder = new StringBuilder();
+		builder.append('<');
+		builder.append(name);
+		if ((parent == null || !parent.getXMLNS().equals(xmlns)) && xmlns != null) {
+			builder.append(' ');
+			builder.append("xmlns=\"");
+			builder.append(xmlns);
+			builder.append('"');
+		}
 
-    @Override
-    public Map<String, String> getAttributes() throws XMLException {
-        return attributes;
-    }
+		for (Map.Entry<String, String> attr : attributes.entrySet()) {
+			builder.append(' ');
+			builder.append(attr.getKey());
+			builder.append("=\"");
+			builder.append(attr.getValue());
+			builder.append('"');
+		}
 
-    @Override
-    public String getValue() throws XMLException {
-        return value;
-    }
+		if (children.isEmpty() && value == null) {
+			builder.append('/');
+		}
+		builder.append('>');
+		for (Element element : children) {
+			builder.append(element.getAsString());
+		}
+		if (value != null)
+			builder.append(value);
+		if (!(children.isEmpty() && value == null)) {
+			builder.append("</");
+			builder.append(name);
+			builder.append('>');
+		}
 
-    @Override
-    public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
-        List<Element> retval = new LinkedList<Element>();
+		return builder.toString();
+	}
 
-        for( Element element : children ) {
-            if( element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
-                retval.add(element);
-            }
-        }
+	@Override
+	public String getAttribute(String attName) throws XMLException {
+		return attributes.get(attName);
+	}
 
-        return retval;
-    }
+	@Override
+	public Map<String, String> getAttributes() throws XMLException {
+		return attributes;
+	}
 
-    @Override
-    public List<Element> getChildren() throws XMLException {
-        return children;
-    }
+	@Override
+	public Element getChildAfter(Element child) throws XMLException {
+		int index = children.indexOf(child);
 
-    @Override
-    public List<Element> getChildren(String name) throws XMLException {
-        List<Element> retval = new LinkedList<Element>();
+		if (index == -1) {
+			throw new XMLException("Element not part of tree");
+		}
 
-        for( Element element : children ) {
-            if( element.getName().equals(name)) {
-                retval.add(element);
-            }
-        }
+		return children.get(index + 1);
+	}
 
-        return retval;
-    }
+	@Override
+	public List<Element> getChildren() throws XMLException {
+		return children;
+	}
 
-    @Override
-    public List<Element> getChildrenNS(String xmlns) throws XMLException {
-        List<Element> retval = new LinkedList<Element>();
+	@Override
+	public List<Element> getChildren(String name) throws XMLException {
+		List<Element> retval = new LinkedList<Element>();
 
-        for( Element element : children ) {
-            if( element.getXMLNS().equals(xmlns)) {
-                retval.add(element);
-            }
-        }
+		for (Element element : children) {
+			if (element.getName().equals(name)) {
+				retval.add(element);
+			}
+		}
 
-        return retval;
-    }
+		return retval;
+	}
 
-    @Override
-    public Element getParent() throws XMLException {
-        return parent;
-    }
+	@Override
+	public List<Element> getChildrenNS(String xmlns) throws XMLException {
+		List<Element> retval = new LinkedList<Element>();
 
-    @Override
-    public Element getFirstChild() throws XMLException {
-        return children.getFirst();
-    }
+		for (Element element : children) {
+			String x = element.getXMLNS();
+			if (x != null && x.equals(xmlns)) {
+				retval.add(element);
+			}
+		}
 
-    @Override
-    public Element getNextSibling() throws XMLException {
-        return parent.getChildAfter(this);
-    }
+		return retval;
+	}
 
-    @Override
-    public Element getChildAfter(Element child) throws XMLException {
-        int index = children.indexOf(child);
+	@Override
+	public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
+		List<Element> retval = new LinkedList<Element>();
 
-        if( index == -1) {
-            throw new XMLException("Element not part of tree");
-        }
+		for (Element element : children) {
+			if (element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
+				retval.add(element);
+			}
+		}
 
-        return children.get(index+1);
-    }
+		return retval;
+	}
 
-    @Override
-    public String getName() throws XMLException {
-        return name;
-    }
+	@Override
+	public Element getFirstChild() throws XMLException {
+		return children.getFirst();
+	}
 
-    @Override
-    public String getXMLNS() throws XMLException {
-        if( xmlns == null ) {
-            xmlns = parent.getXMLNS();
-        }
-        return xmlns;
-    }
+	@Override
+	public String getName() throws XMLException {
+		return name;
+	}
 
-    @Override
-    public void removeAttribute(String key) throws XMLException {
-        attributes.remove(key);
-    }
+	@Override
+	public Element getNextSibling() throws XMLException {
+		return parent.getChildAfter(this);
+	}
 
-    @Override
-    public void removeChild(Element child) throws XMLException {
-        children.remove(child);
-    }
+	@Override
+	public Element getParent() throws XMLException {
+		return parent;
+	}
 
-    @Override
-    public void setParent(Element parent) throws XMLException {
-        //TODO This is specified in std. Should we support it?
-        if( parent != null ) {
-            throw new XMLException("Illegal action, moving child from another tree");
-        }
+	@Override
+	public String getValue() throws XMLException {
+		return value;
+	}
 
-        this.parent = parent;
-    }
+	@Override
+	public String getXMLNS() throws XMLException {
+		if (xmlns == null && parent != null) {
+			xmlns = parent.getXMLNS();
+		}
+		return xmlns;
+	}
 
-    @Override
-    public void setAttribute(String key, String value) throws XMLException {
-        attributes.put(key, value);
-    }
+	@Override
+	public void removeAttribute(String key) throws XMLException {
+		attributes.remove(key);
+	}
 
-    @Override
-    public void setAttributes(Map<String, String> attrs) throws XMLException {
-        attributes.putAll(attrs);
-    }
+	@Override
+	public void removeChild(Element child) throws XMLException {
+		children.remove(child);
+	}
 
-    @Override
-    public void setXMLNS(String xmlns) throws XMLException {
-        this.xmlns = xmlns;
-    }
+	@Override
+	public void setAttribute(String key, String value) throws XMLException {
+		attributes.put(key, value);
+	}
 
-    @Override
-    public void setValue(String value) throws XMLException {
-        if(! children.isEmpty() ) {
-            throw new XMLException("Unsupported mixed Element with children and value");
-        }
-        this.value = value;
-    }
+	@Override
+	public void setAttributes(Map<String, String> attrs) throws XMLException {
+		attributes.putAll(attrs);
+	}
 
-    @Override
-    public String getAsString() throws XMLException {
-        StringBuilder builder = new StringBuilder();
-        builder.append('<');
-        builder.append(name);
-        if(! parent.getXMLNS().equals(xmlns) ) {
-            builder.append(' ');
-            builder.append("xmlns=\"");
-            builder.append(xmlns);
-            builder.append('"');
-        }
+	@Override
+	public void setParent(Element parent) throws XMLException {
+		// TODO This is specified in std. Should we support it?
+		if (this.parent != null) {
+			throw new XMLException("Illegal action, moving child from another tree");
+		}
 
-        for(Map.Entry<String, String> attr : attributes.entrySet() ) {
-            builder.append(' ');
-            builder.append(attr.getKey());
-            builder.append("=\"");
-            builder.append(attr.getValue());
-            builder.append('"');            
-        }
+		this.parent = parent;
+	}
 
-        if( children.isEmpty() && value == null ) {
-            builder.append('/');
-        }
-        builder.append('>');
-        for( Element element : children ) {
-            builder.append(element.getAsString());
-        }
-        builder.append(value);
-        if(! (children.isEmpty() && value == null) ) {
-            builder.append("</");
-            builder.append(name);
-            builder.append('>');
-        }
+	@Override
+	public void setValue(String value) throws XMLException {
+		if (!children.isEmpty()) {
+			throw new XMLException("Unsupported mixed Element with children and value");
+		}
+		this.value = value;
+	}
 
-        return builder.toString();
-    }
+	@Override
+	public void setXMLNS(String xmlns) throws XMLException {
+		this.xmlns = xmlns;
+	}
 }

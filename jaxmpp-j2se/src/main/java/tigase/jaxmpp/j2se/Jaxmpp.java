@@ -44,13 +44,13 @@ public class Jaxmpp {
 					}
 
 					@Override
-					public void log(LogLevel level, String msg, Throwable thrown) {
-						log.log(convert(level), msg, thrown);
+					public void log(LogLevel level, String msg) {
+						log.log(convert(level), msg);
 					}
 
 					@Override
-					public void log(LogLevel level, String msg) {
-						log.log(convert(level), msg);
+					public void log(LogLevel level, String msg, Throwable thrown) {
+						log.log(convert(level), msg, thrown);
 					}
 				};
 

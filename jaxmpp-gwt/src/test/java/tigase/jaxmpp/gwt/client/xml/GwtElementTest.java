@@ -13,9 +13,9 @@ public class GwtElementTest extends GWTTestCase {
 		assertEquals("FOO", "FOO");
 	}
 
-	 public void test02() throws Exception {
-	 GwtElement x = GwtElement.parse("<iq to='x@y.z'><query/></iq>");
-	 assertEquals("iq", x.getName());
-	 }
+	public void test02() throws Exception {
+		GwtElement x = GwtElement.parse("<iq to='x@y.z'><query/></iq>");
+		assertEquals("iq", x.getName());
+	}
 
 }

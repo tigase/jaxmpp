@@ -1,7 +1,7 @@
 package tigase.jaxmpp.core.client.criteria;
 
 import tigase.jaxmpp.core.client.xml.Element;
-
+import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class Or implements Criteria {
 
@@ -23,7 +23,7 @@ public class Or implements Criteria {
 		throw new RuntimeException("Or.add() is not implemented!");
 	}
 
-	public boolean match(Element element) {
+	public boolean match(Element element) throws XMLException {
 		for (int i = 0; i < crits.length; i++) {
 			Criteria c = this.crits[i];
 			if (c.match(element)) {
