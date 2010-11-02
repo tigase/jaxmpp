@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementComparator;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 import com.google.gwt.xml.client.Node;
@@ -35,7 +36,18 @@ public class GwtElement implements Element {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof com.google.gwt.xml.client.Element) {
+			return this.xmlElement.equals(obj);
+		} else if (obj instanceof Element)
+			return ElementComparator.equal((Element) obj, this);
+		else
+			return false;
+	}
+
+	@Override
 	public String getAsString() throws XMLException {
+		// TODO
 		return this.xmlElement.toString();
 	}
 
@@ -71,7 +83,7 @@ public class GwtElement implements Element {
 		ArrayList<Element> result = new ArrayList<Element>();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (node instanceof Element) {
+			if (node instanceof com.google.gwt.xml.client.Element) {
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
 				result.add(gpi);
 			}
@@ -85,7 +97,7 @@ public class GwtElement implements Element {
 		NodeList nodes = this.xmlElement.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (node instanceof Element) {
+			if (node instanceof com.google.gwt.xml.client.Element) {
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
 				if (name.equals(gpi.getName())) {
 					result.add(gpi);
@@ -101,8 +113,8 @@ public class GwtElement implements Element {
 		NodeList nodes = this.xmlElement.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (node instanceof Element) {
-				final String x = ((Element) node).getAttribute("xmlns");
+			if (node instanceof com.google.gwt.xml.client.Element) {
+				final String x = ((com.google.gwt.xml.client.Element) node).getAttribute("xmlns");
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
 				if (x != null && xmlns.equals(gpi.getXMLNS())) {
 					result.add(gpi);
@@ -118,8 +130,8 @@ public class GwtElement implements Element {
 		NodeList nodes = this.xmlElement.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (node instanceof Element) {
-				final String x = ((Element) node).getAttribute("xmlns");
+			if (node instanceof com.google.gwt.xml.client.Element) {
+				final String x = ((com.google.gwt.xml.client.Element) node).getAttribute("xmlns");
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
 				if (x != null && x.equals(xmlns) && xmlns.equals(gpi.getXMLNS())) {
 					result.add(gpi);
@@ -164,10 +176,19 @@ public class GwtElement implements Element {
 		return this.xmlElement.getAttribute("xmlns");
 	}
 
+	@Override
+	public int hashCode() {
+		return this.xmlElement.toString().hashCode();
+	}
+
 	private int indexOf(final Element child) {
 		for (int i = 0; i < this.xmlElement.getChildNodes().getLength(); i++) {
 			Node cc = this.xmlElement.getChildNodes().item(i);
-			if (cc.equals(child))
+			if (child instanceof GwtElement) {
+				if (((GwtElement) child).xmlElement.equals(cc))
+					return i;
+			} else if (cc instanceof com.google.gwt.xml.client.Element
+					&& ElementComparator.equal(new GwtElement((com.google.gwt.xml.client.Element) cc), child))
 				return i;
 		}
 		return -1;

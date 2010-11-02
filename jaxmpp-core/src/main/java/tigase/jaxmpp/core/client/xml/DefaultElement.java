@@ -7,12 +7,32 @@ import java.util.Map;
 
 public class DefaultElement implements Element {
 
+	public final static Element create(final Element src) throws XMLException {
+		return create(src, -1);
+	}
+
+	public final static Element create(final Element src, int deep) throws XMLException {
+		final DefaultElement result = new DefaultElement(src.getName(), src.getValue(), src.getXMLNS());
+		result.setAttributes(src.getAttributes());
+		result.parent = src.getParent();
+		if (deep != 0)
+			for (Element e : src.getChildren()) {
+				result.children.add(create(e, deep - 1));
+			}
+
+		return result;
+	}
+
 	private Map<String, String> attributes;
+
 	private LinkedList<Element> children;
+
 	private String name;
 
 	private Element parent;
+
 	private String value;
+
 	private String xmlns;
 
 	public DefaultElement(String name, String value, String xmlns) {
@@ -34,11 +54,19 @@ public class DefaultElement implements Element {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Element)
+			return ElementComparator.equal((Element) obj, this);
+		else
+			return false;
+	}
+
+	@Override
 	public String getAsString() throws XMLException {
 		StringBuilder builder = new StringBuilder();
 		builder.append('<');
 		builder.append(name);
-		if ((parent == null || !parent.getXMLNS().equals(xmlns)) && xmlns != null) {
+		if (xmlns != null && (parent == null || parent.getXMLNS() == null || !parent.getXMLNS().equals(xmlns))) {
 			builder.append(' ');
 			builder.append("xmlns=\"");
 			builder.append(xmlns);
@@ -168,6 +196,15 @@ public class DefaultElement implements Element {
 			xmlns = parent.getXMLNS();
 		}
 		return xmlns;
+	}
+
+	@Override
+	public int hashCode() {
+		try {
+			return getAsString().hashCode();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override

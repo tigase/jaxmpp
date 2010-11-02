@@ -17,6 +17,11 @@
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>tigase</groupId>
+			<artifactId>tigase-xmltools</artifactId>
+			<version>3.3.6-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
