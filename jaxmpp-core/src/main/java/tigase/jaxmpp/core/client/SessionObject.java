@@ -4,6 +4,7 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.xml.Element;
 
 public interface SessionObject {
-    void setHandler(Criteria criteria, Runnable handler);
-    Runnable getHandler(Element element);//This should be "Packet"...
+	Runnable getHandler(Element element);// This should be "Packet"...
+
+	void setHandler(Criteria criteria, Runnable handler);
 }
