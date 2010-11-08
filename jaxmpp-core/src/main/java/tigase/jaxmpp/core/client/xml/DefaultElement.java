@@ -219,6 +219,8 @@ public class DefaultElement implements Element {
 
 	@Override
 	public void setAttribute(String key, String value) throws XMLException {
+		if (key == null || value == null)
+			return;
 		attributes.put(key, value);
 	}
 
@@ -249,4 +251,5 @@ public class DefaultElement implements Element {
 	public void setXMLNS(String xmlns) throws XMLException {
 		this.xmlns = xmlns;
 	}
+
 }
