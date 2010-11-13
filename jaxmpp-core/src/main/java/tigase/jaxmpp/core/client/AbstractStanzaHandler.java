@@ -2,16 +2,17 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class AbstractStanzaHandler implements Runnable {
 
 	protected final SessionObject sessionObject;
 
-	protected final Element stanza;
+	protected final Stanza stanza;
 
 	protected final PacketWriter writer;
 
-	public AbstractStanzaHandler(Element stanza, PacketWriter writer, SessionObject sessionObject) {
+	public AbstractStanzaHandler(Stanza stanza, PacketWriter writer, SessionObject sessionObject) {
 		super();
 		this.writer = writer;
 		this.stanza = stanza;

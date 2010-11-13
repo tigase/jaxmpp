@@ -1,7 +1,8 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.criteria.Criteria;
-import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 /**
  * Main interface for implement modules. Module is stateless!. To store any
@@ -43,6 +44,6 @@ public interface XmppModule {
 	 * @param packetWriter
 	 *            XML writer
 	 */
-	void process(Element element, SessionObject sessionObject, PacketWriter packetWriter);
+	void process(Stanza element, SessionObject sessionObject, PacketWriter writer) throws XMPPException, XMLException;
 
 }

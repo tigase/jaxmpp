@@ -1,10 +1,13 @@
 package tigase.jaxmpp.core.client;
 
-import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
 
 public interface SessionObject {
-	Runnable getHandler(Element element);// This should be "Packet"...
 
-	void setHandler(Criteria criteria, Runnable handler);
+	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
+			throws XMLException;
+
+	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException;
+
 }

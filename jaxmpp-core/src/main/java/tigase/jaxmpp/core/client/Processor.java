@@ -4,12 +4,13 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class Processor {
 
 	public static class FeatureNotImplementedResponse extends AbstractStanzaHandler {
 
-		public FeatureNotImplementedResponse(Element stanza, PacketWriter writer, SessionObject sessionObject) {
+		public FeatureNotImplementedResponse(Stanza stanza, PacketWriter writer, SessionObject sessionObject) {
 			super(stanza, writer, sessionObject);
 		}
 
@@ -58,11 +59,12 @@ public class Processor {
 
 	private final PacketWriter writer;
 
-	private final XmppModulesManages xmppModulesManages = new XmppModulesManages();
+	private final XmppModulesManages xmppModulesManages;
 
-	public Processor(final SessionObject sessionObject, final PacketWriter writer) {
+	public Processor(XmppModulesManages xmppModulesManages, final SessionObject sessionObject, final PacketWriter writer) {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
+		this.xmppModulesManages = xmppModulesManages;
 	}
 
 	public XmppModulesManages getXmppModulesManages() {
@@ -71,8 +73,7 @@ public class Processor {
 
 	public Runnable process(final Element stanza) {
 		try {
-			// TODO obsluga iq:result najpierw
-			Runnable result = sessionObject.getHandler(stanza);
+			Runnable result = sessionObject.getResponseHandler(stanza, writer, sessionObject);
 			if (result != null)
 				return result;
 
@@ -80,10 +81,18 @@ public class Processor {
 					&& stanza.getAttribute("type").equals("error"))
 				return null;
 
-			XmppModule module = xmppModulesManages.findModule(stanza);
+			final XmppModule module = xmppModulesManages.findModule(stanza);
 			if (module == null)
-				result = new FeatureNotImplementedResponse(stanza, writer, sessionObject);
+				result = new FeatureNotImplementedResponse(Stanza.create(stanza), writer, sessionObject);
+			else {
+				result = new AbstractStanzaHandler(Stanza.create(stanza), writer, sessionObject) {
 
+					@Override
+					protected void process() throws XMLException, XMPPException {
+						module.process(this.stanza, this.sessionObject, this.writer);
+					}
+				};
+			}
 			return result;
 		} catch (Throwable e) {
 			throw new RuntimeException(e);

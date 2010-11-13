@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client;
 
+import java.util.HashMap;
+
 public class XMPPException extends Exception {
 
 	public static enum ErrorCondition {
@@ -147,6 +149,16 @@ public class XMPPException extends Exception {
 		 */
 		unexpected_request("unexpected-request", "wait", 400);
 
+		protected final static HashMap<String, ErrorCondition> conditions = new HashMap<String, ErrorCondition>();
+
+		public static ErrorCondition getByElementName(String name) {
+			for (ErrorCondition e : ErrorCondition.values()) {
+				if (e.elementName.equals(name))
+					return e;
+			}
+			return null;
+		}
+
 		private final String elementName;
 
 		private final int errorCode;
@@ -175,10 +187,10 @@ public class XMPPException extends Exception {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final String xmlns = "urn:ietf:params:xml:ns:xmpp-stanzas";
+	public static final String XMLNS = "urn:ietf:params:xml:ns:xmpp-stanzas";
 
 	public static String getXmlns() {
-		return xmlns;
+		return XMLNS;
 	}
 
 	private final ErrorCondition condition;

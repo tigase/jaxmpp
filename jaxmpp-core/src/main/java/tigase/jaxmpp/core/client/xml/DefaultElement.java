@@ -35,6 +35,10 @@ public class DefaultElement implements Element {
 
 	private String xmlns;
 
+	public DefaultElement(String name) {
+		this(name, null, null);
+	}
+
 	public DefaultElement(String name, String value, String xmlns) {
 		this.name = name;
 		this.value = value;
