@@ -59,15 +59,15 @@ public class Processor {
 
 	private final PacketWriter writer;
 
-	private final XmppModulesManages xmppModulesManages;
+	private final XmppModulesManager xmppModulesManages;
 
-	public Processor(XmppModulesManages xmppModulesManages, final SessionObject sessionObject, final PacketWriter writer) {
+	public Processor(XmppModulesManager xmppModulesManages, final SessionObject sessionObject, final PacketWriter writer) {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 		this.xmppModulesManages = xmppModulesManages;
 	}
 
-	public XmppModulesManages getXmppModulesManages() {
+	public XmppModulesManager getXmppModulesManages() {
 		return xmppModulesManages;
 	}
 

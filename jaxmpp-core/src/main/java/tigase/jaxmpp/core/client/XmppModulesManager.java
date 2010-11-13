@@ -7,7 +7,7 @@ import java.util.Set;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-public class XmppModulesManages {
+public class XmppModulesManager {
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 

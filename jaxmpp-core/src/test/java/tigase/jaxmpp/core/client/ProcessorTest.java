@@ -13,7 +13,7 @@ public class ProcessorTest extends TestCase {
 	private MockWriter writer;
 
 	public ProcessorTest() {
-		XmppModulesManages xmppModulesManages = new XmppModulesManages();
+		XmppModulesManager xmppModulesManages = new XmppModulesManager();
 		xmppModulesManages.register(new PingModule());
 		this.writer = new MockWriter();
 		SessionObject sessionObject = new SessionObject() {
@@ -57,6 +57,18 @@ public class ProcessorTest extends TestCase {
 	}
 
 	public void test03() throws XMLException {
+		Element e = new DefaultElement("iq");
+		e.setAttribute("to", "a@b.c");
+		e.setAttribute("type", "get");
+		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
+
+		System.out.println(e.getAsString());
+		Runnable r = processor.process(e);
+		r.run();
+		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", writer.poll().getAsString());
+	}
+
+	public void test04() throws XMLException {
 		Element e = new DefaultElement("iq");
 		e.setAttribute("to", "a@b.c");
 		e.setAttribute("type", "get");
