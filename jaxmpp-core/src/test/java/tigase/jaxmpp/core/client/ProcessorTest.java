@@ -4,7 +4,6 @@ import junit.framework.TestCase;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 
 public class ProcessorTest extends TestCase {
 
@@ -13,8 +12,7 @@ public class ProcessorTest extends TestCase {
 	private MockWriter writer;
 
 	public ProcessorTest() {
-		XmppModulesManager xmppModulesManages = new XmppModulesManager();
-		xmppModulesManages.register(new PingModule());
+		XmppModulesManager xmppModulesManages = new DefaultXmppModulesManager();
 		this.writer = new MockWriter();
 		SessionObject sessionObject = new SessionObject() {
 

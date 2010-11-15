@@ -1,5 +1,9 @@
-package tigase.jaxmpp.core.client;
+package tigase.jaxmpp.j2se;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.ResponseManager;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 

@@ -1,61 +1,39 @@
 package tigase.jaxmpp.j2se;
 
-import java.util.logging.Level;
-
-import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.DefaultXmppModulesManager;
+import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerSpi;
-import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
+import tigase.jaxmpp.core.client.xml.Element;
 
 public class Jaxmpp {
 
+	private final XmppModulesManager modulesManager;
+
+	private final Processor processor;
+
+	private SessionObject sessionObject;
+
+	private final PacketWriter writer = new PacketWriter() {
+
+		@Override
+		public void write(Element stanza) {
+			// TODO Auto-generated method stub
+
+		}
+	};
+
 	public Jaxmpp() {
-		Logger.setLoggerSpiFactory(new LoggerSpiFactory() {
+		Logger.setLoggerSpiFactory(new DefaultLoggerSpi());
 
-			@Override
-			public LoggerSpi getLoggerSpi(final String name) {
-				final java.util.logging.Logger log = java.util.logging.Logger.getLogger(name);
-
-				LoggerSpi spi = new LoggerSpi() {
-
-					private final Level convert(LogLevel l) {
-						switch (l) {
-						case ALL:
-							return Level.ALL;
-						case CONFIG:
-							return Level.CONFIG;
-						case FINE:
-							return Level.FINE;
-						case FINER:
-							return Level.FINER;
-						case FINEST:
-							return Level.FINEST;
-						case INFO:
-							return Level.INFO;
-						case OFF:
-							return Level.OFF;
-						case SEVERE:
-							return Level.SEVERE;
-						case WARNING:
-							return Level.WARNING;
-						default:
-							return Level.INFO;
-						}
-					}
-
-					@Override
-					public void log(LogLevel level, String msg) {
-						log.log(convert(level), msg);
-					}
-
-					@Override
-					public void log(LogLevel level, String msg, Throwable thrown) {
-						log.log(convert(level), msg, thrown);
-					}
-				};
-
-				return spi;
-			}
-		});
+		this.sessionObject = new DefaultSessionObject();
+		this.modulesManager = new DefaultXmppModulesManager();
+		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 	}
+
+	public void login() {
+	}
+
 }
