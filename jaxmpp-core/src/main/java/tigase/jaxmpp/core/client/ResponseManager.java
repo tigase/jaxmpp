@@ -73,7 +73,9 @@ public class ResponseManager {
 			throws XMLException {
 		String x = element.getAttribute("from");
 		String i = element.getAttribute("id");
-		Key key = new Key(i == null ? null : i, x == null ? null : BareJID.bareJIDInstance(x));
+		if (i == null)
+			return null;
+		Key key = new Key(i, x == null ? null : BareJID.bareJIDInstance(x));
 		final Entry entry = this.handlers.get(key);
 		final Stanza stanza = element instanceof Stanza ? (Stanza) element : Stanza.create(element);
 		if (entry != null) {

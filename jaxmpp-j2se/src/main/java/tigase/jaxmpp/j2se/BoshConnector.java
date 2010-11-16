@@ -2,14 +2,49 @@ package tigase.jaxmpp.j2se;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.HashMap;
+import java.util.Map;
 
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class BoshConnector {
+
+	public static final class BoshConnectorEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		public static long getSerialversionuid() {
+			return serialVersionUID;
+		}
+
+		private Element responseBody;
+
+		private int responseCode;
+
+		private Element stanza;
+
+		public BoshConnectorEvent(EventType type) {
+			super(type);
+		}
+
+		public Element getResponseBody() {
+			return responseBody;
+		}
+
+		public int getResponseCode() {
+			return responseCode;
+		}
+
+		public Element getStanza() {
+			return stanza;
+		}
+	}
 
 	static class ConnectorData {
 
@@ -35,55 +70,113 @@ public class BoshConnector {
 		disconnected
 	}
 
-	public static void main(String[] args) throws Exception {
-		// cd.serverJID = BareJID.bareJIDInstance("malkowscy.net");
-		// cd.userJID = BareJID.bareJIDInstance("bmalkow@malkowscy.net");
+	public final static EventType CONNECTED = new EventType();
 
-		BoshConnector con = new BoshConnector();
-		con.data.url = new URL("http://messenger.tigase.org/bosh");
-		con.data.toHost = "tigase.org";
-		con.data.fromUser = "bmalkow@tigase.org";
+	public final static EventType ERROR = new EventType();
 
-		con.start();
+	public final static EventType STANZA_RECEIVED = new EventType();
 
-		System.out.println(".");
-
-		Thread.sleep(1000 * 15);
-
-		System.out.println(".");
-		con.stop();
-	}
+	public final static EventType TERMINATE = new EventType();
 
 	private final ConnectorData data = new ConnectorData();
 
-	private final Queue<Element> toSendQueue = new LinkedList<Element>();
+	protected final Observable observable = new Observable();
+
+	protected final Map<String, BoshWorker> requests = new HashMap<String, BoshWorker>();
+
+	public void addListener(EventType eventType, Listener<BoshConnectorEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
+
+	protected void addToRequests(final BoshWorker worker) {
+		this.requests.put(worker.getRid(), worker);
+	}
+
+	protected int countActiveRequests() {
+		return this.requests.size();
+	}
+
+	protected void fireOnConnected() {
+		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
+		this.observable.fireEvent(event.getType(), event);
+	}
+
+	protected void fireOnError(int responseCode, Element response, Throwable caught) {
+		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
+		event.responseCode = responseCode;
+		event.responseBody = response;
+		this.observable.fireEvent(event.getType(), event);
+	}
+
+	protected void fireOnStanzaReceived(int responseCode, Element response) {
+		try {
+			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
+			event.responseBody = response;
+			event.responseCode = responseCode;
+			if (response != null) {
+				Element ch = response.getFirstChild();
+				event.stanza = ch;
+			}
+			this.observable.fireEvent(event.getType(), event);
+		} catch (XMLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected void fireOnTerminate(int responseCode, Element response) {
+		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
+		event.responseCode = responseCode;
+		event.responseBody = response;
+		this.observable.fireEvent(event.getType(), event);
+	}
+
+	public ConnectorData getConnectorData() {
+		return data;
+	}
 
 	protected void onError(int responseCode, Element response, Throwable caught) {
-		System.out.println("onError(): responseCode=" + responseCode + "; " + " " + caught);
-		this.data.stage = Stage.disconnected;
+		try {
+			if (response != null)
+				removeFromRequests(response.getAttribute("ack"));
+			System.out.println("onError(): responseCode=" + responseCode + "; " + " " + caught);
+			this.data.stage = Stage.disconnected;
+			fireOnError(responseCode, response, caught);
+		} catch (XMLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void onResponse(final int responseCode, final Element response) {
 		System.out.println("onResponse()");
 		try {
+			if (response != null)
+				removeFromRequests(response.getAttribute("ack"));
 			if (this.data.stage == Stage.connecting) {
 				this.data.sid = response.getAttribute("sid");
 				data.stage = Stage.connected;
+				fireOnConnected();
 			}
-			if (this.data.stage == Stage.connected) {
-				Element toSend = toSendQueue.poll();
-				final Element body = prepareBody(toSend);
+			if (this.data.stage == Stage.connected && countActiveRequests() == 0) {
+				final Element body = prepareBody(null);
 				processSendData(body);
 			}
+			fireOnStanzaReceived(responseCode, response);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
 	}
 
 	protected void onTerminate(int responseCode, Element response) {
-		System.out.println("onTerminate()");
-		this.data.stage = Stage.disconnected;
-
+		try {
+			System.out.println("onTerminate()");
+			if (response != null)
+				removeFromRequests(response.getAttribute("ack"));
+			this.data.stage = Stage.disconnected;
+			terminateAllWorkers();
+			fireOnTerminate(responseCode, response);
+		} catch (XMLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private Element prepareBody(Element payload) throws XMLException {
@@ -147,7 +240,30 @@ public class BoshConnector {
 			}
 		};
 
+		addToRequests(worker);
+
 		(new Thread(worker)).start();
+	}
+
+	protected void removeFromRequests(final String ack) {
+		if (ack == null)
+			return;
+		this.requests.remove(ack);
+	}
+
+	public void removeListener(EventType eventType, Listener<BoshConnectorEvent> listener) {
+		observable.removeListener(eventType, listener);
+	}
+
+	public void send(final Element stanza) throws XMLException {
+		if (this.data.stage == Stage.connected) {
+			if (stanza != null) {
+				final Element body = prepareBody(stanza);
+				System.out.println(" >>>> " + stanza.getAsString());
+				processSendData(body);
+			}
+		} else
+			throw new RuntimeException("Not connected");
 	}
 
 	public void start() throws IOException, XMLException {
@@ -161,5 +277,12 @@ public class BoshConnector {
 	public void stop() throws IOException, XMLException {
 		if (data.stage != Stage.disconnected)
 			processSendData(prepareTerminateBody(null));
+	}
+
+	protected void terminateAllWorkers() {
+		for (BoshWorker w : this.requests.values()) {
+			w.terminate();
+		}
+		this.requests.clear();
 	}
 }

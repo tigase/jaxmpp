@@ -1,10 +1,10 @@
 package tigase.jaxmpp.j2se;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -22,9 +22,13 @@ public abstract class BoshWorker implements Runnable {
 
 	private final Element body;
 
+	private HttpURLConnection conn;
+
 	private final ConnectorData data;
 
 	private final String rid;
+
+	private boolean terminated = false;
 
 	public BoshWorker(ConnectorData connectorData, Element body) throws XMLException {
 		this.data = connectorData;
@@ -46,10 +50,12 @@ public abstract class BoshWorker implements Runnable {
 
 	@Override
 	public void run() {
+		if (terminated)
+			return;
 		try {
 			String b = body.getAsString();
 			System.out.println("S: " + b);
-			HttpURLConnection conn = (HttpURLConnection) data.url.openConnection();
+			this.conn = (HttpURLConnection) data.url.openConnection();
 
 			conn.setDoOutput(true);
 			OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
@@ -87,12 +93,20 @@ public abstract class BoshWorker implements Runnable {
 					throw new RuntimeException("Unknown response type '" + type + "'");
 
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (SocketException e) {
+			if (terminated)
+				return;
+			onError(0, null, e);
 		} catch (Exception e) {
 			e.printStackTrace();
 			onError(0, null, e);
 		}
+	}
+
+	public void terminate() {
+		terminated = true;
+		if (conn != null)
+			conn.disconnect();
 	}
 
 }
