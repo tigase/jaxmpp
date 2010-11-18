@@ -86,7 +86,7 @@ public class ResponseManager {
 					final String type = this.stanza.getAttribute("type");
 
 					if (type != null && type.equals("result")) {
-						entry.callback.onSuccess(this.stanza, writer);
+						entry.callback.onSuccess(this.stanza);
 					} else if (type != null && type.equals("error")) {
 						List<Element> es = this.stanza.getChildren("error");
 						final Element error;
@@ -102,7 +102,7 @@ public class ResponseManager {
 								errorCondition = ErrorCondition.getByElementName(conds.get(0).getName());
 							}
 						}
-						entry.callback.onError(this.stanza, errorCondition, writer);
+						entry.callback.onError(this.stanza, errorCondition);
 					}
 				}
 			};

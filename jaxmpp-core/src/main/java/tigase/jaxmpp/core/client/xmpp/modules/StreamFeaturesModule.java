@@ -23,8 +23,8 @@ public class StreamFeaturesModule implements XmppModule {
 
 		private Element features;
 
-		public StreamFeaturesReceivedEvent(Element features, SessionObject sessionObject) {
-			super(STREAM_FEATURES_RECEIVED, sessionObject);
+		public StreamFeaturesReceivedEvent(Element features) {
+			super(STREAM_FEATURES_RECEIVED);
 			this.features = features;
 		}
 
@@ -40,12 +40,21 @@ public class StreamFeaturesModule implements XmppModule {
 
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
-
 	public static final EventType STREAM_FEATURES_RECEIVED = new EventType();
 
-	private final Logger log = Logger.getLogger(this.getClass().getName());
+	protected final Logger log;
 
 	private final Observable observable = new Observable();
+
+	protected final PacketWriter packetWriter;
+
+	protected final SessionObject sessionObject;
+
+	public StreamFeaturesModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		log = Logger.getLogger(this.getClass().getName());
+		this.sessionObject = sessionObject;
+		this.packetWriter = packetWriter;
+	}
 
 	public void addListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {
 		observable.addListener(eventType, listener);
@@ -62,9 +71,9 @@ public class StreamFeaturesModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element, SessionObject sessionObject, PacketWriter writer) throws XMPPException, XMLException {
+	public void process(Element element) throws XMPPException, XMLException {
 		sessionObject.setStreamFeatures(element);
-		observable.fireEvent(STREAM_FEATURES_RECEIVED, new StreamFeaturesReceivedEvent(element, sessionObject));
+		observable.fireEvent(STREAM_FEATURES_RECEIVED, new StreamFeaturesReceivedEvent(element));
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {

@@ -5,6 +5,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 public interface SessionObject {
 
+	public static final String PASSWORD = "password";
+
 	public static final String RESOURCE = "resource";
 
 	public static final String SERVER_NAME = "serverName";

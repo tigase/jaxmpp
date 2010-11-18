@@ -6,10 +6,10 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public interface AsyncCallback {
 
-	void onError(Stanza responseStanza, ErrorCondition error, PacketWriter writer) throws XMLException;
+	void onError(Stanza responseStanza, ErrorCondition error) throws XMLException;
 
-	void onSuccess(Stanza responseStanza, PacketWriter writer) throws XMLException;
+	void onSuccess(Stanza responseStanza) throws XMLException;
 
-	void onTimeout(PacketWriter writer) throws XMLException;
+	void onTimeout() throws XMLException;
 
 }

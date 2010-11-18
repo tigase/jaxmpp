@@ -30,8 +30,8 @@ public class BoshConnector {
 
 		private Element stanza;
 
-		public BoshConnectorEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+		public BoshConnectorEvent(EventType type) {
+			super(type);
 		}
 
 		public Element getResponseBody() {
@@ -102,12 +102,12 @@ public class BoshConnector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED, sessionObject);
+		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(ERROR, sessionObject);
+		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
 		event.responseCode = responseCode;
 		event.responseBody = response;
 		this.observable.fireEvent(event.getType(), event);
@@ -115,7 +115,7 @@ public class BoshConnector {
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED, sessionObject);
+			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
 			event.responseBody = response;
 			event.responseCode = responseCode;
 			if (response != null) {
@@ -129,7 +129,7 @@ public class BoshConnector {
 	}
 
 	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE, sessionObject);
+		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
 		event.responseCode = responseCode;
 		event.responseBody = response;
 		this.observable.fireEvent(event.getType(), event);
@@ -208,7 +208,7 @@ public class BoshConnector {
 	private Element prepareStartBody() throws XMLException {
 		Element e = new DefaultElement("body");
 		e.setAttribute("content", "text/xml; charset=utf-8");
-		e.setAttribute("from", data.fromUser);
+		// e.setAttribute("from", data.fromUser);
 		e.setAttribute("hold", "1");
 		e.setAttribute("rid", String.valueOf(++data.rid));
 		e.setAttribute("to", data.toHost);

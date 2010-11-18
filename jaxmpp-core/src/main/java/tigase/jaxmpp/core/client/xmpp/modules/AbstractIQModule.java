@@ -16,21 +16,24 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public abstract class AbstractIQModule implements XmppModule {
 
 	protected final Logger log;
+	protected final SessionObject sessionObject;
+	protected final PacketWriter writer;
 
-	public AbstractIQModule() {
+	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
 		log = Logger.getLogger(this.getClass().getName());
+		this.sessionObject = sessionObject;
+		this.writer = packetWriter;
 	}
 
 	@Override
-	public void process(Element $element, SessionObject sessionObject, PacketWriter packetWriter) throws XMPPException,
-			XMLException {
+	public void process(Element $element) throws XMPPException, XMLException {
 		final Stanza stanza = $element instanceof Stanza ? (Stanza) $element : Stanza.create($element);
 		final StanzaType type = stanza.getType();
 
 		if (stanza instanceof IQ && type == StanzaType.set)
-			processSet((IQ) stanza, sessionObject, packetWriter);
+			processSet((IQ) stanza);
 		else if (stanza instanceof IQ && type == StanzaType.get)
-			processGet((IQ) stanza, sessionObject, packetWriter);
+			processGet((IQ) stanza);
 		else {
 			log.log(LogLevel.WARNING, "Unhandled stanza " + $element.getName() + ", type=" + $element.getAttribute("type")
 					+ ", id=" + $element.getAttribute("id"));
@@ -38,9 +41,7 @@ public abstract class AbstractIQModule implements XmppModule {
 		}
 	}
 
-	protected abstract void processGet(IQ element, SessionObject sessionObject, PacketWriter writer) throws XMPPException,
-			XMLException;
+	protected abstract void processGet(IQ element) throws XMPPException, XMLException;
 
-	protected abstract void processSet(IQ element, SessionObject sessionObject, PacketWriter writer) throws XMPPException,
-			XMLException;
+	protected abstract void processSet(IQ element) throws XMPPException, XMLException;
 }

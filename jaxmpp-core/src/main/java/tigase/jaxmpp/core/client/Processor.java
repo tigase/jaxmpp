@@ -89,7 +89,7 @@ public class Processor {
 
 					@Override
 					protected void process() throws XMLException, XMPPException {
-						module.process(this.stanza, this.sessionObject, this.writer);
+						module.process(this.stanza);
 					}
 				};
 			}

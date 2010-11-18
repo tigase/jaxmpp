@@ -28,12 +28,12 @@ public class ResponseManagerTest extends TestCase {
 			rm.registerResponseHandler(es, new AsyncCallback() {
 
 				@Override
-				public void onError(Stanza responseStanza, ErrorCondition error, PacketWriter writer) {
+				public void onError(Stanza responseStanza, ErrorCondition error) {
 					fail();
 				}
 
 				@Override
-				public void onSuccess(Stanza responseStanza, PacketWriter writer) throws XMLException {
+				public void onSuccess(Stanza responseStanza) throws XMLException {
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
 
@@ -42,7 +42,7 @@ public class ResponseManagerTest extends TestCase {
 				}
 
 				@Override
-				public void onTimeout(PacketWriter writer) {
+				public void onTimeout() {
 					fail();
 				}
 			});
@@ -82,7 +82,7 @@ public class ResponseManagerTest extends TestCase {
 			rm.registerResponseHandler(es, new AsyncCallback() {
 
 				@Override
-				public void onError(Stanza responseStanza, ErrorCondition error, PacketWriter writer) throws XMLException {
+				public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
 					assertEquals(ErrorCondition.internal_server_error, error);
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
@@ -92,12 +92,12 @@ public class ResponseManagerTest extends TestCase {
 				}
 
 				@Override
-				public void onSuccess(Stanza responseStanza, PacketWriter writer) throws XMLException {
+				public void onSuccess(Stanza responseStanza) throws XMLException {
 					fail();
 				}
 
 				@Override
-				public void onTimeout(PacketWriter writer) {
+				public void onTimeout() {
 					fail();
 				}
 			});

@@ -77,9 +77,9 @@ public class XmppSessionLogic {
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) {
 		try {
 			if (sessionObject.getProperty("jaxmpp#authorized") != Boolean.TRUE) {
-				saslModule.login(sessionObject, writer);
+				saslModule.login();
 			} else if (sessionObject.getProperty("jaxmpp#authorized") == Boolean.TRUE) {
-				resourceBinder.bind(be.getSessionObject(), writer);
+				resourceBinder.bind();
 			}
 		} catch (XMLException e) {
 			e.printStackTrace();

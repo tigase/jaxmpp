@@ -83,11 +83,11 @@ public class Jaxmpp {
 	}
 
 	private void modulesInit() {
-		this.modulesManager.register(new StreamFeaturesModule());
-		this.modulesManager.register(new SaslModule());
+		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
+		this.modulesManager.register(new SaslModule(sessionObject, writer));
 
-		this.modulesManager.register(new PingModule());
-		this.modulesManager.register(new ResourceBinderModule());
+		this.modulesManager.register(new PingModule(sessionObject, writer));
+		this.modulesManager.register(new ResourceBinderModule(sessionObject, writer));
 
 	}
 

@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.SessionObject;
-
 public class Observable {
 
 	private final Map<EventType, List<Listener<? extends BaseEvent>>> listeners = new HashMap<EventType, List<Listener<? extends BaseEvent>>>();
@@ -22,6 +20,10 @@ public class Observable {
 			listeners.put(eventType, lst);
 		}
 		lst.add(listener);
+	}
+
+	public void fireEvent(final EventType eventType) {
+		fireEvent(eventType, new BaseEvent(eventType));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -39,10 +41,6 @@ public class Observable {
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Problem on notifint observers", e);
 		}
-	}
-
-	public void fireEvent(final EventType eventType, SessionObject sessionObject) {
-		fireEvent(eventType, new BaseEvent(eventType, sessionObject));
 	}
 
 	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {

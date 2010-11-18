@@ -44,6 +44,6 @@ public interface XmppModule {
 	 * @param packetWriter
 	 *            XML writer
 	 */
-	void process(Element element, SessionObject sessionObject, PacketWriter writer) throws XMPPException, XMLException;
+	void process(Element element) throws XMPPException, XMLException;
 
 }

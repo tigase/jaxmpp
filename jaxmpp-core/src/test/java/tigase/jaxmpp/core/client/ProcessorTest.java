@@ -52,9 +52,10 @@ public class ProcessorTest extends TestCase {
 
 			}
 		};
-		XmppModulesManager xmppModulesManages = new XmppModulesManager();
-		xmppModulesManages.register(new PingModule());
 		this.writer = new MockWriter();
+
+		XmppModulesManager xmppModulesManages = new XmppModulesManager();
+		xmppModulesManages.register(new PingModule(sessionObject, writer));
 		this.processor = new Processor(xmppModulesManages, sessionObject, writer);
 	}
 

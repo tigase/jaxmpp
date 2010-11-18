@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -27,8 +28,28 @@ public class ResourceBinderModule implements XmppModule {
 
 		private static final long serialVersionUID = 1L;
 
-		public ResourceBindEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+		private ErrorCondition error;
+
+		private JID jid;
+
+		public ResourceBindEvent(EventType type) {
+			super(type);
+		}
+
+		public ErrorCondition getError() {
+			return error;
+		}
+
+		public JID getJid() {
+			return jid;
+		}
+
+		public void setError(ErrorCondition error) {
+			this.error = error;
+		}
+
+		public void setJid(JID jid) {
+			this.jid = jid;
 		}
 	}
 
@@ -38,13 +59,25 @@ public class ResourceBinderModule implements XmppModule {
 
 	public static final String BINDED_RESOURCE_JID = "jaxmpp#bindedResource";
 
+	protected final Logger log;
+
 	private final Observable observable = new Observable();
+
+	protected final SessionObject sessionObject;
+
+	protected final PacketWriter writer;
+
+	public ResourceBinderModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		log = Logger.getLogger(this.getClass().getName());
+		this.sessionObject = sessionObject;
+		this.writer = packetWriter;
+	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
-	public void bind(final SessionObject sessionObject, PacketWriter writer) throws XMLException {
+	public void bind() throws XMLException {
 		IQ iq = IQ.create();
 		iq.setXMLNS("jabber:client");
 		iq.setType(StanzaType.set);
@@ -56,13 +89,14 @@ public class ResourceBinderModule implements XmppModule {
 		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
 
 			@Override
-			public void onError(Stanza responseStanza, ErrorCondition error, PacketWriter writer) throws XMLException {
-				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR, sessionObject);
+			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
+				event.setError(error);
 				observable.fireEvent(BIND_ERROR, event);
 			}
 
 			@Override
-			public void onSuccess(Stanza responseStanza, PacketWriter writer) throws XMLException {
+			public void onSuccess(Stanza responseStanza) throws XMLException {
 				String name = null;
 				List<Element> bind = responseStanza.getChildrenNS("bind", "urn:ietf:params:xml:ns:xmpp-bind");
 				if (bind != null && bind.size() > 0) {
@@ -71,19 +105,20 @@ public class ResourceBinderModule implements XmppModule {
 						name = r.getValue();
 				}
 				if (name != null) {
-					sessionObject.setProperty(BINDED_RESOURCE_JID, JID.jidInstance(name));
-					System.out.println("BINDED AS " + name);
-					ResourceBindEvent event = new ResourceBindEvent(BIND_SUCCESSFULL, sessionObject);
+					JID jid = JID.jidInstance(name);
+					sessionObject.setProperty(BINDED_RESOURCE_JID, jid);
+					ResourceBindEvent event = new ResourceBindEvent(BIND_SUCCESSFULL);
+					event.setJid(jid);
 					observable.fireEvent(BIND_SUCCESSFULL, event);
 				} else {
-					ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR, sessionObject);
+					ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
 					observable.fireEvent(BIND_ERROR, event);
 				}
 			}
 
 			@Override
-			public void onTimeout(PacketWriter writer) throws XMLException {
-				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR, sessionObject);
+			public void onTimeout() throws XMLException {
+				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
 				observable.fireEvent(BIND_ERROR, event);
 			}
 		});
@@ -101,7 +136,7 @@ public class ResourceBinderModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element, SessionObject sessionObject, PacketWriter writer) throws XMPPException, XMLException {
+	public void process(Element element) throws XMPPException, XMLException {
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {

@@ -15,6 +15,10 @@ public class PingModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "urn:xmpp:ping" };
 
+	public PingModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return ElementCriteria.name("iq").add(ElementCriteria.name("ping", "urn:xmpp:ping"));
@@ -26,16 +30,14 @@ public class PingModule extends AbstractIQModule {
 	}
 
 	@Override
-	protected void processGet(IQ stanza, SessionObject sessionObject, PacketWriter packetWriter) throws XMPPException,
-			XMLException {
+	protected void processGet(IQ stanza) throws XMPPException, XMLException {
 		Element response = XmlTools.makeResult(stanza);
 
-		packetWriter.write(response);
+		writer.write(response);
 	}
 
 	@Override
-	protected void processSet(IQ stanza, SessionObject sessionObject, PacketWriter packetWriter) throws XMPPException,
-			XMLException {
+	protected void processSet(IQ stanza) throws XMPPException, XMLException {
 		throw new XMPPException(ErrorCondition.not_allowed);
 	}
 
