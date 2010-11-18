@@ -2,7 +2,7 @@ package tigase.jaxmpp.j2se;
 
 import java.io.IOException;
 
-import tigase.jaxmpp.core.client.DefaultXmppModulesManager;
+import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -11,15 +11,21 @@ import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.j2se.BoshConnector.BoshConnectorEvent;
 
 public class Jaxmpp {
 
-	private final BoshConnector connector;
+	private BoshConnector connector;
 
 	private final XmppModulesManager modulesManager;
 
 	private final Processor processor;
+
+	private final XmppSessionLogic sessionLogic;
 
 	private SessionObject sessionObject;
 
@@ -42,8 +48,9 @@ public class Jaxmpp {
 			}
 		};
 		this.sessionObject = new DefaultSessionObject();
-		this.modulesManager = new DefaultXmppModulesManager();
+		this.modulesManager = new XmppModulesManager();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
+		this.sessionLogic = new XmppSessionLogic(connector, modulesManager, this.sessionObject, this.writer);
 
 		this.connector.addListener(BoshConnector.STANZA_RECEIVED, new Listener<BoshConnector.BoshConnectorEvent>() {
 
@@ -53,6 +60,10 @@ public class Jaxmpp {
 					onStanzaReceived(be.getStanza());
 			}
 		});
+
+		modulesInit();
+
+		this.sessionLogic.init();
 	}
 
 	public void disconnect() throws IOException, XMLException {
@@ -63,8 +74,21 @@ public class Jaxmpp {
 		return connector;
 	}
 
+	public SessionObject getSessionObject() {
+		return sessionObject;
+	}
+
 	public void login() throws IOException, XMLException {
-		this.connector.start();
+		this.connector.start(this.sessionObject);
+	}
+
+	private void modulesInit() {
+		this.modulesManager.register(new StreamFeaturesModule());
+		this.modulesManager.register(new SaslModule());
+
+		this.modulesManager.register(new PingModule());
+		this.modulesManager.register(new ResourceBinderModule());
+
 	}
 
 	protected void onStanzaReceived(Element stanza) {

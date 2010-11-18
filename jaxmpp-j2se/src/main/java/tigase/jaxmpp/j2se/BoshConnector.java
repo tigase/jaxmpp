@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -29,8 +30,8 @@ public class BoshConnector {
 
 		private Element stanza;
 
-		public BoshConnectorEvent(EventType type) {
-			super(type);
+		public BoshConnectorEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Element getResponseBody() {
@@ -70,6 +71,8 @@ public class BoshConnector {
 		disconnected
 	}
 
+	public static final String BOSH_SERVICE_URL = "boshServiceUrl";
+
 	public final static EventType CONNECTED = new EventType();
 
 	public final static EventType ERROR = new EventType();
@@ -84,6 +87,8 @@ public class BoshConnector {
 
 	protected final Map<String, BoshWorker> requests = new HashMap<String, BoshWorker>();
 
+	private SessionObject sessionObject;
+
 	public void addListener(EventType eventType, Listener<BoshConnectorEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
@@ -96,21 +101,21 @@ public class BoshConnector {
 		return this.requests.size();
 	}
 
-	protected void fireOnConnected() {
-		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
+	protected void fireOnConnected(SessionObject sessionObject) {
+		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED, sessionObject);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnError(int responseCode, Element response, Throwable caught) {
-		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
+	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
+		BoshConnectorEvent event = new BoshConnectorEvent(ERROR, sessionObject);
 		event.responseCode = responseCode;
 		event.responseBody = response;
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnStanzaReceived(int responseCode, Element response) {
+	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
+			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED, sessionObject);
 			event.responseBody = response;
 			event.responseCode = responseCode;
 			if (response != null) {
@@ -123,15 +128,11 @@ public class BoshConnector {
 		}
 	}
 
-	protected void fireOnTerminate(int responseCode, Element response) {
-		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
+	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
+		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE, sessionObject);
 		event.responseCode = responseCode;
 		event.responseBody = response;
 		this.observable.fireEvent(event.getType(), event);
-	}
-
-	public ConnectorData getConnectorData() {
-		return data;
 	}
 
 	protected void onError(int responseCode, Element response, Throwable caught) {
@@ -140,7 +141,7 @@ public class BoshConnector {
 				removeFromRequests(response.getAttribute("ack"));
 			System.out.println("onError(): responseCode=" + responseCode + "; " + " " + caught);
 			this.data.stage = Stage.disconnected;
-			fireOnError(responseCode, response, caught);
+			fireOnError(responseCode, response, caught, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
@@ -154,13 +155,13 @@ public class BoshConnector {
 			if (this.data.stage == Stage.connecting) {
 				this.data.sid = response.getAttribute("sid");
 				data.stage = Stage.connected;
-				fireOnConnected();
+				fireOnConnected(sessionObject);
 			}
 			if (this.data.stage == Stage.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody(null);
 				processSendData(body);
 			}
-			fireOnStanzaReceived(responseCode, response);
+			fireOnStanzaReceived(responseCode, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
@@ -173,7 +174,7 @@ public class BoshConnector {
 				removeFromRequests(response.getAttribute("ack"));
 			this.data.stage = Stage.disconnected;
 			terminateAllWorkers();
-			fireOnTerminate(responseCode, response);
+			fireOnTerminate(responseCode, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
@@ -187,6 +188,19 @@ public class BoshConnector {
 
 		if (payload != null)
 			e.addChild(payload);
+
+		return e;
+	}
+
+	private Element prepareRetartBody() throws XMLException {
+		Element e = new DefaultElement("body");
+		e.setAttribute("rid", String.valueOf(++data.rid));
+		e.setAttribute("sid", data.sid);
+		e.setAttribute("to", data.toHost);
+		e.setAttribute("xml:lang", "en");
+		e.setAttribute("xmpp:restart", "true");
+		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
+		e.setAttribute("xmlns:xmpp", "urn:xmpp:xbosh");
 
 		return e;
 	}
@@ -255,6 +269,11 @@ public class BoshConnector {
 		observable.removeListener(eventType, listener);
 	}
 
+	public void restartStream() throws XMLException {
+		if (data.stage != Stage.disconnected)
+			processSendData(prepareRetartBody());
+	}
+
 	public void send(final Element stanza) throws XMLException {
 		if (this.data.stage == Stage.connected) {
 			if (stanza != null) {
@@ -266,8 +285,12 @@ public class BoshConnector {
 			throw new RuntimeException("Not connected");
 	}
 
-	public void start() throws IOException, XMLException {
-		data.sid = null;
+	public void start(final SessionObject sessionObject) throws IOException, XMLException {
+		this.sessionObject = sessionObject;
+		data.url = new URL((String) sessionObject.getProperty(BOSH_SERVICE_URL));
+		data.fromUser = sessionObject.getProperty(SessionObject.USER_JID);
+		data.toHost = sessionObject.getProperty(SessionObject.SERVER_NAME);
+
 		data.stage = Stage.connecting;
 		this.data.rid = (long) (Math.random() * 10000000);
 		processSendData(prepareStartBody());

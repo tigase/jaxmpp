@@ -8,15 +8,48 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class StreamFeaturesModule implements XmppModule {
 
+	public static class StreamFeaturesReceivedEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Element features;
+
+		public StreamFeaturesReceivedEvent(Element features, SessionObject sessionObject) {
+			super(STREAM_FEATURES_RECEIVED, sessionObject);
+			this.features = features;
+		}
+
+		public Element getFeatures() {
+			return features;
+		}
+
+		public void setFeatures(Element features) {
+			this.features = features;
+		}
+
+	}
+
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
 
+	public static final EventType STREAM_FEATURES_RECEIVED = new EventType();
+
 	private final Logger log = Logger.getLogger(this.getClass().getName());
+
+	private final Observable observable = new Observable();
+
+	public void addListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
 
 	@Override
 	public Criteria getCriteria() {
@@ -30,7 +63,12 @@ public class StreamFeaturesModule implements XmppModule {
 
 	@Override
 	public void process(Element element, SessionObject sessionObject, PacketWriter writer) throws XMPPException, XMLException {
-		log.info("");
+		sessionObject.setStreamFeatures(element);
+		observable.fireEvent(STREAM_FEATURES_RECEIVED, new StreamFeaturesReceivedEvent(element, sessionObject));
+	}
+
+	public void removeListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {
+		observable.removeListener(eventType, listener);
 	}
 
 }

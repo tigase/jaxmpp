@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 public class XmppModulesManager {
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
+
+	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
 
 	public XmppModule findModule(final Element element) throws XMLException {
 		for (XmppModule plugin : modules) {
@@ -33,7 +36,14 @@ public class XmppModulesManager {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
+		return (T) this.modulesByClasses.get(moduleClass);
+	}
+
+	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T register(T plugin) {
+		this.modulesByClasses.put((Class<XmppModule>) plugin.getClass(), plugin);
 		this.modules.add(plugin);
 		return plugin;
 	}

@@ -116,7 +116,7 @@ public class ResponseManager {
 		String i = stanza.getAttribute("id");
 		if (i == null) {
 			i = generator.nextUID();
-			stanza.setAttribute("to", i);
+			stanza.setAttribute("id", i);
 		}
 		Key key = new Key(i == null ? null : i, x == null ? null : BareJID.bareJIDInstance(x));
 

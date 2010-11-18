@@ -83,4 +83,11 @@ public abstract class Stanza extends ElementWrapper {
 			setAttribute("to", jid.toString());
 	}
 
+	public void setType(StanzaType type) throws XMLException {
+		if (type != null)
+			setAttribute("type", type.name());
+		else
+			removeAttribute("type");
+	}
+
 }

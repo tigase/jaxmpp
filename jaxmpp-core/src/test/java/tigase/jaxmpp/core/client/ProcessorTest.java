@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 
 public class ProcessorTest extends TestCase {
 
@@ -12,9 +13,13 @@ public class ProcessorTest extends TestCase {
 	private MockWriter writer;
 
 	public ProcessorTest() {
-		XmppModulesManager xmppModulesManages = new DefaultXmppModulesManager();
-		this.writer = new MockWriter();
 		SessionObject sessionObject = new SessionObject() {
+
+			@Override
+			public <T> T getProperty(String key) {
+				// TODO Auto-generated method stub
+				return null;
+			}
 
 			@Override
 			public Runnable getResponseHandler(Element element, PacketWriter writer, SessionObject sessionObject)
@@ -24,11 +29,32 @@ public class ProcessorTest extends TestCase {
 			}
 
 			@Override
+			public Element getStreamFeatures() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+			@Override
 			public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
 				// TODO Auto-generated method stub
 				return null;
 			}
+
+			@Override
+			public void setProperty(String key, Object value) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void setStreamFeatures(Element element) {
+				// TODO Auto-generated method stub
+
+			}
 		};
+		XmppModulesManager xmppModulesManages = new XmppModulesManager();
+		xmppModulesManages.register(new PingModule());
+		this.writer = new MockWriter();
 		this.processor = new Processor(xmppModulesManages, sessionObject, writer);
 	}
 
