@@ -4,6 +4,4 @@ public interface CredentialsCallback {
 
 	String getPassword();
 
-	String getUsername();
-
 }

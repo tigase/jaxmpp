@@ -73,7 +73,7 @@ public class ResourceBinderModule implements XmppModule {
 		this.writer = packetWriter;
 	}
 
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+	public void addListener(EventType eventType, Listener<ResourceBindEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
@@ -139,7 +139,7 @@ public class ResourceBinderModule implements XmppModule {
 	public void process(Element element) throws XMPPException, XMLException {
 	}
 
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+	public void removeListener(EventType eventType, Listener<ResourceBindEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
 

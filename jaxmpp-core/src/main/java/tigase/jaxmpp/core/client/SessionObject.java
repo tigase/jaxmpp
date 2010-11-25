@@ -3,7 +3,7 @@ package tigase.jaxmpp.core.client;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-public interface SessionObject {
+public interface SessionObject extends UserProperties {
 
 	public static final String PASSWORD = "password";
 
@@ -12,6 +12,8 @@ public interface SessionObject {
 	public static final String SERVER_NAME = "serverName";
 
 	public static final String USER_JID = "userJid";
+
+	public void clear();
 
 	public <T> T getProperty(String key);
 

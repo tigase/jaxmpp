@@ -15,6 +15,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms.AnonymousMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms.PlainMechanism;
 
 public class SaslModule implements XmppModule {
@@ -32,18 +33,75 @@ public class SaslModule implements XmppModule {
 			return sessionObject.getProperty(SessionObject.PASSWORD);
 		}
 
-		@Override
-		public String getUsername() {
-			return sessionObject.getProperty(SessionObject.USER_JID);
-		}
+	}
+
+	public static enum SaslError {
+		/**
+		 * The receiving entity acknowledges an &lt;abort/&gt; element sent by
+		 * the initiating entity; sent in reply to the &lt;abort/&gt; element.
+		 */
+		aborted,
+		/**
+		 * The data provided by the initiating entity could not be processed
+		 * because the BASE64 encoding is incorrect (e.g., because the encoding
+		 * does not adhere to the definition in Section 3 of BASE64); sent in
+		 * reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with
+		 * initial response data.
+		 */
+		incorrect_encoding,
+		/**
+		 * The authzid provided by the initiating entity is invalid, either
+		 * because it is incorrectly formatted or because the initiating entity
+		 * does not have permissions to authorize that ID; sent in reply to a
+		 * &lt;response/&gt element or an &lt;auth/&gt element with initial
+		 * response data.
+		 */
+		invalid_authzid,
+		/**
+		 * The initiating entity did not provide a mechanism or requested a
+		 * mechanism that is not supported by the receiving entity; sent in
+		 * reply to an &lt;auth/&gt element.
+		 */
+		invalid_mechanism,
+		/**
+		 * The mechanism requested by the initiating entity is weaker than
+		 * server policy permits for that initiating entity; sent in reply to a
+		 * &lt;response/&gt element or an &lt;auth/&gt element with initial
+		 * response data.
+		 */
+		mechanism_too_weak,
+		/**
+		 * he authentication failed because the initiating entity did not
+		 * provide valid credentials (this includes but is not limited to the
+		 * case of an unknown username); sent in reply to a &lt;response/&gt
+		 * element or an &lt;auth/&gt element with initial response data.
+		 */
+		not_authorized,
+		/**
+		 * The authentication failed because of a temporary error condition
+		 * within the receiving entity; sent in reply to an &lt;auth/&gt element
+		 * or &lt;response/&gt element.
+		 */
+		temporary_auth_failure,
+
 	}
 
 	public static final class SaslEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
 
+		private SaslError error;
+
 		public SaslEvent(EventType type) {
 			super(type);
+		}
+
+		public SaslError getError() {
+			return error;
+		}
+
+		public void setError(SaslError error) {
+			this.error = error;
 		}
 	}
 
@@ -91,15 +149,28 @@ public class SaslModule implements XmppModule {
 		return null;
 	}
 
+	protected SaslMechanism guessSaslMechanism() {
+		SaslMechanism result;
+		if (sessionObject.getProperty(SessionObject.PASSWORD) == null
+				|| sessionObject.getProperty(SessionObject.USER_JID) == null) {
+			result = new AnonymousMechanism();
+		} else {
+			result = new PlainMechanism();
+		}
+		log.info("Selected SASL mechanism: " + result.name());
+		return result;
+	}
+
 	public void login() throws XMLException {
 		observable.fireEvent(SASL_START);
 
-		sessionObject.setProperty(SASL_MECHANISM, new PlainMechanism());
+		sessionObject.setProperty(SASL_MECHANISM, guessSaslMechanism());
 
 		SaslMechanism mechanism = sessionObject.getProperty(SASL_MECHANISM);
 		Element auth = new DefaultElement("auth");
 		auth.setAttribute("xmlns", "urn:ietf:params:xml:ns:xmpp-sasl");
 		auth.setAttribute("mechanism", mechanism.name());
+		auth.setValue(mechanism.evaluateChallenge(null, sessionObject));
 
 		writer.write(auth);
 	}
@@ -117,11 +188,23 @@ public class SaslModule implements XmppModule {
 
 	protected void processChallenge(Element element) throws XMPPException, XMLException {
 		SaslMechanism mechanism = sessionObject.getProperty(SASL_MECHANISM);
-
+		String v = element.getValue();
+		String r = mechanism.evaluateChallenge(v, sessionObject);
+		Element auth = new DefaultElement("response", r, "urn:ietf:params:xml:ns:xmpp-sasl");
+		writer.write(auth);
 	}
 
 	protected void processFailure(Element element) throws XMPPException, XMLException {
-		observable.fireEvent(SASL_FAILED, new SaslEvent(SASL_FAILED));
+		Element c = element.getFirstChild();
+		SaslError error = null;
+		if (c != null) {
+			String n = c.getName().replace("-", "_");
+			error = SaslError.valueOf(n);
+		}
+		log.fine("Failure with condition: " + error);
+		SaslEvent event = new SaslEvent(SASL_FAILED);
+		event.setError(error);
+		observable.fireEvent(SASL_FAILED, event);
 	}
 
 	protected void processSuccess(Element element) throws XMPPException, XMLException {

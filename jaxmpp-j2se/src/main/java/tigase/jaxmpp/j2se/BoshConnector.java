@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -278,7 +279,6 @@ public class BoshConnector {
 		if (this.data.stage == Stage.connected) {
 			if (stanza != null) {
 				final Element body = prepareBody(stanza);
-				System.out.println(" >>>> " + stanza.getAsString());
 				processSendData(body);
 			}
 		} else
@@ -288,8 +288,10 @@ public class BoshConnector {
 	public void start(final SessionObject sessionObject) throws IOException, XMLException {
 		this.sessionObject = sessionObject;
 		data.url = new URL((String) sessionObject.getProperty(BOSH_SERVICE_URL));
-		data.fromUser = sessionObject.getProperty(SessionObject.USER_JID);
+		data.fromUser = sessionObject.getProperty(SessionObject.USER_JID).toString();
 		data.toHost = sessionObject.getProperty(SessionObject.SERVER_NAME);
+		if (data.toHost == null)
+			data.toHost = ((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain();
 
 		data.stage = Stage.connecting;
 		this.data.rid = (long) (Math.random() * 10000000);

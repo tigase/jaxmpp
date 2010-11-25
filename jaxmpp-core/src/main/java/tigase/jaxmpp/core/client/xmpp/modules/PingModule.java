@@ -13,6 +13,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
 public class PingModule extends AbstractIQModule {
 
+	private final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("ping", "urn:xmpp:ping"));
+
 	private final String[] FEATURES = new String[] { "urn:xmpp:ping" };
 
 	public PingModule(SessionObject sessionObject, PacketWriter packetWriter) {
@@ -21,7 +23,7 @@ public class PingModule extends AbstractIQModule {
 
 	@Override
 	public Criteria getCriteria() {
-		return ElementCriteria.name("iq").add(ElementCriteria.name("ping", "urn:xmpp:ping"));
+		return CRIT;
 	}
 
 	@Override

@@ -65,8 +65,6 @@ public class ResponseManager {
 		}
 	}
 
-	private final UIDGenerator generator = new UIDGenerator();
-
 	private final Map<Key, Entry> handlers = new HashMap<Key, Entry>();
 
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
@@ -115,7 +113,7 @@ public class ResponseManager {
 		String x = stanza.getAttribute("to");
 		String i = stanza.getAttribute("id");
 		if (i == null) {
-			i = generator.nextUID();
+			i = UIDGenerator.next();
 			stanza.setAttribute("id", i);
 		}
 		Key key = new Key(i == null ? null : i, x == null ? null : BareJID.bareJIDInstance(x));

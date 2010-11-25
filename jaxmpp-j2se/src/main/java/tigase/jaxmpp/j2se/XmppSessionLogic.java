@@ -13,6 +13,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 
 public class XmppSessionLogic {
 
+	public static final String AUTHORIZED = "jaxmpp#authorized";
+
 	private final BoshConnector connector;
 
 	private final XmppModulesManager modulesManager;
@@ -66,7 +68,7 @@ public class XmppSessionLogic {
 	protected void processSaslEvent(BaseEvent be) {
 		try {
 			if (be.getType() == SaslModule.SASL_SUCCESS) {
-				sessionObject.setProperty("jaxmpp#authorized", Boolean.TRUE);
+				sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
 				connector.restartStream();
 			}
 		} catch (XMLException e) {
@@ -76,9 +78,9 @@ public class XmppSessionLogic {
 
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) {
 		try {
-			if (sessionObject.getProperty("jaxmpp#authorized") != Boolean.TRUE) {
+			if (sessionObject.getProperty(AUTHORIZED) != Boolean.TRUE) {
 				saslModule.login();
-			} else if (sessionObject.getProperty("jaxmpp#authorized") == Boolean.TRUE) {
+			} else if (sessionObject.getProperty(AUTHORIZED) == Boolean.TRUE) {
 				resourceBinder.bind();
 			}
 		} catch (XMLException e) {

@@ -14,9 +14,19 @@ public class DefaultSessionObject implements SessionObject {
 
 	protected Element streamFeatures;
 
+	protected final Map<String, Object> userProperties = new HashMap<String, Object>();
+
+	@Override
+	public void clear() {
+		this.properties.clear();
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
-		return (T) this.properties.get(key);
+		T t = (T) this.userProperties.get(key);
+		if (t == null)
+			t = (T) this.properties.get(key);
+		return t;
 	}
 
 	@Override
@@ -27,6 +37,12 @@ public class DefaultSessionObject implements SessionObject {
 	@Override
 	public Element getStreamFeatures() {
 		return this.streamFeatures;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T getUserProperty(String key) {
+		return (T) this.userProperties.get(key);
 	}
 
 	@Override
@@ -41,6 +57,11 @@ public class DefaultSessionObject implements SessionObject {
 	@Override
 	public void setStreamFeatures(Element element) {
 		this.streamFeatures = element;
+	}
+
+	@Override
+	public void setUserProperty(String key, Object value) {
+		this.userProperties.put(key, value);
 	}
 
 }

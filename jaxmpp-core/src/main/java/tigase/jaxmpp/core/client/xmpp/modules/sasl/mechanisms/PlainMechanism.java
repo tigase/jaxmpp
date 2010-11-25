@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms;
 
 import tigase.jaxmpp.core.client.Base64;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.CredentialsCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslMechanism;
@@ -18,7 +19,8 @@ public class PlainMechanism implements SaslMechanism {
 			CredentialsCallback callback = sessionObject.getProperty(SaslModule.SASL_CREDENTIALS_CALLBACK);
 			if (callback == null)
 				callback = new SaslModule.DefaultCredentialsCallback(sessionObject);
-			String lreq = NULL + callback.getUsername() + NULL + callback.getPassword();
+			JID userJID = sessionObject.getProperty(SessionObject.USER_JID);
+			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getPassword();
 
 			String base64 = Base64.encodeString(lreq);
 			return base64;

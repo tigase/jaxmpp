@@ -1,0 +1,115 @@
+package tigase.jaxmpp.core.client.xmpp.modules;
+
+import java.util.List;
+
+import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.UIDGenerator;
+import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatManager;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+
+public class MessageModule extends AbstractStanzaModule {
+
+	public static class MessageEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Chat chat;
+
+		private Message message;
+
+		public MessageEvent(EventType type) {
+			super(type);
+		}
+
+		public Chat getChat() {
+			return chat;
+		}
+
+		public Message getMessage() {
+			return message;
+		}
+
+		public void setChat(Chat chat) {
+			this.chat = chat;
+		}
+
+		public void setMessage(Message message) {
+			this.message = message;
+		}
+	}
+
+	public static final EventType CHAT_CREATED = new EventType();
+
+	public static final EventType MESSAGE_RECEIVED = new EventType();
+
+	private final ChatManager chatManager;
+
+	public final Criteria CRIT = ElementCriteria.name("message");
+
+	private final Observable observable = new Observable();
+
+	public MessageModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
+		this.chatManager = new ChatManager(sessionObject, packetWriter, observable);
+	}
+
+	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
+
+	public ChatManager getChatManager() {
+		return chatManager;
+	}
+
+	public List<Chat> getChats() {
+		return this.chatManager.getChats();
+	}
+
+	@Override
+	public Criteria getCriteria() {
+		return CRIT;
+	}
+
+	@Override
+	public String[] getFeatures() {
+		return null;
+	}
+
+	@Override
+	public void process(Stanza element) throws XMPPException, XMLException {
+		MessageEvent event = new MessageEvent(MESSAGE_RECEIVED);
+		event.setMessage((Message) element);
+		Chat chat = chatManager.process((Message) element);
+		if (chat != null) {
+			event.setChat(chat);
+		}
+		observable.fireEvent(event.getType(), event);
+	}
+
+	public void removeListener(EventType eventType, Listener<MessageEvent> listener) {
+		observable.removeListener(eventType, listener);
+	}
+
+	public void sendMessage(JID toJID, String subject, String message) throws XMLException {
+		Message msg = Message.create();
+		msg.setSubject(subject);
+		msg.setBody(message);
+		msg.setTo(toJID);
+		msg.setId(UIDGenerator.next());
+
+		writer.write(msg);
+	}
+
+}

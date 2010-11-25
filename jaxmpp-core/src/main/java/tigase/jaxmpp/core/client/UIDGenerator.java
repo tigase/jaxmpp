@@ -4,6 +4,12 @@ public class UIDGenerator {
 
 	private static final String ELEMENTS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+	private final static UIDGenerator generator = new UIDGenerator();
+
+	public static String next() {
+		return generator.nextUID();
+	}
+
 	private int[] key = new int[9];
 
 	private int last;
