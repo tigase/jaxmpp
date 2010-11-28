@@ -46,7 +46,7 @@ public class BareJID implements Comparable<BareJID> {
 	protected final String localpart;
 
 	protected BareJID(String localpart, String domain) {
-		this.localpart = localpart.intern();
+		this.localpart = localpart != null ? localpart.intern() : null;
 		this.domain = domain.toLowerCase().intern();
 		this.$toString = toString(this.localpart, this.domain);
 	}

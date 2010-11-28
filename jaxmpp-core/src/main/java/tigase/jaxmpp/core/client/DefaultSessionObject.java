@@ -5,12 +5,15 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
 
 public class DefaultSessionObject implements SessionObject {
 
 	protected final Map<String, Object> properties = new HashMap<String, Object>();
 
 	protected final ResponseManager responseManager = new ResponseManager();
+
+	private final Roster roster = new Roster();
 
 	protected Element streamFeatures;
 
@@ -32,6 +35,10 @@ public class DefaultSessionObject implements SessionObject {
 	@Override
 	public Runnable getResponseHandler(Element element, PacketWriter writer, SessionObject sessionObject) throws XMLException {
 		return responseManager.getResponseHandler(element, writer, sessionObject);
+	}
+
+	public Roster getRoster() {
+		return roster;
 	}
 
 	@Override

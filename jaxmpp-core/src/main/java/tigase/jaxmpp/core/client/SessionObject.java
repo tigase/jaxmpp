@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
 
 public interface SessionObject extends UserProperties {
 
@@ -19,6 +20,8 @@ public interface SessionObject extends UserProperties {
 
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException;
+
+	public Roster getRoster();
 
 	public Element getStreamFeatures();
 

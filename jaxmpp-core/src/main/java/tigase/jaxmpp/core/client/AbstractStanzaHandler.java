@@ -26,6 +26,7 @@ public abstract class AbstractStanzaHandler implements Runnable {
 		try {
 			process();
 		} catch (Throwable e) {
+			e.printStackTrace();
 			Element errorResult = Processor.createError(stanza, e);
 			if (errorResult != null)
 				writer.write(errorResult);

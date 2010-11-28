@@ -19,6 +19,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.j2se.BoshConnector.BoshConnectorEvent;
 
@@ -122,6 +124,10 @@ public class Jaxmpp {
 		return sessionObject;
 	}
 
+	public Roster getRoster() {
+		return sessionObject.getRoster();
+	}
+
 	public void login() throws IOException, XMLException, InterruptedException {
 		login(true);
 	}
@@ -145,6 +151,8 @@ public class Jaxmpp {
 		this.modulesManager.register(new PingModule(sessionObject, writer));
 		this.modulesManager.register(new ResourceBinderModule(sessionObject, writer));
 
+		this.modulesManager.register(new RosterModule(sessionObject, writer));
+
 	}
 
 	protected void onResourceBinded(ResourceBindEvent be) {
@@ -159,13 +167,13 @@ public class Jaxmpp {
 			(new Thread(r)).start();
 	}
 
-	protected void onStreamTerminated(BoshConnectorEvent be) {
+	protected void onStreamError(BoshConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
 	}
 
-	protected void onStreamError(BoshConnectorEvent be) {
+	protected void onStreamTerminated(BoshConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}

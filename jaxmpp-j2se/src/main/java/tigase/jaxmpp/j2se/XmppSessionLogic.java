@@ -8,7 +8,9 @@ import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 
 public class XmppSessionLogic {
@@ -20,6 +22,8 @@ public class XmppSessionLogic {
 	private final XmppModulesManager modulesManager;
 
 	private ResourceBinderModule resourceBinder;
+
+	private Listener<ResourceBindEvent> resourceBindListener;
 
 	private final Listener<BaseEvent> saslEventListener;
 
@@ -53,6 +57,14 @@ public class XmppSessionLogic {
 			}
 
 		};
+		this.resourceBindListener = new Listener<ResourceBindEvent>() {
+
+			@Override
+			public void handleEvent(ResourceBindEvent be) {
+				processResourceBindEvent(be);
+
+			}
+		};
 	}
 
 	public void init() {
@@ -63,6 +75,17 @@ public class XmppSessionLogic {
 		featuresModule.addListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
 		saslModule.addListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
 		saslModule.addListener(SaslModule.SASL_FAILED, this.saslEventListener);
+
+		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+	}
+
+	protected void processResourceBindEvent(ResourceBindEvent be) {
+		try {
+			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
+			roster.rosterRequest();
+		} catch (XMLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void processSaslEvent(BaseEvent be) {
