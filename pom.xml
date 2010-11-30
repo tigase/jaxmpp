@@ -8,6 +8,10 @@
     <name>Java XMPP Library</name>
     <version>2.0.0-SNAPSHOT</version>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
     <inceptionYear>2006</inceptionYear>
     <developers>
         <developer>
