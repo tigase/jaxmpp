@@ -29,22 +29,27 @@ public class AnonymousMechanism implements SaslMechanism {
 	public AnonymousMechanism() {
 	}
 
+	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObjec) {
 		return null;
 	}
 
+	@Override
 	public Status getStatus() {
 		return null;
 	}
 
+	@Override
 	public String getStatusMessage() {
 		return null;
 	}
 
+	@Override
 	public boolean isComplete() {
 		return false;
 	}
 
+	@Override
 	public String name() {
 		return "ANONYMOUS";
 	}

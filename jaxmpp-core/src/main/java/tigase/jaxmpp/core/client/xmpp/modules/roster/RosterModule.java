@@ -90,7 +90,7 @@ public class RosterModule extends AbstractIQModule {
 
 	public RosterModule(SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
-		sessionObject.getRoster().setHandler(new Roster.Handler() {
+		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override
 			public void add(BareJID jid, String name, Collection<String> groups) throws XMLException {

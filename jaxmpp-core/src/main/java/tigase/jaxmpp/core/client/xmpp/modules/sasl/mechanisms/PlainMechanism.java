@@ -14,6 +14,7 @@ public class PlainMechanism implements SaslMechanism {
 	public PlainMechanism() {
 	}
 
+	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
 		if (input == null) {
 			CredentialsCallback callback = sessionObject.getProperty(SaslModule.SASL_CREDENTIALS_CALLBACK);
@@ -28,18 +29,22 @@ public class PlainMechanism implements SaslMechanism {
 		return null;
 	}
 
+	@Override
 	public Status getStatus() {
 		return null;
 	}
 
+	@Override
 	public String getStatusMessage() {
 		return null;
 	}
 
+	@Override
 	public boolean isComplete() {
 		return false;
 	}
 
+	@Override
 	public String name() {
 		return "PLAIN";
 	}

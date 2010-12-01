@@ -2,7 +2,8 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public interface SessionObject extends UserProperties {
 
@@ -16,12 +17,14 @@ public interface SessionObject extends UserProperties {
 
 	public void clear();
 
+	public PresenceStore getPresence();
+
 	public <T> T getProperty(String key);
 
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException;
 
-	public Roster getRoster();
+	public RosterStore getRoster();
 
 	public Element getStreamFeatures();
 

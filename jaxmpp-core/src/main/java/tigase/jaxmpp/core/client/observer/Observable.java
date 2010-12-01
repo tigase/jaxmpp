@@ -7,7 +7,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.PresenceEvent;
+
 public class Observable {
+
+	private final List<Listener<? extends BaseEvent>> everythingListener = new ArrayList<Listener<? extends BaseEvent>>();
 
 	private final Map<EventType, List<Listener<? extends BaseEvent>>> listeners = new HashMap<EventType, List<Listener<? extends BaseEvent>>>();
 
@@ -20,6 +24,10 @@ public class Observable {
 			listeners.put(eventType, lst);
 		}
 		lst.add(listener);
+	}
+
+	public void addListener(Listener<? extends BaseEvent> listener) {
+		this.everythingListener.add(listener);
 	}
 
 	public void fireEvent(final EventType eventType) {
@@ -38,9 +46,19 @@ public class Observable {
 					((Listener<BaseEvent>) listener).handleEvent(event);
 				}
 			}
+			if (!everythingListener.isEmpty()) {
+				event.setHandled(true);
+				for (Listener<? extends BaseEvent> listener : this.everythingListener) {
+					((Listener<BaseEvent>) listener).handleEvent(event);
+				}
+			}
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Problem on notifint observers", e);
 		}
+	}
+
+	public void fireEvent(PresenceEvent event) {
+		fireEvent(event.getType(), event);
 	}
 
 	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {

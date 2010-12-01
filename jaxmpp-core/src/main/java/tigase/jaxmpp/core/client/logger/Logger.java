@@ -4,12 +4,15 @@ public class Logger {
 
 	private static LoggerSpiFactory spiFactory = new LoggerSpiFactory() {
 
+		@Override
 		public LoggerSpi getLoggerSpi(String name) {
 			return new LoggerSpi() {
 
+				@Override
 				public void log(LogLevel level, String msg) {
 				}
 
+				@Override
 				public void log(LogLevel level, String msg, Throwable thrown) {
 				}
 			};

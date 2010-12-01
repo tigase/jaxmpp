@@ -7,9 +7,10 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 
@@ -83,6 +84,9 @@ public class XmppSessionLogic {
 		try {
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
 			roster.rosterRequest();
+
+			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
+			presence.sendInitialPresence();
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}

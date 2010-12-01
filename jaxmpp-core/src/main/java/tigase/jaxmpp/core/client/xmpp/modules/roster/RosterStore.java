@@ -8,7 +8,7 @@ import java.util.Map;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-public class Roster {
+public class RosterStore {
 
 	static interface Handler {
 

@@ -5,15 +5,18 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class DefaultSessionObject implements SessionObject {
+
+	private final PresenceStore presence = new PresenceStore();
 
 	protected final Map<String, Object> properties = new HashMap<String, Object>();
 
 	protected final ResponseManager responseManager = new ResponseManager();
 
-	private final Roster roster = new Roster();
+	private final RosterStore roster = new RosterStore();
 
 	protected Element streamFeatures;
 
@@ -24,6 +27,12 @@ public class DefaultSessionObject implements SessionObject {
 		this.properties.clear();
 	}
 
+	@Override
+	public PresenceStore getPresence() {
+		return presence;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
 		T t = (T) this.userProperties.get(key);
@@ -37,7 +46,8 @@ public class DefaultSessionObject implements SessionObject {
 		return responseManager.getResponseHandler(element, writer, sessionObject);
 	}
 
-	public Roster getRoster() {
+	@Override
+	public RosterStore getRoster() {
 		return roster;
 	}
 
@@ -57,6 +67,7 @@ public class DefaultSessionObject implements SessionObject {
 		return responseManager.registerResponseHandler(stanza, callback);
 	}
 
+	@Override
 	public void setProperty(String key, Object value) {
 		this.properties.put(key, value);
 	}

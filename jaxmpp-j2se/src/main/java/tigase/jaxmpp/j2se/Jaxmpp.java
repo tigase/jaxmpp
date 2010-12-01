@@ -2,6 +2,7 @@ package tigase.jaxmpp.j2se;
 
 import java.io.IOException;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -16,12 +17,15 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.Roster;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.j2se.BoshConnector.BoshConnectorEvent;
 
 public class Jaxmpp {
@@ -120,11 +124,15 @@ public class Jaxmpp {
 		return modulesManager;
 	}
 
+	public PresenceStore getPresence() {
+		return this.sessionObject.getPresence();
+	}
+
 	public UserProperties getProperties() {
 		return sessionObject;
 	}
 
-	public Roster getRoster() {
+	public RosterStore getRoster() {
 		return sessionObject.getRoster();
 	}
 
@@ -144,6 +152,7 @@ public class Jaxmpp {
 
 	private void modulesInit() {
 		this.modulesManager.register(new MessageModule(sessionObject, writer));
+		this.modulesManager.register(new PresenceModule(sessionObject, writer));
 
 		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
 		this.modulesManager.register(new SaslModule(sessionObject, writer));
@@ -177,6 +186,15 @@ public class Jaxmpp {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
+	}
+
+	public void send(Stanza stanza) throws XMLException {
+		this.writer.write(stanza);
+	}
+
+	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException {
+		this.sessionObject.registerResponseHandler(stanza, asyncCallback);
+		this.writer.write(stanza);
 	}
 
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException {

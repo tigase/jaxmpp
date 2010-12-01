@@ -80,6 +80,8 @@ public abstract class BoshWorker implements Runnable {
 				parser.parse(domHandler, sb.toString().toCharArray(), 0, sb.length());
 				tigase.xml.Element x = domHandler.getParsedElements().poll();
 
+				System.out.println("R: " + x.toString());
+
 				final String type = x.getAttribute("type");
 
 				Element response = new J2seElement(x);

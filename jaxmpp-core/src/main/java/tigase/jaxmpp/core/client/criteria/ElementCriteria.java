@@ -45,6 +45,7 @@ public class ElementCriteria implements Criteria {
 		}
 	}
 
+	@Override
 	public Criteria add(Criteria criteria) {
 		if (this.nextCriteria == null) {
 			this.nextCriteria = criteria;
@@ -60,6 +61,7 @@ public class ElementCriteria implements Criteria {
 	 * 
 	 * @see tigase.criteria.Criteria#match(tigase.xml.Element)
 	 */
+	@Override
 	public boolean match(Element element) throws XMLException {
 		if (name != null && !name.equals(element.getName())) {
 			return false;

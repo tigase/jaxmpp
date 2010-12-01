@@ -19,10 +19,12 @@ public class Or implements Criteria {
 		this.crits = criteria;
 	}
 
+	@Override
 	public Criteria add(Criteria criteria) {
 		throw new RuntimeException("Or.add() is not implemented!");
 	}
 
+	@Override
 	public boolean match(Element element) throws XMLException {
 		for (int i = 0; i < crits.length; i++) {
 			Criteria c = this.crits[i];
