@@ -29,6 +29,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
+import tigase.jaxmpp.j2se.connectors.bosh.XmppSessionLogic;
 
 public class Jaxmpp {
 
