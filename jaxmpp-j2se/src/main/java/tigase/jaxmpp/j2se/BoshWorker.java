@@ -20,6 +20,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 //~--- classes ----------------------------------------------------------------
 
 /**
@@ -30,6 +33,7 @@ import java.net.SocketException;
  * @author         Artur Hefczyc <artur.hefczyc@tigase.org>
  */
 public abstract class BoshWorker implements Runnable {
+	private static final Logger log = Logger.getLogger(BoshWorker.class.getName());
 	private static final SimpleParser parser = SingletonFactory.getParserInstance();
 
 	//~--- fields ---------------------------------------------------------------
@@ -97,7 +101,10 @@ public abstract class BoshWorker implements Runnable {
 		try {
 			String b = body.getAsString();
 
-			System.out.println("S: " + b);
+			if (log.isLoggable(Level.FINER)) {
+				log.log(Level.FINER, "S: {0}", b);
+			}
+
 			this.conn = (HttpURLConnection) data.url.openConnection();
 			conn.setDoOutput(true);
 
@@ -121,12 +128,18 @@ public abstract class BoshWorker implements Runnable {
 
 				wr.close();
 				rd.close();
-				System.out.println("R: " + sb.toString());
+
+				if (log.isLoggable(Level.FINEST)) {
+					log.log(Level.FINEST, "RB: ", sb);
+				}
+
 				parser.parse(domHandler, sb.toString().toCharArray(), 0, sb.length());
 
 				tigase.xml.Element x = domHandler.getParsedElements().poll();
 
-				System.out.println("R: " + x.toString());
+				if (log.isLoggable(Level.FINER)) {
+					log.log(Level.FINER, "RXML: ", x);
+				}
 
 				final String type = x.getAttribute("type");
 				Element response = new J2seElement(x);
