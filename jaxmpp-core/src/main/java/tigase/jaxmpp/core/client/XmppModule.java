@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -44,6 +45,6 @@ public interface XmppModule {
 	 * @param packetWriter
 	 *            XML writer
 	 */
-	void process(Element element) throws XMPPException, XMLException;
+	void process(Element element) throws XMPPException, XMLException, JaxmppException;
 
 }

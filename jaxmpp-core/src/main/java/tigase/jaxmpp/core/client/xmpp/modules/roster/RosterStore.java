@@ -6,33 +6,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class RosterStore {
 
 	static interface Handler {
 
-		void add(BareJID jid, String name, Collection<String> groups) throws XMLException;
+		void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException;
 
-		void remove(BareJID jid) throws XMLException;
+		void remove(BareJID jid) throws XMLException, JaxmppException;
 
-		void update(RosterItem item) throws XMLException;
+		void update(RosterItem item) throws XMLException, JaxmppException;
 	}
 
 	private Handler handler;
 
 	protected final Map<BareJID, RosterItem> roster = new HashMap<BareJID, RosterItem>();
 
-	public void add(BareJID jid, String name) throws XMLException {
+	public void add(BareJID jid, String name) throws XMLException, JaxmppException {
 		add(jid, name, new ArrayList<String>());
 	}
 
-	public void add(BareJID jid, String name, Collection<String> groups) throws XMLException {
+	public void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
 		if (this.handler != null)
 			this.handler.add(jid, name, groups);
 	}
 
-	public void add(BareJID jid, String name, String[] groups) throws XMLException {
+	public void add(BareJID jid, String name, String[] groups) throws XMLException, JaxmppException {
 		ArrayList<String> x = new ArrayList<String>();
 		if (groups != null)
 			for (String string : groups) {
@@ -49,7 +50,7 @@ public class RosterStore {
 		return this.roster.get(jid);
 	}
 
-	public void remove(BareJID jid) throws XMLException {
+	public void remove(BareJID jid) throws XMLException, JaxmppException {
 		if (handler != null)
 			this.handler.remove(jid);
 	}
@@ -62,7 +63,7 @@ public class RosterStore {
 		this.handler = handler;
 	}
 
-	public void update(RosterItem item) throws XMLException {
+	public void update(RosterItem item) throws XMLException, JaxmppException {
 		if (this.handler != null)
 			this.handler.update(item);
 	}

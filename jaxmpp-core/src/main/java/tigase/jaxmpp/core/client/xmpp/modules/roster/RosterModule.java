@@ -12,6 +12,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -93,23 +94,23 @@ public class RosterModule extends AbstractIQModule {
 		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override
-			public void add(BareJID jid, String name, Collection<String> groups) throws XMLException {
+			public void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
 				RosterModule.this.add(jid, name, groups);
 			}
 
 			@Override
-			public void remove(BareJID jid) throws XMLException {
+			public void remove(BareJID jid) throws XMLException, JaxmppException {
 				RosterModule.this.remove(jid);
 			}
 
 			@Override
-			public void update(RosterItem item) throws XMLException {
+			public void update(RosterItem item) throws XMLException, JaxmppException {
 				RosterModule.this.update(item);
 			}
 		});
 	}
 
-	protected void add(BareJID jid, String name, Collection<String> groups) throws XMLException {
+	protected void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
 		RosterItem item = new RosterItem(jid);
 		fill(item, name, Subscription.none, groups, false);
 
@@ -229,7 +230,7 @@ public class RosterModule extends AbstractIQModule {
 		processRosterQuery(query);
 	}
 
-	protected void remove(BareJID jid) throws XMLException {
+	protected void remove(BareJID jid) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
@@ -264,7 +265,7 @@ public class RosterModule extends AbstractIQModule {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void rosterRequest() throws XMLException {
+	public void rosterRequest() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		iq.addChild(new DefaultElement("query", null, "jabber:iq:roster"));
@@ -292,7 +293,7 @@ public class RosterModule extends AbstractIQModule {
 		writer.write(iq);
 	}
 
-	protected void update(RosterItem item) throws XMLException {
+	protected void update(RosterItem item) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));

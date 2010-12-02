@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -19,17 +20,21 @@ public abstract class AbstractStanzaHandler implements Runnable {
 		this.sessionObject = sessionObject;
 	}
 
-	protected abstract void process() throws XMLException, XMPPException;
+	protected abstract void process() throws XMLException, XMPPException, JaxmppException;
 
 	@Override
 	public void run() {
 		try {
-			process();
-		} catch (Throwable e) {
-			e.printStackTrace();
-			Element errorResult = Processor.createError(stanza, e);
-			if (errorResult != null)
-				writer.write(errorResult);
+			try {
+				process();
+			} catch (Throwable e) {
+				e.printStackTrace();
+				Element errorResult = Processor.createError(stanza, e);
+				if (errorResult != null)
+					writer.write(errorResult);
+			}
+		} catch (JaxmppException e) {
+			// TODO: handle exception
 		}
 	}
 

@@ -3,6 +3,7 @@ package tigase.jaxmpp.j2se;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -47,14 +48,24 @@ public class XmppSessionLogic {
 
 			@Override
 			public void handleEvent(StreamFeaturesReceivedEvent be) {
-				processStreamFeatures(be);
+				try {
+					processStreamFeatures(be);
+				} catch (JaxmppException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		};
 		this.saslEventListener = new Listener<BaseEvent>() {
 
 			@Override
 			public void handleEvent(BaseEvent be) {
-				processSaslEvent(be);
+				try {
+					processSaslEvent(be);
+				} catch (JaxmppException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
 		};
@@ -62,7 +73,12 @@ public class XmppSessionLogic {
 
 			@Override
 			public void handleEvent(ResourceBindEvent be) {
-				processResourceBindEvent(be);
+				try {
+					processResourceBindEvent(be);
+				} catch (JaxmppException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 			}
 		};
@@ -80,7 +96,7 @@ public class XmppSessionLogic {
 		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
 	}
 
-	protected void processResourceBindEvent(ResourceBindEvent be) {
+	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
 		try {
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
 			roster.rosterRequest();
@@ -92,7 +108,7 @@ public class XmppSessionLogic {
 		}
 	}
 
-	protected void processSaslEvent(BaseEvent be) {
+	protected void processSaslEvent(BaseEvent be) throws JaxmppException {
 		try {
 			if (be.getType() == SaslModule.SASL_SUCCESS) {
 				sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
@@ -103,7 +119,7 @@ public class XmppSessionLogic {
 		}
 	}
 
-	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) {
+	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
 		try {
 			if (sessionObject.getProperty(AUTHORIZED) != Boolean.TRUE) {
 				saslModule.login();

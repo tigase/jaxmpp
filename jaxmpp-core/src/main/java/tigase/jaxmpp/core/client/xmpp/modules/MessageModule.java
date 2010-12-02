@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -102,7 +103,7 @@ public class MessageModule extends AbstractStanzaModule {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void sendMessage(JID toJID, String subject, String message) throws XMLException {
+	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setSubject(subject);
 		msg.setBody(message);

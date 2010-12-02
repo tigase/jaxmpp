@@ -6,6 +6,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -108,7 +109,7 @@ public class PresenceModule extends AbstractStanzaModule {
 		this.sessionObject.getPresence().setHandler(new Handler() {
 
 			@Override
-			public void setPresence(Show show, String status, Integer priority) throws XMLException {
+			public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
 				PresenceModule.this.setPresence(show, status, priority);
 			}
 		});
@@ -175,7 +176,7 @@ public class PresenceModule extends AbstractStanzaModule {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void sendInitialPresence() throws XMLException {
+	public void sendInitialPresence() throws XMLException, JaxmppException {
 		PresenceEvent event = new PresenceEvent(BEFORE_INITIAL_PRESENCE);
 		observable.fireEvent(event);
 
@@ -190,7 +191,7 @@ public class PresenceModule extends AbstractStanzaModule {
 		writer.write(presence);
 	}
 
-	public void setPresence(Show show, String status, Integer priority) throws XMLException {
+	public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
 		Presence presence = Presence.create();
 		presence.setShow(show);
 		presence.setStatus(status);

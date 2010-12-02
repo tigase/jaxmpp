@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -86,7 +87,7 @@ public class Chat {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void sendMessage(String body) throws XMLException {
+	public void sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(jid);
 		msg.setType(StanzaType.chat);

@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -32,7 +33,7 @@ public class Test {
 		logger.setLevel(Level.ALL);
 
 		Jaxmpp jaxmpp = new Jaxmpp();
-		jaxmpp.getProperties().setUserProperty(BoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org/bosh");
+		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org/bosh");
 		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
 		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
 

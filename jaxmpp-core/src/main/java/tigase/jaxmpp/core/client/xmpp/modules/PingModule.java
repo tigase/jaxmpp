@@ -6,6 +6,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
@@ -32,7 +33,7 @@ public class PingModule extends AbstractIQModule {
 	}
 
 	@Override
-	protected void processGet(IQ stanza) throws XMPPException, XMLException {
+	protected void processGet(IQ stanza) throws XMPPException, XMLException, JaxmppException {
 		Element response = XmlTools.makeResult(stanza);
 
 		writer.write(response);

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
@@ -14,7 +15,7 @@ public class PresenceStore {
 
 	static interface Handler {
 
-		public void setPresence(Show show, String status, Integer priority) throws XMLException;
+		public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException;
 
 	}
 
@@ -42,7 +43,7 @@ public class PresenceStore {
 		this.handler = handler;
 	}
 
-	public void setPresence(Show show, String status, Integer priority) throws XMLException {
+	public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
 		this.handler.setPresence(show, status, priority);
 	}
 

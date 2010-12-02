@@ -5,6 +5,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -26,7 +27,7 @@ public abstract class AbstractIQModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element $element) throws XMPPException, XMLException {
+	public void process(Element $element) throws XMPPException, XMLException, JaxmppException {
 		final Stanza stanza = $element instanceof Stanza ? (Stanza) $element : Stanza.create($element);
 		final StanzaType type = stanza.getType();
 
@@ -41,7 +42,7 @@ public abstract class AbstractIQModule implements XmppModule {
 		}
 	}
 
-	protected abstract void processGet(IQ element) throws XMPPException, XMLException;
+	protected abstract void processGet(IQ element) throws XMPPException, XMLException, JaxmppException;
 
-	protected abstract void processSet(IQ element) throws XMPPException, XMLException;
+	protected abstract void processSet(IQ element) throws XMPPException, XMLException, JaxmppException;
 }

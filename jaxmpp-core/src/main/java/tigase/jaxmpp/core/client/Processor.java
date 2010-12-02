@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -88,7 +89,7 @@ public class Processor {
 				result = new AbstractStanzaHandler(Stanza.create(stanza), writer, sessionObject) {
 
 					@Override
-					protected void process() throws XMLException, XMPPException {
+					protected void process() throws XMLException, XMPPException, JaxmppException {
 						module.process(this.stanza);
 					}
 				};

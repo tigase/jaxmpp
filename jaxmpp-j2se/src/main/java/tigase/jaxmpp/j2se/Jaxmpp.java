@@ -10,6 +10,9 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UserProperties;
 import tigase.jaxmpp.core.client.XmppModulesManager;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector.BoshConnectorEvent;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -26,7 +29,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
-import tigase.jaxmpp.j2se.BoshConnector.BoshConnectorEvent;
 
 public class Jaxmpp {
 
@@ -56,7 +58,7 @@ public class Jaxmpp {
 		this.writer = new PacketWriter() {
 
 			@Override
-			public void write(Element stanza) {
+			public void write(Element stanza) throws JaxmppException {
 				try {
 					connector.send(stanza);
 				} catch (XMLException e) {
@@ -69,7 +71,7 @@ public class Jaxmpp {
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 		this.sessionLogic = new XmppSessionLogic(connector, modulesManager, this.sessionObject, this.writer);
 
-		this.connector.addListener(BoshConnector.STANZA_RECEIVED, new Listener<BoshConnector.BoshConnectorEvent>() {
+		this.connector.addListener(AbstractBoshConnector.STANZA_RECEIVED, new Listener<BoshConnector.BoshConnectorEvent>() {
 
 			@Override
 			public void handleEvent(BoshConnectorEvent be) {
@@ -100,14 +102,14 @@ public class Jaxmpp {
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
 
-		connector.addListener(BoshConnector.TERMINATE, this.streamTerminateListener);
+		connector.addListener(AbstractBoshConnector.TERMINATE, this.streamTerminateListener);
 	}
 
 	public Chat createChat(JID jid) {
 		return (this.modulesManager.getModule(MessageModule.class)).getChatManager().createChat(jid);
 	}
 
-	public void disconnect() throws IOException, XMLException, InterruptedException {
+	public void disconnect() throws IOException, XMLException, InterruptedException, JaxmppException {
 		this.connector.stop();
 		if ((Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE)) {
 			synchronized (Jaxmpp.this) {
@@ -136,11 +138,11 @@ public class Jaxmpp {
 		return sessionObject.getRoster();
 	}
 
-	public void login() throws IOException, XMLException, InterruptedException {
+	public void login() throws IOException, XMLException, InterruptedException, JaxmppException {
 		login(true);
 	}
 
-	public void login(boolean sync) throws IOException, XMLException, InterruptedException {
+	public void login(boolean sync) throws IOException, XMLException, InterruptedException, JaxmppException {
 		this.sessionObject.clear();
 		this.connector.start(this.sessionObject);
 		this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
@@ -188,16 +190,16 @@ public class Jaxmpp {
 		}
 	}
 
-	public void send(Stanza stanza) throws XMLException {
+	public void send(Stanza stanza) throws XMLException, JaxmppException {
 		this.writer.write(stanza);
 	}
 
-	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException {
+	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
 		this.sessionObject.registerResponseHandler(stanza, asyncCallback);
 		this.writer.write(stanza);
 	}
 
-	public void sendMessage(JID toJID, String subject, String message) throws XMLException {
+	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		(this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID, subject, message);
 	}
 

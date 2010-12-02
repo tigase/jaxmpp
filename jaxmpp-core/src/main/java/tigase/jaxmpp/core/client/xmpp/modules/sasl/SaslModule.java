@@ -7,6 +7,7 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -161,7 +162,7 @@ public class SaslModule implements XmppModule {
 		return result;
 	}
 
-	public void login() throws XMLException {
+	public void login() throws XMLException, JaxmppException {
 		observable.fireEvent(SASL_START);
 
 		sessionObject.setProperty(SASL_MECHANISM, guessSaslMechanism());
@@ -176,7 +177,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException {
+	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		if ("success".equals(element.getName())) {
 			processSuccess(element);
 		} else if ("failure".equals(element.getName())) {
@@ -186,7 +187,7 @@ public class SaslModule implements XmppModule {
 		}
 	}
 
-	protected void processChallenge(Element element) throws XMPPException, XMLException {
+	protected void processChallenge(Element element) throws XMPPException, XMLException, JaxmppException {
 		SaslMechanism mechanism = sessionObject.getProperty(SASL_MECHANISM);
 		String v = element.getValue();
 		String r = mechanism.evaluateChallenge(v, sessionObject);

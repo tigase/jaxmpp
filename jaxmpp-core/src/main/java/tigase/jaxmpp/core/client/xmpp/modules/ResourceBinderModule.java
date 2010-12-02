@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -77,7 +78,7 @@ public class ResourceBinderModule implements XmppModule {
 		observable.addListener(eventType, listener);
 	}
 
-	public void bind() throws XMLException {
+	public void bind() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setXMLNS("jabber:client");
 		iq.setType(StanzaType.set);
