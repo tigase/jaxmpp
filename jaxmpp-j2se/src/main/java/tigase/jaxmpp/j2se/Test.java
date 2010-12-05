@@ -33,7 +33,7 @@ public class Test {
 		logger.setLevel(Level.ALL);
 
 		Jaxmpp jaxmpp = new Jaxmpp();
-		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org/bosh");
+		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org:80/bosh");
 		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
 		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
 
@@ -65,6 +65,7 @@ public class Test {
 					}
 				});
 
+		final long t1 = System.currentTimeMillis();
 		jaxmpp.login(true);
 
 		// ping example
@@ -102,6 +103,8 @@ public class Test {
 
 		System.out.println("// disconnect");
 		jaxmpp.disconnect();
-		System.out.println(".");
+		final long t2 = System.currentTimeMillis();
+
+		System.out.println(". " + (t2 - t1) + " ms");
 	}
 }

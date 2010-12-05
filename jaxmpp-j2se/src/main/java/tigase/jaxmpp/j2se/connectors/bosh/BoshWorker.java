@@ -6,9 +6,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
+import java.util.Queue;
 
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -35,8 +35,14 @@ public abstract class BoshWorker implements BoshRequest {
 			throws XMLException, JaxmppException {
 		this.domHandler = domHandler;
 		this.parser = parser;
+
 		try {
-			this.conn = (HttpURLConnection) (new URL((String) sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL)).openConnection());
+			URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
+			// URL url = new URL((String)
+			// sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL));
+
+			this.conn = (HttpURLConnection) (url.openConnection());
+			this.conn.setAllowUserInteraction(true);
 		} catch (Exception e) {
 			throw new JaxmppException(e);
 		}
@@ -66,7 +72,8 @@ public abstract class BoshWorker implements BoshRequest {
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
-				conn.setDoOutput(true);
+				if (!conn.getDoOutput())
+					conn.setDoOutput(true);
 				OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
 				wr.write(b);
 				wr.flush();
@@ -81,28 +88,28 @@ public abstract class BoshWorker implements BoshRequest {
 					while ((line = rd.readLine()) != null) {
 						sb.append(line);
 					}
-					wr.close();
-					rd.close();
+					// wr.close();
+					// rd.close();
 
 					// System.out.println("R: " + sb.toString());
 
 					parser.parse(domHandler, sb.toString().toCharArray(), 0, sb.length());
-					tigase.xml.Element x = domHandler.getParsedElements().poll();
 
-					// System.out.println("R: " + x.toString());
+					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
 
-					final String type = x.getAttribute("type");
-
-					Element response = new J2seElement(x);
-					if (type != null && "terminate".equals(type)) {
-						onTerminate(responseCode, response);
-					} else if (type != null && "error".equals(type)) {
-						onError(responseCode, response, null);
-					} else if (type == null) {
-						onSuccess(responseCode, response);
-					} else
-						throw new RuntimeException("Unknown response type '" + type + "'");
-
+					tigase.xml.Element elem;
+					while ((elem = elems.poll()) != null) {
+						final String type = elem.getAttribute("type");
+						Element response = new J2seElement(elem);
+						if (type != null && "terminate".equals(type)) {
+							onTerminate(responseCode, response);
+						} else if (type != null && "error".equals(type)) {
+							onError(responseCode, response, null);
+						} else if (type == null) {
+							onSuccess(responseCode, response);
+						} else
+							throw new RuntimeException("Unknown response type '" + type + "'");
+					}
 				}
 			} catch (SocketException e) {
 				if (terminated)

@@ -7,7 +7,6 @@ import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -17,58 +16,22 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 public abstract class AbstractBoshConnector implements Connector {
 
-	public static final class BoshConnectorEvent extends BaseEvent {
+	public static class BoshConnectorEvent extends ConnectorEvent {
 
 		private static final long serialVersionUID = 1L;
-
-		public static long getSerialversionuid() {
-			return serialVersionUID;
-		}
-
-		private Element responseBody;
-
-		private int responseCode;
-
-		private Element stanza;
 
 		public BoshConnectorEvent(EventType type) {
 			super(type);
 		}
-
-		public Element getResponseBody() {
-			return responseBody;
-		}
-
-		public int getResponseCode() {
-			return responseCode;
-		}
-
-		public Element getStanza() {
-			return stanza;
-		}
-	}
-
-	protected static enum Stage {
-		connected,
-		connecting,
-		disconnected
 	}
 
 	public static final String BOSH_SERVICE_URL = "boshServiceUrl";
 
-	public final static EventType CONNECTED = new EventType();
-
 	private static final String DEFAULT_TIMEOUT_KEY = "bosh#defaultTimeout";
-
-	public final static EventType ERROR = new EventType();
 
 	public final static String RID_KEY = "bosh#rid";
 
 	public static final String SID_KEY = "bosh#sid";
-
-	public final static EventType STANZA_RECEIVED = new EventType();
-
-	public final static EventType TERMINATE = new EventType();
 
 	protected final Observable observable = new Observable();
 
@@ -76,7 +39,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected SessionObject sessionObject;
 
-	public void addListener(EventType eventType, Listener<BoshConnectorEvent> listener) {
+	@Override
+	public void addListener(EventType eventType, Listener<ConnectorEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
@@ -89,25 +53,25 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
+		ConnectorEvent event = new ConnectorEvent(CONNECTED);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
-		event.responseCode = responseCode;
-		event.responseBody = response;
+		ConnectorEvent event = new ConnectorEvent(ERROR);
+		event.setResponseCode(responseCode);
+		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
-			event.responseBody = response;
-			event.responseCode = responseCode;
+			ConnectorEvent event = new ConnectorEvent(STANZA_RECEIVED);
+			event.setResponseBody(response);
+			event.setResponseCode(responseCode);
 			if (response != null) {
 				Element ch = response.getFirstChild();
-				event.stanza = ch;
+				event.setStanza(ch);
 			}
 			this.observable.fireEvent(event.getType(), event);
 		} catch (XMLException e) {
@@ -116,9 +80,9 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
-		event.responseCode = responseCode;
-		event.responseBody = response;
+		ConnectorEvent event = new ConnectorEvent(TERMINATE);
+		event.setResponseCode(responseCode);
+		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
@@ -248,7 +212,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.requests.remove(ack);
 	}
 
-	public void removeListener(EventType eventType, Listener<BoshConnectorEvent> listener) {
+	@Override
+	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
 
@@ -275,17 +240,23 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
 	}
 
+	@Override
 	public void start(final SessionObject sessionObject) throws XMLException, JaxmppException {
 		this.sessionObject = sessionObject;
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
 
+		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL);
+		if (u == null)
+			throw new JaxmppException("BOSH service URL not defined!");
+
 		setStage(Stage.connecting);
 		processSendData(prepareStartBody());
 
 	}
 
+	@Override
 	public void stop() throws XMLException, JaxmppException {
 		if (getStage() != Stage.disconnected)
 			processSendData(prepareTerminateBody(null));

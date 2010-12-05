@@ -3,6 +3,8 @@ package tigase.jaxmpp.j2se;
 import java.io.IOException;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -10,8 +12,6 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UserProperties;
 import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector.BoshConnectorEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -48,7 +48,7 @@ public class Jaxmpp {
 
 	private SessionObject sessionObject;
 
-	private final Listener<BoshConnectorEvent> streamTerminateListener;
+	private final Listener<ConnectorEvent> streamTerminateListener;
 
 	private final PacketWriter writer;
 
@@ -73,10 +73,10 @@ public class Jaxmpp {
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 		this.sessionLogic = new XmppSessionLogic(connector, modulesManager, this.sessionObject, this.writer);
 
-		this.connector.addListener(AbstractBoshConnector.STANZA_RECEIVED, new Listener<BoshConnector.BoshConnectorEvent>() {
+		this.connector.addListener(Connector.STANZA_RECEIVED, new Listener<BoshConnector.ConnectorEvent>() {
 
 			@Override
-			public void handleEvent(BoshConnectorEvent be) {
+			public void handleEvent(ConnectorEvent be) {
 				if (be.getStanza() != null)
 					onStanzaReceived(be.getStanza());
 			}
@@ -89,10 +89,10 @@ public class Jaxmpp {
 				onResourceBinded(be);
 			}
 		};
-		this.streamTerminateListener = new Listener<BoshConnectorEvent>() {
+		this.streamTerminateListener = new Listener<ConnectorEvent>() {
 
 			@Override
-			public void handleEvent(BoshConnectorEvent be) {
+			public void handleEvent(ConnectorEvent be) {
 				onStreamTerminated(be);
 			}
 		};
@@ -104,7 +104,7 @@ public class Jaxmpp {
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
 
-		connector.addListener(AbstractBoshConnector.TERMINATE, this.streamTerminateListener);
+		connector.addListener(Connector.TERMINATE, this.streamTerminateListener);
 	}
 
 	public Chat createChat(JID jid) {
@@ -180,13 +180,13 @@ public class Jaxmpp {
 			(new Thread(r)).start();
 	}
 
-	protected void onStreamError(BoshConnectorEvent be) {
+	protected void onStreamError(ConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
 	}
 
-	protected void onStreamTerminated(BoshConnectorEvent be) {
+	protected void onStreamTerminated(ConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
