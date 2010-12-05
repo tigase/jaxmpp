@@ -21,6 +21,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 public class Test {
 
@@ -33,7 +34,16 @@ public class Test {
 		logger.setLevel(Level.ALL);
 
 		Jaxmpp jaxmpp = new Jaxmpp();
+		// for BOSH connector
 		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org:80/bosh");
+		// for Socket connector
+		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "tigase.tigase.org");
+		// port value is not necessary. Default is 5222
+		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_PORT, 5222);
+
+		// "bosh" and "socket" values available
+		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "socket");
+
 		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
 		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
 

@@ -1,8 +1,10 @@
-package tigase.jaxmpp.j2se;
+package tigase.jaxmpp.core.client.connector;
 
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
+import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -15,11 +17,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 
-public class XmppSessionLogic {
+public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	public static final String AUTHORIZED = "jaxmpp#authorized";
 
-	private final BoshConnector connector;
+	private final Connector connector;
+
+	private StreamFeaturesModule featuresModule;
 
 	private final XmppModulesManager modulesManager;
 
@@ -37,7 +41,7 @@ public class XmppSessionLogic {
 
 	private final PacketWriter writer;
 
-	public XmppSessionLogic(BoshConnector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
+	public BoshXmppSessionLogic(Connector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
 			PacketWriter writer) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
@@ -84,15 +88,15 @@ public class XmppSessionLogic {
 		};
 	}
 
-	public void init() {
-		StreamFeaturesModule featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
+	@Override
+	public void bind() throws JaxmppException {
+		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
 		saslModule = this.modulesManager.getModule(SaslModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 
 		featuresModule.addListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
 		saslModule.addListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
 		saslModule.addListener(SaslModule.SASL_FAILED, this.saslEventListener);
-
 		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
 	}
 
@@ -130,4 +134,14 @@ public class XmppSessionLogic {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public void unbind() throws JaxmppException {
+		featuresModule.removeListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
+		saslModule.removeListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
+		saslModule.removeListener(SaslModule.SASL_FAILED, this.saslEventListener);
+		resourceBinder.removeListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+
+	}
+
 }

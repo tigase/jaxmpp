@@ -61,6 +61,11 @@ public class Observable {
 		fireEvent(event.getType(), event);
 	}
 
+	public void removeAllListeners() {
+		everythingListener.clear();
+		listeners.clear();
+	}
+
 	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
 		List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
 		if (lst != null) {

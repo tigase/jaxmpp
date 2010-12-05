@@ -70,9 +70,17 @@ public interface Connector {
 
 	public void addListener(EventType eventType, Listener<ConnectorEvent> listener);
 
+	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
+
+	public void removeAllListeners();
+
 	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener);
 
-	public void start(final SessionObject sessionObject) throws XMLException, JaxmppException;
+	public void restartStream() throws XMLException, JaxmppException;
+
+	public void send(final Element stanza) throws XMLException, JaxmppException;
+
+	public void start() throws XMLException, JaxmppException;
 
 	public void stop() throws XMLException, JaxmppException;
 

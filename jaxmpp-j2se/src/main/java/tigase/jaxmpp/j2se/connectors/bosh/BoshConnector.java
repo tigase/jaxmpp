@@ -20,6 +20,10 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
+	public BoshConnector(SessionObject sessionObject) {
+		super(sessionObject);
+	}
+
 	@Override
 	protected void processSendData(final Element element) throws XMLException, JaxmppException {
 		BoshRequest worker = new BoshWorker(domHandler, parser, sessionObject, element) {
@@ -47,18 +51,19 @@ public class BoshConnector extends AbstractBoshConnector {
 	}
 
 	@Override
-	public void start(SessionObject sessionObject) throws XMLException, JaxmppException {
+	public void start() throws XMLException, JaxmppException {
 		try {
 			String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL);
 			if (u == null)
 				throw new JaxmppException("BOSH service URL not defined!");
 			URL url = new URL(u);
 			sessionObject.setProperty(URL_KEY, url);
-			super.start(sessionObject);
+			super.start();
 		} catch (JaxmppException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new JaxmppException(e);
 		}
 	}
+
 }

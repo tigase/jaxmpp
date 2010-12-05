@@ -12,6 +12,7 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UserProperties;
 import tigase.jaxmpp.core.client.XmppModulesManager;
+import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -30,13 +31,17 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
-import tigase.jaxmpp.j2se.connectors.bosh.XmppSessionLogic;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 public class Jaxmpp {
 
+	public static final String CONNECTOR_TYPE = "connectorType";
+
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
-	private BoshConnector connector;
+	private Connector connector;
+
+	private final Logger log;
 
 	private final XmppModulesManager modulesManager;
 
@@ -44,9 +49,13 @@ public class Jaxmpp {
 
 	private final Listener<ResourceBindEvent> resourceBindListener;
 
-	private final XmppSessionLogic sessionLogic;
+	private XmppSessionLogic sessionLogic;
 
 	private SessionObject sessionObject;
+
+	private final Listener<ConnectorEvent> stanzaReceivedListener;
+
+	private final Listener<ConnectorEvent> streamErrorListener;
 
 	private final Listener<ConnectorEvent> streamTerminateListener;
 
@@ -55,7 +64,7 @@ public class Jaxmpp {
 	public Jaxmpp() {
 		Logger.setLoggerSpiFactory(new DefaultLoggerSpi());
 
-		this.connector = new BoshConnector();
+		this.log = Logger.getLogger(this.getClass().getName());
 
 		this.writer = new PacketWriter() {
 
@@ -71,16 +80,6 @@ public class Jaxmpp {
 		this.sessionObject = new DefaultSessionObject();
 		this.modulesManager = new XmppModulesManager();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
-		this.sessionLogic = new XmppSessionLogic(connector, modulesManager, this.sessionObject, this.writer);
-
-		this.connector.addListener(Connector.STANZA_RECEIVED, new Listener<BoshConnector.ConnectorEvent>() {
-
-			@Override
-			public void handleEvent(ConnectorEvent be) {
-				if (be.getStanza() != null)
-					onStanzaReceived(be.getStanza());
-			}
-		});
 
 		this.resourceBindListener = new Listener<ResourceBindEvent>() {
 
@@ -96,15 +95,27 @@ public class Jaxmpp {
 				onStreamTerminated(be);
 			}
 		};
+		this.streamErrorListener = new Listener<ConnectorEvent>() {
+
+			@Override
+			public void handleEvent(ConnectorEvent be) {
+				onStreamError(be);
+			}
+		};
+		this.stanzaReceivedListener = new Listener<BoshConnector.ConnectorEvent>() {
+
+			@Override
+			public void handleEvent(ConnectorEvent be) {
+				if (be.getStanza() != null)
+					onStanzaReceived(be.getStanza());
+			}
+		};
 
 		modulesInit();
-
-		this.sessionLogic.init();
 
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
 
-		connector.addListener(Connector.TERMINATE, this.streamTerminateListener);
 	}
 
 	public Chat createChat(JID jid) {
@@ -120,7 +131,7 @@ public class Jaxmpp {
 		}
 	}
 
-	public BoshConnector getConnector() {
+	public Connector getConnector() {
 		return connector;
 	}
 
@@ -146,7 +157,33 @@ public class Jaxmpp {
 
 	public void login(boolean sync) throws IOException, XMLException, InterruptedException, JaxmppException {
 		this.sessionObject.clear();
-		this.connector.start(this.sessionObject);
+
+		if (this.sessionLogic != null) {
+			this.sessionLogic.unbind();
+			this.sessionLogic = null;
+		}
+		if (this.connector != null) {
+			this.connector.removeAllListeners();
+			this.connector = null;
+		}
+
+		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using SocketConnector");
+			this.connector = new SocketConnector(this.sessionObject);
+		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using BOSHConnector");
+			this.connector = new BoshConnector(this.sessionObject);
+		} else
+			throw new JaxmppException("Unknown connector type");
+
+		this.connector.addListener(Connector.STANZA_RECEIVED, this.stanzaReceivedListener);
+		connector.addListener(Connector.TERMINATE, this.streamTerminateListener);
+		connector.addListener(Connector.ERROR, this.streamErrorListener);
+
+		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
+		this.sessionLogic.bind();
+
+		this.connector.start();
 		this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
 		if (sync)
 			synchronized (Jaxmpp.this) {

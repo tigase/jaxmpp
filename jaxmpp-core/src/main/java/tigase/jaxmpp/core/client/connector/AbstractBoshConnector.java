@@ -5,7 +5,10 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XmppModulesManager;
+import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -37,7 +40,11 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected final Map<String, BoshRequest> requests = new HashMap<String, BoshRequest>();
 
-	protected SessionObject sessionObject;
+	protected final SessionObject sessionObject;
+
+	public AbstractBoshConnector(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
 
 	@Override
 	public void addListener(EventType eventType, Listener<ConnectorEvent> listener) {
@@ -50,6 +57,11 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected int countActiveRequests() {
 		return this.requests.size();
+	}
+
+	@Override
+	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
+		return new BoshXmppSessionLogic(this, modulesManager, sessionObject, writer);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
@@ -206,6 +218,11 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected abstract void processSendData(final Element element) throws XMLException, JaxmppException;
 
+	@Override
+	public void removeAllListeners() {
+		observable.removeAllListeners();
+	}
+
 	protected void removeFromRequests(final String ack) {
 		if (ack == null)
 			return;
@@ -217,11 +234,13 @@ public abstract class AbstractBoshConnector implements Connector {
 		observable.removeListener(eventType, listener);
 	}
 
+	@Override
 	public void restartStream() throws XMLException, JaxmppException {
 		if (getStage() != Stage.disconnected)
 			processSendData(prepareRetartBody());
 	}
 
+	@Override
 	public void send(final Element stanza) throws XMLException, JaxmppException {
 		if (getStage() == Stage.connected) {
 			if (stanza != null) {
@@ -241,8 +260,10 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public void start(final SessionObject sessionObject) throws XMLException, JaxmppException {
-		this.sessionObject = sessionObject;
+	public void start() throws XMLException, JaxmppException {
+		if (sessionObject.getProperty(SessionObject.USER_JID) == null)
+			throw new JaxmppException("No user JID specified");
+
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
@@ -253,7 +274,6 @@ public abstract class AbstractBoshConnector implements Connector {
 
 		setStage(Stage.connecting);
 		processSendData(prepareStartBody());
-
 	}
 
 	@Override
