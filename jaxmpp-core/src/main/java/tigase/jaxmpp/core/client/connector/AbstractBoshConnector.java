@@ -10,6 +10,9 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -36,6 +39,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "bosh#sid";
 
+	private final Logger log;
+
 	protected final Observable observable = new Observable();
 
 	protected final Map<String, BoshRequest> requests = new HashMap<String, BoshRequest>();
@@ -43,6 +48,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected final SessionObject sessionObject;
 
 	public AbstractBoshConnector(SessionObject sessionObject) {
+		this.log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 	}
 
@@ -120,7 +126,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
-			System.out.println("onError(): responseCode=" + responseCode + "; " + " " + caught);
+			if (log.isLoggable(LogLevel.FINER))
+				log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
 			sessionObject.setProperty(CONNECTOR_STAGE, Stage.disconnected);
 			fireOnError(responseCode, response, caught, sessionObject);
 		} catch (XMLException e) {
@@ -129,7 +136,6 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void onResponse(final int responseCode, final Element response) throws JaxmppException {
-		System.out.println("onResponse()");
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
@@ -150,7 +156,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void onTerminate(int responseCode, Element response) {
 		try {
-			System.out.println("onTerminate()");
+			if (log.isLoggable(LogLevel.FINE))
+				log.fine("Stream terminated. responseCode=" + responseCode);
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
 			setStage(Stage.disconnected);

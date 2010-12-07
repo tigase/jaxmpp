@@ -5,6 +5,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -16,7 +17,7 @@ public abstract class AbstractStanzaModule implements XmppModule {
 	protected final PacketWriter writer;
 
 	public AbstractStanzaModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		log = Logger.getLogger(this.getClass().getName());
+		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}

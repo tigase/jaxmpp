@@ -15,6 +15,7 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -62,9 +63,9 @@ public class Jaxmpp {
 	private final PacketWriter writer;
 
 	public Jaxmpp() {
-		Logger.setLoggerSpiFactory(new DefaultLoggerSpi());
+		LoggerFactory.setLoggerSpiFactory(new DefaultLoggerSpi());
 
-		this.log = Logger.getLogger(this.getClass().getName());
+		this.log = LoggerFactory.getLogger(this.getClass().getName());
 
 		this.writer = new PacketWriter() {
 

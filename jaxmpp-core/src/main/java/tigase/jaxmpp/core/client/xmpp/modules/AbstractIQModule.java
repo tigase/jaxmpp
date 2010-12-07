@@ -8,6 +8,7 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -21,7 +22,7 @@ public abstract class AbstractIQModule implements XmppModule {
 	protected final PacketWriter writer;
 
 	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		log = Logger.getLogger(this.getClass().getName());
+		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}

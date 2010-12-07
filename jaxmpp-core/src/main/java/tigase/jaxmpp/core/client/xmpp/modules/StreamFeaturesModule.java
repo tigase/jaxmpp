@@ -8,6 +8,7 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -51,7 +52,7 @@ public class StreamFeaturesModule implements XmppModule {
 	protected final SessionObject sessionObject;
 
 	public StreamFeaturesModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		log = Logger.getLogger(this.getClass().getName());
+		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.packetWriter = packetWriter;
 	}

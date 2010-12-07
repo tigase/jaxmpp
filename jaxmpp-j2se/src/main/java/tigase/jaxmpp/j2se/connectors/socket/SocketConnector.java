@@ -15,6 +15,9 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -42,7 +45,7 @@ public class SocketConnector implements Connector {
 				Queue<tigase.xml.Element> elems = socketConnector.domHandler.getParsedElements();
 				tigase.xml.Element elem;
 				while ((elem = elems.poll()) != null) {
-					System.out.println(" RECEIVED: " + elem.toString());
+					// System.out.println(" RECEIVED: " + elem.toString());
 					try {
 						socketConnector.onResponse(new J2seElement(elem));
 					} catch (JaxmppException e) {
@@ -109,6 +112,8 @@ public class SocketConnector implements Connector {
 		}
 	});
 
+	private final Logger log;
+
 	protected final Observable observable = new Observable();
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
@@ -126,6 +131,7 @@ public class SocketConnector implements Connector {
 	private OutputStream writer;
 
 	public SocketConnector(SessionObject sessionObject2) {
+		this.log = LoggerFactory.getLogger(this.getClass());
 		this.sessionObject = sessionObject2;
 	}
 
@@ -181,7 +187,7 @@ public class SocketConnector implements Connector {
 
 	protected void onStreamStart(Map<String, String> attribs) {
 		// TODO Auto-generated method stub
-		System.out.println(" STREAM STSRT " + attribs.toString());
+		// System.out.println(" STREAM STSRT " + attribs.toString());
 	}
 
 	protected void onStreamTerminate() {
@@ -189,7 +195,9 @@ public class SocketConnector implements Connector {
 			return;
 		setStage(Stage.disconnected);
 
-		System.out.println("onTerminate()");
+		if (log.isLoggable(LogLevel.FINE))
+			log.fine("Stream terminated");
+
 		terminateAllWorkers();
 		fireOnTerminate(sessionObject);
 
@@ -215,7 +223,8 @@ public class SocketConnector implements Connector {
 		sb.append("version='1.0'>");
 
 		try {
-			System.out.println("S: " + sb.toString());
+			if (log.isLoggable(LogLevel.FINEST))
+				log.finest("Restarting XMPP Stream");
 			writer.write(sb.toString().getBytes());
 		} catch (IOException e) {
 			throw new JaxmppException(e);
@@ -226,7 +235,7 @@ public class SocketConnector implements Connector {
 	public void send(Element stanza) throws XMLException, JaxmppException {
 		try {
 			String t = stanza.getAsString();
-			System.out.println("S: " + t);
+			// System.out.println("S: " + t);
 			writer.write(t.getBytes());
 		} catch (IOException e) {
 			throw new JaxmppException(e);
@@ -294,7 +303,7 @@ public class SocketConnector implements Connector {
 	private void terminateStream() throws JaxmppException {
 		try {
 			String x = "</stream:stream>";
-			System.out.println(x);
+			log.fine("Terminating XMPP Stream");
 			writer.write(x.getBytes());
 		} catch (IOException e) {
 			throw new JaxmppException(e);

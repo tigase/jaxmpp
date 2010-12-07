@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -130,7 +131,7 @@ public class SaslModule implements XmppModule {
 	protected final PacketWriter writer;
 
 	public SaslModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		log = Logger.getLogger(this.getClass().getName());
+		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}
@@ -210,7 +211,6 @@ public class SaslModule implements XmppModule {
 
 	protected void processSuccess(Element element) throws XMPPException, XMLException {
 		log.fine("Authenticated");
-		System.out.println("Authenticated");
 		observable.fireEvent(SASL_SUCCESS, new SaslEvent(SASL_SUCCESS));
 	}
 

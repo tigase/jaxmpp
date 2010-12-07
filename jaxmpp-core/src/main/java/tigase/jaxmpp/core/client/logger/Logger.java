@@ -1,65 +1,20 @@
 package tigase.jaxmpp.core.client.logger;
 
-public class Logger {
+public interface Logger {
 
-	private static LoggerSpiFactory spiFactory = new LoggerSpiFactory() {
+	void config(String string);
 
-		@Override
-		public LoggerSpi getLoggerSpi(String name) {
-			return new LoggerSpi() {
+	void fine(String string);
 
-				@Override
-				public void log(LogLevel level, String msg) {
-				}
+	void finer(String string);
 
-				@Override
-				public void log(LogLevel level, String msg, Throwable thrown) {
-				}
-			};
-		}
-	};
+	void finest(String string);
 
-	public static Logger getLogger(String name) {
-		final LoggerSpi spi = spiFactory.getLoggerSpi(name);
-		return new Logger(spi);
-	}
+	void info(String string);
 
-	public static void setLoggerSpiFactory(final LoggerSpiFactory spiFactory) {
-		Logger.spiFactory = spiFactory;
-	}
+	boolean isLoggable(LogLevel level);
 
-	private final LoggerSpi spi;
+	void log(LogLevel level, String msg);
 
-	private Logger(LoggerSpi spi) {
-		this.spi = spi;
-	}
-
-	public void config(String string) {
-		log(LogLevel.CONFIG, string);
-	}
-
-	public void fine(String string) {
-		log(LogLevel.FINE, string);
-	}
-
-	public void finer(String string) {
-		log(LogLevel.FINER, string);
-	}
-
-	public void finest(String string) {
-		log(LogLevel.FINEST, string);
-	}
-
-	public void info(String string) {
-		log(LogLevel.INFO, string);
-	}
-
-	public void log(LogLevel level, String msg) {
-		spi.log(level, msg);
-	}
-
-	public void log(LogLevel level, String msg, Throwable thrown) {
-		spi.log(level, msg, thrown);
-	}
-
+	void log(LogLevel level, String msg, Throwable thrown);
 }
