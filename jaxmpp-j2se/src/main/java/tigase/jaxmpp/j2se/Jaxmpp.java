@@ -13,7 +13,9 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UserProperties;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -37,6 +39,8 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 public class Jaxmpp {
 
 	public static final String CONNECTOR_TYPE = "connectorType";
+
+	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
@@ -70,11 +74,13 @@ public class Jaxmpp {
 		this.writer = new PacketWriter() {
 
 			@Override
-			public void write(Element stanza) throws JaxmppException {
+			public void write(final Element stanza) throws JaxmppException {
+				if (connector.getStage() != Connector.Stage.connected)
+					throw new JaxmppException("Not connected!");
 				try {
 					connector.send(stanza);
 				} catch (XMLException e) {
-					throw new RuntimeException(e);
+					throw new JaxmppException(e);
 				}
 			}
 		};
@@ -182,7 +188,13 @@ public class Jaxmpp {
 		connector.addListener(Connector.ERROR, this.streamErrorListener);
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
-		this.sessionLogic.bind();
+		this.sessionLogic.bind(new SessionListener() {
+
+			@Override
+			public void onException(JaxmppException e) {
+				Jaxmpp.this.onException(e);
+			}
+		});
 
 		this.connector.start();
 		this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
@@ -190,6 +202,11 @@ public class Jaxmpp {
 			synchronized (Jaxmpp.this) {
 				Jaxmpp.this.wait();
 			}
+		if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+			JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
+			JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
+			throw e;
+		}
 	}
 
 	private void modulesInit() {
@@ -204,6 +221,19 @@ public class Jaxmpp {
 
 		this.modulesManager.register(new RosterModule(sessionObject, writer));
 
+	}
+
+	protected void onException(JaxmppException e) {
+		log.log(LogLevel.FINE, "Catching exception", e);
+		sessionObject.setProperty(EXCEPTION_KEY, e);
+		try {
+			connector.stop();
+		} catch (Exception e1) {
+			log.log(LogLevel.FINE, "Disconnecting error", e1);
+		}
+		synchronized (Jaxmpp.this) {
+			Jaxmpp.this.notify();
+		}
 	}
 
 	protected void onResourceBinded(ResourceBindEvent be) {

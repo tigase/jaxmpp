@@ -30,7 +30,7 @@ import tigase.xml.SingletonFactory;
 
 public class SocketConnector implements Connector {
 
-	static class Worker extends Thread {
+	class Worker extends Thread {
 
 		private SocketConnector socketConnector;
 
@@ -45,18 +45,18 @@ public class SocketConnector implements Connector {
 				Queue<tigase.xml.Element> elems = socketConnector.domHandler.getParsedElements();
 				tigase.xml.Element elem;
 				while ((elem = elems.poll()) != null) {
-					// System.out.println(" RECEIVED: " + elem.toString());
+					System.out.println(" RECEIVED: " + elem.toString());
 					try {
 						socketConnector.onResponse(new J2seElement(elem));
 					} catch (JaxmppException e) {
-						e.printStackTrace();
+						onErrorInThread(e);
 					}
 				}
 				synchronized (this) {
 					try {
 						wait();
 					} catch (InterruptedException e) {
-						// throw new RuntimeException(e);
+						onErrorInThread(e);
 					}
 				}
 			}
@@ -69,7 +69,7 @@ public class SocketConnector implements Connector {
 		}
 	}
 
-	private static class Worker2 extends Thread {
+	private class Worker2 extends Thread {
 
 		private final char[] buffer = new char[10240];
 
@@ -90,7 +90,7 @@ public class SocketConnector implements Connector {
 				}
 				connector.onStreamTerminate();
 			} catch (Exception e) {
-				e.printStackTrace();
+				onErrorInThread(e);
 			}
 		}
 	}
@@ -157,6 +157,7 @@ public class SocketConnector implements Connector {
 	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) {
 		ConnectorEvent event = new ConnectorEvent(ERROR);
 		event.setStanza(response);
+		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
@@ -171,7 +172,8 @@ public class SocketConnector implements Connector {
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected Stage getStage() {
+	@Override
+	public Stage getStage() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
 	}
 
@@ -179,6 +181,12 @@ public class SocketConnector implements Connector {
 		if (response != null)
 			sessionObject.setProperty(CONNECTOR_STAGE, Stage.disconnected);
 		fireOnError(response, caught, sessionObject);
+	}
+
+	protected void onErrorInThread(Exception e) {
+		if (getStage() == Stage.disconnected)
+			return;
+		fireOnError(null, e, sessionObject);
 	}
 
 	protected void onResponse(final Element response) throws JaxmppException {
@@ -283,21 +291,33 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void stop() throws JaxmppException {
+		setStage(Stage.disconnecting);
 		terminateStream();
-		// try {
-		// s.close();
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-		//
-		// this.worker.interrupt();
-		// this.w2.interrupt();
+		terminateAllWorkers();
 	}
 
 	private void terminateAllWorkers() {
-		worker.interrupt();
-		w2.interrupt();
-		worker.wakeUp();
+		try {
+			worker.interrupt();
+		} catch (Exception e) {
+			log.log(LogLevel.FINEST, "Problem with interrupting worker", e);
+		}
+		try {
+			w2.interrupt();
+		} catch (Exception e) {
+			log.log(LogLevel.FINEST, "Problem with interrupting w2", e);
+		}
+		try {
+			worker.wakeUp();
+		} catch (Exception e) {
+			log.log(LogLevel.FINEST, "Problem with wakingup worker", e);
+		}
+		setStage(Stage.disconnected);
+		try {
+			s.close();
+		} catch (IOException e) {
+			log.log(LogLevel.FINEST, "Problem with closing socket", e);
+		}
 	}
 
 	private void terminateStream() throws JaxmppException {

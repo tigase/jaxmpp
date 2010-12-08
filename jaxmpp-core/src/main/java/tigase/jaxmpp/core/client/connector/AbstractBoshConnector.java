@@ -25,9 +25,27 @@ public abstract class AbstractBoshConnector implements Connector {
 	public static class BoshConnectorEvent extends ConnectorEvent {
 
 		private static final long serialVersionUID = 1L;
+		private Element responseBody;
+		private int responseCode;
 
 		public BoshConnectorEvent(EventType type) {
 			super(type);
+		}
+
+		public Element getResponseBody() {
+			return responseBody;
+		}
+
+		public int getResponseCode() {
+			return responseCode;
+		}
+
+		public void setResponseBody(Element response) {
+			this.responseBody = response;
+		}
+
+		public void setResponseCode(int responseCode) {
+			this.responseCode = responseCode;
 		}
 	}
 
@@ -71,12 +89,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(CONNECTED);
+		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(ERROR);
+		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
 		event.setResponseCode(responseCode);
 		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
@@ -84,7 +102,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			ConnectorEvent event = new ConnectorEvent(STANZA_RECEIVED);
+			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
 			event.setResponseBody(response);
 			event.setResponseCode(responseCode);
 			if (response != null) {
@@ -98,7 +116,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(TERMINATE);
+		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
 		event.setResponseCode(responseCode);
 		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
@@ -108,7 +126,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		return this.sessionObject.getProperty(SID_KEY);
 	}
 
-	protected Stage getStage() {
+	@Override
+	public Stage getStage() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
 	}
 

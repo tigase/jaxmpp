@@ -6,7 +6,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -16,6 +15,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeature
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
+import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule.SaslEvent;
 
 public class BoshXmppSessionLogic implements XmppSessionLogic {
 
@@ -31,9 +31,11 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	private Listener<ResourceBindEvent> resourceBindListener;
 
-	private final Listener<BaseEvent> saslEventListener;
+	private final Listener<SaslEvent> saslEventListener;
 
 	private SaslModule saslModule;
+
+	private SessionListener sessionListener;
 
 	private final SessionObject sessionObject;
 
@@ -55,20 +57,18 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 				try {
 					processStreamFeatures(be);
 				} catch (JaxmppException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					processException(e);
 				}
 			}
 		};
-		this.saslEventListener = new Listener<BaseEvent>() {
+		this.saslEventListener = new Listener<SaslEvent>() {
 
 			@Override
-			public void handleEvent(BaseEvent be) {
+			public void handleEvent(SaslEvent be) {
 				try {
 					processSaslEvent(be);
 				} catch (JaxmppException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					processException(e);
 				}
 			}
 
@@ -80,8 +80,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 				try {
 					processResourceBindEvent(be);
 				} catch (JaxmppException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					processException(e);
 				}
 
 			}
@@ -89,7 +88,8 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	}
 
 	@Override
-	public void bind() throws JaxmppException {
+	public void bind(SessionListener sessionListener) throws JaxmppException {
+		this.sessionListener = sessionListener;
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
 		saslModule = this.modulesManager.getModule(SaslModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
@@ -98,6 +98,11 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		saslModule.addListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
 		saslModule.addListener(SaslModule.SASL_FAILED, this.saslEventListener);
 		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+	}
+
+	protected void processException(JaxmppException e) {
+		if (sessionListener != null)
+			sessionListener.onException(e);
 	}
 
 	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
@@ -112,9 +117,11 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
-	protected void processSaslEvent(BaseEvent be) throws JaxmppException {
+	protected void processSaslEvent(SaslEvent be) throws JaxmppException {
 		try {
-			if (be.getType() == SaslModule.SASL_SUCCESS) {
+			if (be.getType() == SaslModule.SASL_FAILED) {
+				throw new JaxmppException("Unauthorized with condition=" + be.getError());
+			} else if (be.getType() == SaslModule.SASL_SUCCESS) {
 				sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
 				connector.restartStream();
 			}

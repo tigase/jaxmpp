@@ -17,9 +17,7 @@ public interface Connector {
 			return serialVersionUID;
 		}
 
-		private Element responseBody;
-
-		private int responseCode;
+		private Throwable caught;
 
 		private Element stanza;
 
@@ -27,24 +25,16 @@ public interface Connector {
 			super(type);
 		}
 
-		public Element getResponseBody() {
-			return responseBody;
-		}
-
-		public int getResponseCode() {
-			return responseCode;
+		public Throwable getCaught() {
+			return caught;
 		}
 
 		public Element getStanza() {
 			return stanza;
 		}
 
-		public void setResponseBody(Element responseBody) {
-			this.responseBody = responseBody;
-		}
-
-		public void setResponseCode(int responseCode) {
-			this.responseCode = responseCode;
+		public void setCaught(Throwable caught) {
+			this.caught = caught;
 		}
 
 		public void setStanza(Element stanza) {
@@ -55,7 +45,8 @@ public interface Connector {
 	public static enum Stage {
 		connected,
 		connecting,
-		disconnected
+		disconnected,
+		disconnecting
 	}
 
 	public final static EventType CONNECTED = new EventType();
@@ -71,6 +62,8 @@ public interface Connector {
 	public void addListener(EventType eventType, Listener<ConnectorEvent> listener);
 
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
+
+	public Stage getStage();
 
 	public void removeAllListeners();
 
