@@ -57,7 +57,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "bosh#sid";
 
-	private final Logger log;
+	protected final Logger log;
 
 	protected final Observable observable = new Observable();
 
@@ -147,7 +147,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				removeFromRequests(response.getAttribute("ack"));
 			if (log.isLoggable(LogLevel.FINER))
 				log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
-			sessionObject.setProperty(CONNECTOR_STAGE, Stage.disconnected);
+			setStage(Stage.disconnected);
 			fireOnError(responseCode, response, caught, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
@@ -282,7 +282,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void setStage(Stage stage) {
+		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
 		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
+		if (s != stage) {
+			ConnectorEvent e = new ConnectorEvent(STAGE_CHANGED);
+			observable.fireEvent(e);
+		}
 	}
 
 	@Override

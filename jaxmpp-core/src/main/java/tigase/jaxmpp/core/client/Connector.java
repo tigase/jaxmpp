@@ -51,9 +51,15 @@ public interface Connector {
 
 	public final static EventType CONNECTED = new EventType();
 
+	public final static EventType CONNECTION_ENCRYPTED = new EventType();
+
 	public final static String CONNECTOR_STAGE = "connector#stage";
 
+	public final static String ENCRYPTED = "connector#encrypted";
+
 	public final static EventType ERROR = new EventType();
+
+	public final static EventType STAGE_CHANGED = new EventType();
 
 	public final static EventType STANZA_RECEIVED = new EventType();
 

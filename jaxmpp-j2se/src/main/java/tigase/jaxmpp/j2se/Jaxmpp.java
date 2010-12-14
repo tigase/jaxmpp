@@ -5,6 +5,7 @@ import java.io.IOException;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
+import tigase.jaxmpp.core.client.Connector.Stage;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -18,7 +19,10 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.logger.LoggerFactory;
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
@@ -38,7 +42,20 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 public class Jaxmpp {
 
+	public static class JaxmppEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		public JaxmppEvent(EventType type) {
+			super(type);
+		}
+	}
+
+	public static final EventType CONNECTED = new EventType();
+
 	public static final String CONNECTOR_TYPE = "connectorType";
+
+	public static final EventType DISCONNECTED = new EventType();
 
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
@@ -49,6 +66,8 @@ public class Jaxmpp {
 	private final Logger log;
 
 	private final XmppModulesManager modulesManager;
+
+	protected final Observable observable = new Observable();
 
 	private final Processor processor;
 
@@ -125,6 +144,14 @@ public class Jaxmpp {
 
 	}
 
+	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
+
+	public void addListener(Listener<? extends BaseEvent> listener) {
+		observable.addListener(listener);
+	}
+
 	public Chat createChat(JID jid) {
 		return (this.modulesManager.getModule(MessageModule.class)).getChatManager().createChat(jid);
 	}
@@ -133,7 +160,7 @@ public class Jaxmpp {
 		this.connector.stop();
 		if ((Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE)) {
 			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.wait();
+				// Jaxmpp.this.wait();
 			}
 		}
 	}
@@ -156,6 +183,11 @@ public class Jaxmpp {
 
 	public RosterStore getRoster() {
 		return sessionObject.getRoster();
+	}
+
+	public boolean isConnected() {
+		return this.connector != null && this.connector.getStage() == Stage.connected
+				&& this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
 	}
 
 	public void login() throws IOException, XMLException, InterruptedException, JaxmppException {
@@ -201,6 +233,7 @@ public class Jaxmpp {
 		if (sync)
 			synchronized (Jaxmpp.this) {
 				Jaxmpp.this.wait();
+				log.finest("Waked up");
 			}
 		if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 			JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
@@ -232,14 +265,20 @@ public class Jaxmpp {
 			log.log(LogLevel.FINE, "Disconnecting error", e1);
 		}
 		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
+		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		observable.fireEvent(event);
 	}
 
 	protected void onResourceBinded(ResourceBindEvent be) {
 		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
+		JaxmppEvent event = new JaxmppEvent(CONNECTED);
+		observable.fireEvent(event);
 	}
 
 	protected void onStanzaReceived(Element stanza) {
@@ -250,14 +289,28 @@ public class Jaxmpp {
 
 	protected void onStreamError(ConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
+		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		observable.fireEvent(event);
 	}
 
 	protected void onStreamTerminated(ConnectorEvent be) {
 		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
+		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		observable.fireEvent(event);
+	}
+
+	public void removeAllListeners() {
+		observable.removeAllListeners();
+	}
+
+	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.removeListener(eventType, listener);
 	}
 
 	public void send(Stanza stanza) throws XMLException, JaxmppException {

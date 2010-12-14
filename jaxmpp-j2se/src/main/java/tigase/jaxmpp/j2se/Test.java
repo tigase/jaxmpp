@@ -45,7 +45,7 @@ public class Test {
 		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "socket");
 
 		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
-		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1] + " ");
+		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
 
 		System.out.println("// login");
 		// not necessary. it allows to set own status on sending initial
@@ -104,9 +104,10 @@ public class Test {
 
 		Thread.sleep(1000 * 5);
 
-		jaxmpp.getPresence().setPresence(null, "Bot changed status", 1);
+		// jaxmpp.getPresence().setPresence(null, "Bot changed status", 1);
 
-		jaxmpp.sendMessage(JID.jidInstance("bmalkow@malkowscy.net"), "Test", "Wiadomosc ");
+		// jaxmpp.sendMessage(JID.jidInstance("bmalkow@malkowscy.net"), "Test",
+		// "Wiadomosc ");
 
 		System.out.println("????????????????");
 

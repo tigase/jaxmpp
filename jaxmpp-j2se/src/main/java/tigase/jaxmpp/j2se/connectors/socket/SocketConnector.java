@@ -5,8 +5,21 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.Socket;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Queue;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.HandshakeCompletedEvent;
+import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
@@ -22,6 +35,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.j2se.xml.J2seElement;
@@ -29,45 +43,6 @@ import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
 public class SocketConnector implements Connector {
-
-	class Worker extends Thread {
-
-		private SocketConnector socketConnector;
-
-		public Worker(SocketConnector socketConnector) {
-			this.socketConnector = socketConnector;
-		}
-
-		@Override
-		public void run() {
-			super.run();
-			while (socketConnector.getStage() != Stage.disconnected) {
-				Queue<tigase.xml.Element> elems = socketConnector.domHandler.getParsedElements();
-				tigase.xml.Element elem;
-				while ((elem = elems.poll()) != null) {
-					System.out.println(" RECEIVED: " + elem.toString());
-					try {
-						socketConnector.onResponse(new J2seElement(elem));
-					} catch (JaxmppException e) {
-						onErrorInThread(e);
-					}
-				}
-				synchronized (this) {
-					try {
-						wait();
-					} catch (InterruptedException e) {
-						onErrorInThread(e);
-					}
-				}
-			}
-		}
-
-		public void wakeUp() {
-			synchronized (this) {
-				notify();
-			}
-		}
-	}
 
 	private class Worker2 extends Thread {
 
@@ -80,18 +55,43 @@ public class SocketConnector implements Connector {
 		}
 
 		@Override
+		public void interrupt() {
+			super.interrupt();
+			log.fine("Worker Interrupted");
+		}
+
+		@Override
 		public void run() {
 			super.run();
-			int r;
+			int r = -2;
 			try {
-				while ((r = connector.reader.read(buffer)) != -1 && connector.getStage() != Stage.disconnected) {
+				while (!isInterrupted() && (r = connector.reader.read(buffer)) != -1
+						&& connector.getStage() != Stage.disconnected) {
 					connector.parser.parse(connector.domHandler, buffer, 0, r);
-					connector.worker.wakeUp();
+
+					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
+					tigase.xml.Element elem;
+					while ((elem = elems.poll()) != null) {
+						System.out.println(" RECEIVED: " + elem.toString());
+						if (elem != null && elem.getXMLNS() != null
+								&& elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
+							connector.onTLSStanza(elem);
+						} else
+							try {
+								connector.onResponse(new J2seElement(elem));
+							} catch (JaxmppException e) {
+								onErrorInThread(e);
+							}
+					}
 				}
+				System.out.println(r + "  " + isInterrupted() + "  " + connector.getStage());
 				connector.onStreamTerminate();
 			} catch (Exception e) {
 				onErrorInThread(e);
 			}
+			interrupt();
+			log.finest("Worker2 is interrupted");
+
 		}
 	}
 
@@ -125,8 +125,6 @@ public class SocketConnector implements Connector {
 	private SessionObject sessionObject;
 
 	private Worker2 w2;
-
-	private Worker worker;
 
 	private OutputStream writer;
 
@@ -195,7 +193,7 @@ public class SocketConnector implements Connector {
 
 	protected void onStreamStart(Map<String, String> attribs) {
 		// TODO Auto-generated method stub
-		// System.out.println(" STREAM STSRT " + attribs.toString());
+		System.out.println(" STREAM STSRT " + attribs.toString());
 	}
 
 	protected void onStreamTerminate() {
@@ -209,6 +207,72 @@ public class SocketConnector implements Connector {
 		terminateAllWorkers();
 		fireOnTerminate(sessionObject);
 
+	}
+
+	public void onTLSStanza(tigase.xml.Element elem) throws JaxmppException {
+		if (elem.getName().equals("proceed")) {
+			proceedTLS();
+		} else if (elem.getName().equals("failure")) {
+			log.info("TLS Failure");
+		}
+	}
+
+	protected void proceedTLS() {
+		log.fine("Proceeding TLS");
+		try {
+			SSLContext ctx = SSLContext.getInstance("TLS");
+			ctx.init(new KeyManager[0], new TrustManager[] { new X509TrustManager() {
+
+				@Override
+				public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+					// TODO Auto-generated method stub
+					log.fine("checkClientTrusted()");
+				}
+
+				@Override
+				public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+					// TODO Auto-generated method stub
+					log.fine("checkServerTrusted() " + arg0 + ", " + arg1);
+
+				}
+
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					log.fine("getAcceptedIssuers()");
+					// TODO Auto-generated method stub
+					return null;
+				}
+			} }, new SecureRandom());
+			final SSLSocketFactory factory = ctx.getSocketFactory();
+
+			SSLSocket s1 = (SSLSocket) factory.createSocket(s, s.getInetAddress().getHostAddress(), s.getPort(), true);
+			s1.setUseClientMode(true);
+			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
+
+				@Override
+				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
+					log.info("TLS completed " + arg0);
+					sessionObject.setProperty(ENCRYPTED, Boolean.TRUE);
+					ConnectorEvent event = new ConnectorEvent(CONNECTION_ENCRYPTED);
+					observable.fireEvent(CONNECTION_ENCRYPTED, event);
+				}
+			});
+			writer = null;
+			reader = null;
+			log.fine("Start handshake");
+			s1.startHandshake();
+			s = s1;
+			writer = s.getOutputStream();
+			reader = new InputStreamReader(s.getInputStream());
+			restartStream();
+		} catch (javax.net.ssl.SSLHandshakeException e) {
+			log.log(LogLevel.SEVERE, "Can't establish encrypted connection", e);
+			onError(null, e);
+		} catch (Exception e) {
+			log.log(LogLevel.SEVERE, "Can't establish encrypted connection", e);
+			// TODO Auto-generated catch block
+			onError(null, e);
+		}
 	}
 
 	@Override
@@ -243,7 +307,8 @@ public class SocketConnector implements Connector {
 	public void send(Element stanza) throws XMLException, JaxmppException {
 		try {
 			String t = stanza.getAsString();
-			// System.out.println("S: " + t);
+			if (log.isLoggable(LogLevel.FINEST))
+				log.finest("SEND: " + t);
 			writer.write(t.getBytes());
 		} catch (IOException e) {
 			throw new JaxmppException(e);
@@ -251,7 +316,12 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void setStage(Stage stage) {
+		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
 		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
+		if (s != stage) {
+			ConnectorEvent e = new ConnectorEvent(STAGE_CHANGED);
+			observable.fireEvent(e);
+		}
 	}
 
 	@Override
@@ -267,13 +337,12 @@ public class SocketConnector implements Connector {
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
 
 		setStage(Stage.connecting);
-		this.worker = new Worker(this);
-		worker.start();
 
 		try {
 			Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
 			port = port == null ? 5222 : port;
-			s = new Socket((String) sessionObject.getProperty(SERVER_HOST), port);
+
+			s = SocketFactory.getDefault().createSocket((String) sessionObject.getProperty(SERVER_HOST), port);
 			writer = s.getOutputStream();
 			reader = new InputStreamReader(s.getInputStream());
 			w2 = new Worker2(this);
@@ -289,6 +358,16 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	public void startTLS() throws JaxmppException {
+		try {
+			log.fine("Start TLS");
+			DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
+			writer.write(e.getAsString().getBytes());
+		} catch (Exception e) {
+			throw new JaxmppException(e);
+		}
+	}
+
 	@Override
 	public void stop() throws JaxmppException {
 		setStage(Stage.disconnecting);
@@ -297,26 +376,17 @@ public class SocketConnector implements Connector {
 	}
 
 	private void terminateAllWorkers() {
-		try {
-			worker.interrupt();
-		} catch (Exception e) {
-			log.log(LogLevel.FINEST, "Problem with interrupting worker", e);
-		}
-		try {
-			w2.interrupt();
-		} catch (Exception e) {
-			log.log(LogLevel.FINEST, "Problem with interrupting w2", e);
-		}
-		try {
-			worker.wakeUp();
-		} catch (Exception e) {
-			log.log(LogLevel.FINEST, "Problem with wakingup worker", e);
-		}
+		log.finest("Terminating all workers");
 		setStage(Stage.disconnected);
 		try {
 			s.close();
 		} catch (IOException e) {
 			log.log(LogLevel.FINEST, "Problem with closing socket", e);
+		}
+		try {
+			w2.interrupt();
+		} catch (Exception e) {
+			log.log(LogLevel.FINEST, "Problem with interrupting w2", e);
 		}
 	}
 

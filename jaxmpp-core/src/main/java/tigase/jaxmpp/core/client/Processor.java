@@ -2,6 +2,8 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -11,12 +13,15 @@ public class Processor {
 
 	public static class FeatureNotImplementedResponse extends AbstractStanzaHandler {
 
+		protected final Logger log = LoggerFactory.getLogger(this.getClass());
+
 		public FeatureNotImplementedResponse(Stanza stanza, PacketWriter writer, SessionObject sessionObject) {
 			super(stanza, writer, sessionObject);
 		}
 
 		@Override
 		protected void process() throws XMLException, XMPPException {
+			log.fine(ErrorCondition.feature_not_implemented.name() + " " + stanza.getAsString());
 			throw new XMPPException(ErrorCondition.feature_not_implemented);
 		}
 

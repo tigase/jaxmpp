@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.PresenceEvent;
-
 public class Observable {
 
 	private final List<Listener<? extends BaseEvent>> everythingListener = new ArrayList<Listener<? extends BaseEvent>>();
@@ -28,6 +26,10 @@ public class Observable {
 
 	public void addListener(Listener<? extends BaseEvent> listener) {
 		this.everythingListener.add(listener);
+	}
+
+	public void fireEvent(BaseEvent event) {
+		fireEvent(event.getType(), event);
 	}
 
 	public void fireEvent(final EventType eventType) {
@@ -55,10 +57,6 @@ public class Observable {
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Problem on notifint observers", e);
 		}
-	}
-
-	public void fireEvent(PresenceEvent event) {
-		fireEvent(event.getType(), event);
 	}
 
 	public void removeAllListeners() {
