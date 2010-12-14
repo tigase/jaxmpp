@@ -51,9 +51,9 @@ public class MessageModule extends AbstractStanzaModule {
 		}
 	}
 
-	public static final EventType CHAT_CREATED = new EventType();
+	public static final EventType ChatCreated = new EventType();
 
-	public static final EventType MESSAGE_RECEIVED = new EventType();
+	public static final EventType MessageReceived = new EventType();
 
 	private final ChatManager chatManager;
 
@@ -90,7 +90,7 @@ public class MessageModule extends AbstractStanzaModule {
 
 	@Override
 	public void process(Stanza element) throws XMPPException, XMLException {
-		MessageEvent event = new MessageEvent(MESSAGE_RECEIVED);
+		MessageEvent event = new MessageEvent(MessageReceived);
 		event.setMessage((Message) element);
 		Chat chat = chatManager.process((Message) element);
 		if (chat != null) {

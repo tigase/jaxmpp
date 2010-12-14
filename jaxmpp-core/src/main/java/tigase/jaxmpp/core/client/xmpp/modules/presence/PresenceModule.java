@@ -90,17 +90,17 @@ public class PresenceModule extends AbstractStanzaModule {
 		}
 	}
 
-	public static final EventType AVAILABLE = new EventType();
+	public static final EventType BeforeInitialPresence = new EventType();
 
-	public static final EventType BEFORE_INITIAL_PRESENCE = new EventType();
+	public static final EventType ContactAvailable = new EventType();
+
+	public static final EventType ContactChangedPresence = new EventType();
+
+	public static final EventType ContactUnavailable = new EventType();
 
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
-	public static final EventType PRESENCE_CHANGE = new EventType();
-
-	public static final EventType SUBSCRIBE = new EventType();
-
-	public static final EventType UNAVAILABLE = new EventType();
+	public static final EventType SubscribeRequest = new EventType();
 
 	private final Observable observable = new Observable();
 
@@ -153,15 +153,15 @@ public class PresenceModule extends AbstractStanzaModule {
 		PresenceEvent event;
 		if (type == StanzaType.subscribe) {
 			// subscribe
-			event = new PresenceEvent(SUBSCRIBE);
+			event = new PresenceEvent(SubscribeRequest);
 		} else if (!availableOld && availableNow) {
 			// sontact available
-			event = new PresenceEvent(AVAILABLE);
+			event = new PresenceEvent(ContactAvailable);
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
-			event = new PresenceEvent(UNAVAILABLE);
+			event = new PresenceEvent(ContactUnavailable);
 		} else {
-			event = new PresenceEvent(PRESENCE_CHANGE);
+			event = new PresenceEvent(ContactChangedPresence);
 		}
 		event.setPresence(presence);
 		event.setJid(fromJid);
@@ -177,7 +177,7 @@ public class PresenceModule extends AbstractStanzaModule {
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {
-		PresenceEvent event = new PresenceEvent(BEFORE_INITIAL_PRESENCE);
+		PresenceEvent event = new PresenceEvent(BeforeInitialPresence);
 		observable.fireEvent(event);
 
 		if (event.isCancelled())

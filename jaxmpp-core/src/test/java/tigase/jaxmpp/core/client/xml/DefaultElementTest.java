@@ -97,10 +97,9 @@ public class DefaultElementTest extends TestCase {
 		e = c.get(0);
 		assertEquals("x", e.getName());
 
-		c = element.getChildrenNS("x", "tigase");
-		assertEquals(1, c.size());
-		e = c.get(0);
-		assertEquals("x", e.getName());
+		Element c1 = element.getChildrenNS("x", "tigase");
+		assertNotNull(c1);
+		assertEquals("x", c1.getName());
 
 	}
 
@@ -138,11 +137,10 @@ public class DefaultElementTest extends TestCase {
 
 		assertNull(element.getXMLNS());
 
-		List<Element> c = element.getChildrenNS("x", "tigase");
-		assertEquals(1, c.size());
-		Element e = c.get(0);
-		assertEquals("x", e.getName());
-		assertEquals("tigase", e.getXMLNS());
+		Element c = element.getChildrenNS("x", "tigase");
+		assertNotNull(c);
+		assertEquals("x", c.getName());
+		assertEquals("tigase", c.getXMLNS());
 
 	}
 }

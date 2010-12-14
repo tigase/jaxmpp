@@ -86,12 +86,11 @@ public class J2seElement implements Element {
 	}
 
 	@Override
-	public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
-		ArrayList<Element> result = new ArrayList<Element>();
+	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		tigase.xml.Element e = this.xmlElement.getChild(name, xmlns);
 		if (e != null)
-			result.add(new J2seElement(e, this));
-		return result;
+			return new J2seElement(e, this);
+		return null;
 	}
 
 	@Override

@@ -49,27 +49,31 @@ public interface Connector {
 		disconnecting
 	}
 
-	public final static EventType CONNECTED = new EventType();
-
-	public final static EventType CONNECTION_ENCRYPTED = new EventType();
+	public final static EventType Connected = new EventType();
 
 	public final static String CONNECTOR_STAGE = "connector#stage";
 
 	public final static String ENCRYPTED = "connector#encrypted";
 
-	public final static EventType ERROR = new EventType();
+	public final static EventType EncryptionEstablished = new EventType();
 
-	public final static EventType STAGE_CHANGED = new EventType();
+	public final static EventType Error = new EventType();
 
-	public final static EventType STANZA_RECEIVED = new EventType();
+	public final static EventType StageChanged = new EventType();
 
-	public final static EventType TERMINATE = new EventType();
+	public final static EventType StanzaReceived = new EventType();
+
+	public final static EventType StreamTerminated = new EventType();
+
+	public static final String TRUST_MANAGER = "connector#trustManager";
 
 	public void addListener(EventType eventType, Listener<ConnectorEvent> listener);
 
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
 	public Stage getStage();
+
+	boolean isSecure();
 
 	public void removeAllListeners();
 

@@ -23,7 +23,7 @@ public class ChatManager {
 
 		@Override
 		public void handleEvent(ChatEvent be) {
-			be.getChat().removeListener(Chat.CHAT_CLOSED, chatCloseListener);
+			be.getChat().removeListener(Chat.ChatClosed, chatCloseListener);
 			onChatClosed(be.getChat());
 		}
 	};
@@ -47,7 +47,7 @@ public class ChatManager {
 		Chat chat = new Chat(packetWriter);
 		chat.setThreadId(threadId);
 		chat.setJid(jid);
-		chat.addListener(Chat.CHAT_CLOSED, chatCloseListener);
+		chat.addListener(Chat.ChatClosed, chatCloseListener);
 
 		this.chats.add(chat);
 
@@ -103,7 +103,7 @@ public class ChatManager {
 			chat.setJid(fromJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);
-			MessageEvent event = new MessageModule.MessageEvent(MessageModule.CHAT_CREATED);
+			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated);
 			event.setChat(chat);
 			event.setMessage(message);
 

@@ -55,11 +55,11 @@ public class RosterModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:roster" }));
 
-	public static final EventType ITEM_ADDED = new EventType();
+	public static final EventType ItemAdded = new EventType();
 
-	public static final EventType ITEM_REMOVED = new EventType();
+	public static final EventType ItemRemoved = new EventType();
 
-	public static final EventType ITEM_UPDATED = new EventType();
+	public static final EventType ItemUpdated = new EventType();
 
 	private static final Element createItem(final RosterItem item) throws XMLException {
 		Element result = new DefaultElement("item");
@@ -181,35 +181,35 @@ public class RosterModule extends AbstractIQModule {
 		if (subscription == Subscription.remove && currentItem != null) {
 			// remove item
 			fill(currentItem, name, subscription, groups, ask);
-			event = new RosterEvent(ITEM_REMOVED, currentItem);
+			event = new RosterEvent(ItemRemoved, currentItem);
 			sessionObject.getRoster().removeItem(jid);
 			log.fine("Roster item " + jid + " removed");
 		} else if (currentItem == null) {
 			// add new item
 			currentItem = new RosterItem(jid);
-			event = new RosterEvent(ITEM_ADDED, currentItem);
+			event = new RosterEvent(ItemAdded, currentItem);
 			fill(currentItem, name, subscription, groups, ask);
 			sessionObject.getRoster().addItem(currentItem);
 			log.fine("Roster item " + jid + " added");
 		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
 			fill(currentItem, name, subscription, groups, ask);
-			event = new RosterEvent(ITEM_UPDATED, currentItem, ChangeAction.askCancelled);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.askCancelled);
 			log.fine("Roster item " + jid + " ask cancelled");
 		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from
 				|| currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
 			fill(currentItem, name, subscription, groups, ask);
-			event = new RosterEvent(ITEM_UPDATED, currentItem, ChangeAction.unsubscribed);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.unsubscribed);
 			log.fine("Roster item " + jid + " unsubscribed");
 		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both
 				|| currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
 			fill(currentItem, name, subscription, groups, ask);
-			event = new RosterEvent(ITEM_UPDATED, currentItem, ChangeAction.subscribed);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.subscribed);
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
-			event = new RosterEvent(ITEM_UPDATED, currentItem);
+			event = new RosterEvent(ItemUpdated, currentItem);
 			fill(currentItem, name, subscription, groups, ask);
 			log.fine("Roster item " + jid + " updated");
 		}

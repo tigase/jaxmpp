@@ -42,9 +42,9 @@ public class Chat {
 		}
 	}
 
-	public static final EventType CHAT_CLOSED = new EventType();
+	public static final EventType ChatClosed = new EventType();
 
-	public static final EventType MESSAGE_RECEIVED = new EventType();
+	public static final EventType MessageReceived = new EventType();
 
 	private boolean closed = false;
 
@@ -66,7 +66,7 @@ public class Chat {
 
 	public void close() {
 		closed = true;
-		ChatEvent event = new ChatEvent(CHAT_CLOSED);
+		ChatEvent event = new ChatEvent(ChatClosed);
 		event.setChat(this);
 		observable.fireEvent(event.getType(), event);
 	}

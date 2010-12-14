@@ -1,5 +1,8 @@
 package tigase.jaxmpp.core.client.xmpp.modules.sasl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -21,6 +24,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms.AnonymousMechanism
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms.PlainMechanism;
 
 public class SaslModule implements XmppModule {
+
+	public static final String AUTHORIZED = "jaxmpp#authorized";
 
 	public static class DefaultCredentialsCallback implements CredentialsCallback {
 
@@ -114,13 +119,33 @@ public class SaslModule implements XmppModule {
 
 	public static final String SASL_CREDENTIALS_CALLBACK = "jaxmpp#credentialsCallback";
 
-	public final static EventType SASL_FAILED = new EventType();
-
 	public static final String SASL_MECHANISM = "jaxmpp#saslMechanism";
 
-	public final static EventType SASL_START = new EventType();
+	public final static EventType SaslFailed = new EventType();
 
-	public final static EventType SASL_SUCCESS = new EventType();
+	public final static EventType SaslStart = new EventType();
+
+	public final static EventType SaslSuccess = new EventType();
+
+	public static List<String> getAllowedSASLMechanisms(SessionObject sessionObject) throws XMLException {
+		final Element sf = sessionObject.getStreamFeatures();
+		if (sf == null)
+			return null;
+		Element m = sf.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
+		if (m == null)
+			return null;
+
+		List<Element> ml = m.getChildren("mechanism");
+		if (ml == null)
+			return null;
+
+		ArrayList<String> result = new ArrayList<String>();
+		for (Element element : ml) {
+			result.add(element.getValue());
+		}
+
+		return result;
+	}
 
 	protected final Logger log;
 
@@ -164,7 +189,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	public void login() throws XMLException, JaxmppException {
-		observable.fireEvent(SASL_START);
+		observable.fireEvent(SaslStart);
 
 		sessionObject.setProperty(SASL_MECHANISM, guessSaslMechanism());
 
@@ -197,6 +222,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	protected void processFailure(Element element) throws XMPPException, XMLException {
+		sessionObject.setProperty(AUTHORIZED, Boolean.FALSE);
 		Element c = element.getFirstChild();
 		SaslError error = null;
 		if (c != null) {
@@ -204,14 +230,15 @@ public class SaslModule implements XmppModule {
 			error = SaslError.valueOf(n);
 		}
 		log.fine("Failure with condition: " + error);
-		SaslEvent event = new SaslEvent(SASL_FAILED);
+		SaslEvent event = new SaslEvent(SaslFailed);
 		event.setError(error);
-		observable.fireEvent(SASL_FAILED, event);
+		observable.fireEvent(SaslFailed, event);
 	}
 
 	protected void processSuccess(Element element) throws XMPPException, XMLException {
+		sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
-		observable.fireEvent(SASL_SUCCESS, new SaslEvent(SASL_SUCCESS));
+		observable.fireEvent(SaslSuccess, new SaslEvent(SaslSuccess));
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {

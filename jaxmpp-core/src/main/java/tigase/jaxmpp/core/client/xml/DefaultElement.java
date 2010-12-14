@@ -157,16 +157,13 @@ public class DefaultElement implements Element {
 	}
 
 	@Override
-	public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
-		List<Element> retval = new LinkedList<Element>();
-
+	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		for (Element element : children) {
 			if (element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
-				retval.add(element);
+				return element;
 			}
 		}
-
-		return retval;
+		return null;
 	}
 
 	@Override

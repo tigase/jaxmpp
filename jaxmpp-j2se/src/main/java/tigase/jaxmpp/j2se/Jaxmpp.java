@@ -51,11 +51,11 @@ public class Jaxmpp {
 		}
 	}
 
-	public static final EventType CONNECTED = new EventType();
+	public static final EventType Connected = new EventType();
 
 	public static final String CONNECTOR_TYPE = "connectorType";
 
-	public static final EventType DISCONNECTED = new EventType();
+	public static final EventType Disconnected = new EventType();
 
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
@@ -140,7 +140,7 @@ public class Jaxmpp {
 		modulesInit();
 
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
-		r.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 
 	}
 
@@ -190,6 +190,10 @@ public class Jaxmpp {
 				&& this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
 	}
 
+	public boolean isSecure() {
+		return connector.isSecure();
+	}
+
 	public void login() throws IOException, XMLException, InterruptedException, JaxmppException {
 		login(true);
 	}
@@ -215,9 +219,9 @@ public class Jaxmpp {
 		} else
 			throw new JaxmppException("Unknown connector type");
 
-		this.connector.addListener(Connector.STANZA_RECEIVED, this.stanzaReceivedListener);
-		connector.addListener(Connector.TERMINATE, this.streamTerminateListener);
-		connector.addListener(Connector.ERROR, this.streamErrorListener);
+		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
+		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
+		connector.addListener(Connector.Error, this.streamErrorListener);
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
 		this.sessionLogic.bind(new SessionListener() {
@@ -268,7 +272,7 @@ public class Jaxmpp {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		observable.fireEvent(event);
 	}
 
@@ -277,7 +281,7 @@ public class Jaxmpp {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(CONNECTED);
+		JaxmppEvent event = new JaxmppEvent(Connected);
 		observable.fireEvent(event);
 	}
 
@@ -292,7 +296,7 @@ public class Jaxmpp {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		observable.fireEvent(event);
 	}
 
@@ -301,7 +305,7 @@ public class Jaxmpp {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(DISCONNECTED);
+		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		observable.fireEvent(event);
 	}
 

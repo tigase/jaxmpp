@@ -125,8 +125,7 @@ public class GwtElement implements Element {
 	}
 
 	@Override
-	public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
-		final ArrayList<Element> result = new ArrayList<Element>();
+	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		NodeList nodes = this.xmlElement.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
@@ -134,11 +133,11 @@ public class GwtElement implements Element {
 				final String x = ((com.google.gwt.xml.client.Element) node).getAttribute("xmlns");
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
 				if (x != null && x.equals(xmlns) && xmlns.equals(gpi.getXMLNS())) {
-					result.add(gpi);
+					return gpi;
 				}
 			}
 		}
-		return result;
+		return null;
 	}
 
 	@Override

@@ -1,12 +1,10 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
-import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -19,8 +17,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule.SaslEvent;
 
 public class SocketXmppSessionLogic implements XmppSessionLogic {
-
-	public static final String AUTHORIZED = "jaxmpp#authorized";
 
 	private final SocketConnector connector;
 
@@ -42,28 +38,12 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private final Listener<StreamFeaturesReceivedEvent> streamFeaturesEventListener;
 
-	private Listener<BaseEvent> tlsEventListener;
-
-	private final PacketWriter writer;
-
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
 			PacketWriter writer) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
 		this.sessionObject = sessionObject;
-		this.writer = writer;
 
-		this.tlsEventListener = new Listener<BaseEvent>() {
-
-			@Override
-			public void handleEvent(BaseEvent be) {
-				try {
-					processTlsEvent(be);
-				} catch (JaxmppException e) {
-					processException(e);
-				}
-			}
-		};
 		this.streamFeaturesEventListener = new Listener<StreamFeaturesModule.StreamFeaturesReceivedEvent>() {
 
 			@Override
@@ -108,10 +88,10 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		saslModule = this.modulesManager.getModule(SaslModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 
-		featuresModule.addListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
-		saslModule.addListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
-		saslModule.addListener(SaslModule.SASL_FAILED, this.saslEventListener);
-		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		saslModule.addListener(SaslModule.SaslSuccess, this.saslEventListener);
+		saslModule.addListener(SaslModule.SaslFailed, this.saslEventListener);
+		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 
 	}
 
@@ -134,10 +114,9 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processSaslEvent(SaslEvent be) throws JaxmppException {
 		try {
-			if (be.getType() == SaslModule.SASL_FAILED) {
+			if (be.getType() == SaslModule.SaslFailed) {
 				throw new JaxmppException("Unauthorized with condition=" + be.getError());
-			} else if (be.getType() == SaslModule.SASL_SUCCESS) {
-				sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
+			} else if (be.getType() == SaslModule.SaslSuccess) {
 				connector.restartStream();
 			}
 		} catch (XMLException e) {
@@ -147,13 +126,17 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
 		try {
+			final boolean saslAvailable = SaslModule.getAllowedSASLMechanisms(sessionObject) != null;
+			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
 
-			if (sessionObject.getProperty(AUTHORIZED) != Boolean.TRUE
-					&& sessionObject.getProperty(Connector.ENCRYPTED) != Boolean.TRUE) {
+			final boolean isAuthorized = sessionObject.getProperty(SaslModule.AUTHORIZED) == Boolean.TRUE;
+			final boolean isConnectionSecure = connector.isSecure();
+
+			if (!isConnectionSecure && tlsAvailable) {
 				connector.startTLS();
-			} else if (sessionObject.getProperty(AUTHORIZED) != Boolean.TRUE) {
+			} else if (!isAuthorized && saslAvailable) {
 				saslModule.login();
-			} else if (sessionObject.getProperty(AUTHORIZED) == Boolean.TRUE) {
+			} else if (isAuthorized) {
 				resourceBinder.bind();
 			}
 		} catch (XMLException e) {
@@ -161,16 +144,12 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
-	protected void processTlsEvent(BaseEvent be) throws JaxmppException {
-		this.connector.proceedTLS();
-	}
-
 	@Override
 	public void unbind() throws JaxmppException {
-		featuresModule.removeListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
-		saslModule.removeListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
-		saslModule.removeListener(SaslModule.SASL_FAILED, this.saslEventListener);
-		resourceBinder.removeListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		saslModule.removeListener(SaslModule.SaslSuccess, this.saslEventListener);
+		saslModule.removeListener(SaslModule.SaslFailed, this.saslEventListener);
+		resourceBinder.removeListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
 }

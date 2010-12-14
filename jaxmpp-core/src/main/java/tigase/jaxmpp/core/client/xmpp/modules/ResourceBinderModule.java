@@ -1,7 +1,5 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -55,11 +53,11 @@ public class ResourceBinderModule implements XmppModule {
 		}
 	}
 
-	public static final EventType BIND_ERROR = new EventType();
-
-	public static final EventType BIND_SUCCESSFULL = new EventType();
-
 	public static final String BINDED_RESOURCE_JID = "jaxmpp#bindedResource";
+
+	public static final EventType ResourceBindError = new EventType();
+
+	public static final EventType ResourceBindSuccess = new EventType();
 
 	protected final Logger log;
 
@@ -92,36 +90,35 @@ public class ResourceBinderModule implements XmppModule {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
-				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
+				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
 				event.setError(error);
-				observable.fireEvent(BIND_ERROR, event);
+				observable.fireEvent(ResourceBindError, event);
 			}
 
 			@Override
 			public void onSuccess(Stanza responseStanza) throws XMLException {
 				String name = null;
-				List<Element> bind = responseStanza.getChildrenNS("bind", "urn:ietf:params:xml:ns:xmpp-bind");
-				if (bind != null && bind.size() > 0) {
-					Element r = bind.get(0).getFirstChild();
-					if (r != null)
-						name = r.getValue();
+				Element bind = responseStanza.getChildrenNS("bind", "urn:ietf:params:xml:ns:xmpp-bind");
+				if (bind != null) {
+					Element c = bind.getFirstChild();
+					name = c != null ? c.getValue() : null;
 				}
 				if (name != null) {
 					JID jid = JID.jidInstance(name);
 					sessionObject.setProperty(BINDED_RESOURCE_JID, jid);
-					ResourceBindEvent event = new ResourceBindEvent(BIND_SUCCESSFULL);
+					ResourceBindEvent event = new ResourceBindEvent(ResourceBindSuccess);
 					event.setJid(jid);
-					observable.fireEvent(BIND_SUCCESSFULL, event);
+					observable.fireEvent(ResourceBindSuccess, event);
 				} else {
-					ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
-					observable.fireEvent(BIND_ERROR, event);
+					ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
+					observable.fireEvent(ResourceBindError, event);
 				}
 			}
 
 			@Override
 			public void onTimeout() throws XMLException {
-				ResourceBindEvent event = new ResourceBindEvent(BIND_ERROR);
-				observable.fireEvent(BIND_ERROR, event);
+				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
+				observable.fireEvent(ResourceBindError, event);
 			}
 		});
 		writer.write(iq);

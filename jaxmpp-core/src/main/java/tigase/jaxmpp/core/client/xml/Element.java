@@ -89,7 +89,7 @@ public interface Element {
 	 * @return A list of Elements with the given name and namespace.
 	 * @throws XMLException
 	 */
-	List<Element> getChildrenNS(String name, String xmlns) throws XMLException;
+	Element getChildrenNS(String name, String xmlns) throws XMLException;
 
 	/**
 	 * Get the first child element of this element.

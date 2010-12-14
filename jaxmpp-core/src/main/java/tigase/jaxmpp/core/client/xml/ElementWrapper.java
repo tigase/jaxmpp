@@ -57,7 +57,7 @@ public class ElementWrapper implements Element {
 	}
 
 	@Override
-	public List<Element> getChildrenNS(String name, String xmlns) throws XMLException {
+	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		return element.getChildrenNS(name, xmlns);
 	}
 

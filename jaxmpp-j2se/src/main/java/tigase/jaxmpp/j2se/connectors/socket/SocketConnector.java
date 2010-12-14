@@ -99,6 +99,14 @@ public class SocketConnector implements Connector {
 
 	public static final String SERVER_PORT = "socket#ServerPort";
 
+	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
+		final Element sf = sessionObject.getStreamFeatures();
+		if (sf == null)
+			return false;
+		Element m = sf.getChildrenNS("starttls", "urn:ietf:params:xml:ns:xmpp-tls");
+		return m != null;
+	}
+
 	private final XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListener() {
 
 		@Override
@@ -111,6 +119,22 @@ public class SocketConnector implements Connector {
 			SocketConnector.this.onStreamStart(attribs);
 		}
 	});
+
+	private final TrustManager dummyTrustManager = new X509TrustManager() {
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+		}
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			return null;
+		}
+	};
 
 	private final Logger log;
 
@@ -148,31 +172,36 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(CONNECTED);
+		ConnectorEvent event = new ConnectorEvent(Connected);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(ERROR);
+		ConnectorEvent event = new ConnectorEvent(Error);
 		event.setStanza(response);
 		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(STANZA_RECEIVED);
+		ConnectorEvent event = new ConnectorEvent(StanzaReceived);
 		event.setStanza(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnTerminate(SessionObject sessionObject) {
-		ConnectorEvent event = new ConnectorEvent(TERMINATE);
+		ConnectorEvent event = new ConnectorEvent(StreamTerminated);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	@Override
 	public Stage getStage() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
+	}
+
+	@Override
+	public boolean isSecure() {
+		return ((Boolean) sessionObject.getProperty(ENCRYPTED)) == Boolean.TRUE;
 	}
 
 	protected void onError(Element response, Throwable caught) {
@@ -220,30 +249,15 @@ public class SocketConnector implements Connector {
 	protected void proceedTLS() {
 		log.fine("Proceeding TLS");
 		try {
-			SSLContext ctx = SSLContext.getInstance("TLS");
-			ctx.init(new KeyManager[0], new TrustManager[] { new X509TrustManager() {
-
-				@Override
-				public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-					// TODO Auto-generated method stub
-					log.fine("checkClientTrusted()");
-				}
-
-				@Override
-				public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-					// TODO Auto-generated method stub
-					log.fine("checkServerTrusted() " + arg0 + ", " + arg1);
-
-				}
-
-				@Override
-				public X509Certificate[] getAcceptedIssuers() {
-					log.fine("getAcceptedIssuers()");
-					// TODO Auto-generated method stub
-					return null;
-				}
-			} }, new SecureRandom());
-			final SSLSocketFactory factory = ctx.getSocketFactory();
+			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER);
+			final SSLSocketFactory factory;
+			if (trustManager == null) {
+				factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+			} else {
+				SSLContext ctx = SSLContext.getInstance("TLS");
+				ctx.init(new KeyManager[0], new TrustManager[] { trustManager }, new SecureRandom());
+				factory = ctx.getSocketFactory();
+			}
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(s, s.getInetAddress().getHostAddress(), s.getPort(), true);
 			s1.setUseClientMode(true);
@@ -253,8 +267,8 @@ public class SocketConnector implements Connector {
 				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 					log.info("TLS completed " + arg0);
 					sessionObject.setProperty(ENCRYPTED, Boolean.TRUE);
-					ConnectorEvent event = new ConnectorEvent(CONNECTION_ENCRYPTED);
-					observable.fireEvent(CONNECTION_ENCRYPTED, event);
+					ConnectorEvent event = new ConnectorEvent(EncryptionEstablished);
+					observable.fireEvent(EncryptionEstablished, event);
 				}
 			});
 			writer = null;
@@ -294,32 +308,34 @@ public class SocketConnector implements Connector {
 		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
 		sb.append("version='1.0'>");
 
-		try {
-			if (log.isLoggable(LogLevel.FINEST))
-				log.finest("Restarting XMPP Stream");
-			writer.write(sb.toString().getBytes());
-		} catch (IOException e) {
-			throw new JaxmppException(e);
-		}
+		if (writer != null)
+			try {
+				if (log.isLoggable(LogLevel.FINEST))
+					log.finest("Restarting XMPP Stream");
+				writer.write(sb.toString().getBytes());
+			} catch (IOException e) {
+				throw new JaxmppException(e);
+			}
 	}
 
 	@Override
 	public void send(Element stanza) throws XMLException, JaxmppException {
-		try {
-			String t = stanza.getAsString();
-			if (log.isLoggable(LogLevel.FINEST))
-				log.finest("SEND: " + t);
-			writer.write(t.getBytes());
-		} catch (IOException e) {
-			throw new JaxmppException(e);
-		}
+		if (writer != null)
+			try {
+				String t = stanza.getAsString();
+				if (log.isLoggable(LogLevel.FINEST))
+					log.finest("SEND: " + t);
+				writer.write(t.getBytes());
+			} catch (IOException e) {
+				throw new JaxmppException(e);
+			}
 	}
 
 	protected void setStage(Stage stage) {
 		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
 		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
 		if (s != stage) {
-			ConnectorEvent e = new ConnectorEvent(STAGE_CHANGED);
+			ConnectorEvent e = new ConnectorEvent(StageChanged);
 			observable.fireEvent(e);
 		}
 	}
@@ -335,6 +351,9 @@ public class SocketConnector implements Connector {
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+
+		if (sessionObject.getProperty(TRUST_MANAGER) == null)
+			sessionObject.setProperty(TRUST_MANAGER, dummyTrustManager);
 
 		setStage(Stage.connecting);
 
@@ -353,19 +372,19 @@ public class SocketConnector implements Connector {
 			setStage(Stage.connected);
 			fireOnConnected(sessionObject);
 		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
+			throw new JaxmppException(e);
 		}
 	}
 
 	public void startTLS() throws JaxmppException {
-		try {
-			log.fine("Start TLS");
-			DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
-			writer.write(e.getAsString().getBytes());
-		} catch (Exception e) {
-			throw new JaxmppException(e);
-		}
+		if (writer != null)
+			try {
+				log.fine("Start TLS");
+				DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
+				writer.write(e.getAsString().getBytes());
+			} catch (Exception e) {
+				throw new JaxmppException(e);
+			}
 	}
 
 	@Override
@@ -391,13 +410,14 @@ public class SocketConnector implements Connector {
 	}
 
 	private void terminateStream() throws JaxmppException {
-		try {
-			String x = "</stream:stream>";
-			log.fine("Terminating XMPP Stream");
-			writer.write(x.getBytes());
-		} catch (IOException e) {
-			throw new JaxmppException(e);
-		}
+		if (writer != null)
+			try {
+				String x = "</stream:stream>";
+				log.fine("Terminating XMPP Stream");
+				writer.write(x.getBytes());
+			} catch (IOException e) {
+				throw new JaxmppException(e);
+			}
 	}
 
 }

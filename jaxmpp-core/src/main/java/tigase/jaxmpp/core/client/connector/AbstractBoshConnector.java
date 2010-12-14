@@ -89,12 +89,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(CONNECTED);
+		BoshConnectorEvent event = new BoshConnectorEvent(Connected);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(ERROR);
+		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
 		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
@@ -102,7 +102,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			BoshConnectorEvent event = new BoshConnectorEvent(STANZA_RECEIVED);
+			BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
 			event.setResponseBody(response);
 			event.setResponseCode(responseCode);
 			if (response != null) {
@@ -116,7 +116,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
-		BoshConnectorEvent event = new BoshConnectorEvent(TERMINATE);
+		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated);
 		event.setResponseCode(responseCode);
 		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
@@ -129,6 +129,11 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public Stage getStage() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
+	}
+
+	@Override
+	public boolean isSecure() {
+		return false;
 	}
 
 	protected Long nextRid() {
@@ -285,7 +290,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
 		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
 		if (s != stage) {
-			ConnectorEvent e = new ConnectorEvent(STAGE_CHANGED);
+			ConnectorEvent e = new ConnectorEvent(StageChanged);
 			observable.fireEvent(e);
 		}
 	}

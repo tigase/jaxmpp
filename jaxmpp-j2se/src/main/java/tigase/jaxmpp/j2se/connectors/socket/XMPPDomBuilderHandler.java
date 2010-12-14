@@ -78,7 +78,6 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 	private Map<String, String> namespaces = new TreeMap<String, String>();
 	private Object parserState = null;
 	private StreamListener service = null;
-	private String top_xmlns = null;
 
 	// ~--- constructors
 	// ---------------------------------------------------------

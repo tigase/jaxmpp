@@ -50,7 +50,7 @@ public class Test {
 		System.out.println("// login");
 		// not necessary. it allows to set own status on sending initial
 		// presence
-		jaxmpp.getModulesManager().getModule(PresenceModule.class).addListener(PresenceModule.BEFORE_INITIAL_PRESENCE,
+		jaxmpp.getModulesManager().getModule(PresenceModule.class).addListener(PresenceModule.BeforeInitialPresence,
 				new Listener<PresenceEvent>() {
 
 					@Override
@@ -62,7 +62,7 @@ public class Test {
 				});
 
 		// listener of incoming messages
-		jaxmpp.getModulesManager().getModule(MessageModule.class).addListener(MessageModule.MESSAGE_RECEIVED,
+		jaxmpp.getModulesManager().getModule(MessageModule.class).addListener(MessageModule.MessageReceived,
 				new Listener<MessageModule.MessageEvent>() {
 
 					@Override
@@ -77,7 +77,7 @@ public class Test {
 
 		final long t1 = System.currentTimeMillis();
 		jaxmpp.login(true);
-		System.out.println(".");
+		System.out.println(" CONNECTED; secure=" + jaxmpp.isSecure());
 
 		// ping example
 		IQ pingIq = IQ.create();

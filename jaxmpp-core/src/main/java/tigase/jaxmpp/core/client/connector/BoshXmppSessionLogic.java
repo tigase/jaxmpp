@@ -94,10 +94,10 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		saslModule = this.modulesManager.getModule(SaslModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 
-		featuresModule.addListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
-		saslModule.addListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
-		saslModule.addListener(SaslModule.SASL_FAILED, this.saslEventListener);
-		resourceBinder.addListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		saslModule.addListener(SaslModule.SaslSuccess, this.saslEventListener);
+		saslModule.addListener(SaslModule.SaslFailed, this.saslEventListener);
+		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
 	protected void processException(JaxmppException e) {
@@ -119,9 +119,9 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processSaslEvent(SaslEvent be) throws JaxmppException {
 		try {
-			if (be.getType() == SaslModule.SASL_FAILED) {
+			if (be.getType() == SaslModule.SaslFailed) {
 				throw new JaxmppException("Unauthorized with condition=" + be.getError());
-			} else if (be.getType() == SaslModule.SASL_SUCCESS) {
+			} else if (be.getType() == SaslModule.SaslSuccess) {
 				sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
 				connector.restartStream();
 			}
@@ -144,10 +144,10 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	@Override
 	public void unbind() throws JaxmppException {
-		featuresModule.removeListener(StreamFeaturesModule.STREAM_FEATURES_RECEIVED, streamFeaturesEventListener);
-		saslModule.removeListener(SaslModule.SASL_SUCCESS, this.saslEventListener);
-		saslModule.removeListener(SaslModule.SASL_FAILED, this.saslEventListener);
-		resourceBinder.removeListener(ResourceBinderModule.BIND_SUCCESSFULL, resourceBindListener);
+		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		saslModule.removeListener(SaslModule.SaslSuccess, this.saslEventListener);
+		saslModule.removeListener(SaslModule.SaslFailed, this.saslEventListener);
+		resourceBinder.removeListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 
 	}
 
