@@ -66,7 +66,7 @@ public class SocketConnector implements Connector {
 			int r = -2;
 			try {
 				while (!isInterrupted() && (r = connector.reader.read(buffer)) != -1
-						&& connector.getStage() != Stage.disconnected) {
+						&& connector.getState() != Connector.State.disconnected) {
 					connector.parser.parse(connector.domHandler, buffer, 0, r);
 
 					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
@@ -84,7 +84,7 @@ public class SocketConnector implements Connector {
 							}
 					}
 				}
-				System.out.println(r + "  " + isInterrupted() + "  " + connector.getStage());
+				System.out.println(r + "  " + isInterrupted() + "  " + connector.getState());
 				connector.onStreamTerminate();
 			} catch (Exception e) {
 				onErrorInThread(e);
@@ -195,7 +195,7 @@ public class SocketConnector implements Connector {
 	}
 
 	@Override
-	public Stage getStage() {
+	public State getState() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
 	}
 
@@ -206,12 +206,12 @@ public class SocketConnector implements Connector {
 
 	protected void onError(Element response, Throwable caught) {
 		if (response != null)
-			sessionObject.setProperty(CONNECTOR_STAGE, Stage.disconnected);
+			sessionObject.setProperty(CONNECTOR_STAGE, State.disconnected);
 		fireOnError(response, caught, sessionObject);
 	}
 
 	protected void onErrorInThread(Exception e) {
-		if (getStage() == Stage.disconnected)
+		if (getState() == State.disconnected)
 			return;
 		fireOnError(null, e, sessionObject);
 	}
@@ -226,9 +226,9 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void onStreamTerminate() {
-		if (getStage() == Stage.disconnected)
+		if (getState() == State.disconnected)
 			return;
-		setStage(Stage.disconnected);
+		setStage(State.disconnected);
 
 		if (log.isLoggable(LogLevel.FINE))
 			log.fine("Stream terminated");
@@ -331,11 +331,11 @@ public class SocketConnector implements Connector {
 			}
 	}
 
-	protected void setStage(Stage stage) {
-		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
-		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
-		if (s != stage) {
-			ConnectorEvent e = new ConnectorEvent(StageChanged);
+	protected void setStage(State state) {
+		State s = this.sessionObject.getProperty(CONNECTOR_STAGE);
+		this.sessionObject.setProperty(CONNECTOR_STAGE, state);
+		if (s != state) {
+			ConnectorEvent e = new ConnectorEvent(StateChanged);
 			observable.fireEvent(e);
 		}
 	}
@@ -355,7 +355,7 @@ public class SocketConnector implements Connector {
 		if (sessionObject.getProperty(TRUST_MANAGER) == null)
 			sessionObject.setProperty(TRUST_MANAGER, dummyTrustManager);
 
-		setStage(Stage.connecting);
+		setStage(State.connecting);
 
 		try {
 			Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
@@ -369,7 +369,7 @@ public class SocketConnector implements Connector {
 
 			restartStream();
 
-			setStage(Stage.connected);
+			setStage(State.connected);
 			fireOnConnected(sessionObject);
 		} catch (Exception e) {
 			throw new JaxmppException(e);
@@ -389,14 +389,14 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void stop() throws JaxmppException {
-		setStage(Stage.disconnecting);
+		setStage(State.disconnecting);
 		terminateStream();
 		terminateAllWorkers();
 	}
 
 	private void terminateAllWorkers() {
 		log.finest("Terminating all workers");
-		setStage(Stage.disconnected);
+		setStage(State.disconnected);
 		try {
 			s.close();
 		} catch (IOException e) {

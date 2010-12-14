@@ -7,6 +7,49 @@ import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Main Connector interface.
+ * 
+ * <dl>
+ * <dt><b>Events:</b></dt>
+ * 
+ * <dd><b>{@link Connector#Connected Connected}</b> : {@link ConnectorEvent
+ * ConnectorEvent} ()<br>
+ * <div>Fires after creates XMPP Stream</div></dd>
+ * 
+ * <dd><b>{@link Connector#EncryptionEstablished EncryptionEstablished}</b> :
+ * {@link ConnectorEvent ConnectorEvent} ()<br>
+ * <div>Fires after encrypted connection is established.</div></dd>
+ * 
+ * <dd><b>{@link Connector#Error Error}</b> : {@link ConnectorEvent
+ * ConnectorEvent} (caught)<br>
+ * <div>Fires on XMPP Stream error</div>
+ * <ul>
+ * <li>caught : exception</li>
+ * </ul>
+ * </dd>
+ * 
+ * <dd><b>{@link Connector#StateChanged StateChanged}</b> :
+ * {@link ConnectorEvent ConnectorEvent} ()<br>
+ * <div>Fires after connection state is changed</div></dd>
+ * 
+ * <dd><b>{@link Connector#StanzaReceived StanzaReceived}</b> :
+ * {@link ConnectorEvent ConnectorEvent} (stanza)<br>
+ * <div>Fires after next stanza is received</div>
+ * <ul>
+ * <li>stanza : received stanza</li>
+ * </ul>
+ * </dd>
+ * 
+ * <dd><b>{@link Connector#StreamTerminated StreamTerminated}</b> :
+ * {@link ConnectorEvent ConnectorEvent} ()<br>
+ * <div>Fires after XMPP Stream is terminated</div></dd>
+ * 
+ * </dl>
+ * 
+ * @author $Author$
+ * @version $Revision$
+ */
 public interface Connector {
 
 	public static class ConnectorEvent extends BaseEvent {
@@ -29,6 +72,11 @@ public interface Connector {
 			return caught;
 		}
 
+		/**
+		 * Return received stanza
+		 * 
+		 * @return stanza
+		 */
 		public Element getStanza() {
 			return stanza;
 		}
@@ -42,27 +90,57 @@ public interface Connector {
 		}
 	}
 
-	public static enum Stage {
+	public static enum State {
 		connected,
 		connecting,
 		disconnected,
 		disconnecting
 	}
 
+	/**
+	 * Event fires after creates XMPP Stream
+	 */
 	public final static EventType Connected = new EventType();
 
 	public final static String CONNECTOR_STAGE = "connector#stage";
 
 	public final static String ENCRYPTED = "connector#encrypted";
 
+	/**
+	 * Event fires after encrypted connection is established.
+	 */
 	public final static EventType EncryptionEstablished = new EventType();
 
+	/**
+	 * Event fires on XMPP Stream error.
+	 * <p>
+	 * Filled fields:
+	 * <ul>
+	 * <li>caught : exception</li>
+	 * </ul>
+	 * </p>
+	 */
 	public final static EventType Error = new EventType();
 
-	public final static EventType StageChanged = new EventType();
-
+	/**
+	 * Event fires after creates XMPP Stream.
+	 * <p>
+	 * Filled fields:
+	 * <ul>
+	 * <li>{@link ConnectorEvent#getStanza() stanza} : received stanza</li>
+	 * </ul>
+	 * </p>
+	 */
 	public final static EventType StanzaReceived = new EventType();
 
+	/**
+	 * Event fires after connection state is changed.
+	 */
+	public final static EventType StateChanged = new EventType();
+
+	/**
+	 * Event fires after XMPP Stream is terminated.
+	 */
 	public final static EventType StreamTerminated = new EventType();
 
 	public static final String TRUST_MANAGER = "connector#trustManager";
@@ -71,7 +149,7 @@ public interface Connector {
 
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
-	public Stage getStage();
+	public State getState();
 
 	boolean isSecure();
 

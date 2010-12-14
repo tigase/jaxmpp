@@ -5,7 +5,7 @@ import java.io.IOException;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
-import tigase.jaxmpp.core.client.Connector.Stage;
+import tigase.jaxmpp.core.client.Connector.State;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -94,7 +94,7 @@ public class Jaxmpp {
 
 			@Override
 			public void write(final Element stanza) throws JaxmppException {
-				if (connector.getStage() != Connector.Stage.connected)
+				if (connector.getState() != Connector.State.connected)
 					throw new JaxmppException("Not connected!");
 				try {
 					connector.send(stanza);
@@ -186,7 +186,7 @@ public class Jaxmpp {
 	}
 
 	public boolean isConnected() {
-		return this.connector != null && this.connector.getStage() == Stage.connected
+		return this.connector != null && this.connector.getState() == State.connected
 				&& this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
 	}
 

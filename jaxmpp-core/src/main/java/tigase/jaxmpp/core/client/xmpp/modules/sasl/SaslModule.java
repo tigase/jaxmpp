@@ -25,8 +25,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms.PlainMechanism;
 
 public class SaslModule implements XmppModule {
 
-	public static final String AUTHORIZED = "jaxmpp#authorized";
-
 	public static class DefaultCredentialsCallback implements CredentialsCallback {
 
 		private final SessionObject sessionObject;
@@ -111,6 +109,8 @@ public class SaslModule implements XmppModule {
 			this.error = error;
 		}
 	}
+
+	public static final String AUTHORIZED = "jaxmpp#authorized";
 
 	private final static Criteria CRIT = new Or(new Criteria[] {
 			ElementCriteria.name("success", "urn:ietf:params:xml:ns:xmpp-sasl"),

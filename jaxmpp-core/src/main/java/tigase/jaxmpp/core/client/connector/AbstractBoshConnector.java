@@ -127,7 +127,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public Stage getStage() {
+	public State getState() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);
 	}
 
@@ -152,7 +152,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				removeFromRequests(response.getAttribute("ack"));
 			if (log.isLoggable(LogLevel.FINER))
 				log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
-			setStage(Stage.disconnected);
+			setStage(State.disconnected);
 			fireOnError(responseCode, response, caught, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
@@ -163,12 +163,12 @@ public abstract class AbstractBoshConnector implements Connector {
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
-			if (getStage() == Stage.connecting) {
+			if (getState() == State.connecting) {
 				setSid(response.getAttribute("sid"));
-				setStage(Stage.connected);
+				setStage(State.connected);
 				fireOnConnected(sessionObject);
 			}
-			if (getStage() == Stage.connected && countActiveRequests() == 0) {
+			if (getState() == State.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody(null);
 				processSendData(body);
 			}
@@ -184,7 +184,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				log.fine("Stream terminated. responseCode=" + responseCode);
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
-			setStage(Stage.disconnected);
+			setStage(State.disconnected);
 			terminateAllWorkers();
 			fireOnTerminate(responseCode, response, sessionObject);
 		} catch (XMLException e) {
@@ -267,13 +267,13 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void restartStream() throws XMLException, JaxmppException {
-		if (getStage() != Stage.disconnected)
+		if (getState() != State.disconnected)
 			processSendData(prepareRetartBody());
 	}
 
 	@Override
 	public void send(final Element stanza) throws XMLException, JaxmppException {
-		if (getStage() == Stage.connected) {
+		if (getState() == State.connected) {
 			if (stanza != null) {
 				final Element body = prepareBody(stanza);
 				processSendData(body);
@@ -286,11 +286,11 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.sessionObject.setProperty(SID_KEY, sid);
 	}
 
-	protected void setStage(Stage stage) {
-		Stage s = this.sessionObject.getProperty(CONNECTOR_STAGE);
-		this.sessionObject.setProperty(CONNECTOR_STAGE, stage);
-		if (s != stage) {
-			ConnectorEvent e = new ConnectorEvent(StageChanged);
+	protected void setStage(State state) {
+		State s = this.sessionObject.getProperty(CONNECTOR_STAGE);
+		this.sessionObject.setProperty(CONNECTOR_STAGE, state);
+		if (s != state) {
+			ConnectorEvent e = new ConnectorEvent(StateChanged);
 			observable.fireEvent(e);
 		}
 	}
@@ -308,13 +308,13 @@ public abstract class AbstractBoshConnector implements Connector {
 		if (u == null)
 			throw new JaxmppException("BOSH service URL not defined!");
 
-		setStage(Stage.connecting);
+		setStage(State.connecting);
 		processSendData(prepareStartBody());
 	}
 
 	@Override
 	public void stop() throws XMLException, JaxmppException {
-		if (getStage() != Stage.disconnected)
+		if (getState() != State.disconnected)
 			processSendData(prepareTerminateBody(null));
 	}
 
