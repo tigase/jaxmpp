@@ -42,6 +42,9 @@ import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
+/**
+ * 
+ */
 public class SocketConnector implements Connector {
 
 	private class Worker2 extends Thread {
@@ -194,6 +197,9 @@ public class SocketConnector implements Connector {
 		this.observable.fireEvent(event.getType(), event);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public State getState() {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE);

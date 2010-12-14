@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client;
 
+import javax.net.ssl.TrustManager;
+
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -15,11 +17,15 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * 
  * <dd><b>{@link Connector#Connected Connected}</b> : {@link ConnectorEvent
  * ConnectorEvent} ()<br>
- * <div>Fires after creates XMPP Stream</div></dd>
+ * <div>Fires after creates XMPP Stream</div>
+ * <ul>
+ * </ul></dd>
  * 
  * <dd><b>{@link Connector#EncryptionEstablished EncryptionEstablished}</b> :
  * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after encrypted connection is established.</div></dd>
+ * <div>Fires after encrypted connection is established.</div>
+ * <ul>
+ * </ul></dd>
  * 
  * <dd><b>{@link Connector#Error Error}</b> : {@link ConnectorEvent
  * ConnectorEvent} (caught)<br>
@@ -31,7 +37,9 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * 
  * <dd><b>{@link Connector#StateChanged StateChanged}</b> :
  * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after connection state is changed</div></dd>
+ * <div>Fires after connection state is changed</div>
+ * <ul>
+ * </ul></dd>
  * 
  * <dd><b>{@link Connector#StanzaReceived StanzaReceived}</b> :
  * {@link ConnectorEvent ConnectorEvent} (stanza)<br>
@@ -43,7 +51,18 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * 
  * <dd><b>{@link Connector#StreamTerminated StreamTerminated}</b> :
  * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after XMPP Stream is terminated</div></dd>
+ * <div>Fires after XMPP Stream is terminated</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * 
+ * <br/>
+ * <dt><b>Properties:</b></dt>
+ * 
+ * <dd><b>{@link Connector#TRUST_MANAGER TRUST_MANAGER}</b>: Custom
+ * {@link TrustManager TrustManager} instead of dummy (accespts all
+ * certificates) builded in.</dd>
+ * 
  * 
  * </dl>
  * 
@@ -143,7 +162,12 @@ public interface Connector {
 	 */
 	public final static EventType StreamTerminated = new EventType();
 
-	public static final String TRUST_MANAGER = "connector#trustManager";
+	/**
+	 * Key for define {@linkplain SessionObject#setUserProperty(String, Object)
+	 * property}. Custom {@link TrustManager TrustManager} instead of dummy
+	 * (accespts all certificates) builded in.
+	 */
+	public static final String TRUST_MANAGER = "TRUST_MANAGER";
 
 	public void addListener(EventType eventType, Listener<ConnectorEvent> listener);
 
