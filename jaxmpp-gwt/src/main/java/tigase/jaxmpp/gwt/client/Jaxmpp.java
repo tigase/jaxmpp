@@ -1,4 +1,4 @@
-package tigase.jaxmpp.j2se;
+package tigase.jaxmpp.gwt.client;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
@@ -9,24 +9,21 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
-import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
-import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
+import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 public class Jaxmpp extends JaxmppCore {
 
-	public static final String CONNECTOR_TYPE = "connectorType";
-
-	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
-
-	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
-
-	public Jaxmpp() {
-		super(new DefaultLoggerSpi());
+	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
+		super(defaultLoggerSpi);
 
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
@@ -35,7 +32,6 @@ public class Jaxmpp extends JaxmppCore {
 
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-
 	}
 
 	@Override
@@ -45,19 +41,10 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (XMLException e) {
 			throw new JaxmppException(e);
 		}
-		if ((Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE)) {
-			synchronized (Jaxmpp.this) {
-				// Jaxmpp.this.wait();
-			}
-		}
 	}
 
 	@Override
 	public void login() throws JaxmppException {
-		login(true);
-	}
-
-	public void login(boolean sync) throws JaxmppException {
 		this.sessionObject.clear();
 
 		if (this.sessionLogic != null) {
@@ -69,14 +56,7 @@ public class Jaxmpp extends JaxmppCore {
 			this.connector = null;
 		}
 
-		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using SocketConnector");
-			this.connector = new SocketConnector(this.sessionObject);
-		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using BOSHConnector");
-			this.connector = new BoshConnector(this.sessionObject);
-		} else
-			throw new JaxmppException("Unknown connector type");
+		this.connector = new BoshConnector(this.sessionObject);
 
 		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
 		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
@@ -93,26 +73,15 @@ public class Jaxmpp extends JaxmppCore {
 
 		try {
 			this.connector.start();
-			this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
-			if (sync)
-				synchronized (Jaxmpp.this) {
-					Jaxmpp.this.wait();
-					log.finest("Waked up");
-				}
-		} catch (Exception e1) {
+		} catch (XMLException e1) {
 			throw new JaxmppException(e1);
 		}
-		if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
-			JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
-			JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
-			throw e;
-		}
+
 	}
 
 	@Override
 	protected void onException(JaxmppException e) {
 		log.log(LogLevel.FINE, "Catching exception", e);
-		sessionObject.setProperty(EXCEPTION_KEY, e);
 		try {
 			connector.stop();
 		} catch (Exception e1) {
@@ -128,37 +97,31 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onResourceBinded(ResourceBindEvent be) {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
 		JaxmppEvent event = new JaxmppEvent(Connected);
 		observable.fireEvent(event);
 	}
 
 	@Override
 	protected void onStanzaReceived(Element stanza) {
-		Runnable r = this.processor.process(stanza);
+		final Runnable r = this.processor.process(stanza);
 		if (r != null)
-			(new Thread(r)).start();
+			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+				@Override
+				public void execute() {
+					r.run();
+				}
+			});
 	}
 
 	@Override
 	protected void onStreamError(ConnectorEvent be) {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		observable.fireEvent(event);
 	}
 
 	@Override
 	protected void onStreamTerminated(ConnectorEvent be) {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		observable.fireEvent(event);
 	}
