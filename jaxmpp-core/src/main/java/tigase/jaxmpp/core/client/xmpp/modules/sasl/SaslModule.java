@@ -172,7 +172,6 @@ public class SaslModule implements XmppModule {
 
 	@Override
 	public String[] getFeatures() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

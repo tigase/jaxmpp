@@ -35,14 +35,16 @@ public class Test {
 
 		Jaxmpp jaxmpp = new Jaxmpp();
 		// for BOSH connector
-		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://messenger.tigase.org:80/bosh");
+		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://127.0.0.1:5280");
+		// jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL,
+		// "http://messenger.tigase.org:80/bosh");
 		// for Socket connector
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "tigase.tigase.org");
 		// port value is not necessary. Default is 5222
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_PORT, 5222);
 
 		// "bosh" and "socket" values available
-		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "socket");
+		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "bosh");
 
 		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
 		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
@@ -55,6 +57,7 @@ public class Test {
 
 					@Override
 					public void handleEvent(PresenceEvent be) {
+						be.cancel();
 						be.setPriority(-1);
 						be.setStatus("jaxmpp2 based Bot!");
 						be.setShow(Show.away);
@@ -102,16 +105,14 @@ public class Test {
 			}
 		});
 
-		Thread.sleep(1000 * 5);
+		Thread.sleep(1000 * 120);
 
 		// jaxmpp.getPresence().setPresence(null, "Bot changed status", 1);
 
 		// jaxmpp.sendMessage(JID.jidInstance("bmalkow@malkowscy.net"), "Test",
 		// "Wiadomosc ");
 
-		System.out.println("????????????????");
-
-		Thread.sleep(1000 * 15);
+		// Thread.sleep(1000 * 15);
 
 		System.out.println("// disconnect");
 		jaxmpp.disconnect();

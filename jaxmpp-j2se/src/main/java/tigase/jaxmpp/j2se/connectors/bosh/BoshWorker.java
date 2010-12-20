@@ -29,23 +29,16 @@ public abstract class BoshWorker implements BoshRequest {
 
 	private final String rid;
 
+	private final SessionObject sessionObject;
+
 	private boolean terminated = false;
 
 	public BoshWorker(DomBuilderHandler domHandler, SimpleParser parser, SessionObject sessionObject, Element body)
 			throws XMLException, JaxmppException {
 		this.domHandler = domHandler;
 		this.parser = parser;
+		this.sessionObject = sessionObject;
 
-		try {
-			URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
-			// URL url = new URL((String)
-			// sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL));
-
-			this.conn = (HttpURLConnection) (url.openConnection());
-			this.conn.setAllowUserInteraction(true);
-		} catch (Exception e) {
-			throw new JaxmppException(e);
-		}
 		this.body = body;
 		this.rid = body.getAttribute("rid");
 		if (this.rid == null)
@@ -69,6 +62,8 @@ public abstract class BoshWorker implements BoshRequest {
 			return;
 		try {
 			try {
+				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
+				this.conn = (HttpURLConnection) (url.openConnection());
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
