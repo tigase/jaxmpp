@@ -50,6 +50,10 @@ public class RosterModule extends AbstractIQModule {
 			super(type);
 			this.item = item;
 		}
+
+		public RosterItem getItem() {
+			return item;
+		}
 	}
 
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(

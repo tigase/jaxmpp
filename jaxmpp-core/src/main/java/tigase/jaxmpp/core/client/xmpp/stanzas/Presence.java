@@ -24,6 +24,10 @@ public class Presence extends Stanza {
 			throw new RuntimeException("Wrong element name: " + element.getName());
 	}
 
+	public String getNickname() throws XMLException {
+		return getChildElementValue("nick", "http://jabber.org/protocol/nick");
+	}
+
 	public Integer getPriority() throws XMLException {
 		String x = getChildElementValue("priority");
 		if (x == null)
@@ -40,6 +44,10 @@ public class Presence extends Stanza {
 
 	public String getStatus() throws XMLException {
 		return getChildElementValue("status");
+	}
+
+	public void setNickname(String value) throws XMLException {
+		setChildElementValue("nick", "http://jabber.org/protocol/nick", value == null ? null : value.toString());
 	}
 
 	public void setPriority(Integer value) throws XMLException {

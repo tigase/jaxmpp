@@ -6,6 +6,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -173,6 +174,8 @@ public interface Connector {
 
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
+	public Observable getObservable();
+
 	public State getState();
 
 	boolean isSecure();
@@ -184,6 +187,8 @@ public interface Connector {
 	public void restartStream() throws XMLException, JaxmppException;
 
 	public void send(final Element stanza) throws XMLException, JaxmppException;
+
+	public void setObservable(Observable observable);
 
 	public void start() throws XMLException, JaxmppException;
 

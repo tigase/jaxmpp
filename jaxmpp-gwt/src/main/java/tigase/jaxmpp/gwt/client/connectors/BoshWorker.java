@@ -46,8 +46,9 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 					int responseCode = $response.getStatusCode();
 					if (responseCode != 200)
 						BoshWorker.this.onError($response.getStatusCode(), null, null);
-					final GwtElement response = new GwtElement(
-							XMLParser.parse($response.getText().replaceAll("&semi;", ";")).getDocumentElement());
+					String x = $response.getText().replaceAll("&semi;", ";");
+					System.out.println("<< " + x);
+					final GwtElement response = new GwtElement(XMLParser.parse(x).getDocumentElement());
 
 					final String type = response.getAttribute("type");
 					if (type != null && "terminate".equals(type)) {
@@ -69,7 +70,9 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 	@Override
 	public void execute() {
 		try {
-			requestBuilder.sendRequest(element.getAsString(), callback);
+			String x = element.getAsString();
+			System.out.println(">> " + x);
+			requestBuilder.sendRequest(x, callback);
 		} catch (Exception e) {
 			try {
 				onError(-1, null, e);

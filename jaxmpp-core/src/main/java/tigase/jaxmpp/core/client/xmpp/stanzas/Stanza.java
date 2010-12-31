@@ -34,6 +34,11 @@ public abstract class Stanza extends ElementWrapper {
 		return b == null ? null : b.getValue();
 	}
 
+	protected String getChildElementValue(final String elemName, final String xmlns) throws XMLException {
+		Element b = getChildrenNS(elemName, xmlns);
+		return b == null ? null : b.getValue();
+	}
+
 	public ErrorCondition getErrorCondition() throws XMLException {
 		List<Element> es = getChildren("error");
 		final Element error;
@@ -92,6 +97,19 @@ public abstract class Stanza extends ElementWrapper {
 			removeChild(b);
 		else if (value != null && b == null) {
 			b = new DefaultElement(elemName);
+			addChild(b);
+			b.setValue(value);
+		} else if (value != null && b != null) {
+			b.setValue(value);
+		}
+	}
+
+	protected void setChildElementValue(final String elemName, final String xmlns, final String value) throws XMLException {
+		Element b = getChildrenNS(elemName, xmlns);
+		if (value == null && b != null)
+			removeChild(b);
+		else if (value != null && b == null) {
+			b = new DefaultElement(elemName, null, xmlns);
 			addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {

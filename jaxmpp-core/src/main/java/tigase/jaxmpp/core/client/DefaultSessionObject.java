@@ -79,6 +79,8 @@ public class DefaultSessionObject implements SessionObject {
 
 	@Override
 	public void setUserProperty(String key, Object value) {
+		if (value == null)
+			this.userProperties.remove(key);
 		this.userProperties.put(key, value);
 	}
 

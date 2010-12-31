@@ -7,6 +7,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public interface SessionObject extends UserProperties {
 
+	public static final String NICKNAME = "nickname";
+
 	public static final String PASSWORD = "password";
 
 	public static final String RESOURCE = "resource";

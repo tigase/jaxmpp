@@ -25,6 +25,26 @@ public class PresenceStore {
 
 	private Map<BareJID, Map<String, Presence>> presencesMapByBareJid = new HashMap<BareJID, Map<String, Presence>>();
 
+	public Presence getBestPresence(final BareJID jid) throws XMLException {
+		Map<String, Presence> resourcesPresence = this.presencesMapByBareJid.get(jid);
+		Presence result = null;
+		if (resourcesPresence != null) {
+			Iterator<Presence> it = resourcesPresence.values().iterator();
+			while (it.hasNext()) {
+				Presence x = it.next();
+				Integer p = x.getPriority();
+				if (result == null || p >= result.getPriority()) {
+					result = x;
+				}
+			}
+		}
+		return result;
+	}
+
+	public Map<String, Presence> getPresences(BareJID jid) {
+		return this.presencesMapByBareJid.get(jid);
+	}
+
 	public boolean isAvailable(BareJID jid) throws XMLException {
 		Map<String, Presence> resourcesPresence = this.presencesMapByBareJid.get(jid);
 		boolean result = false;

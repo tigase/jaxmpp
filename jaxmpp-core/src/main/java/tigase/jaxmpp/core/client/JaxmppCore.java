@@ -31,8 +31,18 @@ public abstract class JaxmppCore {
 
 		private static final long serialVersionUID = 1L;
 
+		private Throwable caught;
+
 		public JaxmppEvent(EventType type) {
 			super(type);
+		}
+
+		public Throwable getCaught() {
+			return caught;
+		}
+
+		public void setCaught(Throwable throwable) {
+			this.caught = throwable;
 		}
 	}
 
@@ -114,11 +124,11 @@ public abstract class JaxmppCore {
 
 	}
 
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+	public void addListener(EventType eventType, Listener<JaxmppEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
-	public void addListener(Listener<? extends BaseEvent> listener) {
+	public void addListener(Listener<JaxmppEvent> listener) {
 		observable.addListener(listener);
 	}
 
@@ -146,6 +156,10 @@ public abstract class JaxmppCore {
 
 	public RosterStore getRoster() {
 		return sessionObject.getRoster();
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 
 	public boolean isConnected() {
@@ -187,7 +201,7 @@ public abstract class JaxmppCore {
 		observable.removeAllListeners();
 	}
 
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+	public void removeListener(EventType eventType, Listener<JaxmppEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
 

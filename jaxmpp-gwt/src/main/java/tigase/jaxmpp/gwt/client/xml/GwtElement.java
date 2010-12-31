@@ -24,6 +24,8 @@ public class GwtElement implements Element {
 	private final com.google.gwt.xml.client.Element xmlElement;
 
 	public GwtElement(com.google.gwt.xml.client.Element xmlElement) {
+		if (xmlElement == null)
+			(new Exception("DEBUG 1")).printStackTrace();
 		this.xmlElement = xmlElement;
 	}
 
@@ -142,7 +144,8 @@ public class GwtElement implements Element {
 
 	@Override
 	public Element getFirstChild() throws XMLException {
-		return new GwtElement((com.google.gwt.xml.client.Element) xmlElement.getFirstChild());
+		com.google.gwt.xml.client.Element c = (com.google.gwt.xml.client.Element) xmlElement.getFirstChild();
+		return c == null ? null : new GwtElement(c);
 	}
 
 	@Override

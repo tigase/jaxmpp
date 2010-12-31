@@ -115,11 +115,11 @@ public class PresenceModule extends AbstractStanzaModule {
 		});
 	}
 
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+	public void addListener(EventType eventType, Listener<PresenceEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
-	public void addListener(Listener<? extends BaseEvent> listener) {
+	public void addListener(Listener<PresenceEvent> listener) {
 		observable.addListener(listener);
 	}
 
@@ -140,6 +140,7 @@ public class PresenceModule extends AbstractStanzaModule {
 	@Override
 	public void process(Stanza element) throws XMPPException, XMLException {
 		final JID fromJid = element.getFrom();
+		log.finest("Presence received from " + fromJid + " :: " + element.getAsString());
 		if (fromJid == null)
 			return;
 		final Presence presence = (Presence) element;
@@ -153,14 +154,18 @@ public class PresenceModule extends AbstractStanzaModule {
 		PresenceEvent event;
 		if (type == StanzaType.subscribe) {
 			// subscribe
+			log.finer("Subscribe from " + fromJid);
 			event = new PresenceEvent(SubscribeRequest);
 		} else if (!availableOld && availableNow) {
 			// sontact available
+			log.finer("Presence online from " + fromJid);
 			event = new PresenceEvent(ContactAvailable);
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
+			log.finer("Presence offline from " + fromJid);
 			event = new PresenceEvent(ContactUnavailable);
 		} else {
+			log.finer("Presence change from " + fromJid);
 			event = new PresenceEvent(ContactChangedPresence);
 		}
 		event.setPresence(presence);
@@ -187,6 +192,9 @@ public class PresenceModule extends AbstractStanzaModule {
 		presence.setPriority(event.getPriority());
 		presence.setStatus(event.getStatus());
 		presence.setShow(event.getShow());
+		if (sessionObject.getProperty(SessionObject.NICKNAME) != null) {
+			presence.setNickname((String) sessionObject.getProperty(SessionObject.NICKNAME));
+		}
 
 		writer.write(presence);
 	}

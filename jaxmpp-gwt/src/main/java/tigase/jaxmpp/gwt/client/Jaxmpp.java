@@ -7,6 +7,7 @@ import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
+import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
@@ -22,8 +23,17 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 public class Jaxmpp extends JaxmppCore {
 
+	private final ConnectorWrapper connectorWrapper;
+
+	public Jaxmpp() {
+		this(new DefaultLoggerSpi());
+	}
+
 	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
 		super(defaultLoggerSpi);
+
+		this.connectorWrapper = new ConnectorWrapper();
+		// this.connector = this.connectorWrapper;
 
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
@@ -87,11 +97,8 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (Exception e1) {
 			log.log(LogLevel.FINE, "Disconnecting error", e1);
 		}
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		event.setCaught(e);
 		observable.fireEvent(event);
 	}
 
@@ -117,12 +124,14 @@ public class Jaxmpp extends JaxmppCore {
 	@Override
 	protected void onStreamError(ConnectorEvent be) {
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		event.setCaught(be.getCaught());
 		observable.fireEvent(event);
 	}
 
 	@Override
 	protected void onStreamTerminated(ConnectorEvent be) {
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		event.setCaught(be.getCaught());
 		observable.fireEvent(event);
 	}
 

@@ -141,7 +141,7 @@ public class SocketConnector implements Connector {
 
 	private final Logger log;
 
-	protected final Observable observable = new Observable();
+	protected Observable observable = new Observable();
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
@@ -195,6 +195,11 @@ public class SocketConnector implements Connector {
 	protected void fireOnTerminate(SessionObject sessionObject) {
 		ConnectorEvent event = new ConnectorEvent(StreamTerminated);
 		this.observable.fireEvent(event.getType(), event);
+	}
+
+	@Override
+	public Observable getObservable() {
+		return observable;
 	}
 
 	/**
@@ -335,6 +340,14 @@ public class SocketConnector implements Connector {
 			} catch (IOException e) {
 				throw new JaxmppException(e);
 			}
+	}
+
+	@Override
+	public void setObservable(Observable observable) {
+		if (observable == null)
+			this.observable = new Observable();
+		else
+			this.observable = observable;
 	}
 
 	protected void setStage(State state) {

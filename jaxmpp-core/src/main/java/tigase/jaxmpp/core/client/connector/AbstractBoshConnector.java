@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client.connector;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.Connector;
@@ -59,7 +60,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected final Logger log;
 
-	protected final Observable observable = new Observable();
+	protected Observable observable = new Observable();
 
 	protected final Map<String, BoshRequest> requests = new HashMap<String, BoshRequest>();
 
@@ -68,6 +69,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	public AbstractBoshConnector(SessionObject sessionObject) {
 		this.log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
+		sessionObject.setProperty(DEFAULT_TIMEOUT_KEY, "30");
 	}
 
 	@Override
@@ -102,14 +104,16 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
-			BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
-			event.setResponseBody(response);
-			event.setResponseCode(responseCode);
-			if (response != null) {
-				Element ch = response.getFirstChild();
-				event.setStanza(ch);
+			List<Element> c = response.getChildren();
+			for (Element ch : c) {
+				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+				event.setResponseBody(response);
+				event.setResponseCode(responseCode);
+				if (response != null) {
+					event.setStanza(ch);
+				}
+				this.observable.fireEvent(event.getType(), event);
 			}
-			this.observable.fireEvent(event.getType(), event);
 		} catch (XMLException e) {
 			throw new RuntimeException(e);
 		}
@@ -120,6 +124,11 @@ public abstract class AbstractBoshConnector implements Connector {
 		event.setResponseCode(responseCode);
 		event.setResponseBody(response);
 		this.observable.fireEvent(event.getType(), event);
+	}
+
+	@Override
+	public Observable getObservable() {
+		return observable;
 	}
 
 	protected String getSid() {
@@ -282,6 +291,14 @@ public abstract class AbstractBoshConnector implements Connector {
 			throw new RuntimeException("Not connected");
 	}
 
+	@Override
+	public void setObservable(Observable observable) {
+		if (observable == null)
+			this.observable = new Observable();
+		else
+			this.observable = observable;
+	}
+
 	protected void setSid(String sid) {
 		this.sessionObject.setProperty(SID_KEY, sid);
 	}
@@ -297,8 +314,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		if (sessionObject.getProperty(SessionObject.USER_JID) == null)
-			throw new JaxmppException("No user JID specified");
+		// if (sessionObject.getProperty(SessionObject.USER_JID) == null)
+		// throw new JaxmppException("No user JID specified");
 
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,

@@ -188,7 +188,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	public void login() throws XMLException, JaxmppException {
-		observable.fireEvent(SaslStart);
+		observable.fireEvent(SaslStart, new SaslEvent(SaslStart));
 
 		sessionObject.setProperty(SASL_MECHANISM, guessSaslMechanism());
 

@@ -8,25 +8,14 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat.ChatEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class ChatManager {
-
-	private final Listener<ChatEvent> chatCloseListener = new Listener<ChatEvent>() {
-
-		@Override
-		public void handleEvent(ChatEvent be) {
-			be.getChat().removeListener(Chat.ChatClosed, chatCloseListener);
-			onChatClosed(be.getChat());
-		}
-	};
 
 	private final ArrayList<Chat> chats = new ArrayList<Chat>();
 
@@ -42,14 +31,22 @@ public class ChatManager {
 		this.observable = observable;
 	}
 
+	public void close(Chat chat) {
+		this.chats.remove(chat);
+	}
+
 	public Chat createChat(JID jid) {
 		final String threadId = UIDGenerator.next();
 		Chat chat = new Chat(packetWriter);
 		chat.setThreadId(threadId);
 		chat.setJid(jid);
-		chat.addListener(Chat.ChatClosed, chatCloseListener);
 
 		this.chats.add(chat);
+
+		MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated);
+		event.setChat(chat);
+
+		observable.fireEvent(event.getType(), event);
 
 		return chat;
 	}
@@ -84,10 +81,6 @@ public class ChatManager {
 
 	public List<Chat> getChats() {
 		return this.chats;
-	}
-
-	protected void onChatClosed(Chat chat) {
-		this.chats.remove(chat);
 	}
 
 	public Chat process(Message message) throws XMLException {

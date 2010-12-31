@@ -55,6 +55,7 @@ public class Observable {
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			log.log(Level.WARNING, "Problem on notifint observers", e);
 		}
 	}
