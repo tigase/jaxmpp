@@ -26,23 +26,23 @@ public abstract class AbstractBoshConnector implements Connector {
 	public static class BoshConnectorEvent extends ConnectorEvent {
 
 		private static final long serialVersionUID = 1L;
-		private Element responseBody;
+		private Element body;
 		private int responseCode;
 
 		public BoshConnectorEvent(EventType type) {
 			super(type);
 		}
 
-		public Element getResponseBody() {
-			return responseBody;
+		public Element getBody() {
+			return body;
 		}
 
 		public int getResponseCode() {
 			return responseCode;
 		}
 
-		public void setResponseBody(Element response) {
-			this.responseBody = response;
+		public void setBody(Element response) {
+			this.body = response;
 		}
 
 		public void setResponseCode(int responseCode) {
@@ -98,16 +98,23 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
 		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
-		event.setResponseBody(response);
+		event.setBody(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
 		try {
+			{
+				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+				event.setBody(response);
+				event.setResponseCode(responseCode);
+				this.observable.fireEvent(event.getType(), event);
+
+			}
 			List<Element> c = response.getChildren();
 			for (Element ch : c) {
 				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
-				event.setResponseBody(response);
+				event.setBody(response);
 				event.setResponseCode(responseCode);
 				if (response != null) {
 					event.setStanza(ch);
@@ -122,7 +129,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
 		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated);
 		event.setResponseCode(responseCode);
-		event.setResponseBody(response);
+		event.setBody(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
@@ -188,6 +195,8 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void onTerminate(int responseCode, Element response) {
+		if (getState() == State.disconnected)
+			return;
 		try {
 			if (log.isLoggable(LogLevel.FINE))
 				log.fine("Stream terminated. responseCode=" + responseCode);
@@ -331,6 +340,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void stop() throws XMLException, JaxmppException {
+		setStage(State.disconnecting);
 		if (getState() != State.disconnected)
 			processSendData(prepareTerminateBody(null));
 	}

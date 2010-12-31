@@ -153,6 +153,8 @@ public interface Connector {
 	 */
 	public final static EventType StanzaReceived = new EventType();
 
+	public final static EventType StanzaSending = new EventType();
+
 	/**
 	 * Event fires after connection state is changed.
 	 */

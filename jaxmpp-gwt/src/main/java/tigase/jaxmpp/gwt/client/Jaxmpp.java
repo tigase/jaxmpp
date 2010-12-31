@@ -33,7 +33,11 @@ public class Jaxmpp extends JaxmppCore {
 		super(defaultLoggerSpi);
 
 		this.connectorWrapper = new ConnectorWrapper();
-		// this.connector = this.connectorWrapper;
+		this.connector = this.connectorWrapper;
+
+		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
+		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
+		this.connector.addListener(Connector.Error, this.streamErrorListener);
 
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
@@ -61,16 +65,8 @@ public class Jaxmpp extends JaxmppCore {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
 		}
-		if (this.connector != null) {
-			this.connector.removeAllListeners();
-			this.connector = null;
-		}
 
-		this.connector = new BoshConnector(this.sessionObject);
-
-		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
-		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
-		connector.addListener(Connector.Error, this.streamErrorListener);
+		this.connectorWrapper.setConnector(new BoshConnector(this.sessionObject));
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
 		this.sessionLogic.bind(new SessionListener() {

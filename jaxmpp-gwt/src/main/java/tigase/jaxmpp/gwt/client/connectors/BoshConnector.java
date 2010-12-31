@@ -44,6 +44,10 @@ public class BoshConnector extends AbstractBoshConnector {
 		};
 		addToRequests(worker);
 
+		BoshConnectorEvent event = new BoshConnectorEvent(StanzaSending);
+		event.setBody(element);
+		observable.fireEvent(event);
+
 		Scheduler.get().scheduleDeferred(worker);
 	}
 

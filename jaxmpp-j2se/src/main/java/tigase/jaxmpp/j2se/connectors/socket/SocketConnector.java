@@ -175,6 +175,8 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) {
+		if (getState() == State.disconnected)
+			return;
 		ConnectorEvent event = new ConnectorEvent(Connected);
 		this.observable.fireEvent(event.getType(), event);
 	}

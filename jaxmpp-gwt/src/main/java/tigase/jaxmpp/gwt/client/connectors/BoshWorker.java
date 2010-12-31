@@ -20,9 +20,13 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	private Element element;
 
+	private Request request;
+
 	private final RequestBuilder requestBuilder;
 
 	private final String rid;
+
+	private boolean terminated = false;
 
 	public BoshWorker(RequestBuilder requestBuilder, SessionObject sessionObject, Element element) throws XMLException {
 		this.requestBuilder = requestBuilder;
@@ -69,10 +73,12 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	@Override
 	public void execute() {
+		if (terminated)
+			return;
 		try {
 			String x = element.getAsString();
 			System.out.println(">> " + x);
-			requestBuilder.sendRequest(x, callback);
+			request = requestBuilder.sendRequest(x, callback);
 		} catch (Exception e) {
 			try {
 				onError(-1, null, e);
@@ -99,8 +105,8 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	@Override
 	public void terminate() {
-		// TODO Auto-generated method stub
-
+		this.terminated = true;
+		if (request != null)
+			request.cancel();
 	}
-
 }
