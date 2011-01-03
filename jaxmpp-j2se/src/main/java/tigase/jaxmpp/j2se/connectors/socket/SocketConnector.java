@@ -161,7 +161,7 @@ public class SocketConnector implements Connector {
 	}
 
 	@Override
-	public void addListener(EventType eventType, Listener<ConnectorEvent> listener) {
+	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 

@@ -19,7 +19,7 @@ public class ConnectorWrapper implements Connector {
 	protected final Observable observable = new Observable();
 
 	@Override
-	public void addListener(EventType eventType, Listener<ConnectorEvent> listener) {
+	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
@@ -43,7 +43,7 @@ public class ConnectorWrapper implements Connector {
 
 	@Override
 	public State getState() {
-		return connector.getState();
+		return connector == null ? State.disconnected : connector.getState();
 	}
 
 	@Override

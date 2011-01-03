@@ -73,7 +73,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public void addListener(EventType eventType, Listener<ConnectorEvent> listener) {
+	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
@@ -99,6 +99,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
 		event.setBody(response);
+		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
@@ -179,7 +180,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
-			if (getState() == State.connecting) {
+			if (response != null && getState() == State.connecting) {
 				setSid(response.getAttribute("sid"));
 				setStage(State.connected);
 				fireOnConnected(sessionObject);
@@ -188,7 +189,8 @@ public abstract class AbstractBoshConnector implements Connector {
 				final Element body = prepareBody(null);
 				processSendData(body);
 			}
-			fireOnStanzaReceived(responseCode, response, sessionObject);
+			if (response != null)
+				fireOnStanzaReceived(responseCode, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}

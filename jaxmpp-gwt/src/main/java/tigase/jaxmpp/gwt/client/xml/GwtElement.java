@@ -203,7 +203,7 @@ public class GwtElement implements Element {
 
 	@Override
 	public void removeChild(Element child) throws XMLException {
-		throw new XMLException("Unsupported in GwtElement");
+		// throw new XMLException("Unsupported in GwtElement");
 	}
 
 	@Override
@@ -220,7 +220,7 @@ public class GwtElement implements Element {
 
 	@Override
 	public void setParent(Element parent) throws XMLException {
-		throw new XMLException("Unsupported in GwtElement");
+		// throw new XMLException("Unsupported in GwtElement");
 	}
 
 	@Override

@@ -50,11 +50,16 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 					int responseCode = $response.getStatusCode();
 					if (responseCode != 200)
 						BoshWorker.this.onError($response.getStatusCode(), null, null);
-					String x = $response.getText().replaceAll("&semi;", ";");
+					final GwtElement response;
+					String t = $response == null ? null : $response.getText();
+					String x = t == null || t.length() == 0 ? null : t.replaceAll("&semi;", ";");
 					System.out.println("<< " + x);
-					final GwtElement response = new GwtElement(XMLParser.parse(x).getDocumentElement());
+					if (x == null)
+						response = null;
+					else
+						response = new GwtElement(XMLParser.parse(x).getDocumentElement());
 
-					final String type = response.getAttribute("type");
+					final String type = response == null ? null : response.getAttribute("type");
 					if (type != null && "terminate".equals(type)) {
 						BoshWorker.this.onTerminate(responseCode, response);
 					} else if (type != null && "error".equals(type)) {
@@ -63,8 +68,11 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 						BoshWorker.this.onSuccess(responseCode, response);
 					} else
 						throw new RuntimeException("Unknown response type '" + type + "'");
-				} catch (JaxmppException e) {
-				} catch (XMLException e) {
+				} catch (Exception e) {
+					try {
+						BoshWorker.this.onError(-1, null, e);
+					} catch (JaxmppException e1) {
+					}
 				}
 			}
 

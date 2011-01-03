@@ -172,7 +172,7 @@ public interface Connector {
 	 */
 	public static final String TRUST_MANAGER = "TRUST_MANAGER";
 
-	public void addListener(EventType eventType, Listener<ConnectorEvent> listener);
+	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener);
 
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
