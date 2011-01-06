@@ -6,6 +6,7 @@ import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -21,6 +22,7 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem.Subscription;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.RosterEvent.ChangeAction;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -230,6 +232,10 @@ public class RosterModule extends AbstractIQModule {
 
 	@Override
 	protected void processSet(final IQ stanza) throws XMPPException, XMLException {
+		final JID bindedJid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		if (stanza.getFrom() != null && !stanza.getFrom().getDomain().equals(bindedJid.getDomain()))
+			throw new XMPPException(ErrorCondition.not_allowed);
+
 		Element query = stanza.getQuery();
 		processRosterQuery(query);
 	}

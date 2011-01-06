@@ -18,9 +18,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatManager;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public class MessageModule extends AbstractStanzaModule {
+public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static class MessageEvent extends BaseEvent {
 
@@ -53,11 +52,11 @@ public class MessageModule extends AbstractStanzaModule {
 
 	public static final EventType ChatCreated = new EventType();
 
+	public static final Criteria CRIT = ElementCriteria.name("message");
+
 	public static final EventType MessageReceived = new EventType();
 
 	private final ChatManager chatManager;
-
-	public final Criteria CRIT = ElementCriteria.name("message");
 
 	private final Observable observable = new Observable();
 
@@ -89,10 +88,10 @@ public class MessageModule extends AbstractStanzaModule {
 	}
 
 	@Override
-	public void process(Stanza element) throws XMPPException, XMLException {
+	public void process(Message element) throws XMPPException, XMLException {
 		MessageEvent event = new MessageEvent(MessageReceived);
-		event.setMessage((Message) element);
-		Chat chat = chatManager.process((Message) element);
+		event.setMessage(element);
+		Chat chat = chatManager.process(element);
 		if (chat != null) {
 			event.setChat(chat);
 		}

@@ -28,6 +28,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		private static final long serialVersionUID = 1L;
 		private Element body;
 		private int responseCode;
+		private String responseData;
 
 		public BoshConnectorEvent(EventType type) {
 			super(type);
@@ -41,12 +42,20 @@ public abstract class AbstractBoshConnector implements Connector {
 			return responseCode;
 		}
 
+		public String getResponseData() {
+			return responseData;
+		}
+
 		public void setBody(Element response) {
 			this.body = response;
 		}
 
 		public void setResponseCode(int responseCode) {
 			this.responseCode = responseCode;
+		}
+
+		public void setResponseData(String responseData) {
+			this.responseData = responseData;
 		}
 	}
 
@@ -95,41 +104,48 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnError(int responseCode, Element response, Throwable caught, SessionObject sessionObject) {
+	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
+			SessionObject sessionObject) {
 		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
+		event.setResponseData(responseData);
 		event.setBody(response);
 		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnStanzaReceived(int responseCode, Element response, SessionObject sessionObject) {
+	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject) {
 		try {
 			{
 				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+				event.setResponseData(responseData);
 				event.setBody(response);
 				event.setResponseCode(responseCode);
 				this.observable.fireEvent(event.getType(), event);
 
 			}
-			List<Element> c = response.getChildren();
-			for (Element ch : c) {
-				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
-				event.setBody(response);
-				event.setResponseCode(responseCode);
-				if (response != null) {
-					event.setStanza(ch);
+			if (response != null) {
+				List<Element> c = response.getChildren();
+				for (Element ch : c) {
+					BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+					event.setResponseData(responseData);
+					event.setBody(response);
+					event.setResponseCode(responseCode);
+					if (response != null) {
+						event.setStanza(ch);
+					}
+					this.observable.fireEvent(event.getType(), event);
 				}
-				this.observable.fireEvent(event.getType(), event);
 			}
 		} catch (XMLException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected void fireOnTerminate(int responseCode, Element response, SessionObject sessionObject) {
+	protected void fireOnTerminate(int responseCode, String responseData, Element response, SessionObject sessionObject) {
 		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated);
 		event.setResponseCode(responseCode);
+		event.setResponseData(responseData);
 		event.setBody(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
@@ -163,20 +179,20 @@ public abstract class AbstractBoshConnector implements Connector {
 		return i;
 	}
 
-	protected void onError(int responseCode, Element response, Throwable caught) {
+	protected void onError(int responseCode, String responseData, Element response, Throwable caught) {
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
 			if (log.isLoggable(LogLevel.FINER))
 				log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
 			setStage(State.disconnected);
-			fireOnError(responseCode, response, caught, sessionObject);
+			fireOnError(responseCode, responseData, response, caught, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	protected void onResponse(final int responseCode, final Element response) throws JaxmppException {
+	protected void onResponse(final int responseCode, String responseData, final Element response) throws JaxmppException {
 		try {
 			if (response != null)
 				removeFromRequests(response.getAttribute("ack"));
@@ -190,13 +206,13 @@ public abstract class AbstractBoshConnector implements Connector {
 				processSendData(body);
 			}
 			if (response != null)
-				fireOnStanzaReceived(responseCode, response, sessionObject);
+				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	protected void onTerminate(int responseCode, Element response) {
+	protected void onTerminate(int responseCode, String responseData, Element response) {
 		if (getState() == State.disconnected)
 			return;
 		try {
@@ -206,7 +222,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				removeFromRequests(response.getAttribute("ack"));
 			setStage(State.disconnected);
 			terminateAllWorkers();
-			fireOnTerminate(responseCode, response, sessionObject);
+			fireOnTerminate(responseCode, responseData, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}

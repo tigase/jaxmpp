@@ -18,6 +18,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
@@ -174,8 +175,11 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
-		this.modulesManager.register(new MessageModule(sessionObject, writer));
+		this.modulesManager.register(new MucModule(sessionObject, writer));
+
 		this.modulesManager.register(new PresenceModule(sessionObject, writer));
+
+		this.modulesManager.register(new MessageModule(sessionObject, writer));
 
 		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
 		this.modulesManager.register(new SaslModule(sessionObject, writer));

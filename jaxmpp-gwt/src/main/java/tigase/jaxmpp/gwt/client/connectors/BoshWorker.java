@@ -39,19 +39,19 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			@Override
 			public void onError(Request request, Throwable exception) {
 				try {
-					BoshWorker.this.onError(-1, null, exception);
+					BoshWorker.this.onError(-1, null, null, exception);
 				} catch (JaxmppException e) {
 				}
 			}
 
 			@Override
 			public void onResponseReceived(Request request, Response $response) {
+				String t = $response == null ? null : $response.getText();
 				try {
 					int responseCode = $response.getStatusCode();
 					if (responseCode != 200)
-						BoshWorker.this.onError($response.getStatusCode(), null, null);
+						BoshWorker.this.onError($response.getStatusCode(), t, null, null);
 					final GwtElement response;
-					String t = $response == null ? null : $response.getText();
 					String x = t == null || t.length() == 0 ? null : t.replaceAll("&semi;", ";");
 					System.out.println("<< " + x);
 					if (x == null)
@@ -61,16 +61,16 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 					final String type = response == null ? null : response.getAttribute("type");
 					if (type != null && "terminate".equals(type)) {
-						BoshWorker.this.onTerminate(responseCode, response);
+						BoshWorker.this.onTerminate(responseCode, t, response);
 					} else if (type != null && "error".equals(type)) {
-						BoshWorker.this.onError(responseCode, response, null);
+						BoshWorker.this.onError(responseCode, t, response, null);
 					} else if (type == null) {
-						BoshWorker.this.onSuccess(responseCode, response);
+						BoshWorker.this.onSuccess(responseCode, t, response);
 					} else
 						throw new RuntimeException("Unknown response type '" + type + "'");
 				} catch (Exception e) {
 					try {
-						BoshWorker.this.onError(-1, null, e);
+						BoshWorker.this.onError(-1, t, null, e);
 					} catch (JaxmppException e1) {
 					}
 				}
@@ -89,7 +89,7 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			request = requestBuilder.sendRequest(x, callback);
 		} catch (Exception e) {
 			try {
-				onError(-1, null, e);
+				onError(-1, null, null, e);
 			} catch (JaxmppException e1) {
 			}
 		}
@@ -100,11 +100,11 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 		return rid;
 	}
 
-	protected abstract void onError(int responseCode, Element response, Throwable caught) throws JaxmppException;
+	protected abstract void onError(int responseCode, String data, Element response, Throwable caught) throws JaxmppException;
 
-	protected abstract void onSuccess(int responseCode, Element response) throws JaxmppException;
+	protected abstract void onSuccess(int responseCode, String data, Element response) throws JaxmppException;
 
-	protected abstract void onTerminate(int responseCode, Element response) throws JaxmppException;
+	protected abstract void onTerminate(int responseCode, String data, Element response) throws JaxmppException;
 
 	@Override
 	public void run() {

@@ -50,11 +50,12 @@ public abstract class BoshWorker implements BoshRequest {
 		return rid;
 	}
 
-	protected abstract void onError(int responseCode, Element response, Throwable caught) throws JaxmppException;
+	protected abstract void onError(int responseCode, String responseData, Element response, Throwable caught)
+			throws JaxmppException;
 
-	protected abstract void onSuccess(int responseCode, Element response) throws JaxmppException;
+	protected abstract void onSuccess(int responseCode, String responseData, Element response) throws JaxmppException;
 
-	protected abstract void onTerminate(int responseCode, Element response) throws JaxmppException;
+	protected abstract void onTerminate(int responseCode, String responseData, Element response) throws JaxmppException;
 
 	@Override
 	public void run() {
@@ -74,45 +75,50 @@ public abstract class BoshWorker implements BoshRequest {
 				wr.flush();
 
 				final int responseCode = conn.getResponseCode();
-				if (responseCode != 200) {
-					onError(responseCode, null, null);
-				} else {
-					StringBuilder sb = new StringBuilder();
-					BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-					String line;
-					while ((line = rd.readLine()) != null) {
-						sb.append(line);
-					}
-					// wr.close();
-					// rd.close();
 
-					// System.out.println("R: " + sb.toString());
-
-					parser.parse(domHandler, sb.toString().toCharArray(), 0, sb.length());
-
-					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
-
-					tigase.xml.Element elem;
-					while ((elem = elems.poll()) != null) {
-						final String type = elem.getAttribute("type");
-						Element response = new J2seElement(elem);
-						if (type != null && "terminate".equals(type)) {
-							onTerminate(responseCode, response);
-						} else if (type != null && "error".equals(type)) {
-							onError(responseCode, response, null);
-						} else if (type == null) {
-							onSuccess(responseCode, response);
-						} else
-							throw new RuntimeException("Unknown response type '" + type + "'");
-					}
+				StringBuilder sb = new StringBuilder();
+				BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+				String line;
+				while ((line = rd.readLine()) != null) {
+					sb.append(line);
 				}
+
+				final String responseData = sb.toString();
+
+				if (responseCode != 200) {
+					onError(responseCode, responseData, null, null);
+					return;
+				}
+				// wr.close();
+				// rd.close();
+
+				// System.out.println("R: " + sb.toString());
+
+				parser.parse(domHandler, responseData.toCharArray(), 0, responseData.length());
+
+				Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
+
+				tigase.xml.Element elem;
+				while ((elem = elems.poll()) != null) {
+					final String type = elem.getAttribute("type");
+					Element response = new J2seElement(elem);
+					if (type != null && "terminate".equals(type)) {
+						onTerminate(responseCode, responseData, response);
+					} else if (type != null && "error".equals(type)) {
+						onError(responseCode, responseData, response, null);
+					} else if (type == null) {
+						onSuccess(responseCode, responseData, response);
+					} else
+						throw new RuntimeException("Unknown response type '" + type + "'");
+				}
+
 			} catch (SocketException e) {
 				if (terminated)
 					return;
-				onError(0, null, e);
+				onError(0, null, null, e);
 			} catch (Exception e) {
 				e.printStackTrace();
-				onError(0, null, e);
+				onError(0, null, null, e);
 			}
 		} catch (JaxmppException e1) {
 			// TODO Auto-generated catch block

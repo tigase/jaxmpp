@@ -16,10 +16,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore.Handler;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class PresenceModule extends AbstractStanzaModule {
+public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static class PresenceEvent extends BaseEvent {
 
@@ -138,12 +137,11 @@ public class PresenceModule extends AbstractStanzaModule {
 	}
 
 	@Override
-	public void process(Stanza element) throws XMPPException, XMLException {
-		final JID fromJid = element.getFrom();
-		log.finest("Presence received from " + fromJid + " :: " + element.getAsString());
+	public void process(final Presence presence) throws XMPPException, XMLException {
+		final JID fromJid = presence.getFrom();
+		log.finest("Presence received from " + fromJid + " :: " + presence.getAsString());
 		if (fromJid == null)
 			return;
-		final Presence presence = (Presence) element;
 
 		boolean availableOld = sessionObject.getPresence().isAvailable(fromJid.getBareJid());
 		sessionObject.getPresence().update(presence);

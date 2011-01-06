@@ -10,7 +10,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class AbstractStanzaModule implements XmppModule {
+public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule {
 
 	protected final Logger log;
 	protected final SessionObject sessionObject;
@@ -23,11 +23,12 @@ public abstract class AbstractStanzaModule implements XmppModule {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void process(Element element) throws XMPPException, XMLException {
-		final Stanza stanza = element instanceof Stanza ? (Stanza) element : Stanza.create(element);
+		final T stanza = element instanceof Stanza ? (T) element : (T) Stanza.create(element);
 		process(stanza);
 	}
 
-	public abstract void process(Stanza element) throws XMPPException, XMLException;
+	public abstract void process(T element) throws XMPPException, XMLException;
 
 }
