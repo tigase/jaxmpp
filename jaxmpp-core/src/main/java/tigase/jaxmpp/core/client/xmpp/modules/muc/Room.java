@@ -14,6 +14,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class Room {
 
+	private boolean leaved;
+
 	private String nickname;
 
 	private final Map<String, Presence> presences = new HashMap<String, Presence>();
@@ -36,6 +38,14 @@ public class Room {
 		return presences;
 	}
 
+	public BareJID getRoomJid() {
+		return roomJid;
+	}
+
+	public boolean isLeaved() {
+		return leaved;
+	}
+
 	public void sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(JID.jidInstance(roomJid));
@@ -43,6 +53,10 @@ public class Room {
 		msg.setBody(body);
 
 		this.writer.write(msg);
+	}
+
+	public void setLeaved(boolean b) {
+		this.leaved = b;
 	}
 
 }

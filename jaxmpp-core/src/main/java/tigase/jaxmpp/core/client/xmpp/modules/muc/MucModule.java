@@ -140,6 +140,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
 		final BareJID roomJid = BareJID.bareJIDInstance(roomName, mucServer);
+		if (this.rooms.containsKey(roomJid))
+			return this.rooms.get(roomJid);
+
 		Room room = new Room(writer, roomJid, nickname);
 		this.rooms.put(roomJid, room);
 
@@ -150,6 +153,17 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		writer.write(presence);
 
 		return room;
+	}
+
+	public void leave(Room room) throws XMLException, JaxmppException {
+		if (!room.isLeaved()) {
+			room.setLeaved(true);
+			Presence presence = Presence.create();
+			presence.setType(StanzaType.unavailable);
+			presence.setTo(JID.jidInstance(room.getRoomJid(), room.getNickname()));
+			writer.write(presence);
+		}
+		this.rooms.remove(room.getRoomJid());
 	}
 
 	@Override
@@ -188,6 +202,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			throw new XMPPException(ErrorCondition.service_unavailable);
 		if (nickname == null)
 			return;
+
+		if (element.getType() == StanzaType.unavailable && nickname.equals(room.getNickname())) {
+			room.setLeaved(true);
+			this.rooms.remove(room.getRoomJid());
+		}
 
 		Presence presOld = room.getPresences().get(nickname);
 		room.getPresences().put(nickname, element);
