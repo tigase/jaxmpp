@@ -14,6 +14,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
@@ -24,6 +25,10 @@ public class Jaxmpp extends JaxmppCore {
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
+
+	{
+		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
+	}
 
 	public Jaxmpp() {
 		super(new DefaultLoggerSpi());
