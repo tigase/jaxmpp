@@ -132,9 +132,9 @@ public class GwtElement implements Element {
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
 			if (node instanceof com.google.gwt.xml.client.Element) {
-				final String x = ((com.google.gwt.xml.client.Element) node).getAttribute("xmlns");
+				final String x = ((com.google.gwt.xml.client.Element) node).getNodeName();
 				GwtElement gpi = new GwtElement((com.google.gwt.xml.client.Element) node);
-				if (x != null && x.equals(xmlns) && xmlns.equals(gpi.getXMLNS())) {
+				if (x != null && x.equals(name) && xmlns.equals(gpi.getXMLNS())) {
 					return gpi;
 				}
 			}

@@ -9,7 +9,6 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class Room {
@@ -18,7 +17,7 @@ public class Room {
 
 	private String nickname;
 
-	private final Map<String, Presence> presences = new HashMap<String, Presence>();
+	private final Map<String, Occupant> presences = new HashMap<String, Occupant>();
 
 	private final BareJID roomJid;
 
@@ -30,11 +29,15 @@ public class Room {
 		this.writer = writer;
 	}
 
+	public void add(Occupant occupant) throws XMLException {
+		this.presences.put(occupant.getNickname(), occupant);
+	}
+
 	public String getNickname() {
 		return nickname;
 	}
 
-	public Map<String, Presence> getPresences() {
+	public Map<String, Occupant> getPresences() {
 		return presences;
 	}
 
@@ -44,6 +47,10 @@ public class Room {
 
 	public boolean isLeaved() {
 		return leaved;
+	}
+
+	public void remove(Occupant occupant) throws XMLException {
+		this.presences.remove(occupant.getNickname());
 	}
 
 	public void sendMessage(String body) throws XMLException, JaxmppException {

@@ -20,6 +20,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.ErrorElement;
 
 public abstract class AbstractBoshConnector implements Connector {
 
@@ -27,6 +28,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 		private static final long serialVersionUID = 1L;
 		private Element body;
+		private ErrorElement errorElement;
 		private int responseCode;
 		private String responseData;
 
@@ -36,6 +38,10 @@ public abstract class AbstractBoshConnector implements Connector {
 
 		public Element getBody() {
 			return body;
+		}
+
+		public ErrorElement getErrorElement() {
+			return errorElement;
 		}
 
 		public int getResponseCode() {
@@ -48,6 +54,10 @@ public abstract class AbstractBoshConnector implements Connector {
 
 		public void setBody(Element response) {
 			this.body = response;
+		}
+
+		public void setErrorElement(ErrorElement errorElement) {
+			this.errorElement = errorElement;
 		}
 
 		public void setResponseCode(int responseCode) {
@@ -109,6 +119,13 @@ public abstract class AbstractBoshConnector implements Connector {
 		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
 		event.setResponseData(responseData);
+		if (response != null) {
+			try {
+				event.setErrorElement(ErrorElement.extract(response));
+			} catch (XMLException e) {
+				event.setErrorElement(null);
+			}
+		}
 		event.setBody(response);
 		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
@@ -117,7 +134,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject) {
 		try {
 			{
-				BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+				BoshConnectorEvent event = new BoshConnectorEvent(BodyReceived);
 				event.setResponseData(responseData);
 				event.setBody(response);
 				event.setResponseCode(responseCode);

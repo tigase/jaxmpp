@@ -1,4 +1,4 @@
-package tigase.jaxmpp.core.client.xmpp.modules.chat;
+package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 /**
  * @author bmalkow

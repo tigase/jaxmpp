@@ -57,11 +57,6 @@ public abstract class Stanza extends ElementWrapper {
 		return errorCondition;
 	}
 
-	protected Element getFirstChild(String name) throws XMLException {
-		List<Element> l = getChildren(name);
-		return l != null && !l.isEmpty() ? l.get(0) : null;
-	}
-
 	public JID getFrom() throws XMLException {
 		String t = getAttribute("from");
 		return t == null ? null : JID.jidInstance(t);

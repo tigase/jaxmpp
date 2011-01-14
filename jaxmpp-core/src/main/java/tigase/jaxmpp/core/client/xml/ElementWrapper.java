@@ -66,6 +66,11 @@ public class ElementWrapper implements Element {
 		return element.getFirstChild();
 	}
 
+	public Element getFirstChild(String name) throws XMLException {
+		List<Element> l = getChildren(name);
+		return l != null && !l.isEmpty() ? l.get(0) : null;
+	}
+
 	@Override
 	public String getName() throws XMLException {
 		return element.getName();

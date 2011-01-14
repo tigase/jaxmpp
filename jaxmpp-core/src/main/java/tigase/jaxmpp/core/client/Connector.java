@@ -117,6 +117,8 @@ public interface Connector {
 		disconnecting
 	}
 
+	public final static EventType BodyReceived = new EventType();
+
 	/**
 	 * Event fires after creates XMPP Stream
 	 */

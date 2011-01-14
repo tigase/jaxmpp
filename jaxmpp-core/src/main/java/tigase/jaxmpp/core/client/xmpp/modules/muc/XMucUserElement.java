@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -33,6 +34,38 @@ public class XMucUserElement extends ElementWrapper {
 				if (v != null)
 					statuses.add(Integer.parseInt(v));
 			}
+	}
+
+	public Affiliation getAffiliation() throws XMLException {
+		Element item = getFirstChild("item");
+		if (item == null)
+			return null;
+		String tmp = item.getAttribute("affiliation");
+		return tmp == null ? null : Affiliation.valueOf(tmp);
+	}
+
+	public JID getJID() throws XMLException {
+		Element item = getFirstChild("item");
+		if (item == null)
+			return null;
+		String tmp = item.getAttribute("jid");
+		return tmp == null ? null : JID.jidInstance(tmp);
+	}
+
+	public String getNick() throws XMLException {
+		Element item = getFirstChild("item");
+		if (item == null)
+			return null;
+		String tmp = item.getAttribute("nick");
+		return tmp;
+	}
+
+	public Role getRole() throws XMLException {
+		Element item = getFirstChild("item");
+		if (item == null)
+			return null;
+		String tmp = item.getAttribute("role");
+		return tmp == null ? null : Role.valueOf(tmp);
 	}
 
 	public Set<Integer> getStatuses() {
