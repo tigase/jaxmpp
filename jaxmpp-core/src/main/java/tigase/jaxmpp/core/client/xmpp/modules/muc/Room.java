@@ -21,6 +21,8 @@ public class Room {
 
 	private final BareJID roomJid;
 
+	private final Map<String, Occupant> tempOccupants = new HashMap<String, Occupant>();
+
 	private final PacketWriter writer;
 
 	public Room(PacketWriter writer, BareJID roomJid, String nickname) {
@@ -43,6 +45,10 @@ public class Room {
 
 	public BareJID getRoomJid() {
 		return roomJid;
+	}
+
+	public Map<String, Occupant> getTempOccupants() {
+		return tempOccupants;
 	}
 
 	public boolean isLeaved() {

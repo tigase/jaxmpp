@@ -36,6 +36,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		private Occupant occupant;
 
+		private String oldNickname;
+
 		private Presence presence;
 
 		private Room room;
@@ -54,6 +56,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public Occupant getOccupant() {
 			return occupant;
+		}
+
+		public String getOldNickname() {
+			return oldNickname;
 		}
 
 		public Presence getPresence() {
@@ -76,6 +82,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			this.occupant = occupant;
 		}
 
+		public void setOldNickname(String nickname2) {
+			this.oldNickname = nickname2;
+		}
+
 		public void setPresence(Presence presence) {
 			this.presence = presence;
 		}
@@ -87,6 +97,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public static final EventType MessageReceived = new EventType();
+
+	public static final EventType OccupantChangedNick = new EventType();
 
 	public static final EventType OccupantChangedPresence = new EventType();
 
@@ -234,16 +246,27 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		Presence presNew = element;
 
 		MucEvent event;
-		// if ((presOld == null || presOld.getType() == StanzaType.unavailable)
-		// && presNew.getType() == null && xUser != null
-		// && xUser.getStatuses().contains(STATUS_NEW_NICKNAME)) {
-		// event = null;
-		// xUser.getNick();
-		// } else
-		if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
+		if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable && xUser != null
+				&& xUser.getStatuses().contains(STATUS_NEW_NICKNAME)) {
+			event = null;
+			String newNickName = xUser.getNick();
+			room.remove(occupant);
+			room.getTempOccupants().put(newNickName, occupant);
+			log.finer(element.getFrom() + " wants to change nickname to " + newNickName);
+		} else if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
+			Occupant tmp = room.getTempOccupants().remove(nickname);
+			if (tmp != null) {
+				log.finer(element.getFrom() + " successfully changed nickname ");
+				event = new MucEvent(OccupantChangedNick);
+				event.setOldNickname(tmp.getNickname());
+				occupant = tmp;
+			} else
+				event = new MucEvent(OccupantComes);
+
+			occupant.setPresence(element);
 			room.add(occupant);
-			event = new MucEvent(OccupantComes);
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
+			occupant.setPresence(element);
 			room.remove(occupant);
 			event = new MucEvent(OccupantLeaved);
 		} else {

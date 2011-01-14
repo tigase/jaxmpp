@@ -1,5 +1,7 @@
 package tigase.jaxmpp.gwt.client;
 
+import java.util.Date;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
@@ -16,6 +18,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
+import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 
 import com.google.gwt.core.client.Scheduler;
@@ -24,6 +28,33 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 public class Jaxmpp extends JaxmppCore {
 
 	private final ConnectorWrapper connectorWrapper;
+
+	{
+		DateTimeFormat.setProvider(new DateTimeFormatProvider() {
+
+			private final com.google.gwt.i18n.client.DateTimeFormat df1 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+			private final com.google.gwt.i18n.client.DateTimeFormat df2 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+
+			@Override
+			public String format(Date date) {
+				return df1.format(date);
+			}
+
+			@Override
+			public Date parse(String t) {
+				try {
+					return df1.parse(t);
+				} catch (Exception e) {
+					try {
+						return df2.parse(t);
+					} catch (Exception e1) {
+						return null;
+					}
+				}
+			}
+		});
+	}
 
 	public Jaxmpp() {
 		this(new DefaultLoggerSpi());
