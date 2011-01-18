@@ -91,4 +91,9 @@ public class RosterItem {
 		this.subscription = subscription;
 	}
 
+	@Override
+	public String toString() {
+		return "RosterItem [" + name + " <" + jid.toString() + ">]";
+	}
+
 }
