@@ -17,6 +17,8 @@ public interface SessionObject extends UserProperties {
 
 	public static final String USER_JID = "userJid";
 
+	public void checkHandlersTimeout();
+
 	public void clear();
 
 	public PresenceStore getPresence();

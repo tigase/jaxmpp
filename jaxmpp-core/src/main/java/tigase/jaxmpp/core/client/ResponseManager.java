@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -67,6 +68,23 @@ public class ResponseManager {
 
 	private final Map<Key, Entry> handlers = new HashMap<Key, Entry>();
 
+	private long timeout = 1000 * 60;;
+
+	public void checkTimeouts() {
+		long now = (new Date()).getTime();
+		Iterator<java.util.Map.Entry<Key, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
+		while (it.hasNext()) {
+			java.util.Map.Entry<Key, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
+			if (e.getValue().timestamp + timeout < now) {
+				it.remove();
+				try {
+					e.getValue().callback.onTimeout();
+				} catch (XMLException e1) {
+				}
+			}
+		}
+	}
+
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException {
 		String x = element.getAttribute("from");
@@ -107,7 +125,7 @@ public class ResponseManager {
 			return r;
 		}
 		return null;
-	};
+	}
 
 	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
 		String x = stanza.getAttribute("to");

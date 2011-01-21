@@ -19,6 +19,8 @@ public class PresenceStore {
 
 	}
 
+	private Map<BareJID, Presence> bestPresence = new HashMap<BareJID, Presence>();
+
 	private Handler handler;
 
 	private Map<JID, Presence> presenceByJid = new HashMap<JID, Presence>();
@@ -26,6 +28,14 @@ public class PresenceStore {
 	private Map<BareJID, Map<String, Presence>> presencesMapByBareJid = new HashMap<BareJID, Map<String, Presence>>();
 
 	public Presence getBestPresence(final BareJID jid) throws XMLException {
+		return this.bestPresence.get(jid);
+	}
+
+	public Map<String, Presence> getPresences(BareJID jid) {
+		return this.presencesMapByBareJid.get(jid);
+	}
+
+	private Presence intGetBestPresence(final BareJID jid) throws XMLException {
 		Map<String, Presence> resourcesPresence = this.presencesMapByBareJid.get(jid);
 		Presence result = null;
 		if (resourcesPresence != null) {
@@ -33,16 +43,12 @@ public class PresenceStore {
 			while (it.hasNext()) {
 				Presence x = it.next();
 				Integer p = x.getPriority();
-				if (result == null || p >= result.getPriority()) {
+				if (result == null || p >= result.getPriority() && x.getType() == null) {
 					result = x;
 				}
 			}
 		}
 		return result;
-	}
-
-	public Map<String, Presence> getPresences(BareJID jid) {
-		return this.presencesMapByBareJid.get(jid);
 	}
 
 	public boolean isAvailable(BareJID jid) throws XMLException {
@@ -81,5 +87,21 @@ public class PresenceStore {
 			this.presencesMapByBareJid.put(bareFrom, m);
 		}
 		m.put(resource, presence);
+		updateBestPresence(presence);
+	}
+
+	private void updateBestPresence(final Presence presence) throws XMLException {
+		final BareJID bareFrom = presence.getFrom().getBareJid();
+
+		Presence x = this.bestPresence.get(bareFrom);
+		if (x == null) {
+			this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
+		} else {
+			if (presence.getPriority() > x.getPriority() && presence.getType() == null) {
+				this.bestPresence.put(bareFrom, x);
+			} else {
+				this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
+			}
+		}
 	}
 }

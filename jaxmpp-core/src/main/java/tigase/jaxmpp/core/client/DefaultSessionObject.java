@@ -23,6 +23,11 @@ public class DefaultSessionObject implements SessionObject {
 	protected final Map<String, Object> userProperties = new HashMap<String, Object>();
 
 	@Override
+	public void checkHandlersTimeout() {
+		this.responseManager.checkTimeouts();
+	}
+
+	@Override
 	public void clear() {
 		this.properties.clear();
 	}

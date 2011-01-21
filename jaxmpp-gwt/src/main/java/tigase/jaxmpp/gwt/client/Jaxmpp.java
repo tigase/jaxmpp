@@ -6,15 +6,19 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -22,12 +26,18 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 public class Jaxmpp extends JaxmppCore {
 
 	private final ConnectorWrapper connectorWrapper;
+
+	private Object lastRid;
+
+	private RepeatingCommand timeoutChecker;
 
 	{
 		DateTimeFormat.setProvider(new DateTimeFormatProvider() {
@@ -58,6 +68,18 @@ public class Jaxmpp extends JaxmppCore {
 
 	public Jaxmpp() {
 		this(new DefaultLoggerSpi());
+		this.timeoutChecker = new RepeatingCommand() {
+
+			@Override
+			public boolean execute() {
+				try {
+					checkTimeouts();
+				} catch (Exception e) {
+				}
+				return true;
+			}
+		};
+		Scheduler.get().scheduleFixedDelay(timeoutChecker, 1000 * 31);
 	}
 
 	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
@@ -79,6 +101,48 @@ public class Jaxmpp extends JaxmppCore {
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
+	protected void checkTimeouts() {
+		sessionObject.checkHandlersTimeout();
+		if (isConnected()) {
+			Object r = sessionObject.getProperty(AbstractBoshConnector.RID_KEY);
+			if (lastRid != null && lastRid.equals(r)) {
+				Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+					@Override
+					public void execute() {
+						JID jid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+						try {
+							GWT.log("Checking if server lived");
+							modulesManager.getModule(PingModule.class).ping(JID.jidInstance(jid.getDomain()),
+									new AsyncCallback() {
+
+										@Override
+										public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+										}
+
+										@Override
+										public void onSuccess(Stanza responseStanza) throws XMLException {
+										}
+
+										@Override
+										public void onTimeout() throws XMLException {
+											try {
+												disconnect();
+											} catch (JaxmppException e) {
+												onException(e);
+											}
+										}
+									});
+						} catch (Exception e) {
+							onException(new JaxmppException(e));
+						}
+					}
+				});
+			}
+			lastRid = r;
+		}
+	}
+
 	@Override
 	public void disconnect() throws JaxmppException {
 		try {
@@ -90,6 +154,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void login() throws JaxmppException {
+		lastRid = null;
 		this.sessionObject.clear();
 
 		if (this.sessionLogic != null) {
@@ -113,7 +178,6 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (XMLException e1) {
 			throw new JaxmppException(e1);
 		}
-
 	}
 
 	@Override
