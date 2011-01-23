@@ -163,6 +163,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
+		return join(roomName, mucServer, nickname, null);
+	}
+
+	public Room join(final String roomName, final String mucServer, final String nickname, final String password)
+			throws XMLException, JaxmppException {
 		final BareJID roomJid = BareJID.bareJIDInstance(roomName, mucServer);
 		if (this.rooms.containsKey(roomJid))
 			return this.rooms.get(roomJid);
@@ -172,7 +177,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		Presence presence = Presence.create();
 		presence.setTo(JID.jidInstance(roomJid, nickname));
-		presence.addChild(new DefaultElement("x", null, "http://jabber.org/protocol/muc"));
+		final DefaultElement x = new DefaultElement("x", null, "http://jabber.org/protocol/muc");
+		presence.addChild(x);
+
+		if (password != null) {
+			x.addChild(new DefaultElement("password", password, null));
+		}
 
 		writer.write(presence);
 
