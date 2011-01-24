@@ -7,6 +7,8 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -14,6 +16,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public class Room {
 
 	private boolean leaved;
+
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private String nickname;
 
@@ -29,6 +33,7 @@ public class Room {
 		this.roomJid = roomJid;
 		this.nickname = nickname;
 		this.writer = writer;
+		log.fine("Room " + roomJid + " is created");
 	}
 
 	public void add(Occupant occupant) throws XMLException {

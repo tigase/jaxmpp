@@ -98,6 +98,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final EventType MessageReceived = new EventType();
 
+	public static final EventType NewRoomCreated = new EventType();
+
 	public static final EventType OccupantChangedNick = new EventType();
 
 	public static final EventType OccupantChangedPresence = new EventType();
@@ -108,7 +110,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
-	public final Criteria crit;
+	private final Criteria crit;
 
 	private final Observable observable = new Observable();
 
@@ -147,9 +149,17 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (from == null)
 			return false;
 
+		final String type = element.getAttribute("type");
+		if (type != null && type.equals("groupchat"))
+			return true;
+
 		final BareJID roomJid = BareJID.bareJIDInstance(from);
 
-		return this.rooms.containsKey(roomJid);
+		boolean result = this.rooms.containsKey(roomJid);
+
+		System.out.println("!!! " + roomJid + "  " + result);
+
+		return result;
 	}
 
 	@Override
@@ -216,7 +226,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		final String nickname = from.getResource();
 		Room room = this.rooms.get(roomJid);
 		if (room == null)
-			throw new XMPPException(ErrorCondition.service_unavailable);
+			return;
+		// throw new XMPPException(ErrorCondition.service_unavailable);
 
 		MucEvent event = new MucEvent(MessageReceived);
 		event.setMessage(element);
@@ -291,6 +302,16 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			event.setOccupant(occupant);
 			observable.fireEvent(event);
 		}
+
+		if (xUser != null && xUser.getStatuses().contains(201)) {
+			event = new MucEvent(NewRoomCreated);
+			event.setNickname(nickname);
+			event.setPresence(element);
+			event.setRoom(room);
+			event.setOccupant(occupant);
+			observable.fireEvent(event);
+		}
+
 	}
 
 	public void removeAllListeners() {
