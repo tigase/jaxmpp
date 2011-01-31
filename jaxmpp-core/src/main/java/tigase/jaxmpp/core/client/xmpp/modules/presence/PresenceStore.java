@@ -92,16 +92,18 @@ public class PresenceStore {
 
 	private void updateBestPresence(final Presence presence) throws XMLException {
 		final BareJID bareFrom = presence.getFrom().getBareJid();
+		this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
 
-		Presence x = this.bestPresence.get(bareFrom);
-		if (x == null) {
-			this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
-		} else {
-			if (presence.getPriority() > x.getPriority() && presence.getType() == null) {
-				this.bestPresence.put(bareFrom, x);
-			} else {
-				this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
-			}
-		}
+		// Presence x = this.bestPresence.get(bareFrom);
+		// if (x == null) {
+		// this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
+		// } else {
+		// if (presence.getPriority() > x.getPriority() && presence.getType() ==
+		// null) {
+		// this.bestPresence.put(bareFrom, x);
+		// } else {
+		// this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
+		// }
+		// }
 	}
 }

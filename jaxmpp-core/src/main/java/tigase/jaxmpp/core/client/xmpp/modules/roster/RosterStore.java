@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.roster;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.BareJID;
@@ -48,6 +49,12 @@ public class RosterStore {
 
 	public RosterItem get(BareJID jid) {
 		return this.roster.get(jid);
+	}
+
+	public List<RosterItem> getAll() {
+		ArrayList<RosterItem> result = new ArrayList<RosterItem>();
+		result.addAll(this.roster.values());
+		return result;
 	}
 
 	public void remove(BareJID jid) throws XMLException, JaxmppException {

@@ -151,6 +151,10 @@ public class RosterModule extends AbstractIQModule {
 		observable.addListener(eventType, listener);
 	}
 
+	public void addListener(Listener<? extends BaseEvent> listener) {
+		observable.addListener(listener);
+	}
+
 	private void fireEvent(RosterEvent event) {
 		if (event == null)
 			return;
