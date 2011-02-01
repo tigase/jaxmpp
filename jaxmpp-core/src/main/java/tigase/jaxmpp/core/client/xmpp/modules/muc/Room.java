@@ -15,6 +15,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class Room {
 
+	private boolean joined;
+
 	private boolean leaved;
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
@@ -56,6 +58,10 @@ public class Room {
 		return tempOccupants;
 	}
 
+	public boolean isJoined() {
+		return joined;
+	}
+
 	public boolean isLeaved() {
 		return leaved;
 	}
@@ -71,6 +77,10 @@ public class Room {
 		msg.setBody(body);
 
 		this.writer.write(msg);
+	}
+
+	public void setJoined(boolean joined) {
+		this.joined = joined;
 	}
 
 	public void setLeaved(boolean b) {

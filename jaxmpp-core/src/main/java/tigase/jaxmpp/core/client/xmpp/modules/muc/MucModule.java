@@ -96,6 +96,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
+	public static final EventType MessageError = new EventType();
+
 	public static final EventType MessageReceived = new EventType();
 
 	public static final EventType NewRoomCreated = new EventType();
@@ -107,6 +109,14 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public static final EventType OccupantComes = new EventType();
 
 	public static final EventType OccupantLeaved = new EventType();
+
+	public static final EventType PresenceError = new EventType();
+
+	/**
+	 * Local instance of Chat Room was closed because of, for example, presence
+	 * error.
+	 */
+	public static final EventType RoomClosed = new EventType();
 
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
@@ -229,11 +239,16 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return;
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
-		MucEvent event = new MucEvent(MessageReceived);
+		MucEvent event;
+		if (element.getType() == StanzaType.error) {
+			event = new MucEvent(MessageError);
+		} else {
+			event = new MucEvent(MessageReceived);
+		}
+
 		event.setMessage(element);
 		event.setRoom(room);
 		event.setNickname(nickname);
-
 		observable.fireEvent(event);
 
 	}
@@ -245,6 +260,24 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		Room room = this.rooms.get(roomJid);
 		if (room == null)
 			throw new XMPPException(ErrorCondition.service_unavailable);
+
+		if (element.getType() == StanzaType.error && !room.isJoined() && nickname == null) {
+			room.setLeaved(true);
+			this.rooms.remove(room.getRoomJid());
+			MucEvent event = new MucEvent(RoomClosed);
+			event.setNickname(nickname);
+			event.setPresence(element);
+			event.setRoom(room);
+			observable.fireEvent(event);
+		} else if (element.getType() == StanzaType.error) {
+			MucEvent event = new MucEvent(PresenceError);
+			event.setNickname(nickname);
+			event.setPresence(element);
+			event.setRoom(room);
+			observable.fireEvent(event);
+			return;
+		}
+
 		if (nickname == null)
 			return;
 
@@ -281,9 +314,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 				event = new MucEvent(OccupantChangedNick);
 				event.setOldNickname(tmp.getNickname());
 				occupant = tmp;
-			} else
+			} else {
+				if (!room.isJoined() && xUser != null && xUser.getStatuses().contains(110)) {
+					room.setJoined(true);
+				}
 				event = new MucEvent(OccupantComes);
-
+			}
 			occupant.setPresence(element);
 			room.add(occupant);
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
