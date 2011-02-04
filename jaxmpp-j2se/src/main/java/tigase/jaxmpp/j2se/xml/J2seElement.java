@@ -56,9 +56,11 @@ public class J2seElement implements Element {
 	@Override
 	public List<Element> getChildren() throws XMLException {
 		ArrayList<Element> result = new ArrayList<Element>();
-		for (tigase.xml.Element e : this.xmlElement.getChildren()) {
-			result.add(new J2seElement(e, this));
-		}
+		List<tigase.xml.Element> x = this.xmlElement.getChildren();
+		if (x != null)
+			for (tigase.xml.Element e : x) {
+				result.add(new J2seElement(e, this));
+			}
 		return result;
 	}
 

@@ -84,7 +84,7 @@ public class Processor {
 				return result;
 
 			if (stanza.getName().equals("iq") && stanza.getAttribute("type") != null
-					&& stanza.getAttribute("type").equals("error"))
+					&& (stanza.getAttribute("type").equals("error") || stanza.getAttribute("type").equals("result")))
 				return null;
 
 			final XmppModule module = xmppModulesManages.findModule(stanza);
