@@ -16,8 +16,11 @@ import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
@@ -181,14 +184,17 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new MessageModule(sessionObject, writer));
 
-		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
-		this.modulesManager.register(new SaslModule(sessionObject, writer));
+		this.modulesManager.register(new DiscoInfoModule(sessionObject, writer));
+		this.modulesManager.register(new DiscoItemsModule(sessionObject, writer));
 
+		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
 		this.modulesManager.register(new PingModule(sessionObject, writer));
 		this.modulesManager.register(new ResourceBinderModule(sessionObject, writer));
 
 		this.modulesManager.register(new RosterModule(sessionObject, writer));
 
+		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
+		this.modulesManager.register(new SaslModule(sessionObject, writer));
 	}
 
 	protected abstract void onException(JaxmppException e);

@@ -21,6 +21,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
@@ -94,6 +95,8 @@ public class Jaxmpp extends JaxmppCore {
 
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
+
+		sessionObject.setProperty(DiscoInfoModule.IDENTITY_TYPE_KEY, "web");
 
 		modulesInit();
 
