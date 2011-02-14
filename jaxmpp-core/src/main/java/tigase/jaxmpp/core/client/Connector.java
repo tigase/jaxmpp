@@ -60,7 +60,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * <br/>
  * <dt><b>Properties:</b></dt>
  * 
- * <dd><b>{@link Connector#TRUST_MANAGER TRUST_MANAGER}</b>: Custom
+ * <dd><b>{@link Connector#TRUST_MANAGER_KEY TRUST_MANAGER}</b>: Custom
  * {@link TrustManager TrustManager} instead of dummy (accespts all
  * certificates) builded in.</dd>
  * 
@@ -124,9 +124,9 @@ public interface Connector {
 	 */
 	public final static EventType Connected = new EventType();
 
-	public final static String CONNECTOR_STAGE = "connector#stage";
+	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
 
-	public final static String ENCRYPTED = "connector#encrypted";
+	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
 
 	/**
 	 * Event fires after encrypted connection is established.
@@ -172,7 +172,7 @@ public interface Connector {
 	 * property}. Custom {@link TrustManager TrustManager} instead of dummy
 	 * (accespts all certificates) builded in.
 	 */
-	public static final String TRUST_MANAGER = "TRUST_MANAGER";
+	public static final String TRUST_MANAGER_KEY = "TRUST_MANAGER_KEY";
 
 	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener);
 

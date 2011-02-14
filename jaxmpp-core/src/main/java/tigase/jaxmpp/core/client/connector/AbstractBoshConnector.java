@@ -69,13 +69,20 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 	}
 
-	public static final String BOSH_SERVICE_URL = "boshServiceUrl";
+	/**
+	 * @deprecated use {@linkplain BOSH_SERVICE_URL_KEY
+	 *             AbstractBoshConnector#BOSH_SERVICE_URL_KEY}
+	 */
+	@Deprecated
+	public static final String BOSH_SERVICE_URL = "BOSH_SERVICE_URL_KEY";
 
-	private static final String DEFAULT_TIMEOUT_KEY = "bosh#defaultTimeout";
+	public static final String BOSH_SERVICE_URL_KEY = "BOSH_SERVICE_URL_KEY";
 
-	public final static String RID_KEY = "bosh#rid";
+	private static final String DEFAULT_TIMEOUT_KEY = "BOSH#DEFAULT_TIMEOUT_KEY";
 
-	public static final String SID_KEY = "bosh#sid";
+	public final static String RID_KEY = "BOSH#RID_KEY";
+
+	public static final String SID_KEY = "BOSH#SID_KEY";
 
 	protected final Logger log;
 
@@ -178,7 +185,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public State getState() {
-		return this.sessionObject.getProperty(CONNECTOR_STAGE);
+		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 	}
 
 	@Override
@@ -348,8 +355,8 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void setStage(State state) {
-		State s = this.sessionObject.getProperty(CONNECTOR_STAGE);
-		this.sessionObject.setProperty(CONNECTOR_STAGE, state);
+		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			ConnectorEvent e = new ConnectorEvent(StateChanged);
 			observable.fireEvent(e);
@@ -365,7 +372,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
 
-		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL);
+		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		if (u == null)
 			throw new JaxmppException("BOSH service URL not defined!");
 

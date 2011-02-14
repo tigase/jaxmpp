@@ -209,17 +209,17 @@ public class SocketConnector implements Connector {
 	 */
 	@Override
 	public State getState() {
-		return this.sessionObject.getProperty(CONNECTOR_STAGE);
+		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 	}
 
 	@Override
 	public boolean isSecure() {
-		return ((Boolean) sessionObject.getProperty(ENCRYPTED)) == Boolean.TRUE;
+		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
 	}
 
 	protected void onError(Element response, Throwable caught) {
 		if (response != null)
-			sessionObject.setProperty(CONNECTOR_STAGE, State.disconnected);
+			sessionObject.setProperty(CONNECTOR_STAGE_KEY, State.disconnected);
 		fireOnError(response, caught, sessionObject);
 	}
 
@@ -262,7 +262,7 @@ public class SocketConnector implements Connector {
 	protected void proceedTLS() {
 		log.fine("Proceeding TLS");
 		try {
-			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER);
+			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER_KEY);
 			final SSLSocketFactory factory;
 			if (trustManager == null) {
 				factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -279,7 +279,7 @@ public class SocketConnector implements Connector {
 				@Override
 				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 					log.info("TLS completed " + arg0);
-					sessionObject.setProperty(ENCRYPTED, Boolean.TRUE);
+					sessionObject.setProperty(ENCRYPTED_KEY, Boolean.TRUE);
 					ConnectorEvent event = new ConnectorEvent(EncryptionEstablished);
 					observable.fireEvent(EncryptionEstablished, event);
 				}
@@ -353,8 +353,8 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void setStage(State state) {
-		State s = this.sessionObject.getProperty(CONNECTOR_STAGE);
-		this.sessionObject.setProperty(CONNECTOR_STAGE, state);
+		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			ConnectorEvent e = new ConnectorEvent(StateChanged);
 			observable.fireEvent(e);
@@ -373,8 +373,8 @@ public class SocketConnector implements Connector {
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
 					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
 
-		if (sessionObject.getProperty(TRUST_MANAGER) == null)
-			sessionObject.setProperty(TRUST_MANAGER, dummyTrustManager);
+		if (sessionObject.getProperty(TRUST_MANAGER_KEY) == null)
+			sessionObject.setProperty(TRUST_MANAGER_KEY, dummyTrustManager);
 
 		setStage(State.connecting);
 

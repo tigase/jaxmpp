@@ -34,16 +34,16 @@ public class SoftwareVersionModule extends AbstractIQModule {
 			}
 		}
 
-		protected abstract void onVersionReceived(final String name, final String version, final String os);
+		protected abstract void onVersionReceived(final String name, final String version, final String os) throws XMLException;
 	}
 
 	public final static String DEFAULT_NAME_VAL = "Tigase based software";
 
-	public final static String NAME_KEY = "NAME_KEY";
+	public final static String NAME_KEY = "SOFTWARE_VERSION#NAME_KEY";
 
-	public final static String OS_KEY = "OS_KEY";
+	public final static String OS_KEY = "SOFTWARE_VERSION#OS_KEY";
 
-	public final static String VERSION_KEY = "VERSION_KEY";
+	public final static String VERSION_KEY = "SOFTWARE_VERSION#VERSION_KEY";
 
 	private static String getFirst(List<Element> list) throws XMLException {
 		if (list == null || list.size() == 0)

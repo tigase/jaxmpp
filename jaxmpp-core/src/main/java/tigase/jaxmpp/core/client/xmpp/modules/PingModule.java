@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
+import java.util.Date;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -14,9 +16,22 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class PingModule extends AbstractIQModule {
+
+	public abstract class PingAsyncCallback implements AsyncCallback {
+
+		private long pingTimestamp;
+
+		protected abstract void onPong(final long time);
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws XMLException {
+			onPong((new Date()).getTime() - pingTimestamp);
+		}
+	}
 
 	private final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("ping", "urn:xmpp:ping"));
 
@@ -44,6 +59,11 @@ public class PingModule extends AbstractIQModule {
 
 		sessionObject.registerResponseHandler(iq, asyncCallback);
 		writer.write(iq);
+	}
+
+	public void ping(JID jidInstance, PingAsyncCallback asyncCallback) throws XMLException, JaxmppException {
+		asyncCallback.pingTimestamp = (new Date()).getTime();
+		ping(jidInstance, (AsyncCallback) asyncCallback);
 	}
 
 	@Override

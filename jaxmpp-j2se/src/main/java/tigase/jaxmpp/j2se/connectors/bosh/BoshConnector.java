@@ -53,7 +53,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		try {
-			String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL);
+			String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 			if (u == null)
 				throw new JaxmppException("BOSH service URL not defined!");
 			URL url = new URL(u);

@@ -16,7 +16,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	public BoshConnector(SessionObject sessionObject) {
 		super(sessionObject);
 
-		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL);
+		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 
 		requestBuilder = new RequestBuilder(RequestBuilder.POST, u);
 		requestBuilder.setHeader("Connection", "close");

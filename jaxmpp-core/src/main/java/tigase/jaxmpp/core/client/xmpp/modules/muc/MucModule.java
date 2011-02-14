@@ -120,6 +120,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
+	public static final EventType YouJoined = new EventType();
+
 	private final Criteria crit;
 
 	private final Observable observable = new Observable();
@@ -170,6 +172,26 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		System.out.println("!!! " + roomJid + "  " + result);
 
 		return result;
+	}
+
+	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant) {
+		if (event == null)
+			return;
+		event.setNickname(nickname);
+		event.setPresence(element);
+		event.setRoom(room);
+		event.setOccupant(occupant);
+		observable.fireEvent(event);
+	}
+
+	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant) {
+		MucEvent event = new MucEvent(NewRoomCreated);
+		fireMucEvent(event, element, nickname, room, occupant);
+	}
+
+	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) {
+		MucEvent event = new MucEvent(YouJoined);
+		fireMucEvent(event, element, nickname, room, occupant);
 	}
 
 	@Override
@@ -315,13 +337,14 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 				event.setOldNickname(tmp.getNickname());
 				occupant = tmp;
 			} else {
-				if (!room.isJoined() && xUser != null && xUser.getStatuses().contains(110)) {
-					room.setJoined(true);
-				}
 				event = new MucEvent(OccupantComes);
 			}
 			occupant.setPresence(element);
 			room.add(occupant);
+			if (!room.isJoined() && xUser != null && xUser.getStatuses().contains(110)) {
+				room.setJoined(true);
+				fireYouJoinedEvent(element, nickname, room, occupant);
+			}
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
 			occupant.setPresence(element);
 			room.remove(occupant);
@@ -331,21 +354,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			event = new MucEvent(OccupantChangedPresence);
 		}
 
-		if (event != null) {
-			event.setNickname(nickname);
-			event.setPresence(element);
-			event.setRoom(room);
-			event.setOccupant(occupant);
-			observable.fireEvent(event);
-		}
+		fireMucEvent(event, element, nickname, room, occupant);
 
 		if (xUser != null && xUser.getStatuses().contains(201)) {
-			event = new MucEvent(NewRoomCreated);
-			event.setNickname(nickname);
-			event.setPresence(element);
-			event.setRoom(room);
-			event.setOccupant(occupant);
-			observable.fireEvent(event);
+			fireNewRoomCreatedEvent(element, nickname, room, occupant);
 		}
 
 	}

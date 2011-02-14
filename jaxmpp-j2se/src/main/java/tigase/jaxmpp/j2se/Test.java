@@ -1,5 +1,7 @@
 package tigase.jaxmpp.j2se;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -15,6 +17,14 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
+import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule.SoftwareVersionAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.DiscoItemsAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.Item;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.PresenceEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -35,19 +45,21 @@ public class Test {
 
 		Jaxmpp jaxmpp = new Jaxmpp();
 		// for BOSH connector
-		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL, "http://127.0.0.1:5280");
+		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, "http://178.32.171.163:5280");
 		// jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL,
 		// "http://messenger.tigase.org:80/bosh");
+
 		// for Socket connector
-		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "tigase.tigase.org");
+		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "178.32.171.161");
 		// port value is not necessary. Default is 5222
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_PORT, 5222);
 
 		// "bosh" and "socket" values available
-		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "bosh");
+		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "socket");
 
-		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
-		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
+		jaxmpp.getProperties().setUserProperty(SessionObject.RESOURCE, "jaxmpp");
+		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance("test1@example.com"));
+		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, "test");
 
 		System.out.println("// login");
 		// not necessary. it allows to set own status on sending initial
@@ -84,7 +96,7 @@ public class Test {
 
 		// ping example
 		IQ pingIq = IQ.create();
-		pingIq.setTo(JID.jidInstance("tigase.org"));
+		pingIq.setTo(JID.jidInstance("example.com"));
 		pingIq.setType(StanzaType.get);
 		pingIq.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 		jaxmpp.send(pingIq, new AsyncCallback() {
@@ -104,6 +116,69 @@ public class Test {
 				System.out.println("No ping response");
 			}
 		});
+
+		jaxmpp.getModulesManager().getModule(DiscoItemsModule.class).getItems(JID.jidInstance("example.com"),
+				new DiscoItemsAsyncCallback() {
+
+					@Override
+					public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+						System.out.println(" error " + error);
+					}
+
+					@Override
+					public void onInfoReceived(String attribute, ArrayList<Item> items) throws XMLException {
+						for (Item string : items) {
+							System.out.println(" ITEM: " + string.getName());
+						}
+					}
+
+					@Override
+					public void onTimeout() throws XMLException {
+						System.out.println(" timeout");
+					}
+				});
+		jaxmpp.getModulesManager().getModule(DiscoInfoModule.class).getInfo(JID.jidInstance("example.com"),
+				new DiscoInfoAsyncCallback() {
+
+					@Override
+					public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+						System.out.println("disco info error " + error);
+					}
+
+					@Override
+					protected void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
+							throws XMLException {
+						for (Identity i : identities) {
+							System.out.println("ID: " + i.getType() + " " + i.getCategory() + " " + i.getName());
+						}
+						System.out.println(" FEATURES: " + features.toString());
+					}
+
+					@Override
+					public void onTimeout() throws XMLException {
+						System.out.println("disco info timeout");
+					}
+				});
+		jaxmpp.getModulesManager().getModule(SoftwareVersionModule.class).checkSoftwareVersion(JID.jidInstance("example.com"),
+				new SoftwareVersionAsyncCallback() {
+
+					@Override
+					public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+						System.out.println("Version Error response " + error);
+					}
+
+					@Override
+					public void onTimeout() throws XMLException {
+						System.out.println("No version response");
+
+					}
+
+					@Override
+					protected void onVersionReceived(String name, String version, String os) {
+						System.out.println("Version: " + name + ", " + version + ", " + os);
+
+					}
+				});
 
 		Thread.sleep(1000 * 120);
 

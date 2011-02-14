@@ -91,6 +91,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static final EventType BeforeInitialPresence = new EventType();
 
+	public static final EventType BeforePresenceSend = new EventType();
+
 	public static final EventType ContactAvailable = new EventType();
 
 	public static final EventType ContactChangedPresence = new EventType();
@@ -120,6 +122,20 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public void addListener(Listener<PresenceEvent> listener) {
 		observable.addListener(listener);
+	}
+
+	/**
+	 * 
+	 * @param presence
+	 * @return <code>true</code> if event is cancelled
+	 */
+	protected boolean fireBeforePresenceSend(final Presence presence) {
+		PresenceEvent event = new PresenceEvent(BeforePresenceSend);
+		event.setPresence(presence);
+
+		observable.fireEvent(BeforePresenceSend, event);
+
+		return event.isCancelled();
 	}
 
 	@Override
@@ -194,6 +210,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			presence.setNickname((String) sessionObject.getProperty(SessionObject.NICKNAME));
 		}
 
+		if (fireBeforePresenceSend(presence))
+			return;
+
 		writer.write(presence);
 	}
 
@@ -202,6 +221,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		presence.setShow(show);
 		presence.setStatus(status);
 		presence.setPriority(priority);
+
+		if (fireBeforePresenceSend(presence))
+			return;
 
 		writer.write(presence);
 	}

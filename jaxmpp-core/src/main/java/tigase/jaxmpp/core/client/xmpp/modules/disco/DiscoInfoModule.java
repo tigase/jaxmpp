@@ -1,5 +1,11 @@
 package tigase.jaxmpp.core.client.xmpp.modules.disco;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -15,8 +21,72 @@ import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class DiscoInfoModule extends AbstractIQModule {
+
+	public static abstract class DiscoInfoAsyncCallback implements AsyncCallback {
+
+		protected abstract void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
+				throws XMLException;
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws XMLException {
+			Element query = responseStanza.getChildrenNS("query", "http://jabber.org/protocol/disco#info");
+			List<Element> identities = query.getChildren("identity");
+			ArrayList<Identity> idres = new ArrayList<DiscoInfoModule.Identity>();
+			for (Element id : identities) {
+				Identity t = new Identity();
+				t.setName(id.getAttribute("name"));
+				t.setType(id.getAttribute("type"));
+				t.setCategory(id.getAttribute("category"));
+				idres.add(t);
+			}
+
+			List<Element> features = query.getChildren("feature");
+			ArrayList<String> feres = new ArrayList<String>();
+			for (Element element : features) {
+				String v = element.getAttribute("var");
+				if (v != null)
+					feres.add(v);
+			}
+
+			onInfoReceived(query.getAttribute("node"), idres, feres);
+		}
+	}
+
+	public static class Identity {
+		private String category;
+
+		private String name;
+
+		private String type;
+
+		public String getCategory() {
+			return category;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getType() {
+			return type;
+		}
+
+		public void setCategory(String category) {
+			this.category = category;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setType(String type) {
+			this.type = type;
+		}
+	}
 
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/disco#info" }));
@@ -41,6 +111,21 @@ public class DiscoInfoModule extends AbstractIQModule {
 	@Override
 	public String[] getFeatures() {
 		return FEATURES;
+	}
+
+	public void getInfo(JID jid, AsyncCallback callback) throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setTo(jid);
+		iq.setType(StanzaType.get);
+		iq.addChild(new DefaultElement("query", null, "http://jabber.org/protocol/disco#info"));
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+
+	}
+
+	public void getInfo(JID jid, DiscoInfoAsyncCallback callback) throws XMLException, JaxmppException {
+		getInfo(jid, (AsyncCallback) callback);
 	}
 
 	@Override
