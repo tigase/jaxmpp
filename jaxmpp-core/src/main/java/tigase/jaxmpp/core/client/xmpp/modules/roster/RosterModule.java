@@ -100,8 +100,9 @@ public class RosterModule extends AbstractIQModule {
 		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override
-			public void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
-				RosterModule.this.add(jid, name, groups);
+			public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
+					throws XMLException, JaxmppException {
+				RosterModule.this.add(jid, name, groups, asyncCallback);
 			}
 
 			@Override
@@ -116,7 +117,8 @@ public class RosterModule extends AbstractIQModule {
 		});
 	}
 
-	protected void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
+	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
+			JaxmppException {
 		RosterItem item = new RosterItem(jid);
 		fill(item, name, Subscription.none, groups, false);
 
@@ -125,26 +127,23 @@ public class RosterModule extends AbstractIQModule {
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+
+		AsyncCallback c = asyncCallback != null ? asyncCallback : new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
-				// TODO Auto-generated method stub
-
 			}
 
 			@Override
 			public void onSuccess(Stanza responseStanza) throws XMLException {
-				Element query = ((IQ) responseStanza).getQuery();
-				processRosterQuery(query);
 			}
 
 			@Override
 			public void onTimeout() throws XMLException {
-				// TODO Auto-generated method stub
-
 			}
-		});
+		};
+
+		sessionObject.registerResponseHandler(iq, c);
 		writer.write(iq);
 	}
 

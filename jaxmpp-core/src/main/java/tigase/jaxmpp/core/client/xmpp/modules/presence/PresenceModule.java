@@ -228,4 +228,48 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		writer.write(presence);
 	}
 
+	public void subscribe(JID jid) throws JaxmppException, XMLException {
+		Presence p = Presence.create();
+		p.setType(StanzaType.subscribe);
+		p.setTo(jid);
+
+		if (fireBeforePresenceSend(p))
+			return;
+
+		writer.write(p);
+	}
+
+	public void subscribed(JID jid) throws JaxmppException, XMLException {
+		Presence p = Presence.create();
+		p.setType(StanzaType.subscribed);
+		p.setTo(jid);
+
+		if (fireBeforePresenceSend(p))
+			return;
+
+		writer.write(p);
+	}
+
+	public void unsubscribe(JID jid) throws JaxmppException, XMLException {
+		Presence p = Presence.create();
+		p.setType(StanzaType.unsubscribe);
+		p.setTo(jid);
+
+		if (fireBeforePresenceSend(p))
+			return;
+
+		writer.write(p);
+	}
+
+	public void unsubscribed(JID jid) throws JaxmppException, XMLException {
+		Presence p = Presence.create();
+		p.setType(StanzaType.unsubscribed);
+		p.setTo(jid);
+
+		if (fireBeforePresenceSend(p))
+			return;
+
+		writer.write(p);
+	}
+
 }

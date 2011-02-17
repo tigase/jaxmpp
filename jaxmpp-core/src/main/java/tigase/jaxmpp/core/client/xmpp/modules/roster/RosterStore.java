@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -14,7 +15,8 @@ public class RosterStore {
 
 	static interface Handler {
 
-		void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException;
+		void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
+				JaxmppException;
 
 		void remove(BareJID jid) throws XMLException, JaxmppException;
 
@@ -25,22 +27,24 @@ public class RosterStore {
 
 	protected final Map<BareJID, RosterItem> roster = new HashMap<BareJID, RosterItem>();
 
-	public void add(BareJID jid, String name) throws XMLException, JaxmppException {
-		add(jid, name, new ArrayList<String>());
+	public void add(BareJID jid, String name, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
+		add(jid, name, new ArrayList<String>(), asyncCallback);
 	}
 
-	public void add(BareJID jid, String name, Collection<String> groups) throws XMLException, JaxmppException {
+	public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
+			JaxmppException {
 		if (this.handler != null)
-			this.handler.add(jid, name, groups);
+			this.handler.add(jid, name, groups, asyncCallback);
 	}
 
-	public void add(BareJID jid, String name, String[] groups) throws XMLException, JaxmppException {
+	public void add(BareJID jid, String name, String[] groups, AsyncCallback asyncCallback) throws XMLException,
+			JaxmppException {
 		ArrayList<String> x = new ArrayList<String>();
 		if (groups != null)
 			for (String string : groups) {
 				x.add(string);
 			}
-		add(jid, name, x);
+		add(jid, name, x, asyncCallback);
 	}
 
 	void addItem(RosterItem item) {
