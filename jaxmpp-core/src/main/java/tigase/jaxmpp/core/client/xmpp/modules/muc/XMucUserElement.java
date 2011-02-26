@@ -13,7 +13,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 public class XMucUserElement extends ElementWrapper {
 
 	public static XMucUserElement extract(Stanza stanza) throws XMLException {
-		final Element x = stanza.getChildrenNS("x", "http://jabber.org/protocol/muc#user");
+		final Element x = stanza == null ? null : stanza.getChildrenNS("x", "http://jabber.org/protocol/muc#user");
 		if (x == null)
 			return null;
 		return new XMucUserElement(x);

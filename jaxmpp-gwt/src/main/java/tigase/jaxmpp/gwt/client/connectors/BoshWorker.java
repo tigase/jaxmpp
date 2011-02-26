@@ -97,7 +97,9 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			String x = element.getAsString();
 			System.out.println(">> " + x);
 			request = requestBuilder.sendRequest(x, callback);
+			System.out.println(" ok " + request.toString() + " " + request.isPending() + " ");
 		} catch (Exception e) {
+			e.printStackTrace();
 			try {
 				onError(-1, null, null, e);
 			} catch (JaxmppException e1) {

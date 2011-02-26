@@ -5,9 +5,9 @@ import java.util.Date;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
-import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
@@ -16,6 +16,7 @@ import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
+import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
@@ -25,14 +26,22 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
+import tigase.jaxmpp.gwt.client.GwtSessionObject.RestoringSessionException;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Cookies;
 
 public class Jaxmpp extends JaxmppCore {
+
+	public static EventType BeforeSessionResoting = new EventType();
+
+	private final static String COOKIE_RID_KEY = "jaxmpp-rid";
 
 	private final ConnectorWrapper connectorWrapper;
 
@@ -93,7 +102,7 @@ public class Jaxmpp extends JaxmppCore {
 		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
 		this.connector.addListener(Connector.Error, this.streamErrorListener);
 
-		this.sessionObject = new DefaultSessionObject();
+		this.sessionObject = new GwtSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
 		sessionObject.setProperty(DiscoInfoModule.IDENTITY_TYPE_KEY, "web");
@@ -155,11 +164,11 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	}
 
-	@Override
-	public void login() throws JaxmppException {
-		lastRid = null;
-		this.sessionObject.clear();
+	public PacketWriter getWriter() {
+		return writer;
+	}
 
+	private void intLogin() throws JaxmppException {
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
@@ -181,6 +190,13 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (XMLException e1) {
 			throw new JaxmppException(e1);
 		}
+	}
+
+	@Override
+	public void login() throws JaxmppException {
+		lastRid = null;
+		this.sessionObject.clear();
+		intLogin();
 	}
 
 	@Override
@@ -229,6 +245,37 @@ public class Jaxmpp extends JaxmppCore {
 		observable.fireEvent(event);
 	}
 
+	public void restoreSession() throws JaxmppException {
+		try {
+			String s = Cookies.getCookie(COOKIE_RID_KEY);
+			if (s != null) {
+				System.out.println(s);
+				JSONValue x = JSONParser.parseStrict(s);
+				System.out.println(x);
+				((GwtSessionObject) sessionObject).restore(x);
+				sessionObject.setProperty(Connector.CONNECTOR_STAGE_KEY, Connector.State.connected);
+
+				Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+					@Override
+					public void execute() {
+						try {
+							observable.fireEvent(BeforeSessionResoting, new JaxmppEvent(BeforeSessionResoting));
+							intLogin();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+
+			}
+		} catch (RestoringSessionException e) {
+			e.printStackTrace();
+		} finally {
+			Cookies.removeCookie(COOKIE_RID_KEY);
+		}
+	}
+
 	@Override
 	public void send(Stanza stanza) throws XMLException, JaxmppException {
 		this.writer.write(stanza);
@@ -240,4 +287,9 @@ public class Jaxmpp extends JaxmppCore {
 		this.writer.write(stanza);
 	}
 
+	public void storeSession() {
+		System.out.println("Storing session");
+		String s = ((GwtSessionObject) sessionObject).serialize();
+		Cookies.setCookie(COOKIE_RID_KEY, s);
+	}
 }

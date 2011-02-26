@@ -42,6 +42,7 @@ public class BoshConnector extends AbstractBoshConnector {
 			}
 
 		};
+
 		addToRequests(worker);
 
 		BoshConnectorEvent event = new BoshConnectorEvent(StanzaSending);

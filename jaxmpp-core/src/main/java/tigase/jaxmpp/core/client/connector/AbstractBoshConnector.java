@@ -69,6 +69,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 	}
 
+	public static final String AUTHID_KEY = "BOSH#AUTHID_KEY";
+
 	/**
 	 * @deprecated use {@linkplain BOSH_SERVICE_URL_KEY
 	 *             AbstractBoshConnector#BOSH_SERVICE_URL_KEY}
@@ -225,6 +227,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				setStage(State.connected);
 				fireOnConnected(sessionObject);
 			}
+			System.out.println("?? " + this.requests.size() + " :: " + this.requests.keySet().toString());
 			if (getState() == State.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody(null);
 				processSendData(body);
@@ -290,6 +293,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		e.setAttribute("xmpp:version", "1.0");
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
 		e.setAttribute("xmlns:xmpp", "urn:xmpp:xbosh");
+		e.setAttribute("cache", "on");
 
 		return e;
 	}
@@ -376,8 +380,19 @@ public abstract class AbstractBoshConnector implements Connector {
 		if (u == null)
 			throw new JaxmppException("BOSH service URL not defined!");
 
-		setStage(State.connecting);
-		processSendData(prepareStartBody());
+		if (getState() == State.connected) {
+			processSendData(prepareBody(null));
+
+			Element x = prepareBody(null);
+			x.setAttribute("cache", "get_all");
+			processSendData(x);
+
+			// processSendData(prepareBody(null));
+			// requests.clear();
+		} else {
+			setStage(State.connecting);
+			processSendData(prepareStartBody());
+		}
 	}
 
 	@Override

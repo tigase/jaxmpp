@@ -10,13 +10,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class DefaultSessionObject implements SessionObject {
 
-	private final PresenceStore presence = new PresenceStore();
+	protected final PresenceStore presence = new PresenceStore();
 
 	protected final Map<String, Object> properties = new HashMap<String, Object>();
 
 	protected final ResponseManager responseManager = new ResponseManager();
 
-	private final RosterStore roster = new RosterStore();
+	protected final RosterStore roster = new RosterStore();
 
 	protected Element streamFeatures;
 

@@ -174,6 +174,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		return result;
 	}
 
+	public void enable(Room room) {
+		fireYouJoinedEvent(null, null, room, null);
+	}
+
 	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant) {
 		if (event == null)
 			return;
@@ -215,7 +219,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return this.rooms.get(roomJid);
 
 		Room room = new Room(writer, roomJid, nickname);
-		this.rooms.put(roomJid, room);
+		register(room);
 
 		Presence presence = Presence.create();
 		presence.setTo(JID.jidInstance(roomJid, nickname));
@@ -360,6 +364,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			fireNewRoomCreatedEvent(element, nickname, room, occupant);
 		}
 
+	}
+
+	public void register(Room room) {
+		this.rooms.put(room.getRoomJid(), room);
 	}
 
 	public void removeAllListeners() {
