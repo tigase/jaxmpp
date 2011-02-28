@@ -1,73 +1,85 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>tigase</groupId>
-    <artifactId>tigase-jaxmpp</artifactId>
-    <packaging>pom</packaging>
-    <name>Java XMPP Library</name>
-    <version>2.0.0-SNAPSHOT</version>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>tigase</groupId>
+	<artifactId>tigase-jaxmpp</artifactId>
+	<packaging>pom</packaging>
+	<name>Java XMPP Library</name>
+	<version>2.0.0-SNAPSHOT</version>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
-    <inceptionYear>2006</inceptionYear>
-    <developers>
-        <developer>
-            <id>bmalkow</id>
-            <name>Bartosz Malkowski</name>
-            <email>bmalkow tigase org</email>
-            <roles>
-                <role>architect</role>
-                <role>developer</role>
-            </roles>
-            <timezone>+1</timezone>
-        </developer>
-    </developers>
+	<inceptionYear>2006</inceptionYear>
+	<developers>
+		<developer>
+			<id>bmalkow</id>
+			<name>Bartosz Malkowski</name>
+			<email>bmalkow tigase org</email>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
 
-    <licenses>
-        <license>
-            <name>GNU GENERAL PUBLIC LICENSE Version 3</name>
-            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
-        </license>
-    </licenses>
+	<licenses>
+		<license>
+			<name>GNU GENERAL PUBLIC LICENSE Version 3</name>
+			<url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+		</license>
+	</licenses>
 
-    <organization>
-        <name>Tigase</name>
-        <url>http://www.tigase.org</url>
-    </organization>
+	<organization>
+		<name>Tigase</name>
+		<url>http://www.tigase.org</url>
+	</organization>
 
-    <modules>
-        <module>jaxmpp-core</module>
-        <module>jaxmpp-j2se</module>
-        <module>jaxmpp-gwt</module>
-    </modules>
+	<modules>
+		<module>jaxmpp-core</module>
+		<module>jaxmpp-j2se</module>
+		<module>jaxmpp-gwt</module>
+	</modules>
 
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
-                        <encoding>UTF-8</encoding>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.8.1</version>
-            <scope>test</scope>
-        </dependency>
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
-    </dependencies>
+	<distributionManagement>
+		<repository>
+			<id>tigase</id>
+			<name>Tigase Repo</name>
+			<url>scpexe://maven.tigase.org:/home/webapp/maven-repository</url>
+		</repository>
+		<snapshotRepository>
+			<id>tigase</id>
+			<name>Tigase Repo</name>
+			<url>scpexe://maven.tigase.org:/home/webapp/maven-repository</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 </project>
