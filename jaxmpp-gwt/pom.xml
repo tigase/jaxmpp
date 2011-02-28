@@ -12,7 +12,7 @@
 	<name>Java XMPP Library for GWT</name>
 
 	<properties>
-		<gwt.version>2.0.4</gwt.version>
+		<gwt.version>2.2.0</gwt.version>
 	</properties>
 
 	<dependencies>
@@ -21,7 +21,7 @@
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<!--  GWT deps (from central repo) -->
+		<!-- GWT deps (from central repo) -->
 		<dependency>
 			<groupId>com.google.gwt</groupId>
 			<artifactId>gwt-servlet</artifactId>
@@ -47,7 +47,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>gwt-maven-plugin</artifactId>
-				<!--				<version>1.2</version>-->
+				<version>2.1.0-1</version>
 				<executions>
 					<execution>
 						<phase>prepare-package</phase>
@@ -59,10 +59,8 @@
 			</plugin>
 
 
-			<!--
-				Add source folders to test classpath in order to run gwt-tests as
-				normal junit-tests
-			-->
+			<!-- Add source folders to test classpath in order to run gwt-tests as 
+				normal junit-tests -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
