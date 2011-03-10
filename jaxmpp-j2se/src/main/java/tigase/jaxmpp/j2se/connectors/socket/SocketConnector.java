@@ -75,7 +75,6 @@ public class SocketConnector implements Connector {
 					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
 					tigase.xml.Element elem;
 					while ((elem = elems.poll()) != null) {
-						System.out.println(" RECEIVED: " + elem.toString());
 						if (elem != null && elem.getXMLNS() != null
 								&& elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
 							connector.onTLSStanza(elem);
@@ -87,7 +86,6 @@ public class SocketConnector implements Connector {
 							}
 					}
 				}
-				System.out.println(r + "  " + isInterrupted() + "  " + connector.getState());
 				connector.onStreamTerminate();
 			} catch (Exception e) {
 				onErrorInThread(e);
@@ -235,7 +233,6 @@ public class SocketConnector implements Connector {
 
 	protected void onStreamStart(Map<String, String> attribs) {
 		// TODO Auto-generated method stub
-		System.out.println(" STREAM STSRT " + attribs.toString());
 	}
 
 	protected void onStreamTerminate() {

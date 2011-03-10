@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -31,7 +32,11 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
-		super(new DefaultLoggerSpi());
+		this(new DefaultLoggerSpi());
+	}
+
+	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
+		super(defaultLoggerSpi);
 
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);

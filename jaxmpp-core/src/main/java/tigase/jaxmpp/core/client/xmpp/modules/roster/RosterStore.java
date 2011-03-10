@@ -51,6 +51,10 @@ public class RosterStore {
 		this.roster.put(item.getJid(), item);
 	}
 
+	public void cler() {
+		roster.clear();
+	}
+
 	public RosterItem get(BareJID jid) {
 		return this.roster.get(jid);
 	}

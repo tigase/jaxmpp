@@ -249,9 +249,7 @@ public class Jaxmpp extends JaxmppCore {
 		try {
 			String s = Cookies.getCookie(COOKIE_RID_KEY);
 			if (s != null) {
-				System.out.println(s);
 				JSONValue x = JSONParser.parseStrict(s);
-				System.out.println(x);
 				((GwtSessionObject) sessionObject).restore(x);
 				sessionObject.setProperty(Connector.CONNECTOR_STAGE_KEY, Connector.State.connected);
 
@@ -288,7 +286,6 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public void storeSession() {
-		System.out.println("Storing session");
 		String s = ((GwtSessionObject) sessionObject).serialize();
 		Cookies.setCookie(COOKIE_RID_KEY, s);
 	}

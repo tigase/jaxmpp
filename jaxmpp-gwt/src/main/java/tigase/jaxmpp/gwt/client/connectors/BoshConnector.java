@@ -28,17 +28,17 @@ public class BoshConnector extends AbstractBoshConnector {
 
 			@Override
 			protected void onError(int responseCode, String responseData, Element response, Throwable caught) {
-				BoshConnector.this.onError(responseCode, responseData, response, caught);
+				BoshConnector.this.onError(this, responseCode, responseData, response, caught);
 			}
 
 			@Override
 			protected void onSuccess(int responseCode, String responseData, Element response) throws JaxmppException {
-				BoshConnector.this.onResponse(responseCode, responseData, response);
+				BoshConnector.this.onResponse(this, responseCode, responseData, response);
 			}
 
 			@Override
 			protected void onTerminate(int responseCode, String responseData, Element response) {
-				BoshConnector.this.onTerminate(responseCode, responseData, response);
+				BoshConnector.this.onTerminate(this, responseCode, responseData, response);
 			}
 
 		};

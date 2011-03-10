@@ -46,8 +46,23 @@ public abstract class BoshWorker implements BoshRequest {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (!(obj instanceof BoshWorker))
+			return false;
+
+		return ((BoshWorker) obj).rid.equals(rid);
+	}
+
+	@Override
 	public String getRid() {
 		return rid;
+	}
+
+	@Override
+	public int hashCode() {
+		return rid.hashCode();
 	}
 
 	protected abstract void onError(int responseCode, String responseData, Element response, Throwable caught)
@@ -131,6 +146,11 @@ public abstract class BoshWorker implements BoshRequest {
 		terminated = true;
 		if (conn != null)
 			conn.disconnect();
+	}
+
+	@Override
+	public String toString() {
+		return "rid=" + rid;
 	}
 
 }

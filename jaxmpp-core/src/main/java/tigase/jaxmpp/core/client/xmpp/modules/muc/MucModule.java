@@ -169,8 +169,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		boolean result = this.rooms.containsKey(roomJid);
 
-		System.out.println("!!! " + roomJid + "  " + result);
-
 		return result;
 	}
 

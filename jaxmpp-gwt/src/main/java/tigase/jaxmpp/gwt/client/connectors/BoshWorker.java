@@ -90,6 +90,16 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (!(obj instanceof BoshWorker))
+			return false;
+
+		return ((BoshWorker) obj).rid.equals(rid);
+	}
+
+	@Override
 	public void execute() {
 		if (terminated)
 			return;
@@ -97,7 +107,6 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			String x = element.getAsString();
 			System.out.println(">> " + x);
 			request = requestBuilder.sendRequest(x, callback);
-			System.out.println(" ok " + request.toString() + " " + request.isPending() + " ");
 		} catch (Exception e) {
 			e.printStackTrace();
 			try {
@@ -110,6 +119,11 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 	@Override
 	public String getRid() {
 		return rid;
+	}
+
+	@Override
+	public int hashCode() {
+		return rid.hashCode();
 	}
 
 	protected abstract void onError(int responseCode, String data, Element response, Throwable caught) throws JaxmppException;
@@ -128,5 +142,10 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 		this.terminated = true;
 		if (request != null)
 			request.cancel();
+	}
+
+	@Override
+	public String toString() {
+		return "rid=" + rid;
 	}
 }

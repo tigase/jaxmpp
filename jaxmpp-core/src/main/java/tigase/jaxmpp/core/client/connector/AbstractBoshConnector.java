@@ -1,8 +1,9 @@
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.HashMap;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
@@ -86,11 +87,19 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
+	private final static void uglyWait(int ms) {
+		long t = (new Date()).getTime();
+		long t1 = t;
+		while (t1 < t + ms) {
+			t1 = (new Date()).getTime();
+		}
+	}
+
 	protected final Logger log;
 
 	protected Observable observable = new Observable();
 
-	protected final Map<String, BoshRequest> requests = new HashMap<String, BoshRequest>();
+	protected final Set<BoshRequest> requests = new HashSet<BoshRequest>();
 
 	protected final SessionObject sessionObject;
 
@@ -106,7 +115,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void addToRequests(final BoshRequest worker) {
-		this.requests.put(worker.getRid(), worker);
+		this.requests.add(worker);
 	}
 
 	protected int countActiveRequests() {
@@ -205,54 +214,46 @@ public abstract class AbstractBoshConnector implements Connector {
 		return i;
 	}
 
-	protected void onError(int responseCode, String responseData, Element response, Throwable caught) {
-		try {
-			if (response != null)
-				removeFromRequests(response.getAttribute("ack"));
-			if (log.isLoggable(LogLevel.FINER))
-				log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
-			setStage(State.disconnected);
-			fireOnError(responseCode, responseData, response, caught, sessionObject);
-		} catch (XMLException e) {
-			e.printStackTrace();
-		}
+	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught) {
+		removeFromRequests(request);
+		if (log.isLoggable(LogLevel.FINER))
+			log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
+		setStage(State.disconnected);
+		fireOnError(responseCode, responseData, response, caught, sessionObject);
 	}
 
-	protected void onResponse(final int responseCode, String responseData, final Element response) throws JaxmppException {
+	protected void onResponse(BoshRequest request, final int responseCode, String responseData, final Element response)
+			throws JaxmppException {
+		removeFromRequests(request);
 		try {
-			if (response != null)
-				removeFromRequests(response.getAttribute("ack"));
 			if (response != null && getState() == State.connecting) {
 				setSid(response.getAttribute("sid"));
 				setStage(State.connected);
 				fireOnConnected(sessionObject);
 			}
-			System.out.println("?? " + this.requests.size() + " :: " + this.requests.keySet().toString());
+			if (response != null)
+				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
+
+			uglyWait(1550);
+
 			if (getState() == State.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody(null);
 				processSendData(body);
 			}
-			if (response != null)
-				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	protected void onTerminate(int responseCode, String responseData, Element response) {
+	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response) {
+		removeFromRequests(request);
 		if (getState() == State.disconnected)
 			return;
-		try {
-			if (log.isLoggable(LogLevel.FINE))
-				log.fine("Stream terminated. responseCode=" + responseCode);
-			if (response != null)
-				removeFromRequests(response.getAttribute("ack"));
-			setStage(State.disconnected);
-			terminateAllWorkers();
-			fireOnTerminate(responseCode, responseData, response, sessionObject);
-		} catch (XMLException e) {
-			e.printStackTrace();
-		}
+		if (log.isLoggable(LogLevel.FINE))
+			log.fine("Stream terminated. responseCode=" + responseCode);
+		setStage(State.disconnected);
+		terminateAllWorkers();
+		fireOnTerminate(responseCode, responseData, response, sessionObject);
 	}
 
 	protected Element prepareBody(Element payload) throws XMLException {
@@ -318,9 +319,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		observable.removeAllListeners();
 	}
 
-	protected void removeFromRequests(final String ack) {
-		if (ack == null)
-			return;
+	protected void removeFromRequests(final BoshRequest ack) {
 		this.requests.remove(ack);
 	}
 
@@ -331,8 +330,9 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void restartStream() throws XMLException, JaxmppException {
-		if (getState() != State.disconnected)
+		if (getState() != State.disconnected) {
 			processSendData(prepareRetartBody());
+		}
 	}
 
 	@Override
@@ -398,12 +398,13 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void stop() throws XMLException, JaxmppException {
 		setStage(State.disconnecting);
-		if (getState() != State.disconnected)
+		if (getState() != State.disconnected) {
 			processSendData(prepareTerminateBody(null));
+		}
 	}
 
 	protected void terminateAllWorkers() {
-		for (BoshRequest w : this.requests.values()) {
+		for (BoshRequest w : this.requests) {
 			w.terminate();
 		}
 		this.requests.clear();

@@ -30,6 +30,8 @@ public class DefaultSessionObject implements SessionObject {
 	@Override
 	public void clear() {
 		this.properties.clear();
+		roster.cler();
+		presence.clear();
 	}
 
 	@Override
