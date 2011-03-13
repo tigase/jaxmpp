@@ -24,6 +24,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
+import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
@@ -178,6 +179,8 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
+		this.modulesManager.register(new PubSubModule(sessionObject, writer));
+
 		this.modulesManager.register(new MucModule(sessionObject, writer));
 
 		this.modulesManager.register(new PresenceModule(sessionObject, writer));

@@ -13,6 +13,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 public abstract class Stanza extends ElementWrapper {
 
 	public static final Stanza create(final Element element) throws XMLException {
+		if (element instanceof Stanza)
+			return (Stanza) element;
 		final String name = element.getName();
 		if ("iq".equals(name))
 			return new IQ(element);
