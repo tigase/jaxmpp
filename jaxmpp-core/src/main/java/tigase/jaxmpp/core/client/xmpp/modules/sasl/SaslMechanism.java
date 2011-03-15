@@ -9,6 +9,8 @@ public interface SaslMechanism {
 		ERROR,
 		SUCCESS
 	}
+	
+	boolean isAllowedToUse(SessionObject sessionObject);
 
 	String evaluateChallenge(String input, SessionObject sessionObject);
 

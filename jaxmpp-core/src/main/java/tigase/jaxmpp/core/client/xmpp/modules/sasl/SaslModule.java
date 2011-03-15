@@ -1,7 +1,10 @@
 package tigase.jaxmpp.core.client.xmpp.modules.sasl;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -159,6 +162,12 @@ public class SaslModule implements XmppModule {
 		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
+
+		this.mechanisms.put("ANONYMOUS", new AnonymousMechanism());
+		this.mechanisms.put("PLAIN", new PlainMechanism());
+
+		this.mechanismsOrder.add("PLAIN");
+		this.mechanismsOrder.add("ANONYMOUS");
 	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -175,22 +184,63 @@ public class SaslModule implements XmppModule {
 		return null;
 	}
 
-	protected SaslMechanism guessSaslMechanism() {
-		SaslMechanism result;
-		if (sessionObject.getProperty(SessionObject.PASSWORD) == null
-				|| sessionObject.getProperty(SessionObject.USER_JID) == null) {
-			result = new AnonymousMechanism();
-		} else {
-			result = new PlainMechanism();
+	private final Map<String, SaslMechanism> mechanisms = new HashMap<String, SaslMechanism>();
+
+	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
+
+	public void addMechanism(SaslMechanism mechanism) {
+		this.mechanisms.put(mechanism.name(), mechanism);
+	}
+
+	protected Collection<String> getSupportedMechanisms() throws XMLException {
+		ArrayList<String> result = new ArrayList<String>();
+		Element x = this.sessionObject.getStreamFeatures().getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
+		if (x != null) {
+			List<Element> mms = x.getChildren("mechanism");
+			if (mms != null)
+				for (Element element : mms) {
+					String n = element.getValue();
+					if (n != null && !n.isEmpty())
+						result.add(n);
+				}
 		}
-		log.info("Selected SASL mechanism: " + result.name());
+
 		return result;
+	}
+
+	protected SaslMechanism guessSaslMechanism() throws XMLException {
+		final Collection<String> supportedMechanisms = getSupportedMechanisms();
+
+		for (final String name : this.mechanismsOrder) {
+			final SaslMechanism mechanism = this.mechanisms.get(name);
+			if (mechanism == null || !supportedMechanisms.contains(name))
+				continue;
+
+			if (mechanism.isAllowedToUse(sessionObject))
+				return mechanism;
+
+		}
+
+		return null;
+
+		// SaslMechanism result;
+		// if (sessionObject.getProperty(SessionObject.PASSWORD) == null
+		// || sessionObject.getProperty(SessionObject.USER_JID) == null) {
+		// result = new AnonymousMechanism();
+		// } else {
+		// result = new PlainMechanism();
+		// }
+		// log.info("Selected SASL mechanism: " + result.name());
+		// return result;
 	}
 
 	public void login() throws XMLException, JaxmppException {
 		observable.fireEvent(SaslStart, new SaslEvent(SaslStart));
 
-		sessionObject.setProperty(SASL_MECHANISM, guessSaslMechanism());
+		SaslMechanism saslM = guessSaslMechanism();
+		if (saslM == null)
+			throw new JaxmppException("No SASL Mechanism to use.");
+		sessionObject.setProperty(SASL_MECHANISM, saslM);
 
 		SaslMechanism mechanism = sessionObject.getProperty(SASL_MECHANISM);
 		Element auth = new DefaultElement("auth");
@@ -242,6 +292,10 @@ public class SaslModule implements XmppModule {
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.removeListener(eventType, listener);
+	}
+
+	public ArrayList<String> getMechanismsOrder() {
+		return mechanismsOrder;
 	}
 
 }

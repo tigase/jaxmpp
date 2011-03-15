@@ -54,4 +54,9 @@ public class AnonymousMechanism implements SaslMechanism {
 		return "ANONYMOUS";
 	}
 
+	@Override
+	public boolean isAllowedToUse(SessionObject sessionObject) {
+		return true;
+	}
+
 }

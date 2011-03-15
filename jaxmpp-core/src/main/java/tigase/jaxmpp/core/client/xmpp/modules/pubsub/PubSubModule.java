@@ -165,8 +165,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	@Override
 	public void process(Message message) throws XMPPException, XMLException {
 		final Element event = message.getChildrenNS("event", "http://jabber.org/protocol/pubsub#event");
-		List<Element> $tmp = event == null ? null : event.getChildren("items");
-		final Element items = $tmp == null || $tmp.isEmpty() ? null : $tmp.get(0);
+		List<Element> tmp = event == null ? null : event.getChildren("items");
+		final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
 		final String nodeName = items == null ? null : items.getAttribute("node");
 
 		final Element delay = message.getChildrenNS("delay", "urn:xmpp:delay");
