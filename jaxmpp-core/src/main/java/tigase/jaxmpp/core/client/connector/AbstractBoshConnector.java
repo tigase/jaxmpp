@@ -87,14 +87,6 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
-	private final static void uglyWait(int ms) {
-		long t = (new Date()).getTime();
-		long t1 = t;
-		while (t1 < t + ms) {
-			t1 = (new Date()).getTime();
-		}
-	}
-
 	protected final Logger log;
 
 	protected Observable observable = new Observable();
@@ -233,8 +225,6 @@ public abstract class AbstractBoshConnector implements Connector {
 			}
 			if (response != null)
 				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
-
-			uglyWait(1550);
 
 			if (getState() == State.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody(null);
