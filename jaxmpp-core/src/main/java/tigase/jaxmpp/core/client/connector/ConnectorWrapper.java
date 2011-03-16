@@ -16,7 +16,11 @@ public class ConnectorWrapper implements Connector {
 
 	private Connector connector;
 
-	protected final Observable observable = new Observable();
+	protected final Observable observable;
+
+	public ConnectorWrapper(Observable parentObservable) {
+		this.observable = new Observable(parentObservable);
+	}
 
 	@Override
 	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {

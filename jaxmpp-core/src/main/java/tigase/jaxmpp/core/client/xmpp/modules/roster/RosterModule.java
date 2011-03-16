@@ -93,10 +93,11 @@ public class RosterModule extends AbstractIQModule {
 		return Subscription.valueOf(x);
 	}
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
-	public RosterModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public RosterModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override

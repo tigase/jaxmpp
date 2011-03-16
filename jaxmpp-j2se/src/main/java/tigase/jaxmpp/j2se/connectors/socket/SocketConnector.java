@@ -139,7 +139,7 @@ public class SocketConnector implements Connector {
 
 	private final Logger log;
 
-	protected Observable observable = new Observable();
+	protected Observable observable;
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
@@ -153,7 +153,8 @@ public class SocketConnector implements Connector {
 
 	private OutputStream writer;
 
-	public SocketConnector(SessionObject sessionObject2) {
+	public SocketConnector(Observable parentObservable, SessionObject sessionObject2) {
+		this.observable = new Observable(parentObservable);
 		this.log = LoggerFactory.getLogger(this.getClass());
 		this.sessionObject = sessionObject2;
 	}
@@ -344,7 +345,7 @@ public class SocketConnector implements Connector {
 	@Override
 	public void setObservable(Observable observable) {
 		if (observable == null)
-			this.observable = new Observable();
+			this.observable = new Observable(null);
 		else
 			this.observable = observable;
 	}

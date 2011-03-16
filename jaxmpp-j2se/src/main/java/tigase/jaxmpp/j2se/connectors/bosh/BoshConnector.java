@@ -6,6 +6,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.xml.DomBuilderHandler;
@@ -20,8 +21,8 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
-	public BoshConnector(SessionObject sessionObject) {
-		super(sessionObject);
+	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
+		super(parentObservable, sessionObject);
 	}
 
 	@Override

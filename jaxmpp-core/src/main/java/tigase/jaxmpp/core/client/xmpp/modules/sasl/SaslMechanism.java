@@ -9,14 +9,14 @@ public interface SaslMechanism {
 		ERROR,
 		SUCCESS
 	}
-	
-	boolean isAllowedToUse(SessionObject sessionObject);
 
 	String evaluateChallenge(String input, SessionObject sessionObject);
 
 	Status getStatus();
 
 	String getStatusMessage();
+
+	boolean isAllowedToUse(SessionObject sessionObject);
 
 	boolean isComplete();
 

@@ -61,13 +61,14 @@ public class ResourceBinderModule implements XmppModule {
 
 	protected final Logger log;
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
 	protected final SessionObject sessionObject;
 
 	protected final PacketWriter writer;
 
-	public ResourceBinderModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public ResourceBinderModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
+		this.observable = new Observable(parentObservable);
 		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;

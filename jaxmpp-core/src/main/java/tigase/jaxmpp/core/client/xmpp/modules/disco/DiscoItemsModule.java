@@ -124,10 +124,11 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#items" };
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
-	public DiscoItemsModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public DiscoItemsModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {

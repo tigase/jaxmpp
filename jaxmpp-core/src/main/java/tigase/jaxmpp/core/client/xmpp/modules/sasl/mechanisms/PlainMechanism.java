@@ -40,6 +40,12 @@ public class PlainMechanism implements SaslMechanism {
 	}
 
 	@Override
+	public boolean isAllowedToUse(final SessionObject sessionObject) {
+		return sessionObject.getProperty(SessionObject.PASSWORD) != null
+				&& sessionObject.getProperty(SessionObject.USER_JID) != null;
+	}
+
+	@Override
 	public boolean isComplete() {
 		return false;
 	}
@@ -47,12 +53,6 @@ public class PlainMechanism implements SaslMechanism {
 	@Override
 	public String name() {
 		return "PLAIN";
-	}
-
-	@Override
-	public boolean isAllowedToUse(final SessionObject sessionObject) {
-		return sessionObject.getProperty(SessionObject.PASSWORD) != null
-				&& sessionObject.getProperty(SessionObject.USER_JID) != null;
 	}
 
 }

@@ -15,6 +15,12 @@ public class Observable {
 
 	private final Logger log = Logger.getLogger(this.getClass().getName());
 
+	private final Observable parent;
+
+	public Observable(Observable parent) {
+		this.parent = parent;
+	}
+
 	public void addListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
 		List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
 		if (lst == null) {
@@ -57,6 +63,9 @@ public class Observable {
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.log(Level.WARNING, "Problem on notifint observers", e);
+		}
+		if (parent != null) {
+			parent.fireEvent(eventType, event);
 		}
 	}
 

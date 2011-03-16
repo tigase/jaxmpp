@@ -97,10 +97,11 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#info" };
 
-	private XmppModulesManager modulesManager;
+	private final XmppModulesManager modulesManager;
 
-	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter, XmppModulesManager modulesManager) {
 		super(sessionObject, packetWriter);
+		this.modulesManager = modulesManager;
 	}
 
 	@Override

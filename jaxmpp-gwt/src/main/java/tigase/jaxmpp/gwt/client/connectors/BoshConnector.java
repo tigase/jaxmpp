@@ -3,6 +3,7 @@ package tigase.jaxmpp.gwt.client.connectors;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -13,8 +14,8 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	private final RequestBuilder requestBuilder;
 
-	public BoshConnector(SessionObject sessionObject) {
-		super(sessionObject);
+	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
+		super(parentObservable, sessionObject);
 
 		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 

@@ -103,10 +103,11 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static final EventType SubscribeRequest = new EventType();
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
-	public PresenceModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public PresenceModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 		this.sessionObject.getPresence().setHandler(new Handler() {
 
 			@Override

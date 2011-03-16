@@ -11,13 +11,14 @@ public class DefaultElement implements Element {
 		return create(src, -1);
 	}
 
-	public final static Element create(final Element src, int deep) throws XMLException {
+	public final static DefaultElement create(final Element src, int deep) throws XMLException {
 		final DefaultElement result = new DefaultElement(src.getName(), src.getValue(), src.getXMLNS());
 		result.setAttributes(src.getAttributes());
-		result.parent = src.getParent();
 		if (deep != 0)
 			for (Element e : src.getChildren()) {
-				result.children.add(create(e, deep - 1));
+				DefaultElement c = create(e, deep - 1);
+				c.parent = result;
+				result.children.add(c);
 			}
 
 		return result;

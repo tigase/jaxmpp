@@ -41,6 +41,16 @@ public class ElementWrapper implements Element {
 		return element.getChildAfter(child);
 	}
 
+	protected String getChildElementValue(final String elemName) throws XMLException {
+		Element b = getFirstChild(elemName);
+		return b == null ? null : b.getValue();
+	}
+
+	protected String getChildElementValue(final String elemName, final String xmlns) throws XMLException {
+		Element b = getChildrenNS(elemName, xmlns);
+		return b == null ? null : b.getValue();
+	}
+
 	@Override
 	public List<Element> getChildren() throws XMLException {
 		return element.getChildren();
@@ -119,6 +129,32 @@ public class ElementWrapper implements Element {
 	@Override
 	public void setAttributes(Map<String, String> attrs) throws XMLException {
 		element.setAttributes(attrs);
+	}
+
+	protected void setChildElementValue(final String elemName, final String value) throws XMLException {
+		Element b = getFirstChild(elemName);
+		if (value == null && b != null)
+			removeChild(b);
+		else if (value != null && b == null) {
+			b = new DefaultElement(elemName);
+			addChild(b);
+			b.setValue(value);
+		} else if (value != null && b != null) {
+			b.setValue(value);
+		}
+	}
+
+	protected void setChildElementValue(final String elemName, final String xmlns, final String value) throws XMLException {
+		Element b = getChildrenNS(elemName, xmlns);
+		if (value == null && b != null)
+			removeChild(b);
+		else if (value != null && b == null) {
+			b = new DefaultElement(elemName, null, xmlns);
+			addChild(b);
+			b.setValue(value);
+		} else if (value != null && b != null) {
+			b.setValue(value);
+		}
 	}
 
 	@Override

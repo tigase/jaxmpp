@@ -58,10 +58,11 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	private final ChatManager chatManager;
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
-	public MessageModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 		this.chatManager = new ChatManager(sessionObject, packetWriter, observable);
 	}
 

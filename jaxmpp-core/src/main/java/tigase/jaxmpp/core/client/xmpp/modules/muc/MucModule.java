@@ -124,12 +124,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private final Criteria crit;
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
 	private final Map<BareJID, Room> rooms = new HashMap<BareJID, Room>();
 
-	public MucModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public MucModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 
 		this.crit = new Criteria() {
 

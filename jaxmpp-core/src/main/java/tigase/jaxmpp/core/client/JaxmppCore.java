@@ -24,7 +24,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
@@ -61,7 +60,7 @@ public abstract class JaxmppCore {
 
 	protected final XmppModulesManager modulesManager;
 
-	protected final Observable observable = new Observable();
+	protected final Observable observable = new Observable(null);
 
 	protected Processor processor;
 
@@ -179,25 +178,25 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
-		this.modulesManager.register(new PubSubModule(sessionObject, writer));
+	//	this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new MucModule(sessionObject, writer));
+		this.modulesManager.register(new MucModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new PresenceModule(sessionObject, writer));
+		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new MessageModule(sessionObject, writer));
+		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new DiscoInfoModule(sessionObject, writer));
-		this.modulesManager.register(new DiscoItemsModule(sessionObject, writer));
+		this.modulesManager.register(new DiscoInfoModule(sessionObject, writer, modulesManager));
+		this.modulesManager.register(new DiscoItemsModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
 		this.modulesManager.register(new PingModule(sessionObject, writer));
-		this.modulesManager.register(new ResourceBinderModule(sessionObject, writer));
+		this.modulesManager.register(new ResourceBinderModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new RosterModule(sessionObject, writer));
+		this.modulesManager.register(new RosterModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new StreamFeaturesModule(sessionObject, writer));
-		this.modulesManager.register(new SaslModule(sessionObject, writer));
+		this.modulesManager.register(new StreamFeaturesModule(observable, sessionObject, writer));
+		this.modulesManager.register(new SaslModule(observable, sessionObject, writer));
 	}
 
 	protected abstract void onException(JaxmppException e);

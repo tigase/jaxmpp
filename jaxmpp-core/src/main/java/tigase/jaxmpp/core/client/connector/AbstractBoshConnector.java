@@ -1,6 +1,5 @@
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -89,13 +88,14 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected final Logger log;
 
-	protected Observable observable = new Observable();
+	protected Observable observable;
 
 	protected final Set<BoshRequest> requests = new HashSet<BoshRequest>();
 
 	protected final SessionObject sessionObject;
 
-	public AbstractBoshConnector(SessionObject sessionObject) {
+	public AbstractBoshConnector(Observable parentObservable, SessionObject sessionObject) {
+		this.observable = new Observable(parentObservable);
 		this.log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		sessionObject.setProperty(DEFAULT_TIMEOUT_KEY, "30");
@@ -339,7 +339,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void setObservable(Observable observable) {
 		if (observable == null)
-			this.observable = new Observable();
+			this.observable = new Observable(null);
 		else
 			this.observable = observable;
 	}

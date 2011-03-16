@@ -152,13 +152,18 @@ public class SaslModule implements XmppModule {
 
 	protected final Logger log;
 
-	private final Observable observable = new Observable();
+	private final Map<String, SaslMechanism> mechanisms = new HashMap<String, SaslMechanism>();
+
+	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
+
+	private final Observable observable;
 
 	protected final SessionObject sessionObject;
 
 	protected final PacketWriter writer;
 
-	public SaslModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public SaslModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
+		this.observable = new Observable(parentObservable);
 		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
@@ -174,6 +179,10 @@ public class SaslModule implements XmppModule {
 		observable.addListener(eventType, listener);
 	}
 
+	public void addMechanism(SaslMechanism mechanism) {
+		this.mechanisms.put(mechanism.name(), mechanism);
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
@@ -184,12 +193,8 @@ public class SaslModule implements XmppModule {
 		return null;
 	}
 
-	private final Map<String, SaslMechanism> mechanisms = new HashMap<String, SaslMechanism>();
-
-	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
-
-	public void addMechanism(SaslMechanism mechanism) {
-		this.mechanisms.put(mechanism.name(), mechanism);
+	public ArrayList<String> getMechanismsOrder() {
+		return mechanismsOrder;
 	}
 
 	protected Collection<String> getSupportedMechanisms() throws XMLException {
@@ -292,10 +297,6 @@ public class SaslModule implements XmppModule {
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.removeListener(eventType, listener);
-	}
-
-	public ArrayList<String> getMechanismsOrder() {
-		return mechanismsOrder;
 	}
 
 }

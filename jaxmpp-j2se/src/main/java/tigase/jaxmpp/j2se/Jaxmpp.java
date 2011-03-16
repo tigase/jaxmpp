@@ -81,10 +81,10 @@ public class Jaxmpp extends JaxmppCore {
 
 		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using SocketConnector");
-			this.connector = new SocketConnector(this.sessionObject);
+			this.connector = new SocketConnector(observable, this.sessionObject);
 		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using BOSHConnector");
-			this.connector = new BoshConnector(this.sessionObject);
+			this.connector = new BoshConnector(observable, this.sessionObject);
 		} else
 			throw new JaxmppException("Unknown connector type");
 

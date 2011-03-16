@@ -46,13 +46,14 @@ public class StreamFeaturesModule implements XmppModule {
 
 	protected final Logger log;
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
 	protected final PacketWriter packetWriter;
 
 	protected final SessionObject sessionObject;
 
-	public StreamFeaturesModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public StreamFeaturesModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
+		this.observable = new Observable(parentObservable);
 		log = LoggerFactory.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.packetWriter = packetWriter;
