@@ -124,10 +124,11 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	private final DateTimeFormat dtf;
 
-	private final Observable observable = new Observable();
+	private final Observable observable;
 
-	public PubSubModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public PubSubModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
+		this.observable = new Observable(parentObservable);
 		dtf = new DateTimeFormat();
 	}
 
