@@ -12,6 +12,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -19,6 +20,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -117,6 +119,35 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		}
 	}
 
+	public static abstract class SubscriptionOptionsAsyncCallback extends PubSubAsyncCallback {
+
+		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JID jid, JabberDataElement form);
+
+		@Override
+		public final void onSuccess(Stanza responseStanza) throws XMLException {
+			try {
+				final Element pubsub = responseStanza.getChildrenNS("pubsub", "http://jabber.org/protocol/pubsub");
+				List<Element> tmp = pubsub.getChildren("options");
+				if (tmp == null || tmp.isEmpty()) {
+					tmp = pubsub.getChildren("default");
+				}
+				final Element options = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
+
+				String node = options.getAttribute("node");
+				String jid = options.getAttribute("jid");
+
+				final Element x = options.getChildrenNS("x", "jabber:x:data");
+
+				final JabberDataElement form = new JabberDataElement(DefaultElement.create(x));
+
+				onReceiveConfiguration((IQ) responseStanza, node, jid == null ? null : JID.jidInstance(jid), form);
+			} catch (Exception e) {
+				log.log(LogLevel.WARNING, "Processing subscription configuration error", e);
+			}
+		}
+
+	}
+
 	public static final Criteria CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("event", "http://jabber.org/protocol/pubsub#event"));
 
@@ -158,9 +189,52 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		return CRIT;
 	}
 
+	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName, AsyncCallback callback)
+			throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		iq.addChild(pubsub);
+
+		final Element def = new DefaultElement("default");
+		def.setAttribute("node", nodeName);
+		pubsub.addChild(def);
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName,
+			SubscriptionOptionsAsyncCallback callback) throws XMLException, JaxmppException {
+		getDefaultSubscriptionConfiguration(pubSubJID, nodeName, (AsyncCallback) callback);
+	}
+
 	@Override
 	public String[] getFeatures() {
 		return null;
+	}
+
+	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
+			throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		iq.addChild(pubsub);
+
+		final Element options = new DefaultElement("options");
+		options.setAttribute("node", nodeName);
+		options.setAttribute("jid", subscriberJID.toString());
+		pubsub.addChild(options);
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID,
+			SubscriptionOptionsAsyncCallback callback) throws XMLException, JaxmppException {
+		getSubscriptionConfiguration(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
 	@Override
@@ -188,6 +262,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	}
 
+	public void publishItem() {
+		// XXX
+	}
+
 	public void removeAllListeners() {
 		observable.removeAllListeners();
 	}
@@ -196,8 +274,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		observable.removeListener(eventType, listener);
 	}
 
-	protected void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+	public void sendSubscriptionConfiguration() {
+		// TODO
+	}
+
+	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
+			JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -213,13 +295,17 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		writer.write(iq);
 	}
 
+	// TODO 6.5.2 Requesting All Items
+	// TODO 6.5.7. Requesting the Most Recent Items
+	// TODO 6.5.8. Requesting a Particular Item
+
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, SubscriptionAsyncCallback callback)
 			throws XMLException, JaxmppException {
 		subscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
-	protected void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
+			JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);

@@ -162,6 +162,13 @@ public class JabberDataElement extends ElementWrapper {
 		return result;
 	}
 
+	public Element createSubmitableElement(final XDataType type) throws XMLException {
+		DefaultElement e = DefaultElement.create(this, -1);
+		e.setAttribute("type", type.name());
+
+		return e;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <X> AbstractField<X> getField(final String var) {
 		return (AbstractField<X>) this.fieldsMap.get(var);

@@ -4,12 +4,16 @@ import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.logger.Logger;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class PubSubAsyncCallback implements AsyncCallback {
+
+	protected Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
 	protected abstract void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition);
 
