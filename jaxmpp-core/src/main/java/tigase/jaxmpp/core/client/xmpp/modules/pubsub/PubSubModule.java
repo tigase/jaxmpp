@@ -30,6 +30,27 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class PubSubModule extends AbstractStanzaModule<Message> {
 
+	public abstract static class PublishAsyncCallback extends PubSubAsyncCallback {
+
+		public abstract void onPublish(String itemId);
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws XMLException {
+			Element pubsub = responseStanza.getChildrenNS("pubsub", "http://jabber.org/protocol/pubsub");
+			List<Element> publishs = pubsub.getChildren("publish");
+			Element publish = publishs == null || publishs.isEmpty() ? null : publishs.get(0);
+			if (publish == null)
+				return;
+
+			List<Element> items = publish.getChildren("item");
+			for (Element element : items) {
+				onPublish(element.getAttribute("id"));
+			}
+
+		}
+
+	}
+
 	public static class PubSubEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -262,8 +283,31 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	}
 
-	public void publishItem() {
-		// XXX
+	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, AsyncCallback callback)
+			throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		iq.addChild(pubsub);
+
+		final Element publish = new DefaultElement("publish");
+		publish.setAttribute("node", nodeName);
+		pubsub.addChild(publish);
+
+		final Element item = new DefaultElement("item");
+		item.setAttribute("id", itemId);
+		pubsub.addChild(item);
+
+		item.addChild(payload);
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, PublishAsyncCallback callback)
+			throws XMLException, JaxmppException {
+		publishItem(pubSubJID, nodeName, itemId, payload, (AsyncCallback) callback);
 	}
 
 	public void removeAllListeners() {
