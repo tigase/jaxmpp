@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.pubsub;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -21,6 +23,7 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -36,7 +39,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws XMLException {
-			Element pubsub = responseStanza.getChildrenNS("pubsub", "http://jabber.org/protocol/pubsub");
+			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> publishs = pubsub.getChildren("publish");
 			Element publish = publishs == null || publishs.isEmpty() ? null : publishs.get(0);
 			if (publish == null)
@@ -120,13 +123,62 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		}
 	}
 
+	public static abstract class RetrieveItemsAsyncCallback extends PubSubAsyncCallback {
+
+		public static class Item {
+
+			private final String id;
+
+			private final Element payload;
+
+			Item(String id, Element payload) {
+				super();
+				this.id = id;
+				this.payload = payload;
+			}
+
+			public String getId() {
+				return id;
+			}
+
+			public Element getPayload() {
+				return payload;
+			}
+
+		}
+
+		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws XMLException {
+			final Element event = responseStanza.getChildrenNS("event", PUBSUB_XMLNS);
+			List<Element> tmp = event == null ? null : event.getChildren("items");
+			final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
+			final String nodeName = items == null ? null : items.getAttribute("node");
+
+			ArrayList<Item> result = new ArrayList<Item>();
+
+			List<Element> itemElements = items == null ? null : items.getChildren("item");
+			for (Element item : itemElements) {
+				final String itemId = item.getAttribute("id");
+				final Element payload = item.getFirstChild();
+
+				Item it = new Item(itemId, payload);
+				result.add(it);
+			}
+
+			onRetrieve((IQ) responseStanza, nodeName, result);
+		}
+
+	}
+
 	public static abstract class SubscriptionAsyncCallback extends PubSubAsyncCallback {
 
 		protected abstract void onSubscribe(IQ response, String node, JID jid, String subID, Subscription subscription);
 
 		@Override
-		public final void onSuccess(Stanza responseStanza) throws XMLException {
-			Element pubsub = responseStanza.getChildrenNS("pubsub", "http://jabber.org/protocol/pubsub");
+		public void onSuccess(Stanza responseStanza) throws XMLException {
+			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> subscriptions = pubsub.getChildren("subscription");
 			Element subscription = subscriptions == null || subscriptions.isEmpty() ? null : subscriptions.get(0);
 
@@ -145,9 +197,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JID jid, JabberDataElement form);
 
 		@Override
-		public final void onSuccess(Stanza responseStanza) throws XMLException {
+		public void onSuccess(Stanza responseStanza) throws XMLException {
 			try {
-				final Element pubsub = responseStanza.getChildrenNS("pubsub", "http://jabber.org/protocol/pubsub");
+				final Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 				List<Element> tmp = pubsub.getChildren("options");
 				if (tmp == null || tmp.isEmpty()) {
 					tmp = pubsub.getChildren("default");
@@ -174,6 +226,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType NotificationReceived = new EventType();
 
+	private static final String PUBSUB_EVENT_XMLNS = "http://jabber.org/protocol/pubsub#event";
+
+	private static final String PUBSUB_XMLNS = "http://jabber.org/protocol/pubsub";
+
+	private static final String QUEUEING_XMLNS = "urn:xmpp:pubsub:queueing:0";
+
 	private final DateTimeFormat dtf;
 
 	private final Observable observable;
@@ -190,6 +248,56 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	public void addListener(Listener<? extends BaseEvent> listener) {
 		observable.addListener(listener);
+	}
+
+	public void configureSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement form,
+			AsyncCallback callback) throws JaxmppException, XMLException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element options = new DefaultElement("options");
+		options.setAttribute("node", nodeName);
+		options.setAttribute("jid", subscriberJID.toString());
+		pubsub.addChild(options);
+
+		options.addChild(form.createSubmitableElement(XDataType.submit));
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+
+	}
+
+	public void configureSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement form,
+			PubSubAsyncCallback callback) throws JaxmppException, XMLException {
+		configureSubscription(pubSubJID, nodeName, subscriberJID, form, (AsyncCallback) callback);
+	}
+
+	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
+			JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element retract = new DefaultElement("retract");
+		retract.setAttribute("node", nodeName);
+		pubsub.addChild(retract);
+
+		Element item = new DefaultElement("item");
+		item.setAttribute("id", itemId);
+		retract.addChild(item);
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
+			throws XMLException, JaxmppException {
+		deleteItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
 	}
 
 	protected void fireNotificationReceived(Message message, String nodeName, String intemID, Element payload, Date delayTime)
@@ -215,7 +323,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element def = new DefaultElement("default");
@@ -241,7 +349,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element options = new DefaultElement("options");
@@ -260,7 +368,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	@Override
 	public void process(Message message) throws XMPPException, XMLException {
-		final Element event = message.getChildrenNS("event", "http://jabber.org/protocol/pubsub#event");
+		final Element event = message.getChildrenNS("event", PUBSUB_EVENT_XMLNS);
 		List<Element> tmp = event == null ? null : event.getChildren("items");
 		final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
 		final String nodeName = items == null ? null : items.getAttribute("node");
@@ -288,7 +396,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element publish = new DefaultElement("publish");
@@ -318,8 +426,48 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void sendSubscriptionConfiguration() {
-		// TODO
+	public void retrieveItem(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws XMLException, JaxmppException {
+		retrieveItem(pubSubJID, nodeName, null, null, callback);
+	}
+
+	public void retrieveItem(BareJID pubSubJID, String nodeName, RetrieveItemsAsyncCallback callback) throws XMLException,
+			JaxmppException {
+		retrieveItem(pubSubJID, nodeName, null, null, callback);
+	}
+
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
+			JaxmppException {
+		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
+	}
+
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, Integer maxItems, AsyncCallback callback)
+			throws XMLException, JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.get);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element items = new DefaultElement("items");
+		items.setAttribute("node", nodeName);
+		if (maxItems != null) {
+			items.setAttribute("max_items", maxItems.toString());
+		}
+		pubsub.addChild(items);
+
+		if (itemId != null) {
+			Element item = new DefaultElement("item");
+			item.setAttribute("id", itemId);
+			items.addChild(item);
+		}
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
+			throws XMLException, JaxmppException {
+		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
@@ -327,7 +475,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element subscribe = new DefaultElement("subscribe");
@@ -339,13 +487,34 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		writer.write(iq);
 	}
 
-	// TODO 6.5.2 Requesting All Items
-	// TODO 6.5.7. Requesting the Most Recent Items
-	// TODO 6.5.8. Requesting a Particular Item
-
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, SubscriptionAsyncCallback callback)
 			throws XMLException, JaxmppException {
 		subscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
+	}
+
+	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
+			JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element unlock = new DefaultElement("unlock", null, QUEUEING_XMLNS);
+		unlock.setAttribute("node", nodeName);
+		pubsub.addChild(unlock);
+
+		Element item = new DefaultElement("item");
+		item.setAttribute("id", itemId);
+		unlock.addChild(item);
+
+		sessionObject.registerResponseHandler(iq, callback);
+		writer.write(iq);
+	}
+
+	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
+			throws XMLException, JaxmppException {
+		unlockItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
 	}
 
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
@@ -353,7 +522,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element unsubscribe = new DefaultElement("unsubscribe");
