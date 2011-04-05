@@ -26,19 +26,19 @@ public class Node {
 		this.function = f;
 	}
 
-	public void evaluate(Collection<Object> result, Element src) throws XMLException {
+	public void evaluate(final Collection<Object> result, Element src) throws XMLException {
 		if (criteria != null && !criteria.match(src))
 			return;
 
 		if (subnode == null && function != null) {
 			Object r = function.value(src);
-			result.add(r);
-			System.out.println("0!!! FOUND:::" + r);
+			if (r != null)
+				result.add(r);
 			return;
 		} else if (subnode == null && function == null) {
 			Object r = src;
-			result.add(r);
-			System.out.println("1!!! FOUND:::" + r);
+			if (r != null)
+				result.add(r);
 			return;
 		}
 
@@ -54,12 +54,20 @@ public class Node {
 		return criteria;
 	}
 
+	public Function getFunction() {
+		return function;
+	}
+
 	public Node getSubnode() {
 		return subnode;
 	}
 
 	public void setCriteria(Criteria criteria) {
 		this.criteria = criteria;
+	}
+
+	public void setFunction(Function function) {
+		this.function = function;
 	}
 
 	public void setSubnode(Node subnode) {

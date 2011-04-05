@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client.criteria.tpath;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -14,17 +15,20 @@ public class TPathExpression {
 	}
 
 	public Object evaluate(Element element) throws XMLException {
+		List<Object> r = evaluateAsArray(element);
+		if (r.isEmpty())
+			return null;
+		else if (r.size() == 1) {
+			return r.get(0);
+		} else
+			return r;
+	}
+
+	public List<Object> evaluateAsArray(Element element) throws XMLException {
 		ArrayList<Object> x = new ArrayList<Object>();
 		this.node.evaluate(x, element);
 
 		return x;
-		// if (x.size() == 0) {
-		// return null;
-		// } else if (x.size() == 1) {
-		// return x.get(0);
-		// } else
-		// return x;
-
 	}
 
 }

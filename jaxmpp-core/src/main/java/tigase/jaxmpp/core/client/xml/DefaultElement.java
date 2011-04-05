@@ -106,7 +106,10 @@ public class DefaultElement implements Element {
 
 	@Override
 	public String getAttribute(String attName) throws XMLException {
-		return attributes.get(attName);
+		if (attName.equals("xmlns"))
+			return getXMLNS();
+		else
+			return attributes.get(attName);
 	}
 
 	@Override
