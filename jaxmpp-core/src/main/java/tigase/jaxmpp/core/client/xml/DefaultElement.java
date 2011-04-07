@@ -172,7 +172,10 @@ public class DefaultElement implements Element {
 
 	@Override
 	public Element getFirstChild() throws XMLException {
-		return children.getFirst();
+		if (!children.isEmpty())
+			return children.getFirst();
+		else
+			return null;
 	}
 
 	@Override

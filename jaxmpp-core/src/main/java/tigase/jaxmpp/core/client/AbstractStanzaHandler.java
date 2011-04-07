@@ -27,13 +27,13 @@ public abstract class AbstractStanzaHandler implements Runnable {
 		try {
 			try {
 				process();
-			} catch (Throwable e) {
-				e.printStackTrace();
+			} catch (Exception e) {
 				Element errorResult = Processor.createError(stanza, e);
 				if (errorResult != null)
 					writer.write(errorResult);
 			}
 		} catch (JaxmppException e) {
+			throw new RuntimeException(e);
 			// TODO: handle exception
 		}
 	}

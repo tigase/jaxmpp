@@ -62,6 +62,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		private String itemId;
 
+		private String itemType;
+
 		private Message message;
 
 		private String nodeName;
@@ -80,6 +82,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		public String getItemId() {
 			return itemId;
+		}
+
+		public String getItemType() {
+			return itemType;
 		}
 
 		public Message getMessage() {
@@ -104,6 +110,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		public void setItemId(String itemId) {
 			this.itemId = itemId;
+		}
+
+		public void setItemType(String itemType) {
+			this.itemType = itemType;
 		}
 
 		public void setMessage(Message message) {
@@ -151,7 +161,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws XMLException {
-			final Element event = responseStanza.getChildrenNS("event", PUBSUB_XMLNS);
+			final Element event = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> tmp = event == null ? null : event.getChildren("items");
 			final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
 			final String nodeName = items == null ? null : items.getAttribute("node");
@@ -159,13 +169,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			ArrayList<Item> result = new ArrayList<Item>();
 
 			List<Element> itemElements = items == null ? null : items.getChildren("item");
-			for (Element item : itemElements) {
-				final String itemId = item.getAttribute("id");
-				final Element payload = item.getFirstChild();
+			if (itemElements != null)
+				for (Element item : itemElements) {
+					final String itemId = item.getAttribute("id");
+					final Element payload = item.getFirstChild();
 
-				Item it = new Item(itemId, payload);
-				result.add(it);
-			}
+					Item it = new Item(itemId, payload);
+					result.add(it);
+				}
 
 			onRetrieve((IQ) responseStanza, nodeName, result);
 		}
@@ -300,15 +311,16 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		deleteItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
 	}
 
-	protected void fireNotificationReceived(Message message, String nodeName, String intemID, Element payload, Date delayTime)
-			throws XMLException {
+	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
+			Date delayTime) throws XMLException {
 		PubSubEvent event = new PubSubEvent(NotificationReceived);
 		event.setMessage(message);
 		event.setPubSubJID(message.getFrom());
 		event.setNodeName(nodeName);
-		event.setItemId(intemID);
+		event.setItemId(itemId);
 		event.setPayload(payload);
 		event.setDelay(delayTime);
+		event.setItemType(itemType);
 
 		observable.fireEvent(event);
 	}
@@ -381,12 +393,13 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			delayTime = null;
 		}
 
-		List<Element> itemElements = items == null ? null : items.getChildren("item");
+		List<Element> itemElements = items == null ? null : items.getChildren();
 		for (Element item : itemElements) {
+			final String type = item.getName();
 			final String itemId = item.getAttribute("id");
 			final Element payload = item.getFirstChild();
 
-			fireNotificationReceived(message, nodeName, itemId, payload, delayTime);
+			fireNotificationReceived(message, nodeName, type, itemId, payload, delayTime);
 		}
 
 	}
@@ -405,7 +418,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		final Element item = new DefaultElement("item");
 		item.setAttribute("id", itemId);
-		pubsub.addChild(item);
+		publish.addChild(item);
 
 		item.addChild(payload);
 
