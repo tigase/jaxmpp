@@ -35,7 +35,6 @@ public class ProcessorTest extends TestCase {
 		e.setAttribute("type", "set");
 		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
-		System.out.println(e.getAsString());
 		Runnable r = processor.process(e);
 		r.run();
 		assertEquals(
@@ -49,7 +48,6 @@ public class ProcessorTest extends TestCase {
 		e.setAttribute("type", "get");
 		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
-		System.out.println(e.getAsString());
 		Runnable r = processor.process(e);
 		r.run();
 		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", writer.poll().getAsString());
@@ -61,7 +59,6 @@ public class ProcessorTest extends TestCase {
 		e.setAttribute("type", "get");
 		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
-		System.out.println(e.getAsString());
 		Runnable r = processor.process(e);
 		r.run();
 		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", writer.poll().getAsString());

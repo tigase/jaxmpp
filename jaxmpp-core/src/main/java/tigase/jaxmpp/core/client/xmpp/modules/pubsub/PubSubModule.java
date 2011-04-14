@@ -31,6 +31,17 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
+/**
+ * Publish-Subscribe Module.
+ * <p>
+ * This module implementation of <a
+ * href='http://xmpp.org/extensions/xep-0060.html'>XEP-0060:
+ * Publish-Subscribe</a>.
+ * </p>
+ * 
+ * @author bmalkow
+ * 
+ */
 public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	public abstract static class PublishAsyncCallback extends PubSubAsyncCallback {

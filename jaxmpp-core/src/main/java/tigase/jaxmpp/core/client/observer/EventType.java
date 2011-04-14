@@ -2,6 +2,12 @@ package tigase.jaxmpp.core.client.observer;
 
 import java.io.Serializable;
 
+/**
+ * Base class for all events type.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class EventType implements Serializable {
 
 	private static int counter = 0;

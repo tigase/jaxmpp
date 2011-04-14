@@ -5,6 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Default implementation of XML Element object. This class should be used every
+ * time when new XML Element is created.
+ */
 public class DefaultElement implements Element {
 
 	public final static Element create(final Element src) throws XMLException {
