@@ -10,7 +10,6 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -323,7 +322,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
-			Date delayTime) throws XMLException {
+			Date delayTime) throws JaxmppException {
 		PubSubEvent event = new PubSubEvent(NotificationReceived);
 		event.setMessage(message);
 		event.setPubSubJID(message.getFrom());
@@ -390,7 +389,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	@Override
-	public void process(Message message) throws XMPPException, XMLException {
+	public void process(Message message) throws JaxmppException {
 		final Element event = message.getChildrenNS("event", PUBSUB_EVENT_XMLNS);
 		List<Element> tmp = event == null ? null : event.getChildren("items");
 		final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);

@@ -1,7 +1,7 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -23,9 +23,9 @@ public interface AsyncCallback {
 	 *            received IQ stanza
 	 * @param error
 	 *            error condition
-	 * @throws XMLException
+	 * @throws JaxmppException
 	 */
-	void onError(Stanza responseStanza, ErrorCondition error) throws XMLException;
+	void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException;
 
 	/**
 	 * Called when received response has type {@linkplain StanzaType#result
@@ -33,15 +33,15 @@ public interface AsyncCallback {
 	 * 
 	 * @param responseStanza
 	 *            received stanza
-	 * @throws XMLException
+	 * @throws JaxmppException
 	 */
-	void onSuccess(Stanza responseStanza) throws XMLException;
+	void onSuccess(Stanza responseStanza) throws JaxmppException;
 
 	/**
 	 * Called when response wasn't received in given time.
 	 * 
-	 * @throws XMLException
+	 * @throws JaxmppException
 	 */
-	void onTimeout() throws XMLException;
+	void onTimeout() throws JaxmppException;
 
 }

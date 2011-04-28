@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
@@ -23,7 +24,7 @@ public class DefaultSessionObject implements SessionObject {
 	protected final Map<String, Object> userProperties = new HashMap<String, Object>();
 
 	@Override
-	public void checkHandlersTimeout() {
+	public void checkHandlersTimeout() throws JaxmppException {
 		this.responseManager.checkTimeouts();
 	}
 

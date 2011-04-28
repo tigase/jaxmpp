@@ -157,7 +157,6 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 		sessionObject.registerResponseHandler(iq, callback);
 		writer.write(iq);
-
 	}
 
 	public void getItems(JID jid, DiscoItemsAsyncCallback callback) throws XMLException, JaxmppException {
@@ -166,14 +165,19 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 	@Override
 	protected void processGet(IQ element) throws XMPPException, XMLException, JaxmppException {
+		Element query = element.getChildrenNS("query", "http://jabber.org/protocol/disco#items");
+
+		final String requestedNode = query.getAttribute("node");
+
 		DiscoItemEvent event = new DiscoItemEvent(ItemsRequested);
 		event.setRequestStanza(element);
+		event.setNode(requestedNode);
 		observable.fireEvent(event);
 
 		Element result = XmlTools.makeResult(element);
-		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/disco#items");
-		query.setAttribute("node", event.getNode());
-		result.addChild(query);
+		Element queryResult = new DefaultElement("query", null, "http://jabber.org/protocol/disco#items");
+		queryResult.setAttribute("node", event.getNode());
+		result.addChild(queryResult);
 
 		for (Item it : event.items) {
 			Element e = new DefaultElement("item");
@@ -182,7 +186,7 @@ public class DiscoItemsModule extends AbstractIQModule {
 			e.setAttribute("name", it.getName());
 			e.setAttribute("node", it.getNode());
 
-			query.addChild(e);
+			queryResult.addChild(e);
 		}
 
 		writer.write(result);

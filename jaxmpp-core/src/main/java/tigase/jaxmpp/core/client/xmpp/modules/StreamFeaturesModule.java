@@ -2,11 +2,11 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
@@ -14,7 +14,6 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class StreamFeaturesModule implements XmppModule {
 
@@ -74,7 +73,7 @@ public class StreamFeaturesModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException {
+	public void process(Element element) throws JaxmppException {
 		sessionObject.setStreamFeatures(element);
 		observable.fireEvent(StreamFeaturesReceived, new StreamFeaturesReceivedEvent(element));
 	}

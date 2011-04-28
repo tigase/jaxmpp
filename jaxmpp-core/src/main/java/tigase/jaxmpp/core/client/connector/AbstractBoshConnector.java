@@ -119,13 +119,13 @@ public abstract class AbstractBoshConnector implements Connector {
 		return new BoshXmppSessionLogic(this, modulesManager, sessionObject, writer);
 	}
 
-	protected void fireOnConnected(SessionObject sessionObject) {
+	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		BoshConnectorEvent event = new BoshConnectorEvent(Connected);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
-			SessionObject sessionObject) {
+			SessionObject sessionObject) throws JaxmppException {
 		BoshConnectorEvent event = new BoshConnectorEvent(Error);
 		event.setResponseCode(responseCode);
 		event.setResponseData(responseData);
@@ -141,7 +141,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject) {
+	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject)
+			throws JaxmppException {
 		try {
 			{
 				BoshConnectorEvent event = new BoshConnectorEvent(BodyReceived);
@@ -169,7 +170,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 	}
 
-	protected void fireOnTerminate(int responseCode, String responseData, Element response, SessionObject sessionObject) {
+	protected void fireOnTerminate(int responseCode, String responseData, Element response, SessionObject sessionObject)
+			throws JaxmppException {
 		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated);
 		event.setResponseCode(responseCode);
 		event.setResponseData(responseData);
@@ -206,7 +208,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		return i;
 	}
 
-	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught) {
+	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught)
+			throws JaxmppException {
 		removeFromRequests(request);
 		if (log.isLoggable(LogLevel.FINER))
 			log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
@@ -235,7 +238,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 	}
 
-	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response) {
+	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response)
+			throws JaxmppException {
 		removeFromRequests(request);
 		if (getState() == State.disconnected)
 			return;
@@ -348,7 +352,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.sessionObject.setProperty(SID_KEY, sid);
 	}
 
-	protected void setStage(State state) {
+	protected void setStage(State state) throws JaxmppException {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {

@@ -10,7 +10,6 @@ import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.logger.Logger;
 import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -28,7 +27,7 @@ public abstract class AbstractIQModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element $element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element $element) throws JaxmppException {
 		final Stanza stanza = $element instanceof Stanza ? (Stanza) $element : Stanza.create($element);
 		final StanzaType type = stanza.getType();
 
@@ -43,7 +42,7 @@ public abstract class AbstractIQModule implements XmppModule {
 		}
 	}
 
-	protected abstract void processGet(IQ element) throws XMPPException, XMLException, JaxmppException;
+	protected abstract void processGet(IQ element) throws JaxmppException;
 
-	protected abstract void processSet(IQ element) throws XMPPException, XMLException, JaxmppException;
+	protected abstract void processSet(IQ element) throws JaxmppException;
 }

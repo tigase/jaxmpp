@@ -1,11 +1,13 @@
 package tigase.jaxmpp.core.client.xml;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
 /**
  * Exception for XML errors.
  * 
  * @author Mads Randstoft
  */
-public class XMLException extends Exception {
+public class XMLException extends JaxmppException {
 
 	/**
 	 * 

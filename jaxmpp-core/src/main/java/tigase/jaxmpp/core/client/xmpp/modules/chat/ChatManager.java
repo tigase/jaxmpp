@@ -8,8 +8,8 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -35,7 +35,7 @@ public class ChatManager {
 		this.chats.remove(chat);
 	}
 
-	public Chat createChat(JID jid) {
+	public Chat createChat(JID jid) throws JaxmppException {
 		final String threadId = UIDGenerator.next();
 		Chat chat = new Chat(packetWriter);
 		chat.setThreadId(threadId);
@@ -83,7 +83,7 @@ public class ChatManager {
 		return this.chats;
 	}
 
-	public Chat process(Message message) throws XMLException {
+	public Chat process(Message message) throws JaxmppException {
 		if (message.getType() != StanzaType.chat)
 			return null;
 		final JID fromJid = message.getFrom();

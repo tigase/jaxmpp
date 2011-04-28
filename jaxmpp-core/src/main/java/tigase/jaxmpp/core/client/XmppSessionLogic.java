@@ -6,7 +6,7 @@ public interface XmppSessionLogic {
 
 	public static interface SessionListener {
 
-		void onException(JaxmppException e);
+		void onException(JaxmppException e) throws JaxmppException;;
 	}
 
 	public void bind(SessionListener listener) throws JaxmppException;

@@ -51,7 +51,7 @@ public class PingModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-	public void ping(JID jidInstance, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
+	public void ping(JID jidInstance, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		iq.setTo(jidInstance);
@@ -61,13 +61,13 @@ public class PingModule extends AbstractIQModule {
 		writer.write(iq);
 	}
 
-	public void ping(JID jidInstance, PingAsyncCallback asyncCallback) throws XMLException, JaxmppException {
+	public void ping(JID jidInstance, PingAsyncCallback asyncCallback) throws JaxmppException {
 		asyncCallback.pingTimestamp = (new Date()).getTime();
 		ping(jidInstance, (AsyncCallback) asyncCallback);
 	}
 
 	@Override
-	protected void processGet(IQ stanza) throws XMPPException, XMLException, JaxmppException {
+	protected void processGet(IQ stanza) throws JaxmppException {
 		Element response = XmlTools.makeResult(stanza);
 
 		writer.write(response);

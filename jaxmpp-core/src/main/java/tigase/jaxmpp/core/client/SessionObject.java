@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
@@ -17,7 +18,7 @@ public interface SessionObject extends UserProperties {
 
 	public static final String USER_JID = "userJid";
 
-	public void checkHandlersTimeout();
+	public void checkHandlersTimeout() throws JaxmppException;
 
 	public void clear();
 

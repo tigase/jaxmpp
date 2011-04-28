@@ -3,7 +3,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.presence;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -129,8 +128,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	 * 
 	 * @param presence
 	 * @return <code>true</code> if event is cancelled
+	 * @throws JaxmppException
 	 */
-	protected boolean fireBeforePresenceSend(final Presence presence) {
+	protected boolean fireBeforePresenceSend(final Presence presence) throws JaxmppException {
 		PresenceEvent event = new PresenceEvent(BeforePresenceSend);
 		event.setPresence(presence);
 
@@ -154,7 +154,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	}
 
 	@Override
-	public void process(final Presence presence) throws XMPPException, XMLException {
+	public void process(final Presence presence) throws JaxmppException {
 		final JID fromJid = presence.getFrom();
 		log.finest("Presence received from " + fromJid + " :: " + presence.getAsString());
 		if (fromJid == null)

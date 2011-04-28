@@ -2,7 +2,9 @@ package tigase.jaxmpp.core.client;
 
 import java.util.HashMap;
 
-public class XMPPException extends Exception {
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
+public class XMPPException extends JaxmppException {
 
 	public static enum ErrorCondition {
 		/**

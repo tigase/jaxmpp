@@ -170,8 +170,8 @@ public class JabberDataElement extends ElementWrapper {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <X> AbstractField<X> getField(final String var) {
-		return (AbstractField<X>) this.fieldsMap.get(var);
+	public <X extends AbstractField<?>> X getField(final String var) {
+		return (X) this.fieldsMap.get(var);
 	}
 
 	public ArrayList<AbstractField<?>> getFields() {

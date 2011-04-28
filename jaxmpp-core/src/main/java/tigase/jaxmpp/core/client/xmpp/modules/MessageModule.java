@@ -6,7 +6,6 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -89,7 +88,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	}
 
 	@Override
-	public void process(Message element) throws XMPPException, XMLException {
+	public void process(Message element) throws JaxmppException {
 		MessageEvent event = new MessageEvent(MessageReceived);
 		event.setMessage(element);
 		Chat chat = chatManager.process(element);

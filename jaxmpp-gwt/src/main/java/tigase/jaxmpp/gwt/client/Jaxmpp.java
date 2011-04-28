@@ -113,7 +113,7 @@ public class Jaxmpp extends JaxmppCore {
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
-	protected void checkTimeouts() {
+	protected void checkTimeouts() throws JaxmppException {
 		sessionObject.checkHandlersTimeout();
 		if (isConnected()) {
 			Object r = sessionObject.getProperty(AbstractBoshConnector.RID_KEY);
@@ -137,7 +137,7 @@ public class Jaxmpp extends JaxmppCore {
 										}
 
 										@Override
-										public void onTimeout() throws XMLException {
+										public void onTimeout() throws JaxmppException {
 											try {
 												disconnect();
 											} catch (JaxmppException e) {
@@ -146,7 +146,11 @@ public class Jaxmpp extends JaxmppCore {
 										}
 									});
 						} catch (Exception e) {
-							onException(new JaxmppException(e));
+							try {
+								onException(new JaxmppException(e));
+							} catch (JaxmppException e1) {
+								e1.printStackTrace();
+							}
 						}
 					}
 				});
@@ -180,7 +184,7 @@ public class Jaxmpp extends JaxmppCore {
 		this.sessionLogic.bind(new SessionListener() {
 
 			@Override
-			public void onException(JaxmppException e) {
+			public void onException(JaxmppException e) throws JaxmppException {
 				Jaxmpp.this.onException(e);
 			}
 		});
@@ -200,7 +204,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onException(JaxmppException e) {
+	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(LogLevel.FINE, "Catching exception", e);
 		try {
 			connector.stop();
@@ -213,7 +217,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onResourceBinded(ResourceBindEvent be) {
+	protected void onResourceBinded(ResourceBindEvent be) throws JaxmppException {
 		JaxmppEvent event = new JaxmppEvent(Connected);
 		observable.fireEvent(event);
 	}
@@ -232,14 +236,14 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onStreamError(ConnectorEvent be) {
+	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		event.setCaught(be.getCaught());
 		observable.fireEvent(event);
 	}
 
 	@Override
-	protected void onStreamTerminated(ConnectorEvent be) {
+	protected void onStreamTerminated(ConnectorEvent be) throws JaxmppException {
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		event.setCaught(be.getCaught());
 		observable.fireEvent(event);

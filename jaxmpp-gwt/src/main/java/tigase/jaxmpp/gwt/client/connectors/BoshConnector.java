@@ -28,7 +28,8 @@ public class BoshConnector extends AbstractBoshConnector {
 		BoshWorker worker = new BoshWorker(requestBuilder, sessionObject, element) {
 
 			@Override
-			protected void onError(int responseCode, String responseData, Element response, Throwable caught) {
+			protected void onError(int responseCode, String responseData, Element response, Throwable caught)
+					throws JaxmppException {
 				BoshConnector.this.onError(this, responseCode, responseData, response, caught);
 			}
 
@@ -38,7 +39,7 @@ public class BoshConnector extends AbstractBoshConnector {
 			}
 
 			@Override
-			protected void onTerminate(int responseCode, String responseData, Element response) {
+			protected void onTerminate(int responseCode, String responseData, Element response) throws JaxmppException {
 				BoshConnector.this.onTerminate(this, responseCode, responseData, response);
 			}
 

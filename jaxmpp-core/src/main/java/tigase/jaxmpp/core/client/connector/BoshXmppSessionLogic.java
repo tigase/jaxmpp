@@ -53,7 +53,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		this.streamFeaturesEventListener = new Listener<StreamFeaturesModule.StreamFeaturesReceivedEvent>() {
 
 			@Override
-			public void handleEvent(StreamFeaturesReceivedEvent be) {
+			public void handleEvent(StreamFeaturesReceivedEvent be) throws JaxmppException {
 				try {
 					processStreamFeatures(be);
 				} catch (JaxmppException e) {
@@ -64,7 +64,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		this.saslEventListener = new Listener<SaslEvent>() {
 
 			@Override
-			public void handleEvent(SaslEvent be) {
+			public void handleEvent(SaslEvent be) throws JaxmppException {
 				try {
 					processSaslEvent(be);
 				} catch (JaxmppException e) {
@@ -76,7 +76,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		this.resourceBindListener = new Listener<ResourceBindEvent>() {
 
 			@Override
-			public void handleEvent(ResourceBindEvent be) {
+			public void handleEvent(ResourceBindEvent be) throws JaxmppException {
 				try {
 					processResourceBindEvent(be);
 				} catch (JaxmppException e) {
@@ -100,7 +100,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
-	protected void processException(JaxmppException e) {
+	protected void processException(JaxmppException e) throws JaxmppException {
 		if (sessionListener != null)
 			sessionListener.onException(e);
 	}

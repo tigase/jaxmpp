@@ -88,7 +88,11 @@ public class SocketConnector implements Connector {
 				}
 				connector.onStreamTerminate();
 			} catch (Exception e) {
-				onErrorInThread(e);
+				try {
+					onErrorInThread(e);
+				} catch (JaxmppException e1) {
+					e1.printStackTrace();
+				}
 			}
 			interrupt();
 			log.finest("Worker2 is interrupted");
@@ -112,7 +116,11 @@ public class SocketConnector implements Connector {
 
 		@Override
 		public void xmppStreamClosed() {
-			SocketConnector.this.onStreamTerminate();
+			try {
+				SocketConnector.this.onStreamTerminate();
+			} catch (JaxmppException e) {
+				e.printStackTrace();
+			}
 		}
 
 		@Override
@@ -173,27 +181,27 @@ public class SocketConnector implements Connector {
 		return new SocketXmppSessionLogic(this, modulesManager, sessionObject, writer);
 	}
 
-	protected void fireOnConnected(SessionObject sessionObject) {
+	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
 		ConnectorEvent event = new ConnectorEvent(Connected);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) {
+	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) throws JaxmppException {
 		ConnectorEvent event = new ConnectorEvent(Error);
 		event.setStanza(response);
 		event.setCaught(caught);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) {
+	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
 		ConnectorEvent event = new ConnectorEvent(StanzaReceived);
 		event.setStanza(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
-	protected void fireOnTerminate(SessionObject sessionObject) {
+	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
 		ConnectorEvent event = new ConnectorEvent(StreamTerminated);
 		this.observable.fireEvent(event.getType(), event);
 	}
@@ -216,13 +224,13 @@ public class SocketConnector implements Connector {
 		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
 	}
 
-	protected void onError(Element response, Throwable caught) {
+	protected void onError(Element response, Throwable caught) throws JaxmppException {
 		if (response != null)
 			sessionObject.setProperty(CONNECTOR_STAGE_KEY, State.disconnected);
 		fireOnError(response, caught, sessionObject);
 	}
 
-	protected void onErrorInThread(Exception e) {
+	protected void onErrorInThread(Exception e) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
 		fireOnError(null, e, sessionObject);
@@ -236,7 +244,7 @@ public class SocketConnector implements Connector {
 		// TODO Auto-generated method stub
 	}
 
-	protected void onStreamTerminate() {
+	protected void onStreamTerminate() throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
 		setStage(State.disconnected);
@@ -257,7 +265,7 @@ public class SocketConnector implements Connector {
 		}
 	}
 
-	protected void proceedTLS() {
+	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
 			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER_KEY);
@@ -279,7 +287,11 @@ public class SocketConnector implements Connector {
 					log.info("TLS completed " + arg0);
 					sessionObject.setProperty(ENCRYPTED_KEY, Boolean.TRUE);
 					ConnectorEvent event = new ConnectorEvent(EncryptionEstablished);
-					observable.fireEvent(EncryptionEstablished, event);
+					try {
+						observable.fireEvent(EncryptionEstablished, event);
+					} catch (JaxmppException e) {
+						throw new RuntimeException(e);
+					}
 				}
 			});
 			writer = null;
@@ -350,7 +362,7 @@ public class SocketConnector implements Connector {
 			this.observable = observable;
 	}
 
-	protected void setStage(State state) {
+	protected void setStage(State state) throws JaxmppException {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
@@ -413,7 +425,7 @@ public class SocketConnector implements Connector {
 		terminateAllWorkers();
 	}
 
-	private void terminateAllWorkers() {
+	private void terminateAllWorkers() throws JaxmppException {
 		log.finest("Terminating all workers");
 		setStage(State.disconnected);
 		try {

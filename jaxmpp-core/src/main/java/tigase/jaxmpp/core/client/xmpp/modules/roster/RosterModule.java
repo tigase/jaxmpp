@@ -156,7 +156,7 @@ public class RosterModule extends AbstractIQModule {
 		observable.addListener(listener);
 	}
 
-	private void fireEvent(RosterEvent event) {
+	private void fireEvent(RosterEvent event) throws JaxmppException {
 		if (event == null)
 			return;
 		observable.fireEvent(event.getType(), event);
@@ -184,7 +184,7 @@ public class RosterModule extends AbstractIQModule {
 		throw new XMPPException(ErrorCondition.not_allowed);
 	}
 
-	private void processRosterItem(final Element item) throws XMLException {
+	private void processRosterItem(final Element item) throws JaxmppException {
 		final BareJID jid = BareJID.bareJIDInstance(item.getAttribute("jid"));
 		final String name = item.getAttribute("name");
 		final Subscription subscription = getSubscription(item.getAttribute("subscription"));
@@ -235,7 +235,7 @@ public class RosterModule extends AbstractIQModule {
 		fireEvent(event);
 	}
 
-	private void processRosterQuery(final Element query) throws XMLException {
+	private void processRosterQuery(final Element query) throws JaxmppException {
 		List<Element> items = query.getChildren("item");
 		for (Element element : items) {
 			processRosterItem(element);
@@ -243,7 +243,7 @@ public class RosterModule extends AbstractIQModule {
 	}
 
 	@Override
-	protected void processSet(final IQ stanza) throws XMPPException, XMLException {
+	protected void processSet(final IQ stanza) throws JaxmppException {
 		final JID bindedJid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 		if (stanza.getFrom() != null && !stanza.getFrom().getDomain().equals(bindedJid.getDomain()))
 			throw new XMPPException(ErrorCondition.not_allowed);
@@ -270,7 +270,7 @@ public class RosterModule extends AbstractIQModule {
 			}
 
 			@Override
-			public void onSuccess(Stanza responseStanza) throws XMLException {
+			public void onSuccess(Stanza responseStanza) throws JaxmppException {
 				Element query = ((IQ) responseStanza).getQuery();
 				processRosterQuery(query);
 			}
@@ -303,7 +303,7 @@ public class RosterModule extends AbstractIQModule {
 			}
 
 			@Override
-			public void onSuccess(Stanza responseStanza) throws XMLException {
+			public void onSuccess(Stanza responseStanza) throws JaxmppException {
 				Element query = ((IQ) responseStanza).getQuery();
 				processRosterQuery(query);
 			}
@@ -333,7 +333,7 @@ public class RosterModule extends AbstractIQModule {
 			}
 
 			@Override
-			public void onSuccess(Stanza responseStanza) throws XMLException {
+			public void onSuccess(Stanza responseStanza) throws JaxmppException {
 				Element query = ((IQ) responseStanza).getQuery();
 				processRosterQuery(query);
 			}

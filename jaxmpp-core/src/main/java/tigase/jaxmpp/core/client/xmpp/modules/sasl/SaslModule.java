@@ -275,7 +275,7 @@ public class SaslModule implements XmppModule {
 		writer.write(auth);
 	}
 
-	protected void processFailure(Element element) throws XMPPException, XMLException {
+	protected void processFailure(Element element) throws JaxmppException {
 		sessionObject.setProperty(AUTHORIZED, Boolean.FALSE);
 		Element c = element.getFirstChild();
 		SaslError error = null;
@@ -289,7 +289,7 @@ public class SaslModule implements XmppModule {
 		observable.fireEvent(SaslFailed, event);
 	}
 
-	protected void processSuccess(Element element) throws XMPPException, XMLException {
+	protected void processSuccess(Element element) throws JaxmppException {
 		sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
 		observable.fireEvent(SaslSuccess, new SaslEvent(SaslSuccess));

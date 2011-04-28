@@ -12,13 +12,27 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.logger.LogLevel;
+import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.TextSingleField;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule.SoftwareVersionAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommand;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommansModule;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocRequest;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocResponse;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.State;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
@@ -43,14 +57,18 @@ public class Test {
 		logger.addHandler(handler);
 		logger.setLevel(Level.ALL);
 
+		tigase.jaxmpp.core.client.logger.Logger l = LoggerFactory.getLogger(Test.class);
+		if (l.isLoggable(LogLevel.CONFIG))
+			l.config("Logger successfully initialized");
+
 		Jaxmpp jaxmpp = new Jaxmpp();
 		// for BOSH connector
-		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, "http://178.32.171.163:5280");
+		jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, "http://xmpp.tigase.org");
 		// jaxmpp.getProperties().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL,
 		// "http://messenger.tigase.org:80/bosh");
 
 		// for Socket connector
-		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "178.32.171.161");
+		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "xmpp.tigase.org");
 		// port value is not necessary. Default is 5222
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_PORT, 5222);
 
@@ -58,21 +76,41 @@ public class Test {
 		jaxmpp.getProperties().setUserProperty(Jaxmpp.CONNECTOR_TYPE, "socket");
 
 		jaxmpp.getProperties().setUserProperty(SessionObject.RESOURCE, "jaxmpp");
-		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance("test1@example.com"));
-		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, "test");
+		jaxmpp.getProperties().setUserProperty(SessionObject.USER_JID, JID.jidInstance(args[0]));
+		jaxmpp.getProperties().setUserProperty(SessionObject.PASSWORD, args[1]);
+
+		Observable observable = new Observable(null);
+		observable.addListener(ResourceBinderModule.ResourceBindSuccess,
+				new Listener<ResourceBinderModule.ResourceBindEvent>() {
+
+					@Override
+					public void handleEvent(ResourceBindEvent be) {
+
+					}
+				});
+		observable.fireEvent(new ResourceBinderModule.ResourceBindEvent(ResourceBinderModule.ResourceBindSuccess));
 
 		System.out.println("// login");
 		// not necessary. it allows to set own status on sending initial
 		// presence
+
+		jaxmpp.getModulesManager().getModule(ResourceBinderModule.class).addListener(ResourceBinderModule.ResourceBindSuccess,
+				new Listener<ResourceBinderModule.ResourceBindEvent>() {
+
+					@Override
+					public void handleEvent(ResourceBindEvent be) {
+						System.out.println("Binded as " + be.getJid());
+					}
+				});
 		jaxmpp.getModulesManager().getModule(PresenceModule.class).addListener(PresenceModule.BeforeInitialPresence,
 				new Listener<PresenceEvent>() {
 
 					@Override
 					public void handleEvent(PresenceEvent be) {
-						be.cancel();
-						be.setPriority(-1);
+						// be.cancel();
+						be.setPriority(0);
 						be.setStatus("jaxmpp2 based Bot!");
-						be.setShow(Show.away);
+						be.setShow(Show.online);
 					}
 				});
 
@@ -179,6 +217,52 @@ public class Test {
 
 					}
 				});
+		jaxmpp.getModulesManager().getModule(AdHocCommansModule.class).register(new AdHocCommand() {
+
+			@Override
+			public String[] getFeatures() {
+				return new String[] { "http://jabber.org/protocol/commands", "jabber:x:data" };
+			}
+
+			@Override
+			public String getName() {
+				return "Hello world";
+			}
+
+			@Override
+			public String getNode() {
+				return "hello-world";
+			}
+
+			@Override
+			public void handle(AdHocRequest request, AdHocResponse response) throws JaxmppException {
+				try {
+					if (request.getForm() == null) {
+						JabberDataElement e = new JabberDataElement(XDataType.form);
+						e.setTitle("Hello World Command");
+						e.addTextSingleField("name", null).setLabel("Nickname");
+						response.setForm(e);
+						response.setState(State.executing);
+					} else {
+						TextSingleField name = request.getForm().getField("name");
+						JabberDataElement e = new JabberDataElement(XDataType.result);
+
+						e.setTitle("Hello World Command Result");
+						e.addFixedField("Hello " + name.getFieldValue() + "!");
+
+						response.setForm(e);
+					}
+
+				} catch (Exception e) {
+					throw new JaxmppException(e);
+				}
+			}
+
+			@Override
+			public boolean isAllowed(JID jid) {
+				return false;
+			}
+		});
 
 		Thread.sleep(1000 * 120);
 

@@ -173,11 +173,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		return result;
 	}
 
-	public void enable(Room room) {
+	public void enable(Room room) throws JaxmppException {
 		fireYouJoinedEvent(null, null, room, null);
 	}
 
-	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant) {
+	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant)
+			throws JaxmppException {
 		if (event == null)
 			return;
 		event.setNickname(nickname);
@@ -187,12 +188,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		observable.fireEvent(event);
 	}
 
-	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant) {
+	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant)
+			throws JaxmppException {
 		MucEvent event = new MucEvent(NewRoomCreated);
 		fireMucEvent(event, element, nickname, room, occupant);
 	}
 
-	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) {
+	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
 		MucEvent event = new MucEvent(YouJoined);
 		fireMucEvent(event, element, nickname, room, occupant);
 	}
@@ -246,7 +248,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	@Override
-	public void process(Stanza element) throws XMPPException, XMLException {
+	public void process(Stanza element) throws JaxmppException {
 		if (element instanceof Message)
 			processMessage((Message) element);
 		else if (element instanceof Presence)
@@ -255,7 +257,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			throw new RuntimeException("Stanza not handled");
 	}
 
-	protected void processMessage(Message element) throws XMPPException, XMLException {
+	protected void processMessage(Message element) throws JaxmppException {
 		final JID from = element.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
@@ -278,7 +280,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
-	protected void processPresence(Presence element) throws XMPPException, XMLException {
+	protected void processPresence(Presence element) throws JaxmppException {
 		final JID from = element.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();

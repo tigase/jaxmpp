@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 /**
  * Object for registering {@linkplain Listener listeners} and fire
@@ -83,8 +84,9 @@ public class Observable {
 	 * 
 	 * @param event
 	 *            event
+	 * @throws JaxmppException
 	 */
-	public void fireEvent(BaseEvent event) {
+	public void fireEvent(BaseEvent event) throws JaxmppException {
 		fireEvent(event.getType(), event);
 	}
 
@@ -92,8 +94,9 @@ public class Observable {
 	 * Fires {@linkplain BaseEvent BaseEvent}.
 	 * 
 	 * @param eventType
+	 * @throws JaxmppException
 	 */
-	public void fireEvent(final EventType eventType) {
+	public void fireEvent(final EventType eventType) throws JaxmppException {
 		fireEvent(eventType, new BaseEvent(eventType));
 	}
 
@@ -106,7 +109,7 @@ public class Observable {
 	 *            event
 	 */
 	@SuppressWarnings("unchecked")
-	public void fireEvent(final EventType eventType, final BaseEvent event) {
+	public void fireEvent(final EventType eventType, final BaseEvent event) throws JaxmppException {
 		try {
 			// if (log.isLoggable(Level.FINEST))
 			// log.finest("Fire event " + eventType);
@@ -123,9 +126,12 @@ public class Observable {
 					((Listener<BaseEvent>) listener).handleEvent(event);
 				}
 			}
+		} catch (JaxmppException e) {
+			throw e;
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.log(Level.WARNING, "Problem on notifint observers", e);
+			// log.log(Level.WARNING, "Problem on notifint observers", e);
+			throw new JaxmppException(e);
 		}
 		if (parent != null) {
 			parent.fireEvent(eventType, event);

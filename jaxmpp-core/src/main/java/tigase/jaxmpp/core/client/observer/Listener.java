@@ -2,6 +2,8 @@ package tigase.jaxmpp.core.client.observer;
 
 import java.util.EventListener;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
 /**
  * Interface for objects that are notified of events.
  * 
@@ -24,6 +26,6 @@ public interface Listener<E extends BaseEvent> extends EventListener {
 	 * @param be
 	 *            event
 	 */
-	public void handleEvent(E be);
+	public void handleEvent(E be) throws JaxmppException;
 
 }

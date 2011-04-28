@@ -90,14 +90,14 @@ public class ResourceBinderModule implements XmppModule {
 		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
 
 			@Override
-			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
 				event.setError(error);
 				observable.fireEvent(ResourceBindError, event);
 			}
 
 			@Override
-			public void onSuccess(Stanza responseStanza) throws XMLException {
+			public void onSuccess(Stanza responseStanza) throws JaxmppException {
 				String name = null;
 				Element bind = responseStanza.getChildrenNS("bind", "urn:ietf:params:xml:ns:xmpp-bind");
 				if (bind != null) {
@@ -117,7 +117,7 @@ public class ResourceBinderModule implements XmppModule {
 			}
 
 			@Override
-			public void onTimeout() throws XMLException {
+			public void onTimeout() throws JaxmppException {
 				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
 				observable.fireEvent(ResourceBindError, event);
 			}

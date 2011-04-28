@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -70,7 +71,7 @@ public class ResponseManager {
 
 	private long timeout = 1000 * 60;;
 
-	public void checkTimeouts() {
+	public void checkTimeouts() throws JaxmppException {
 		long now = (new Date()).getTime();
 		Iterator<java.util.Map.Entry<Key, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
 		while (it.hasNext()) {
@@ -98,7 +99,7 @@ public class ResponseManager {
 			AbstractStanzaHandler r = new AbstractStanzaHandler(stanza, writer, sessionObject) {
 
 				@Override
-				protected void process() throws XMLException, XMPPException {
+				protected void process() throws JaxmppException {
 					final String type = this.stanza.getAttribute("type");
 
 					if (type != null && type.equals("result")) {

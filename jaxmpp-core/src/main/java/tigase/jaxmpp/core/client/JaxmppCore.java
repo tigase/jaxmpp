@@ -18,6 +18,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommansModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
@@ -100,28 +101,28 @@ public abstract class JaxmppCore {
 		this.resourceBindListener = new Listener<ResourceBindEvent>() {
 
 			@Override
-			public void handleEvent(ResourceBindEvent be) {
+			public void handleEvent(ResourceBindEvent be) throws JaxmppException {
 				onResourceBinded(be);
 			}
 		};
 		this.streamTerminateListener = new Listener<ConnectorEvent>() {
 
 			@Override
-			public void handleEvent(ConnectorEvent be) {
+			public void handleEvent(ConnectorEvent be) throws JaxmppException {
 				onStreamTerminated(be);
 			}
 		};
 		this.streamErrorListener = new Listener<ConnectorEvent>() {
 
 			@Override
-			public void handleEvent(ConnectorEvent be) {
+			public void handleEvent(ConnectorEvent be) throws JaxmppException {
 				onStreamError(be);
 			}
 		};
 		this.stanzaReceivedListener = new Listener<ConnectorEvent>() {
 
 			@Override
-			public void handleEvent(ConnectorEvent be) {
+			public void handleEvent(ConnectorEvent be) throws JaxmppException {
 				if (be.getStanza() != null)
 					onStanzaReceived(be.getStanza());
 			}
@@ -137,7 +138,7 @@ public abstract class JaxmppCore {
 		observable.addListener(listener);
 	}
 
-	public Chat createChat(JID jid) {
+	public Chat createChat(JID jid) throws JaxmppException {
 		return (this.modulesManager.getModule(MessageModule.class)).getChatManager().createChat(jid);
 	}
 
@@ -187,8 +188,12 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new DiscoInfoModule(sessionObject, writer, modulesManager));
-		this.modulesManager.register(new DiscoItemsModule(observable, sessionObject, writer));
+		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(observable, sessionObject,
+				writer, modulesManager));
+		final DiscoItemsModule discoItemsModule = this.modulesManager.register(new DiscoItemsModule(observable, sessionObject,
+				writer));
+
+		this.modulesManager.register(new AdHocCommansModule(sessionObject, writer, discoItemsModule, discoInfoModule));
 
 		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
 		this.modulesManager.register(new PingModule(sessionObject, writer));
@@ -200,15 +205,15 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new SaslModule(observable, sessionObject, writer));
 	}
 
-	protected abstract void onException(JaxmppException e);
+	protected abstract void onException(JaxmppException e) throws JaxmppException;
 
-	protected abstract void onResourceBinded(ResourceBindEvent be);
+	protected abstract void onResourceBinded(ResourceBindEvent be) throws JaxmppException;
 
-	protected abstract void onStanzaReceived(Element stanza);
+	protected abstract void onStanzaReceived(Element stanza) throws JaxmppException;
 
-	protected abstract void onStreamError(ConnectorEvent be);
+	protected abstract void onStreamError(ConnectorEvent be) throws JaxmppException;
 
-	protected abstract void onStreamTerminated(ConnectorEvent be);
+	protected abstract void onStreamTerminated(ConnectorEvent be) throws JaxmppException;
 
 	public void removeAllListeners() {
 		observable.removeAllListeners();

@@ -51,7 +51,7 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 					int responseCode = $response.getStatusCode();
 					GwtElement response;
 					String x = t == null || t.length() == 0 ? null : t.replaceAll("&semi;", ";");
-					System.out.println("<< " + x);
+					// System.out.println("<< " + x);
 					if (x == null)
 						response = null;
 					else
@@ -105,7 +105,7 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			return;
 		try {
 			String x = element.getAsString();
-			System.out.println(">> " + x);
+			// System.out.println(">> " + x);
 			request = requestBuilder.sendRequest(x, callback);
 		} catch (Exception e) {
 			e.printStackTrace();

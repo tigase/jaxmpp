@@ -27,7 +27,9 @@ public abstract class AbstractStanzaHandler implements Runnable {
 		try {
 			try {
 				process();
+				// }catch(XMPPException e){
 			} catch (Exception e) {
+				e.printStackTrace();
 				Element errorResult = Processor.createError(stanza, e);
 				if (errorResult != null)
 					writer.write(errorResult);
@@ -37,5 +39,4 @@ public abstract class AbstractStanzaHandler implements Runnable {
 			// TODO: handle exception
 		}
 	}
-
 }

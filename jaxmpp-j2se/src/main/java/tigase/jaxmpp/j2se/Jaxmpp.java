@@ -96,7 +96,7 @@ public class Jaxmpp extends JaxmppCore {
 		this.sessionLogic.bind(new SessionListener() {
 
 			@Override
-			public void onException(JaxmppException e) {
+			public void onException(JaxmppException e) throws JaxmppException {
 				Jaxmpp.this.onException(e);
 			}
 		});
@@ -120,7 +120,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onException(JaxmppException e) {
+	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(LogLevel.FINE, "Catching exception", e);
 		sessionObject.setProperty(EXCEPTION_KEY, e);
 		try {
@@ -137,7 +137,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onResourceBinded(ResourceBindEvent be) {
+	protected void onResourceBinded(ResourceBindEvent be) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
@@ -154,7 +154,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onStreamError(ConnectorEvent be) {
+	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
@@ -164,7 +164,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onStreamTerminated(ConnectorEvent be) {
+	protected void onStreamTerminated(ConnectorEvent be) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
