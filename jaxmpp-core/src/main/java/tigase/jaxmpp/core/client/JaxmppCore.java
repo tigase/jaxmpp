@@ -130,11 +130,11 @@ public abstract class JaxmppCore {
 
 	}
 
-	public void addListener(EventType eventType, Listener<JaxmppEvent> listener) {
+	public void addListener(EventType eventType, Listener<?> listener) {
 		observable.addListener(eventType, listener);
 	}
 
-	public void addListener(Listener<JaxmppEvent> listener) {
+	public void addListener(Listener<?> listener) {
 		observable.addListener(listener);
 	}
 
