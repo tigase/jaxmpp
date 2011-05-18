@@ -75,6 +75,8 @@ public class SocketConnector implements Connector {
 					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
 					tigase.xml.Element elem;
 					while ((elem = elems.poll()) != null) {
+						if (log.isLoggable(LogLevel.FINEST))
+							log.finest("RECV: " + elem.toString());
 						if (elem != null && elem.getXMLNS() != null
 								&& elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
 							connector.onTLSStanza(elem);
