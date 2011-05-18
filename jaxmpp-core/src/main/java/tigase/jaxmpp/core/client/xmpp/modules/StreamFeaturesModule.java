@@ -74,6 +74,7 @@ public class StreamFeaturesModule implements XmppModule {
 
 	@Override
 	public void process(Element element) throws JaxmppException {
+		System.out.println(element.getAsString());
 		sessionObject.setStreamFeatures(element);
 		observable.fireEvent(StreamFeaturesReceived, new StreamFeaturesReceivedEvent(element));
 	}

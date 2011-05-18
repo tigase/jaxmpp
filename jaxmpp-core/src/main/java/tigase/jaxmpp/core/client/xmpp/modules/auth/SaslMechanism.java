@@ -1,4 +1,4 @@
-package tigase.jaxmpp.core.client.xmpp.modules.sasl;
+package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.SessionObject;
 

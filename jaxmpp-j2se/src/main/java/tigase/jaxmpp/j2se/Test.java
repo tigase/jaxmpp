@@ -33,6 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommansModule;
 import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocRequest;
 import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocResponse;
 import tigase.jaxmpp.core.client.xmpp.modules.adhoc.State;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
@@ -68,6 +69,7 @@ public class Test {
 		// "http://messenger.tigase.org:80/bosh");
 
 		// for Socket connector
+		jaxmpp.getProperties().setUserProperty(AuthModule.FORCE_NON_SASL, Boolean.TRUE);
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_HOST, "xmpp.tigase.org");
 		// port value is not necessary. Default is 5222
 		jaxmpp.getProperties().setUserProperty(SocketConnector.SERVER_PORT, 5222);

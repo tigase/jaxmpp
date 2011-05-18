@@ -116,14 +116,19 @@ public class Observable {
 			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
 			if (lst != null) {
 				event.setHandled(true);
-				for (Listener<? extends BaseEvent> listener : lst) {
-					((Listener<BaseEvent>) listener).handleEvent(event);
+				System.out.println("!");
+				synchronized (lst) {
+					for (Listener<? extends BaseEvent> listener : lst) {
+						((Listener<BaseEvent>) listener).handleEvent(event);
+					}
 				}
 			}
 			if (!everythingListener.isEmpty()) {
 				event.setHandled(true);
-				for (Listener<? extends BaseEvent> listener : this.everythingListener) {
-					((Listener<BaseEvent>) listener).handleEvent(event);
+				synchronized (everythingListener) {
+					for (Listener<? extends BaseEvent> listener : this.everythingListener) {
+						((Listener<BaseEvent>) listener).handleEvent(event);
+					}
 				}
 			}
 		} catch (JaxmppException e) {

@@ -11,12 +11,17 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule.NonSaslAuthEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
-import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
-import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule.SaslEvent;
 
 public class SocketXmppSessionLogic implements XmppSessionLogic {
+
+	private AuthModule authModule;
 
 	private final SocketConnector connector;
 
@@ -28,9 +33,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private Listener<ResourceBindEvent> resourceBindListener;
 
-	private final Listener<SaslEvent> saslEventListener;
-
-	private SaslModule saslModule;
+	private final Listener<AuthModule.AuthEvent> saslEventListener;
 
 	private SessionListener sessionListener;
 
@@ -55,12 +58,16 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 				}
 			}
 		};
-		this.saslEventListener = new Listener<SaslEvent>() {
+		this.saslEventListener = new Listener<AuthModule.AuthEvent>() {
 
 			@Override
-			public void handleEvent(SaslEvent be) throws JaxmppException {
+			public void handleEvent(AuthModule.AuthEvent be) throws JaxmppException {
 				try {
-					processSaslEvent(be);
+					if (be instanceof SaslEvent) {
+						processSaslEvent((SaslEvent) be);
+					} else if (be instanceof NonSaslAuthEvent) {
+						processNonSaslEvent((NonSaslAuthEvent) be);
+					}
 				} catch (JaxmppException e) {
 					processException(e);
 				}
@@ -85,12 +92,12 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	public void bind(SessionListener sessionListener) throws JaxmppException {
 		this.sessionListener = sessionListener;
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
-		saslModule = this.modulesManager.getModule(SaslModule.class);
+		authModule = this.modulesManager.getModule(AuthModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 
 		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		saslModule.addListener(SaslModule.SaslSuccess, this.saslEventListener);
-		saslModule.addListener(SaslModule.SaslFailed, this.saslEventListener);
+		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
+		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
 		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 
 	}
@@ -98,6 +105,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	protected void processException(JaxmppException e) throws JaxmppException {
 		if (sessionListener != null)
 			sessionListener.onException(e);
+	}
+
+	protected void processNonSaslEvent(final NonSaslAuthModule.NonSaslAuthEvent be) throws JaxmppException {
+		if (be.getType() == AuthModule.AuthFailed) {
+			throw new JaxmppException("Unauthorized with condition=" + be.getError());
+		} else if (be.getType() == AuthModule.AuthSuccess) {
+			connector.restartStream();
+		}
 	}
 
 	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
@@ -113,14 +128,10 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	}
 
 	protected void processSaslEvent(SaslEvent be) throws JaxmppException {
-		try {
-			if (be.getType() == SaslModule.SaslFailed) {
-				throw new JaxmppException("Unauthorized with condition=" + be.getError());
-			} else if (be.getType() == SaslModule.SaslSuccess) {
-				connector.restartStream();
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		if (be.getType() == AuthModule.AuthFailed) {
+			throw new JaxmppException("Unauthorized with condition=" + be.getError());
+		} else if (be.getType() == AuthModule.AuthSuccess) {
+			connector.restartStream();
 		}
 	}
 
@@ -129,13 +140,13 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			final boolean saslAvailable = SaslModule.getAllowedSASLMechanisms(sessionObject) != null;
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
 
-			final boolean isAuthorized = sessionObject.getProperty(SaslModule.AUTHORIZED) == Boolean.TRUE;
+			final boolean isAuthorized = sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
 			final boolean isConnectionSecure = connector.isSecure();
 
 			if (!isConnectionSecure && tlsAvailable) {
 				connector.startTLS();
 			} else if (!isAuthorized && saslAvailable) {
-				saslModule.login();
+				authModule.login();
 			} else if (isAuthorized) {
 				resourceBinder.bind();
 			}
@@ -147,8 +158,8 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	@Override
 	public void unbind() throws JaxmppException {
 		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		saslModule.removeListener(SaslModule.SaslSuccess, this.saslEventListener);
-		saslModule.removeListener(SaslModule.SaslFailed, this.saslEventListener);
+		authModule.removeListener(AuthModule.AuthSuccess, this.saslEventListener);
+		authModule.removeListener(AuthModule.AuthFailed, this.saslEventListener);
 		resourceBinder.removeListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 

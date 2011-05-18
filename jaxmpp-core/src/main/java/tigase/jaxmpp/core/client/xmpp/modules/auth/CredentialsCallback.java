@@ -1,4 +1,4 @@
-package tigase.jaxmpp.core.client.xmpp.modules.sasl;
+package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 public interface CredentialsCallback {
 

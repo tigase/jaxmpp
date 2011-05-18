@@ -19,6 +19,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindE
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommansModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
@@ -28,7 +31,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
-import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class JaxmppCore {
@@ -180,6 +182,9 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
+		final AuthModule authModule = this.modulesManager.register(new AuthModule(observable, this.sessionObject,
+				this.modulesManager));
+
 		this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new MucModule(observable, sessionObject, writer));
@@ -202,7 +207,10 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new RosterModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new StreamFeaturesModule(observable, sessionObject, writer));
-		this.modulesManager.register(new SaslModule(observable, sessionObject, writer));
+		this.modulesManager.register(new SaslModule(authModule.getObservable(), sessionObject, writer));
+		this.modulesManager.register(new NonSaslAuthModule(authModule.getObservable(), sessionObject, writer));
+
+		this.modulesManager.init();
 	}
 
 	protected abstract void onException(JaxmppException e) throws JaxmppException;

@@ -19,10 +19,10 @@
  * Last modified by $Author: bmalkow $
  * $Date: 2009-01-12 12:59:15 +0100 (pon, 12 sty 2009) $
  */
-package tigase.jaxmpp.core.client.xmpp.modules.sasl.mechanisms;
+package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.sasl.SaslMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 
 public class AnonymousMechanism implements SaslMechanism {
 

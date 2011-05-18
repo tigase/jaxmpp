@@ -5,10 +5,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class XmppModulesManager {
+
+	public static interface InitializingBean {
+
+		void init() throws JaxmppException;
+
+	}
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 
@@ -39,6 +46,17 @@ public class XmppModulesManager {
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
 		return (T) this.modulesByClasses.get(moduleClass);
+	}
+
+	public void init() {
+		for (XmppModule mod : this.modules) {
+			if (mod instanceof InitializingBean) {
+				try {
+					((InitializingBean) mod).init();
+				} catch (JaxmppException e) {
+				}
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")
