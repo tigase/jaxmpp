@@ -86,7 +86,8 @@ public class SocketConnector implements Connector {
 							}
 					}
 				}
-				log.finest("Disconnecting: state=" + connector.getState() + "; buffer=" + r);
+				if (log.isLoggable(LogLevel.FINEST))
+					log.finest("Disconnecting: state=" + connector.getState() + "; buffer=" + r);
 				connector.onStreamTerminate();
 			} catch (Exception e) {
 				try {
@@ -118,7 +119,8 @@ public class SocketConnector implements Connector {
 		@Override
 		public void xmppStreamClosed() {
 			try {
-				log.finest("xmppStreamClosed()");
+				if (log.isLoggable(LogLevel.FINEST))
+					log.finest("xmppStreamClosed()");
 				SocketConnector.this.onStreamTerminate();
 			} catch (JaxmppException e) {
 				e.printStackTrace();
