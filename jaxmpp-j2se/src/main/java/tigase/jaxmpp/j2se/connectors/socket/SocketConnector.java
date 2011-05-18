@@ -86,6 +86,7 @@ public class SocketConnector implements Connector {
 							}
 					}
 				}
+				log.finest("Disconnecting: state=" + connector.getState() + "; buffer=" + r);
 				connector.onStreamTerminate();
 			} catch (Exception e) {
 				try {
@@ -117,6 +118,7 @@ public class SocketConnector implements Connector {
 		@Override
 		public void xmppStreamClosed() {
 			try {
+				log.finest("xmppStreamClosed()");
 				SocketConnector.this.onStreamTerminate();
 			} catch (JaxmppException e) {
 				e.printStackTrace();
