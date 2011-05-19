@@ -14,7 +14,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeature
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule.NonSaslAuthEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
@@ -137,7 +136,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
 		try {
-			final boolean saslAvailable = SaslModule.getAllowedSASLMechanisms(sessionObject) != null;
+			final boolean authAvailable = AuthModule.isAuthAvailable(sessionObject);
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
 
 			final boolean isAuthorized = sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
@@ -145,7 +144,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			if (!isConnectionSecure && tlsAvailable) {
 				connector.startTLS();
-			} else if (!isAuthorized && saslAvailable) {
+			} else if (!isAuthorized && authAvailable) {
 				authModule.login();
 			} else if (isAuthorized) {
 				resourceBinder.bind();

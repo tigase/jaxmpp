@@ -62,6 +62,17 @@ public class AuthModule implements XmppModule {
 	 */
 	public static final String FORCE_NON_SASL = "jaxmpp#forceNonSASL";
 
+	public static boolean isAuthAvailable(final SessionObject sessionObject) throws XMLException {
+		final Element features = sessionObject.getStreamFeatures();
+
+		boolean saslSupported = features != null
+				&& features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
+		boolean nonSaslSupported = features != null
+				&& features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
+
+		return saslSupported || nonSaslSupported;
+	}
+
 	private final Logger log;
 
 	private XmppModulesManager modulesManager;
@@ -138,5 +149,4 @@ public class AuthModule implements XmppModule {
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
-
 }
