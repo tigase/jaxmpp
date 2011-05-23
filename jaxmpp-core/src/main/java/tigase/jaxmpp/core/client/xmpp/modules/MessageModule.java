@@ -20,13 +20,30 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 public class MessageModule extends AbstractStanzaModule<Message> {
 
-	public static class MessageEvent extends BaseEvent {
+	public static abstract class AbstractMessageEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Message message;
+
+		public AbstractMessageEvent(EventType type) {
+			super(type);
+		}
+
+		public Message getMessage() {
+			return message;
+		}
+
+		public void setMessage(Message message) {
+			this.message = message;
+		}
+	}
+
+	public static class MessageEvent extends AbstractMessageEvent {
 
 		private static final long serialVersionUID = 1L;
 
 		private Chat chat;
-
-		private Message message;
 
 		public MessageEvent(EventType type) {
 			super(type);
@@ -36,17 +53,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			return chat;
 		}
 
-		public Message getMessage() {
-			return message;
-		}
-
 		public void setChat(Chat chat) {
 			this.chat = chat;
 		}
 
-		public void setMessage(Message message) {
-			this.message = message;
-		}
 	}
 
 	public static final EventType ChatCreated = new EventType();
@@ -62,11 +72,15 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = new Observable(parentObservable);
-		this.chatManager = new ChatManager(sessionObject, packetWriter, observable);
+		this.chatManager = new ChatManager(sessionObject, packetWriter);
 	}
 
 	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
 		observable.addListener(eventType, listener);
+	}
+
+	public Chat createChat(JID jid) throws JaxmppException {
+		return this.chatManager.createChat(jid, observable);
 	}
 
 	public ChatManager getChatManager() {
@@ -91,10 +105,11 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	public void process(Message element) throws JaxmppException {
 		MessageEvent event = new MessageEvent(MessageReceived);
 		event.setMessage(element);
-		Chat chat = chatManager.process(element);
+		Chat chat = chatManager.process(element, observable);
 		if (chat != null) {
 			event.setChat(chat);
 		}
+		System.out.println("MesM: fire");
 		observable.fireEvent(event.getType(), event);
 	}
 

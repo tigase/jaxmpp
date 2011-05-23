@@ -19,6 +19,11 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
+import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.AbstractMessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatManager;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -26,11 +31,9 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class MucModule extends AbstractStanzaModule<Stanza> {
 
-	public static class MucEvent extends BaseEvent {
+	public static class MucEvent extends AbstractMessageEvent {
 
 		private static final long serialVersionUID = 1L;
-
-		private Message message;
 
 		private String nickname;
 
@@ -44,10 +47,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public MucEvent(EventType type) {
 			super(type);
-		}
-
-		public Message getMessage() {
-			return message;
 		}
 
 		public String getNickname() {
@@ -68,10 +67,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public Room getRoom() {
 			return room;
-		}
-
-		public void setMessage(Message message) {
-			this.message = message;
 		}
 
 		public void setNickname(String nickname) {
@@ -98,7 +93,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final EventType MessageError = new EventType();
 
-	public static final EventType MessageReceived = new EventType();
+	public static final EventType MucMessageReceived = new EventType();
 
 	public static final EventType NewRoomCreated = new EventType();
 
@@ -121,6 +116,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
 	public static final EventType YouJoined = new EventType();
+
+	private ChatManager chatManager;
 
 	private final Criteria crit;
 
@@ -146,11 +143,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		};
 	}
 
-	public void addListener(EventType eventType, Listener<? extends MucEvent> listener) {
+	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
-	public void addListener(Listener<? extends MucEvent> listener) {
+	public void addListener(Listener<? extends BaseEvent> listener) {
 		observable.addListener(listener);
 	}
 
@@ -197,6 +194,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
 		MucEvent event = new MucEvent(YouJoined);
 		fireMucEvent(event, element, nickname, room, occupant);
+	}
+
+	public ChatManager getChatManager() {
+		return chatManager;
 	}
 
 	@Override
@@ -266,18 +267,28 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return;
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
-		MucEvent event;
-		if (element.getType() == StanzaType.error) {
-			event = new MucEvent(MessageError);
+		if (element.getType() == StanzaType.chat && chatManager != null) {
+			System.out.println("MucM: fire");
+			MessageEvent event = new MessageEvent(MessageModule.MessageReceived);
+			event.setMessage(element);
+			Chat chat = chatManager.process(element, observable);
+			if (chat != null) {
+				event.setChat(chat);
+			}
+			observable.fireEvent(event.getType(), event);
 		} else {
-			event = new MucEvent(MessageReceived);
+			MucEvent event;
+			if (element.getType() == StanzaType.error) {
+				event = new MucEvent(MessageError);
+			} else {
+				event = new MucEvent(MucMessageReceived);
+			}
+
+			event.setMessage(element);
+			event.setRoom(room);
+			event.setNickname(nickname);
+			observable.fireEvent(event);
 		}
-
-		event.setMessage(element);
-		event.setRoom(room);
-		event.setNickname(nickname);
-		observable.fireEvent(event);
-
 	}
 
 	protected void processPresence(Presence element) throws JaxmppException {
@@ -377,6 +388,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.removeListener(eventType, listener);
+	}
+
+	public void setChatManager(ChatManager chatManager) {
+		this.chatManager = chatManager;
 	}
 
 }

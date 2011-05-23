@@ -141,7 +141,7 @@ public abstract class JaxmppCore {
 	}
 
 	public Chat createChat(JID jid) throws JaxmppException {
-		return (this.modulesManager.getModule(MessageModule.class)).getChatManager().createChat(jid);
+		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
 	}
 
 	public abstract void disconnect() throws JaxmppException;
@@ -187,11 +187,11 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new MucModule(observable, sessionObject, writer));
-
 		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
+		MucModule mucModule = this.modulesManager.register(new MucModule(observable, sessionObject, writer));
+		final MessageModule messageModule = this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
+		mucModule.setChatManager(messageModule.getChatManager());
 
 		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(observable, sessionObject,
 				writer, modulesManager));

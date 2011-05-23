@@ -19,23 +19,20 @@ public class ChatManager {
 
 	private final ArrayList<Chat> chats = new ArrayList<Chat>();
 
-	private final Observable observable;
-
 	private final PacketWriter packetWriter;
 
 	private final SessionObject sessionObject;
 
-	public ChatManager(SessionObject sessionObject, PacketWriter packetWriter, Observable observable) {
+	public ChatManager(SessionObject sessionObject, PacketWriter packetWriter) {
 		this.sessionObject = sessionObject;
 		this.packetWriter = packetWriter;
-		this.observable = observable;
 	}
 
 	public void close(Chat chat) {
 		this.chats.remove(chat);
 	}
 
-	public Chat createChat(JID jid) throws JaxmppException {
+	public Chat createChat(JID jid, Observable observable) throws JaxmppException {
 		final String threadId = UIDGenerator.next();
 		Chat chat = new Chat(packetWriter);
 		chat.setThreadId(threadId);
@@ -83,7 +80,7 @@ public class ChatManager {
 		return this.chats;
 	}
 
-	public Chat process(Message message) throws JaxmppException {
+	public Chat process(Message message, Observable observable) throws JaxmppException {
 		if (message.getType() != StanzaType.chat)
 			return null;
 		final JID fromJid = message.getFrom();
