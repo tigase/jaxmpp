@@ -114,7 +114,6 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	}
 
 	protected void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-		System.out.println(responseStanza.getAsString());
 		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure with condition: " + error);
 		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed);

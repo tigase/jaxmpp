@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client;
 
 import javax.net.ssl.TrustManager;
 
+import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -84,6 +85,10 @@ public interface Connector {
 
 		private Element stanza;
 
+		private StreamError streamError;
+
+		private Element streamErrorElement;
+
 		public ConnectorEvent(EventType type) {
 			super(type);
 		}
@@ -101,12 +106,28 @@ public interface Connector {
 			return stanza;
 		}
 
+		public StreamError getStreamError() {
+			return this.streamError;
+		}
+
+		public Element getStreamErrorElement() {
+			return this.streamErrorElement;
+		}
+
 		public void setCaught(Throwable caught) {
 			this.caught = caught;
 		}
 
 		public void setStanza(Element stanza) {
 			this.stanza = stanza;
+		}
+
+		public void setStreamError(StreamError streamError) {
+			this.streamError = streamError;
+		}
+
+		public void setStreamErrorElement(Element streamErrorElement) {
+			this.streamErrorElement = streamErrorElement;
 		}
 	}
 

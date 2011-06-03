@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -13,7 +14,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -166,7 +166,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 		case canceled:
 		case completed:
 			if (session != null) {
-				if (log.isLoggable(LogLevel.FINE))
+				if (log.isLoggable(Level.FINE))
 					log.fine("Session " + session.getSessionId() + " is removed");
 				this.sessions.remove(session.getSessionId());
 			}

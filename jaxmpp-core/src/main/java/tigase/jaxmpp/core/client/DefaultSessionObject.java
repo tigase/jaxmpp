@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -10,6 +11,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class DefaultSessionObject implements SessionObject {
+
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected final PresenceStore presence = new PresenceStore();
 
@@ -30,6 +33,7 @@ public class DefaultSessionObject implements SessionObject {
 
 	@Override
 	public void clear() {
+		log.fine("Clearing");
 		this.properties.clear();
 		roster.cler();
 		presence.clear();

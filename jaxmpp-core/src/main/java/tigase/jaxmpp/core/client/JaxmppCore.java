@@ -1,11 +1,10 @@
 package tigase.jaxmpp.core.client;
 
+import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.Connector.State;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
-import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -94,9 +93,8 @@ public abstract class JaxmppCore {
 		}
 	};
 
-	public JaxmppCore(LoggerSpiFactory defaultLoggerSpi) {
-		LoggerFactory.setLoggerSpiFactory(defaultLoggerSpi);
-		this.log = LoggerFactory.getLogger(this.getClass().getName());
+	public JaxmppCore() {
+		this.log = Logger.getLogger(this.getClass().getName());
 
 		modulesManager = new XmppModulesManager();
 

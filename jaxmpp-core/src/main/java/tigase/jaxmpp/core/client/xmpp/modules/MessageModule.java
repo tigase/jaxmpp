@@ -109,7 +109,6 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		if (chat != null) {
 			event.setChat(chat);
 		}
-		System.out.println("MesM: fire");
 		observable.fireEvent(event.getType(), event);
 	}
 

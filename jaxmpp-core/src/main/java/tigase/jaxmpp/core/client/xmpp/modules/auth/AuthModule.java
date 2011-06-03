@@ -1,14 +1,14 @@
 package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -85,7 +85,7 @@ public class AuthModule implements XmppModule {
 		this.observable = new Observable(parentObservable);
 		this.modulesManager = modulesManager;
 		this.sessionObject = sessionObject;
-		this.log = LoggerFactory.getLogger(this.getClass().getName());
+		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -122,7 +122,7 @@ public class AuthModule implements XmppModule {
 		boolean nonSaslSupported = !saslSupported || features == null
 				|| features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
 
-		if (log.isLoggable(LogLevel.FINER))
+		if (log.isLoggable(Level.FINER))
 			log.finer("Authenticating with " + (saslSupported ? "SASL" : "-") + " " + (nonSaslSupported ? "Non-SASL" : "-"));
 
 		try {

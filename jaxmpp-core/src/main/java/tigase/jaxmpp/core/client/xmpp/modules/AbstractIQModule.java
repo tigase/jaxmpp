@@ -1,14 +1,14 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -21,7 +21,7 @@ public abstract class AbstractIQModule implements XmppModule {
 	protected final PacketWriter writer;
 
 	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		log = LoggerFactory.getLogger(this.getClass().getName());
+		log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}
@@ -36,7 +36,7 @@ public abstract class AbstractIQModule implements XmppModule {
 		else if (stanza instanceof IQ && type == StanzaType.get)
 			processGet((IQ) stanza);
 		else {
-			log.log(LogLevel.WARNING, "Unhandled stanza " + $element.getName() + ", type=" + $element.getAttribute("type")
+			log.log(Level.WARNING, "Unhandled stanza " + $element.getName() + ", type=" + $element.getAttribute("type")
 					+ ", id=" + $element.getAttribute("id"));
 			throw new XMPPException(ErrorCondition.bad_request);
 		}

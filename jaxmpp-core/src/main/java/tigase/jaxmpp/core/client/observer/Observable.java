@@ -116,7 +116,6 @@ public class Observable {
 			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
 			if (lst != null) {
 				event.setHandled(true);
-				System.out.println("!");
 				synchronized (lst) {
 					for (Listener<? extends BaseEvent> listener : lst) {
 						((Listener<BaseEvent>) listener).handleEvent(event);

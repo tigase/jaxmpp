@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
+import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -9,8 +11,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -69,7 +69,7 @@ public class ResourceBinderModule implements XmppModule {
 
 	public ResourceBinderModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		this.observable = new Observable(parentObservable);
-		log = LoggerFactory.getLogger(this.getClass().getName());
+		log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}

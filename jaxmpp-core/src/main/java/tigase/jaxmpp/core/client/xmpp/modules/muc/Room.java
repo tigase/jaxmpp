@@ -2,13 +2,12 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -19,7 +18,7 @@ public class Room {
 
 	private boolean leaved;
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	private String nickname;
 

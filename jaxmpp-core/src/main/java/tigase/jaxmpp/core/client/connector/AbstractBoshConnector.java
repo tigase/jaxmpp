@@ -3,6 +3,8 @@ package tigase.jaxmpp.core.client.connector;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
@@ -11,9 +13,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.Logger;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -96,7 +95,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public AbstractBoshConnector(Observable parentObservable, SessionObject sessionObject) {
 		this.observable = new Observable(parentObservable);
-		this.log = LoggerFactory.getLogger(this.getClass().getName());
+		this.log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		sessionObject.setProperty(DEFAULT_TIMEOUT_KEY, "30");
 	}
@@ -211,8 +210,8 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught)
 			throws JaxmppException {
 		removeFromRequests(request);
-		if (log.isLoggable(LogLevel.FINER))
-			log.log(LogLevel.FINER, "responseCode=" + responseCode, caught);
+		if (log.isLoggable(Level.FINER))
+			log.log(Level.FINER, "responseCode=" + responseCode, caught);
 		setStage(State.disconnected);
 		fireOnError(responseCode, responseData, response, caught, sessionObject);
 	}
@@ -243,7 +242,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		removeFromRequests(request);
 		if (getState() == State.disconnected)
 			return;
-		if (log.isLoggable(LogLevel.FINE))
+		if (log.isLoggable(Level.FINE))
 			log.fine("Stream terminated. responseCode=" + responseCode);
 		setStage(State.disconnected);
 		terminateAllWorkers();

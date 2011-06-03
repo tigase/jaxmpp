@@ -1,6 +1,7 @@
 package tigase.jaxmpp.gwt.client;
 
 import java.util.Date;
+import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
@@ -14,8 +15,6 @@ import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -77,7 +76,6 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
-		this(new DefaultLoggerSpi());
 		this.timeoutChecker = new RepeatingCommand() {
 
 			@Override
@@ -90,10 +88,6 @@ public class Jaxmpp extends JaxmppCore {
 			}
 		};
 		Scheduler.get().scheduleFixedDelay(timeoutChecker, 1000 * 31);
-	}
-
-	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
-		super(defaultLoggerSpi);
 
 		this.connectorWrapper = new ConnectorWrapper(observable);
 		this.connector = this.connectorWrapper;
@@ -205,11 +199,11 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
-		log.log(LogLevel.FINE, "Catching exception", e);
+		log.log(Level.FINE, "Catching exception", e);
 		try {
 			connector.stop();
 		} catch (Exception e1) {
-			log.log(LogLevel.FINE, "Disconnecting error", e1);
+			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected);
 		event.setCaught(e);

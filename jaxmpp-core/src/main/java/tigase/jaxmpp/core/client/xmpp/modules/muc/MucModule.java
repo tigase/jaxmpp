@@ -268,7 +268,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
 		if (element.getType() == StanzaType.chat && chatManager != null) {
-			System.out.println("MucM: fire");
 			MessageEvent event = new MessageEvent(MessageModule.MessageReceived);
 			event.setMessage(element);
 			Chat chat = chatManager.process(element, observable);

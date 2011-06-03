@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
@@ -13,7 +14,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -236,7 +236,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 				onReceiveConfiguration((IQ) responseStanza, node, jid == null ? null : JID.jidInstance(jid), form);
 			} catch (Exception e) {
-				log.log(LogLevel.WARNING, "Processing subscription configuration error", e);
+				log.log(Level.WARNING, "Processing subscription configuration error", e);
 			}
 		}
 
@@ -493,8 +493,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
-	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
-			JaxmppException {
+	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
+			AsyncCallback callback) throws XMLException, JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -506,13 +506,26 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		subscribe.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(subscribe);
 
+		if (options != null) {
+			Element optionsElement = new DefaultElement("options");
+			optionsElement.setAttribute("jid", subscriberJID.toString());
+			optionsElement.setAttribute("node", nodeName);
+			optionsElement.addChild(options);
+			pubsub.addChild(optionsElement);
+		}
+
 		sessionObject.registerResponseHandler(iq, callback);
 		writer.write(iq);
 	}
 
+	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
+			SubscriptionAsyncCallback callback) throws XMLException, JaxmppException {
+		subscribe(pubSubJID, nodeName, subscriberJID, options, (AsyncCallback) callback);
+	}
+
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, SubscriptionAsyncCallback callback)
 			throws XMLException, JaxmppException {
-		subscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
+		subscribe(pubSubJID, nodeName, subscriberJID, null, (AsyncCallback) callback);
 	}
 
 	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,

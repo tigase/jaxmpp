@@ -8,13 +8,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.LoggerFactory;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -58,9 +58,10 @@ public class Test {
 		logger.addHandler(handler);
 		logger.setLevel(Level.ALL);
 
-		tigase.jaxmpp.core.client.logger.Logger l = LoggerFactory.getLogger(Test.class);
-		if (l.isLoggable(LogLevel.CONFIG))
-			l.config("Logger successfully initialized");
+		System.out.println(Test.class.getName());
+
+		if (logger.isLoggable(Level.CONFIG))
+			logger.config("Logger successfully initialized");
 
 		Jaxmpp jaxmpp = new Jaxmpp();
 		// for BOSH connector
@@ -129,6 +130,16 @@ public class Test {
 						}
 					}
 				});
+
+		jaxmpp.addListener(Connector.Error, new Listener<Connector.ConnectorEvent>() {
+
+			@Override
+			public void handleEvent(ConnectorEvent be) throws JaxmppException {
+				(new Exception()).printStackTrace();
+				System.out.println(be.getStreamError() + " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+				System.out.println(be.getStanza().getAsString());
+			}
+		});
 
 		final long t1 = System.currentTimeMillis();
 		jaxmpp.login(true);

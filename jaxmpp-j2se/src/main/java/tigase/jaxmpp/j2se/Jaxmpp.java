@@ -1,5 +1,7 @@
 package tigase.jaxmpp.j2se;
 
+import java.util.logging.Level;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
@@ -8,8 +10,6 @@ import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.logger.LogLevel;
-import tigase.jaxmpp.core.client.logger.LoggerSpiFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -32,12 +32,6 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
-		this(new DefaultLoggerSpi());
-	}
-
-	public Jaxmpp(LoggerSpiFactory defaultLoggerSpi) {
-		super(defaultLoggerSpi);
-
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
@@ -55,7 +49,8 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (XMLException e) {
 			throw new JaxmppException(e);
 		}
-		if ((Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE)) {
+		Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
+		if (sync != null && sync) {
 			synchronized (Jaxmpp.this) {
 				// Jaxmpp.this.wait();
 			}
@@ -121,12 +116,12 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
-		log.log(LogLevel.FINE, "Catching exception", e);
+		log.log(Level.FINE, "Catching exception", e);
 		sessionObject.setProperty(EXCEPTION_KEY, e);
 		try {
 			connector.stop();
 		} catch (Exception e1) {
-			log.log(LogLevel.FINE, "Disconnecting error", e1);
+			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 		synchronized (Jaxmpp.this) {
 			// (new Exception("DEBUG")).printStackTrace();

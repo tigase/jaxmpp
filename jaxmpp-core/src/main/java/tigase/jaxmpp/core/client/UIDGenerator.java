@@ -86,12 +86,6 @@ public abstract class UIDGenerator {
 
 	private final static UIDGenerator generator = new UIDGenerator2();
 
-	public static void main(String[] args) {
-		for (int i = 0; i < 100000; i++) {
-			System.out.println(next());
-		}
-	}
-
 	public static String next() {
 		return generator.nextUID();
 	}
