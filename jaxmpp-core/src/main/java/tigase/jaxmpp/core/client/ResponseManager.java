@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class ResponseManager {
@@ -17,65 +19,33 @@ public class ResponseManager {
 	// TODO add timeout handling
 
 	private static final class Entry {
+
 		private final AsyncCallback callback;
+
+		private final JID jid;
 
 		private final long timestamp;
 
-		public Entry(long timestamp, AsyncCallback callback) {
+		public Entry(JID jid, long timestamp, AsyncCallback callback) {
 			super();
+			this.jid = jid;
 			this.timestamp = timestamp;
 			this.callback = callback;
 		}
 
 	}
 
-	public static final class Key {
+	private final Map<String, Entry> handlers = new HashMap<String, Entry>();
 
-		final String $toString;
+	private final Logger log = Logger.getLogger(this.getClass().getName());;
 
-		final String id;
-
-		final BareJID jid;
-
-		public Key(String id, BareJID jid) {
-			super();
-			if (id == null)
-				throw new RuntimeException("ID can't be null");
-			this.id = id;
-			this.jid = jid;
-			this.$toString = ("k:" + (id == null ? "" : id) + ":" + (jid == null ? "" : jid)).intern();
-		}
-
-		@Override
-		public boolean equals(Object arg0) {
-			if (arg0 == this)
-				return true;
-			if (!(arg0 instanceof Key))
-				return false;
-
-			return $toString.equals(((Key) arg0).$toString);
-		}
-
-		@Override
-		public int hashCode() {
-			return id.hashCode();
-		}
-
-		@Override
-		public String toString() {
-			return $toString;
-		}
-	}
-
-	private final Map<Key, Entry> handlers = new HashMap<Key, Entry>();
-
-	private long timeout = 1000 * 60;;
+	private long timeout = 1000 * 60;
 
 	public void checkTimeouts() throws JaxmppException {
 		long now = (new Date()).getTime();
-		Iterator<java.util.Map.Entry<Key, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
+		Iterator<java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
 		while (it.hasNext()) {
-			java.util.Map.Entry<Key, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
+			java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
 			if (e.getValue().timestamp + timeout < now) {
 				it.remove();
 				try {
@@ -88,12 +58,18 @@ public class ResponseManager {
 
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException {
-		String x = element.getAttribute("from");
-		String i = element.getAttribute("id");
-		if (i == null)
+		final String id = element.getAttribute("id");
+		if (id == null)
 			return null;
-		Key key = new Key(i, x == null ? null : BareJID.bareJIDInstance(x));
-		final Entry entry = this.handlers.get(key);
+		final Entry entry = this.handlers.get(id);
+		if (entry == null)
+			return null;
+
+		if (!verify(element, entry, sessionObject))
+			return null;
+
+		this.handlers.remove(id);
+
 		final Stanza stanza = element instanceof Stanza ? (Stanza) element : Stanza.create(element);
 		if (entry != null) {
 			AbstractStanzaHandler r = new AbstractStanzaHandler(stanza, writer, sessionObject) {
@@ -130,17 +106,33 @@ public class ResponseManager {
 
 	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
 		String x = stanza.getAttribute("to");
-		String i = stanza.getAttribute("id");
-		if (i == null) {
-			i = UIDGenerator.next();
-			stanza.setAttribute("id", i);
+		String id = stanza.getAttribute("id");
+		if (id == null) {
+			id = UIDGenerator.next();
+			stanza.setAttribute("id", id);
 		}
-		Key key = new Key(i == null ? null : i, x == null ? null : BareJID.bareJIDInstance(x));
 
-		Entry entry = new Entry((new Date()).getTime(), callback);
+		Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(), callback);
 
-		this.handlers.put(key, entry);
+		this.handlers.put(id, entry);
 
-		return i;
+		return id;
+	}
+
+	private boolean verify(final Element response, final Entry entry, final SessionObject sessionObject) throws XMLException {
+		String x = response.getAttribute("from");
+		final JID jid = x == null ? null : JID.jidInstance(x);
+
+		if (jid != null && entry.jid != null && jid.getBareJid().equals(entry.jid.getBareJid())) {
+			return true;
+		} else if (entry.jid == null && jid == null) {
+			return true;
+		} else {
+			final JID userJID = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+			if (entry.jid == null && userJID != null && jid.getBareJid().equals(userJID.getBareJid())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

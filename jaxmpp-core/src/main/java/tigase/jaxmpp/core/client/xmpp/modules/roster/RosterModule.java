@@ -124,7 +124,6 @@ public class RosterModule extends AbstractIQModule {
 		fill(item, name, Subscription.none, groups, false);
 
 		IQ iq = IQ.create();
-		iq.setTo(getRosterRequestsReceiver());
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
@@ -170,13 +169,6 @@ public class RosterModule extends AbstractIQModule {
 	@Override
 	public String[] getFeatures() {
 		return null;
-	}
-
-	private JID getRosterRequestsReceiver() {
-		JID j = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		if (j == null)
-			return null;
-		return JID.jidInstance(j.getBareJid());
 	}
 
 	@Override
@@ -245,7 +237,7 @@ public class RosterModule extends AbstractIQModule {
 	@Override
 	protected void processSet(final IQ stanza) throws JaxmppException {
 		final JID bindedJid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		if (stanza.getFrom() != null && !stanza.getFrom().getDomain().equals(bindedJid.getDomain()))
+		if (stanza.getFrom() != null && !stanza.getFrom().getBareJid().equals(bindedJid.getBareJid()))
 			throw new XMPPException(ErrorCondition.not_allowed);
 
 		Element query = stanza.getQuery();
@@ -254,7 +246,6 @@ public class RosterModule extends AbstractIQModule {
 
 	protected void remove(BareJID jid) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
-		iq.setTo(getRosterRequestsReceiver());
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
 		Element item = query.addChild(new DefaultElement("item"));
@@ -290,7 +281,6 @@ public class RosterModule extends AbstractIQModule {
 
 	public void rosterRequest() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
-		iq.setTo(getRosterRequestsReceiver());
 		iq.setType(StanzaType.get);
 		iq.addChild(new DefaultElement("query", null, "jabber:iq:roster"));
 
@@ -319,7 +309,6 @@ public class RosterModule extends AbstractIQModule {
 
 	protected void update(RosterItem item) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
-		iq.setTo(getRosterRequestsReceiver());
 		iq.setType(StanzaType.set);
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
