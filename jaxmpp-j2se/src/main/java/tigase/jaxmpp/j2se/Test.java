@@ -50,7 +50,7 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 public class Test {
 
-	public static void main(String[] args) throws Exception {
+	public static void $main(String[] args) throws Exception {
 		Logger logger = Logger.getLogger("tigase.jaxmpp");
 		// create a ConsoleHandler
 		Handler handler = new ConsoleHandler();
@@ -291,5 +291,9 @@ public class Test {
 		final long t2 = System.currentTimeMillis();
 
 		System.out.println(". " + (t2 - t1) + " ms");
+	}
+
+	public static void main(String[] args) {
+		System.out.println((int) '\32');
 	}
 }

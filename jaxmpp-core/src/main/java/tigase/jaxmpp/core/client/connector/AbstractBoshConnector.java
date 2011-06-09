@@ -197,6 +197,14 @@ public abstract class AbstractBoshConnector implements Connector {
 		return false;
 	}
 
+	@Override
+	public void keepalive() throws JaxmppException {
+		if (getState() == State.connected) {
+			processSendData(prepareBody((Element) null));
+		} else
+			throw new JaxmppException("Not connected");
+	}
+
 	protected Long nextRid() {
 		Long i = sessionObject.getProperty(RID_KEY);
 		if (i == null) {
@@ -229,7 +237,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
 
 			if (getState() == State.connected && countActiveRequests() == 0) {
-				final Element body = prepareBody(null);
+				final Element body = prepareBody((Element) null);
 				processSendData(body);
 			}
 		} catch (XMLException e) {
@@ -247,6 +255,17 @@ public abstract class AbstractBoshConnector implements Connector {
 		setStage(State.disconnected);
 		terminateAllWorkers();
 		fireOnTerminate(responseCode, responseData, response, sessionObject);
+	}
+
+	protected Element prepareBody(byte[] payload) throws XMLException {
+		Element e = new DefaultElement("body");
+		e.setAttribute("rid", nextRid().toString());
+		e.setAttribute("sid", getSid());
+		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
+
+		if (payload != null)
+			e.setValue(new String(payload));
+		return e;
 	}
 
 	protected Element prepareBody(Element payload) throws XMLException {
@@ -329,6 +348,17 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
+	public void send(byte[] buffer) throws JaxmppException {
+		if (getState() == State.connected) {
+			if (buffer != null && buffer.length > 0) {
+				final Element body = prepareBody(buffer);
+				processSendData(body);
+			}
+		} else
+			throw new JaxmppException("Not connected");
+	}
+
+	@Override
 	public void send(final Element stanza) throws XMLException, JaxmppException {
 		if (getState() == State.connected) {
 			if (stanza != null) {
@@ -336,7 +366,7 @@ public abstract class AbstractBoshConnector implements Connector {
 				processSendData(body);
 			}
 		} else
-			throw new RuntimeException("Not connected");
+			throw new JaxmppException("Not connected");
 	}
 
 	@Override
@@ -374,9 +404,9 @@ public abstract class AbstractBoshConnector implements Connector {
 			throw new JaxmppException("BOSH service URL not defined!");
 
 		if (getState() == State.connected) {
-			processSendData(prepareBody(null));
+			processSendData(prepareBody((Element) null));
 
-			Element x = prepareBody(null);
+			Element x = prepareBody((Element) null);
 			x.setAttribute("cache", "get_all");
 			processSendData(x);
 

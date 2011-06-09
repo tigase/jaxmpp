@@ -267,6 +267,12 @@ public class SocketConnector implements Connector {
 		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
 	}
 
+	@Override
+	public void keepalive() throws JaxmppException {
+
+		send(new byte[] { 32 });
+	}
+
 	protected void onError(Element response, Throwable caught) throws JaxmppException {
 		if (response != null) {
 			Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
@@ -416,6 +422,16 @@ public class SocketConnector implements Connector {
 				if (log.isLoggable(Level.FINEST))
 					log.finest("Restarting XMPP Stream");
 				writer.write(sb.toString().getBytes());
+			} catch (IOException e) {
+				throw new JaxmppException(e);
+			}
+	}
+
+	@Override
+	public void send(byte[] buffer) throws JaxmppException {
+		if (writer != null)
+			try {
+				writer.write(buffer);
 			} catch (IOException e) {
 				throw new JaxmppException(e);
 			}

@@ -205,11 +205,20 @@ public interface Connector {
 
 	boolean isSecure();
 
+	/**
+	 * Whitespace ping.
+	 * 
+	 * @throws JaxmppException
+	 */
+	public void keepalive() throws JaxmppException;
+
 	public void removeAllListeners();
 
 	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener);
 
 	public void restartStream() throws XMLException, JaxmppException;
+
+	public void send(byte[] buffer) throws JaxmppException;
 
 	public void send(final Element stanza) throws XMLException, JaxmppException;
 

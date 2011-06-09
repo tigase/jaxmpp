@@ -177,6 +177,16 @@ public abstract class JaxmppCore {
 		return connector.isSecure();
 	}
 
+	/**
+	 * Whitespace ping.
+	 * 
+	 * @throws JaxmppException
+	 */
+	public void keepalive() throws JaxmppException {
+		if (sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null)
+			this.connector.keepalive();
+	}
+
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {

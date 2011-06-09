@@ -56,6 +56,11 @@ public class ConnectorWrapper implements Connector {
 	}
 
 	@Override
+	public void keepalive() throws JaxmppException {
+		connector.keepalive();
+	}
+
+	@Override
 	@Deprecated
 	public void removeAllListeners() {
 		connector.removeAllListeners();
@@ -69,6 +74,11 @@ public class ConnectorWrapper implements Connector {
 	@Override
 	public void restartStream() throws XMLException, JaxmppException {
 		connector.restartStream();
+	}
+
+	@Override
+	public void send(byte[] buffer) throws JaxmppException {
+		connector.send(buffer);
 	}
 
 	@Override
