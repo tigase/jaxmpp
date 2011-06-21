@@ -1,5 +1,7 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
+import java.util.logging.Level;
+
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -50,6 +52,9 @@ public class BoshConnector extends AbstractBoshConnector {
 		BoshConnectorEvent event = new BoshConnectorEvent(StanzaSending);
 		event.setBody(element);
 		observable.fireEvent(event);
+
+		if (log.isLoggable(Level.FINEST))
+			log.finest("Send: " + element.getAsString());
 
 		Scheduler.get().scheduleDeferred(worker);
 	}

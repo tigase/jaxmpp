@@ -282,6 +282,10 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected Element prepareRetartBody() throws XMLException {
 		Element e = new DefaultElement("body");
+		final JID from = sessionObject.getProperty(SessionObject.USER_JID);
+		if (from != null) {
+			e.setAttribute("from", from.toString());
+		}
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
 		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.SERVER_NAME));

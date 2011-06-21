@@ -412,25 +412,28 @@ public class SocketConnector implements Connector {
 	public void restartStream() throws XMLException, JaxmppException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<stream:stream ");
+
+		final JID from = sessionObject.getProperty(SessionObject.USER_JID);
+		if (from != null) {
+			sb.append("from='").append(from.toString()).append("' ");
+		}
+
 		sb.append("to='").append((String) sessionObject.getProperty(SessionObject.SERVER_NAME)).append("' ");
 		sb.append("xmlns='jabber:client' ");
 		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
 		sb.append("version='1.0'>");
 
-		if (writer != null)
-			try {
-				if (log.isLoggable(Level.FINEST))
-					log.finest("Restarting XMPP Stream");
-				writer.write(sb.toString().getBytes());
-			} catch (IOException e) {
-				throw new JaxmppException(e);
-			}
+		if (log.isLoggable(Level.FINEST))
+			log.finest("Restarting XMPP Stream");
+		send(sb.toString().getBytes());
 	}
 
 	@Override
 	public void send(byte[] buffer) throws JaxmppException {
 		if (writer != null)
 			try {
+				if (log.isLoggable(Level.FINEST))
+					log.finest("Send: " + new String(buffer));
 				writer.write(buffer);
 			} catch (IOException e) {
 				throw new JaxmppException(e);
@@ -443,7 +446,7 @@ public class SocketConnector implements Connector {
 			try {
 				String t = stanza.getAsString();
 				if (log.isLoggable(Level.FINEST))
-					log.finest("SEND: " + t);
+					log.finest("Send: " + t);
 				writer.write(t.getBytes());
 			} catch (IOException e) {
 				throw new JaxmppException(e);
@@ -511,7 +514,7 @@ public class SocketConnector implements Connector {
 			try {
 				log.fine("Start TLS");
 				DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
-				writer.write(e.getAsString().getBytes());
+				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);
 			}
@@ -540,14 +543,9 @@ public class SocketConnector implements Connector {
 	}
 
 	private void terminateStream() throws JaxmppException {
-		if (writer != null)
-			try {
-				String x = "</stream:stream>";
-				log.fine("Terminating XMPP Stream");
-				writer.write(x.getBytes());
-			} catch (IOException e) {
-				throw new JaxmppException(e);
-			}
+		String x = "</stream:stream>";
+		log.fine("Terminating XMPP Stream");
+		send(x.getBytes());
 	}
 
 	private void workerTerminated(final Worker worker) {

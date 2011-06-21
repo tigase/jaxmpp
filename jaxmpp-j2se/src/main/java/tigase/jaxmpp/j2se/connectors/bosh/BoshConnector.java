@@ -1,6 +1,7 @@
 package tigase.jaxmpp.j2se.connectors.bosh;
 
 import java.net.URL;
+import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -48,6 +49,9 @@ public class BoshConnector extends AbstractBoshConnector {
 		};
 
 		addToRequests(worker);
+
+		if (log.isLoggable(Level.FINEST))
+			log.finest("Send: " + element.getAsString());
 
 		(new Thread(worker)).start();
 	}
