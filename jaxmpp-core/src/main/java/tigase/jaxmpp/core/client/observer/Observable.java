@@ -61,12 +61,14 @@ public class Observable {
 	 *            the listener
 	 */
 	public void addListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
-		List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-		if (lst == null) {
-			lst = new ArrayList<Listener<? extends BaseEvent>>();
-			listeners.put(eventType, lst);
+		synchronized (this.listeners) {
+			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
+			if (lst == null) {
+				lst = new ArrayList<Listener<? extends BaseEvent>>();
+				listeners.put(eventType, lst);
+			}
+			lst.add(listener);
 		}
-		lst.add(listener);
 	}
 
 	/**
@@ -76,7 +78,9 @@ public class Observable {
 	 *            the listener
 	 */
 	public void addListener(Listener<? extends BaseEvent> listener) {
-		this.everythingListener.add(listener);
+		synchronized (this.everythingListener) {
+			this.everythingListener.add(listener);
+		}
 	}
 
 	/**
@@ -113,18 +117,18 @@ public class Observable {
 		try {
 			// if (log.isLoggable(Level.FINEST))
 			// log.finest("Fire event " + eventType);
-			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-			if (lst != null) {
-				event.setHandled(true);
-				synchronized (lst) {
+			synchronized (this.listeners) {
+				List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
+				if (lst != null) {
+					event.setHandled(true);
 					for (Listener<? extends BaseEvent> listener : lst) {
 						((Listener<BaseEvent>) listener).handleEvent(event);
 					}
 				}
 			}
-			if (!everythingListener.isEmpty()) {
-				event.setHandled(true);
-				synchronized (everythingListener) {
+			synchronized (everythingListener) {
+				if (!everythingListener.isEmpty()) {
+					event.setHandled(true);
 					for (Listener<? extends BaseEvent> listener : this.everythingListener) {
 						((Listener<BaseEvent>) listener).handleEvent(event);
 					}
@@ -146,8 +150,12 @@ public class Observable {
 	 * Removes all listeners.
 	 */
 	public void removeAllListeners() {
-		everythingListener.clear();
-		listeners.clear();
+		synchronized (this.everythingListener) {
+			everythingListener.clear();
+		}
+		synchronized (this.listeners) {
+			listeners.clear();
+		}
 	}
 
 	/**
@@ -159,11 +167,13 @@ public class Observable {
 	 *            listener
 	 */
 	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
-		List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-		if (lst != null) {
-			lst.remove(listener);
-			if (lst.isEmpty()) {
-				listeners.remove(eventType);
+		synchronized (this.listeners) {
+			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
+			if (lst != null) {
+				lst.remove(listener);
+				if (lst.isEmpty()) {
+					listeners.remove(eventType);
+				}
 			}
 		}
 	}
