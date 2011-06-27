@@ -1,5 +1,7 @@
 package tigase.jaxmpp.j2se;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
@@ -27,11 +29,26 @@ public class Jaxmpp extends JaxmppCore {
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
+	private final Timer timer = new Timer(true);
+
 	{
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
 
 	public Jaxmpp() {
+		TimerTask checkTimeouts = new TimerTask() {
+
+			@Override
+			public void run() {
+				try {
+					checkTimeouts();
+				} catch (JaxmppException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
+
 		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
@@ -40,6 +57,10 @@ public class Jaxmpp extends JaxmppCore {
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 
+	}
+
+	protected void checkTimeouts() throws JaxmppException {
+		sessionObject.checkHandlersTimeout();
 	}
 
 	@Override
