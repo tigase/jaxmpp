@@ -58,10 +58,10 @@ public class NonSaslAuthModule extends AbstractIQModule {
 		this.observable = new Observable(parent);
 	}
 
-	protected void fireAuthStart(IQ iq) {
+	protected void fireAuthStart(IQ iq) throws JaxmppException {
 		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthStart);
 		event.setRequest(iq);
-
+		this.observable.fireEvent(event);
 	}
 
 	@Override
