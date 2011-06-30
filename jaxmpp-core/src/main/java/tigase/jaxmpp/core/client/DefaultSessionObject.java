@@ -33,7 +33,7 @@ public class DefaultSessionObject implements SessionObject {
 
 	@Override
 	public void clear() {
-		log.fine("Clearing");
+		log.fine("Clearing properties!");
 		this.properties.clear();
 		roster.cler();
 		presence.clear();
@@ -47,9 +47,9 @@ public class DefaultSessionObject implements SessionObject {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
-		T t = (T) this.userProperties.get(key);
+		T t = (T) this.properties.get(key);
 		if (t == null)
-			t = (T) this.properties.get(key);
+			t = (T) this.userProperties.get(key);
 		return t;
 	}
 
