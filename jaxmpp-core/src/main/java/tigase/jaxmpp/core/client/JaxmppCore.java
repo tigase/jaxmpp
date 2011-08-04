@@ -235,8 +235,8 @@ public abstract class JaxmppCore {
 		observable.removeAllListeners();
 	}
 
-	public void removeListener(EventType eventType, Listener<JaxmppEvent> listener) {
-		observable.removeListener(eventType, listener);
+	public void removeListener(EventType eventType, Listener<? extends BaseEvent> connectorListener) {
+		observable.removeListener(eventType, connectorListener);
 	}
 
 	public abstract void send(Stanza stanza) throws XMLException, JaxmppException;

@@ -24,10 +24,10 @@ package tigase.jaxmpp.j2se.connectors.socket;
 
 //~--- non-JDK imports --------------------------------------------------------
 
-import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Stack;
@@ -71,7 +71,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 	// ~--- fields
 	// ---------------------------------------------------------------
 
-	private ArrayDeque<Element> all_roots = new ArrayDeque<Element>();
+	private LinkedList<Element> all_roots = new LinkedList<Element>();
 	private ElementFactory customFactory = null;
 	private Stack<Element> el_stack = new Stack<Element>();
 	private boolean error = false;
