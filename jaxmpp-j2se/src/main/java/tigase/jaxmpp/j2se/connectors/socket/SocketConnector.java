@@ -188,6 +188,11 @@ public class SocketConnector implements Connector {
 
 	private Socket socket;
 
+	/**
+	 * Socket timeout. 20 seconds.
+	 */
+	private int SOCKET_TIMEOUT = 1000 * 20;
+
 	private Worker worker;
 
 	private OutputStream writer;
@@ -341,6 +346,7 @@ public class SocketConnector implements Connector {
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
+			s1.setSoTimeout(SOCKET_TIMEOUT);
 			s1.setUseClientMode(true);
 			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
@@ -467,6 +473,9 @@ public class SocketConnector implements Connector {
 		if (s != state) {
 			ConnectorEvent e = new SocketConnectorEvent(StateChanged);
 			observable.fireEvent(e);
+			if (state == State.disconnected) {
+				fireOnTerminate(sessionObject);
+			}
 		}
 	}
 
@@ -494,6 +503,7 @@ public class SocketConnector implements Connector {
 
 			log.finest("Starting socket " + ((String) sessionObject.getProperty(SERVER_HOST)) + ":" + port);
 			socket = SocketFactory.getDefault().createSocket((String) sessionObject.getProperty(SERVER_HOST), port);
+			socket.setSoTimeout(SOCKET_TIMEOUT);
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
 			worker = new Worker(this);
