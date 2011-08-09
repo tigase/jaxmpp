@@ -154,6 +154,8 @@ public class SocketConnector implements Connector {
 
 	public static final String SERVER_PORT = "socket#ServerPort";
 
+	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
+
 	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
 		final Element sf = sessionObject.getStreamFeatures();
 		if (sf == null)

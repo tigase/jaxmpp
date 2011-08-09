@@ -136,13 +136,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
 		try {
+			final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
 			final boolean authAvailable = AuthModule.isAuthAvailable(sessionObject);
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
 
 			final boolean isAuthorized = sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
 			final boolean isConnectionSecure = connector.isSecure();
 
-			if (!isConnectionSecure && tlsAvailable) {
+			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
 				connector.startTLS();
 			} else if (!isAuthorized && authAvailable) {
 				authModule.login();
