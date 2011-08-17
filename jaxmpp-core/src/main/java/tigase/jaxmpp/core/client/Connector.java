@@ -1,5 +1,7 @@
 package tigase.jaxmpp.core.client;
 
+import javax.net.ssl.TrustManager;
+
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;

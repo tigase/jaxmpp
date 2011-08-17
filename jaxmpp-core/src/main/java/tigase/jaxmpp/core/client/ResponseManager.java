@@ -71,40 +71,39 @@ public class ResponseManager {
 		this.handlers.remove(id);
 
 		final Stanza stanza = element instanceof Stanza ? (Stanza) element : Stanza.create(element);
-		if (entry != null) {
-			AbstractStanzaHandler r = new AbstractStanzaHandler(stanza, writer, sessionObject) {
+		AbstractStanzaHandler r = new AbstractStanzaHandler(stanza, writer, sessionObject) {
 
-				@Override
-				protected void process() throws JaxmppException {
-					final String type = this.stanza.getAttribute("type");
+			@Override
+			protected void process() throws JaxmppException {
+				final String type = this.stanza.getAttribute("type");
 
-					if (type != null && type.equals("result")) {
-						entry.callback.onSuccess(this.stanza);
-					} else if (type != null && type.equals("error")) {
-						List<Element> es = this.stanza.getChildren("error");
-						final Element error;
-						if (es != null && es.size() > 0)
-							error = es.get(0);
-						else
-							error = null;
+				if (type != null && type.equals("result")) {
+					entry.callback.onSuccess(this.stanza);
+				} else if (type != null && type.equals("error")) {
+					List<Element> es = this.stanza.getChildren("error");
+					final Element error;
+					if (es != null && es.size() > 0)
+						error = es.get(0);
+					else
+						error = null;
 
-						ErrorCondition errorCondition = null;
-						if (error != null) {
-							List<Element> conds = error.getChildrenNS(XMPPException.XMLNS);
-							if (conds != null && conds.size() > 0) {
-								errorCondition = ErrorCondition.getByElementName(conds.get(0).getName());
-							}
+					ErrorCondition errorCondition = null;
+					if (error != null) {
+						List<Element> conds = error.getChildrenNS(XMPPException.XMLNS);
+						if (conds != null && conds.size() > 0) {
+							errorCondition = ErrorCondition.getByElementName(conds.get(0).getName());
 						}
-						entry.callback.onError(this.stanza, errorCondition);
 					}
+					entry.callback.onError(this.stanza, errorCondition);
 				}
-			};
-			return r;
-		}
-		return null;
+			}
+		};
+		return r;
 	}
 
 	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
+		if (stanza == null)
+			return null;
 		String x = stanza.getAttribute("to");
 		String id = stanza.getAttribute("id");
 		if (id == null) {
@@ -112,9 +111,10 @@ public class ResponseManager {
 			stanza.setAttribute("id", id);
 		}
 
-		Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(), callback);
-
-		this.handlers.put(id, entry);
+		if (callback != null) {
+			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(), callback);
+			this.handlers.put(id, entry);
+		}
 
 		return id;
 	}

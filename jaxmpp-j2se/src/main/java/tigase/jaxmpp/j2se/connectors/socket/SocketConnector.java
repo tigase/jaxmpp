@@ -125,11 +125,12 @@ public class SocketConnector implements Connector {
 							}
 					}
 				}
-				if (log.isLoggable(Level.FINEST))
-					log.finest(hashCode() + "Disconnecting: state=" + connector.getState() + "; buffer=" + r + "   " + this);
+				// if (log.isLoggable(Level.FINEST))
+				log.finest(hashCode() + "Disconnecting: state=" + connector.getState() + "; buffer=" + r + "   " + this);
 				if (!isInterrupted())
 					connector.onStreamTerminate();
 			} catch (Exception e) {
+				log.log(Level.WARNING, "Exception in worker", e);
 				try {
 					onErrorInThread(e);
 				} catch (JaxmppException e1) {
@@ -288,7 +289,7 @@ public class SocketConnector implements Connector {
 				return;
 			}
 
-			sessionObject.setProperty(CONNECTOR_STAGE_KEY, State.disconnected);
+			stop();
 		}
 		fireOnError(response, caught, sessionObject);
 	}
@@ -296,6 +297,7 @@ public class SocketConnector implements Connector {
 	protected void onErrorInThread(Exception e) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
+		stop();
 		fireOnError(null, e, sessionObject);
 	}
 
@@ -348,7 +350,7 @@ public class SocketConnector implements Connector {
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
-			s1.setSoTimeout(SOCKET_TIMEOUT);
+			// XXX s1.setSoTimeout(SOCKET_TIMEOUT);
 			s1.setUseClientMode(true);
 			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
@@ -377,7 +379,6 @@ public class SocketConnector implements Connector {
 			onError(null, e);
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
-			// TODO Auto-generated catch block
 			onError(null, e);
 		}
 	}
@@ -505,7 +506,7 @@ public class SocketConnector implements Connector {
 
 			log.finest("Starting socket " + ((String) sessionObject.getProperty(SERVER_HOST)) + ":" + port);
 			socket = SocketFactory.getDefault().createSocket((String) sessionObject.getProperty(SERVER_HOST), port);
-			socket.setSoTimeout(SOCKET_TIMEOUT);
+			// XXX socket.setSoTimeout(SOCKET_TIMEOUT);
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
 			worker = new Worker(this);
@@ -534,6 +535,8 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void stop() throws JaxmppException {
+		if (getState() == State.disconnected)
+			return;
 		setStage(State.disconnecting);
 		terminateStream();
 		terminateAllWorkers();
