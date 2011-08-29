@@ -10,31 +10,40 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.xmpp.modules.MessageModule;
-import tigase.jaxmpp.core.client.xmpp.modules.MessageModule.MessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class ChatManager {
 
+	private static long chatIds = 1;
+
 	private final ArrayList<Chat> chats = new ArrayList<Chat>();
+
+	private final Observable observable;
 
 	private final PacketWriter packetWriter;
 
 	private final SessionObject sessionObject;
 
-	public ChatManager(SessionObject sessionObject, PacketWriter packetWriter) {
+	public ChatManager(Observable observable, SessionObject sessionObject, PacketWriter packetWriter) {
 		this.sessionObject = sessionObject;
 		this.packetWriter = packetWriter;
+		this.observable = observable;
 	}
 
-	public void close(Chat chat) {
-		this.chats.remove(chat);
+	public void close(Chat chat) throws JaxmppException {
+		boolean x = this.chats.remove(chat);
+		if (x) {
+			MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatClosed);
+			event.setChat(chat);
+			observable.fireEvent(event);
+		}
 	}
 
-	public Chat createChat(JID jid, Observable observable) throws JaxmppException {
+	public Chat createChat(JID jid) throws JaxmppException {
 		final String threadId = UIDGenerator.next();
-		Chat chat = new Chat(packetWriter);
+		Chat chat = new Chat(++chatIds, packetWriter);
 		chat.setThreadId(threadId);
 		chat.setJid(jid);
 
@@ -89,7 +98,7 @@ public class ChatManager {
 		Chat chat = getChat(fromJid, threadId);
 
 		if (chat == null) {
-			chat = new Chat(packetWriter);
+			chat = new Chat(++chatIds, packetWriter);
 			chat.setJid(fromJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);

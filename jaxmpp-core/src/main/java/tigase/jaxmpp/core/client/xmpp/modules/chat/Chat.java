@@ -14,14 +14,21 @@ public class Chat {
 
 	private boolean closed = false;
 
+	private final long id;
+
 	private JID jid;
 
 	private String threadId;
 
 	private final PacketWriter writer;
 
-	public Chat(PacketWriter packetWriter) {
+	public Chat(long id, PacketWriter packetWriter) {
+		this.id = id;
 		this.writer = packetWriter;
+	}
+
+	public long getId() {
+		return id;
 	}
 
 	public JID getJid() {

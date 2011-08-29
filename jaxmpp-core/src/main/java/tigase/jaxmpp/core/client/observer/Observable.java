@@ -178,4 +178,18 @@ public class Observable {
 		}
 	}
 
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            listener
+	 */
+	public void removeListener(Listener<? extends BaseEvent> listener) {
+		synchronized (this.everythingListener) {
+			this.everythingListener.remove(listener);
+		}
+	}
+
 }

@@ -1,4 +1,4 @@
-package tigase.jaxmpp.core.client.xmpp.modules;
+package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
 
@@ -14,8 +14,7 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatManager;
+import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 public class MessageModule extends AbstractStanzaModule<Message> {
@@ -59,6 +58,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	}
 
+	public static final EventType ChatClosed = new EventType();
+
 	public static final EventType ChatCreated = new EventType();
 
 	public static final Criteria CRIT = ElementCriteria.name("message");
@@ -72,15 +73,19 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = new Observable(parentObservable);
-		this.chatManager = new ChatManager(sessionObject, packetWriter);
+		this.chatManager = new ChatManager(this.observable, sessionObject, packetWriter);
 	}
 
 	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
+	public void addListener(Listener<MessageEvent> listener) {
+		observable.addListener(listener);
+	}
+
 	public Chat createChat(JID jid) throws JaxmppException {
-		return this.chatManager.createChat(jid, observable);
+		return this.chatManager.createChat(jid);
 	}
 
 	public ChatManager getChatManager() {
@@ -114,6 +119,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public void removeListener(EventType eventType, Listener<MessageEvent> listener) {
 		observable.removeListener(eventType, listener);
+	}
+
+	public void removeListener(Listener<MessageEvent> listener) {
+		observable.removeListener(listener);
 	}
 
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
