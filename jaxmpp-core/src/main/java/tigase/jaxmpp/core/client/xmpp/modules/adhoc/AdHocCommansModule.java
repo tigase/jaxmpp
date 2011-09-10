@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -28,8 +29,46 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.DiscoItemEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.Item;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class AdHocCommansModule extends AbstractIQModule {
+
+	public static abstract class AdHocCommansAsyncCallback implements AsyncCallback {
+
+		private Element command;
+
+		private IQ response;
+
+		protected Element getCommand() {
+			return command;
+		}
+
+		protected IQ getResponse() {
+			return response;
+		}
+
+		protected abstract void onResponseReceived(String sessionid, String node, State status, JabberDataElement data)
+				throws JaxmppException;
+
+		@Override
+		public void onSuccess(final Stanza responseStanza) throws JaxmppException {
+			this.response = (IQ) responseStanza;
+			this.command = responseStanza.getChildrenNS("command", "http://jabber.org/protocol/commands");
+
+			if (this.command != null) {
+				String sessionid = this.command.getAttribute("sessionid");
+				String node = this.command.getAttribute("node");
+				State status = this.command.getAttribute("status") == null ? null
+						: State.valueOf(this.command.getAttribute("status"));
+
+				JabberDataElement data = new JabberDataElement(this.command.getChildrenNS("x", "jabber:x:data"));
+
+				onResponseReceived(sessionid, node, status, data);
+			}
+
+		}
+	}
 
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("command", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/commands" }));
@@ -75,6 +114,23 @@ public class AdHocCommansModule extends AbstractIQModule {
 				}
 			}
 		});
+	}
+
+	public void execute(JID toJID, String node, Action action, JabberDataElement data, AsyncCallback asyncCallback)
+			throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.set);
+		iq.setTo(toJID);
+
+		Element command = new DefaultElement("command", null, "http://jabber.org/protocol/commands");
+		command.setAttribute("node", node);
+		if (action != null)
+			command.setAttribute("action", action.name());
+
+		iq.addChild(command);
+
+		sessionObject.registerResponseHandler(iq, asyncCallback);
+		writer.write(iq);
 	}
 
 	@Override

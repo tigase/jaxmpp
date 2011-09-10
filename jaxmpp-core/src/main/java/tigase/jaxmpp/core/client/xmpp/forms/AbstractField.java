@@ -9,7 +9,8 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 
 	AbstractField(String elementType, Element element) throws XMLException {
 		super(element);
-		setAttribute("type", elementType);
+		if (elementType != null)
+			setAttribute("type", elementType);
 	}
 
 	@Override
