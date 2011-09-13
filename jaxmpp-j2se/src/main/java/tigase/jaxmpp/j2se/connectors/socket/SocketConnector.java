@@ -474,6 +474,7 @@ public class SocketConnector implements Connector {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
+			log.fine("Connector state changed: " + s + "->" + state);
 			ConnectorEvent e = new SocketConnectorEvent(StateChanged);
 			observable.fireEvent(e);
 			if (state == State.disconnected) {
@@ -546,12 +547,14 @@ public class SocketConnector implements Connector {
 		log.finest("Terminating all workers");
 		setStage(State.disconnected);
 		try {
-			socket.close();
+			if (socket != null)
+				socket.close();
 		} catch (IOException e) {
 			log.log(Level.FINEST, "Problem with closing socket", e);
 		}
 		try {
-			worker.interrupt();
+			if (worker != null)
+				worker.interrupt();
 		} catch (Exception e) {
 			log.log(Level.FINEST, "Problem with interrupting w2", e);
 		}
@@ -564,6 +567,10 @@ public class SocketConnector implements Connector {
 	}
 
 	private void workerTerminated(final Worker worker) {
+		try {
+			setStage(State.disconnected);
+		} catch (JaxmppException e) {
+		}
 		log.finest("Worker terminated");
 		try {
 			if (this.sessionObject.getProperty(RECONNECTING_KEY) == Boolean.TRUE) {
