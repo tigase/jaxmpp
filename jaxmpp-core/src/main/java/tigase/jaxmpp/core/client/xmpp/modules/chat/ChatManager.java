@@ -89,6 +89,14 @@ public class ChatManager {
 		return this.chats;
 	}
 
+	public boolean isChatOpenFor(final BareJID jid) {
+		for (Chat chat : this.chats) {
+			if (chat.getJid().getBareJid().equals(jid))
+				return true;
+		}
+		return false;
+	}
+
 	public Chat process(Message message, Observable observable) throws JaxmppException {
 		if (message.getType() != StanzaType.chat)
 			return null;
