@@ -7,11 +7,22 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 public class Presence extends Stanza {
 
 	public static enum Show {
-		away,
-		chat,
-		dnd,
-		online,
-		xa
+		away(3),
+		chat(5),
+		dnd(1),
+		online(4),
+		xa(2);
+
+		private final int weight;
+
+		private Show(int weight) {
+			this.weight = weight;
+		}
+
+		public int getWeight() {
+			return weight;
+		}
+
 	}
 
 	public static Presence create() throws XMLException {
