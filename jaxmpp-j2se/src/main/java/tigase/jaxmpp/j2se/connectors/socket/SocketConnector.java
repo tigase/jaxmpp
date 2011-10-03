@@ -11,6 +11,8 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -185,6 +187,8 @@ public class SocketConnector implements Connector {
 
 	protected Observable observable;
 
+	private TimerTask pingTask;
+
 	private Reader reader;
 
 	private SessionObject sessionObject;
@@ -192,9 +196,11 @@ public class SocketConnector implements Connector {
 	private Socket socket;
 
 	/**
-	 * Socket timeout. 20 seconds.
+	 * Socket timeout.
 	 */
-	private int SOCKET_TIMEOUT = 1000 * 20;
+	private int SOCKET_TIMEOUT = 1000 * 60 * 5;
+
+	private final Timer timer = new Timer(true);
 
 	private Worker worker;
 
@@ -267,7 +273,8 @@ public class SocketConnector implements Connector {
 	 */
 	@Override
 	public State getState() {
-		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		State st = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		return st == null ? State.disconnected : st;
 	}
 
 	@Override
@@ -277,7 +284,8 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void keepalive() throws JaxmppException {
-
+		if (sessionObject.getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
+			return;
 		send(new byte[] { 32 });
 	}
 
@@ -338,6 +346,7 @@ public class SocketConnector implements Connector {
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER_KEY);
 			final SSLSocketFactory factory;
 			if (trustManager == null) {
@@ -350,7 +359,7 @@ public class SocketConnector implements Connector {
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
-			// XXX s1.setSoTimeout(SOCKET_TIMEOUT);
+			s1.setSoTimeout(SOCKET_TIMEOUT);
 			s1.setUseClientMode(true);
 			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
@@ -380,6 +389,8 @@ public class SocketConnector implements Connector {
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
 			onError(null, e);
+		} finally {
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
 	}
 
@@ -502,12 +513,13 @@ public class SocketConnector implements Connector {
 		setStage(State.connecting);
 
 		try {
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 			Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
 			port = port == null ? 5222 : port;
 
 			log.finest("Starting socket " + ((String) sessionObject.getProperty(SERVER_HOST)) + ":" + port);
 			socket = SocketFactory.getDefault().createSocket((String) sessionObject.getProperty(SERVER_HOST), port);
-			// XXX socket.setSoTimeout(SOCKET_TIMEOUT);
+			socket.setSoTimeout(SOCKET_TIMEOUT);
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
 			worker = new Worker(this);
@@ -517,6 +529,25 @@ public class SocketConnector implements Connector {
 			restartStream();
 
 			setStage(State.connected);
+
+			this.pingTask = new TimerTask() {
+
+				@Override
+				public void run() {
+					try {
+						keepalive();
+					} catch (JaxmppException e) {
+						log.log(Level.SEVERE, "Can't ping!", e);
+					}
+				}
+			};
+			long delay = SOCKET_TIMEOUT - SOCKET_TIMEOUT / 6;
+
+			if (log.isLoggable(Level.CONFIG))
+				log.config("Whitespace ping period is setted to " + delay + "ms");
+
+			timer.schedule(pingTask, delay, delay);
+
 			fireOnConnected(sessionObject);
 		} catch (Exception e) {
 			throw new JaxmppException(e);
@@ -545,6 +576,10 @@ public class SocketConnector implements Connector {
 
 	private void terminateAllWorkers() throws JaxmppException {
 		log.finest("Terminating all workers");
+		if (this.pingTask != null) {
+			this.pingTask.cancel();
+			this.pingTask = null;
+		}
 		setStage(State.disconnected);
 		try {
 			if (socket != null)

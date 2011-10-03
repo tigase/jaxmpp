@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -238,14 +239,18 @@ public class SaslModule implements XmppModule {
 		auth.setAttribute("mechanism", mechanism.name());
 		auth.setValue(mechanism.evaluateChallenge(null, sessionObject));
 
+		sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+
 		writer.write(auth);
 	}
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		if ("success".equals(element.getName())) {
+			sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 			processSuccess(element);
 		} else if ("failure".equals(element.getName())) {
+			sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 			processFailure(element);
 		} else if ("challenge".equals(element.getName())) {
 			processChallenge(element);

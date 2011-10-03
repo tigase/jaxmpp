@@ -147,6 +147,8 @@ public interface Connector {
 
 	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
 
+	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
+
 	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
 
 	/**
