@@ -2,7 +2,9 @@ package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
@@ -42,6 +44,8 @@ public class RosterModule extends AbstractIQModule {
 
 		private static final long serialVersionUID = 1L;
 
+		private Set<String> changedGroups;
+
 		private RosterItem item;
 
 		RosterEvent(EventType type, RosterItem item) {
@@ -53,8 +57,16 @@ public class RosterModule extends AbstractIQModule {
 			this.item = item;
 		}
 
+		public Set<String> getChangedGroups() {
+			return changedGroups;
+		}
+
 		public RosterItem getItem() {
 			return item;
+		}
+
+		void setChangedGroups(Set<String> modifiedGroups) {
+			this.changedGroups = modifiedGroups;
 		}
 	}
 
@@ -77,13 +89,15 @@ public class RosterModule extends AbstractIQModule {
 		return result;
 	}
 
-	private final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription,
+	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription,
 			Collection<String> groups, boolean ask) {
 		rosterItem.setName(name);
 		rosterItem.setSubscription(subscription);
 		rosterItem.setAsk(ask);
-		rosterItem.getGroups().clear();
-		rosterItem.getGroups().addAll(groups);
+		if (groups != null) {
+			rosterItem.getGroups().clear();
+			rosterItem.getGroups().addAll(groups);
+		}
 		return rosterItem;
 	}
 
@@ -190,37 +204,45 @@ public class RosterModule extends AbstractIQModule {
 		RosterEvent event = null;
 		if (subscription == Subscription.remove && currentItem != null) {
 			// remove item
-			fill(currentItem, name, subscription, groups, ask);
+			HashSet<String> groupsOld = new HashSet<String>(sessionObject.getRoster().groups);
+			fill(currentItem, name, subscription, null, ask);
 			event = new RosterEvent(ItemRemoved, currentItem);
 			sessionObject.getRoster().removeItem(jid);
+			Set<String> modifiedGroups = sessionObject.getRoster().calculateModifiedGroups(groupsOld);
+			event.setChangedGroups(modifiedGroups);
 			log.fine("Roster item " + jid + " removed");
 		} else if (currentItem == null) {
 			// add new item
 			currentItem = new RosterItem(jid);
 			event = new RosterEvent(ItemAdded, currentItem);
 			fill(currentItem, name, subscription, groups, ask);
-			sessionObject.getRoster().addItem(currentItem);
+			Set<String> modifiedGroups = sessionObject.getRoster().addItem(currentItem);
+			event.setChangedGroups(modifiedGroups);
 			log.fine("Roster item " + jid + " added");
 		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
-			fill(currentItem, name, subscription, groups, ask);
+			fill(currentItem, name, subscription, null, ask);
 			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.askCancelled);
 			log.fine("Roster item " + jid + " ask cancelled");
 		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from
 				|| currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
-			fill(currentItem, name, subscription, groups, ask);
+			fill(currentItem, name, subscription, null, ask);
 			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.unsubscribed);
 			log.fine("Roster item " + jid + " unsubscribed");
 		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both
 				|| currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
-			fill(currentItem, name, subscription, groups, ask);
+			fill(currentItem, name, subscription, null, ask);
 			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.subscribed);
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
 			event = new RosterEvent(ItemUpdated, currentItem);
+			HashSet<String> groupsOld = new HashSet<String>(sessionObject.getRoster().groups);
 			fill(currentItem, name, subscription, groups, ask);
+			Set<String> modifiedGroups = sessionObject.getRoster().calculateModifiedGroups(groupsOld);
+			event.setChangedGroups(modifiedGroups);
+
 			log.fine("Roster item " + jid + " updated");
 		}
 

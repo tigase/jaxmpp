@@ -32,11 +32,11 @@ public class DefaultSessionObject implements SessionObject {
 	}
 
 	@Override
-	public void clear() {
+	public void clear() throws JaxmppException {
 		log.fine("Clearing properties!");
 		this.properties.clear();
 		roster.cler();
-		presence.clear();
+		presence.clear(true);
 	}
 
 	@Override

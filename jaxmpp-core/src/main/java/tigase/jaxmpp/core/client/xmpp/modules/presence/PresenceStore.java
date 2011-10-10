@@ -15,6 +15,8 @@ public class PresenceStore {
 
 	static interface Handler {
 
+		public void onOffline(Presence i) throws JaxmppException;
+
 		public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException;
 
 	}
@@ -27,9 +29,23 @@ public class PresenceStore {
 
 	private Map<BareJID, Map<String, Presence>> presencesMapByBareJid = new HashMap<BareJID, Map<String, Presence>>();
 
-	public void clear() {
-		bestPresence.clear();
+	public void clear() throws JaxmppException {
+		clear(true);
+	}
+
+	public void clear(boolean notify) throws JaxmppException {
 		presenceByJid.clear();
+
+		if (notify) {
+			Iterator<Presence> it = bestPresence.values().iterator();
+			while (it.hasNext()) {
+				Presence i = it.next();
+				handler.onOffline(i);
+				it.remove();
+			}
+		} else
+			bestPresence.clear();
+
 		presencesMapByBareJid.clear();
 	}
 

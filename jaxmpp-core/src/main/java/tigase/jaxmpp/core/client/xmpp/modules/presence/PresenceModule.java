@@ -110,6 +110,11 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		this.sessionObject.getPresence().setHandler(new Handler() {
 
 			@Override
+			public void onOffline(Presence i) throws JaxmppException {
+				contactOffline(i.getFrom());
+			}
+
+			@Override
 			public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
 				PresenceModule.this.setPresence(show, status, priority);
 			}
@@ -122,6 +127,14 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public void addListener(Listener<PresenceEvent> listener) {
 		observable.addListener(listener);
+	}
+
+	protected void contactOffline(final JID jid) throws JaxmppException {
+		PresenceEvent event = new PresenceEvent(ContactUnavailable);
+		event.setJid(jid);
+
+		observable.fireEvent(event);
+
 	}
 
 	/**

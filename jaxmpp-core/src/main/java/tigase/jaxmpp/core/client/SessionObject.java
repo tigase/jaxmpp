@@ -20,7 +20,7 @@ public interface SessionObject extends UserProperties {
 
 	public void checkHandlersTimeout() throws JaxmppException;
 
-	public void clear();
+	public void clear() throws JaxmppException;
 
 	public PresenceStore getPresence();
 
