@@ -107,4 +107,9 @@ public class ConnectorWrapper implements Connector {
 		connector.stop();
 	}
 
+	@Override
+	public void stop(boolean terminate) throws XMLException, JaxmppException {
+		connector.stop(terminate);
+	}
+
 }

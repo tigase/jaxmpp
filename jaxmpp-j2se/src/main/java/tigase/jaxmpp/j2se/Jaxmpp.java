@@ -65,6 +65,10 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void disconnect() throws JaxmppException {
+		disconnect(false);
+	}
+
+	public void disconnect(boolean b) throws JaxmppException {
 		try {
 			this.connector.stop();
 		} catch (XMLException e) {

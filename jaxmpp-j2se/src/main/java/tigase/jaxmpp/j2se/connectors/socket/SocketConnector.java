@@ -518,7 +518,7 @@ public class SocketConnector implements Connector {
 			port = port == null ? 5222 : port;
 
 			log.finest("Starting socket " + ((String) sessionObject.getProperty(SERVER_HOST)) + ":" + port);
-			socket = SocketFactory.getDefault().createSocket((String) sessionObject.getProperty(SERVER_HOST), port);
+			socket = new Socket((String) sessionObject.getProperty(SERVER_HOST), port);
 			socket.setSoTimeout(SOCKET_TIMEOUT);
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
@@ -567,10 +567,16 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void stop() throws JaxmppException {
+		stop(false);
+	}
+
+	@Override
+	public void stop(boolean terminate) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
 		setStage(State.disconnecting);
-		terminateStream();
+		if (!terminate)
+			terminateStream();
 		terminateAllWorkers();
 	}
 

@@ -230,4 +230,6 @@ public interface Connector {
 
 	public void stop() throws XMLException, JaxmppException;
 
+	public void stop(boolean terminate) throws XMLException, JaxmppException;
+
 }

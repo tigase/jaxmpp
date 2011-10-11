@@ -424,8 +424,15 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void stop() throws XMLException, JaxmppException {
+		stop(false);
+	}
+
+	@Override
+	public void stop(boolean terminate) throws XMLException, JaxmppException {
 		setStage(State.disconnecting);
-		if (getState() != State.disconnected) {
+		if (terminate)
+			terminateAllWorkers();
+		else if (getState() != State.disconnected) {
 			processSendData(prepareTerminateBody(null));
 		}
 	}
