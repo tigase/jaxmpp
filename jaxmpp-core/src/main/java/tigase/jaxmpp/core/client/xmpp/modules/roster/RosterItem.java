@@ -65,6 +65,10 @@ public class RosterItem {
 		return groups;
 	}
 
+	public int getId() {
+		return hashCode();
+	}
+
 	public BareJID getJid() {
 		return jid;
 	}
