@@ -66,14 +66,18 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType MessageReceived = new EventType();
 
-	private final ChatManager chatManager;
+	private final AbstractChatManager chatManager;
 
 	private final Observable observable;
 
 	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = new Observable(parentObservable);
-		this.chatManager = new ChatManager(this.observable, sessionObject, packetWriter);
+		this.chatManager = ChatManagerFactory.createChatManager();
+		this.chatManager.setObservable(this.observable);
+		this.chatManager.setPacketWriter(packetWriter);
+		this.chatManager.setSessionObject(sessionObject);
+		this.chatManager.initialize();
 	}
 
 	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
@@ -88,7 +92,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		return this.chatManager.createChat(jid);
 	}
 
-	public ChatManager getChatManager() {
+	public AbstractChatManager getChatManager() {
 		return chatManager;
 	}
 

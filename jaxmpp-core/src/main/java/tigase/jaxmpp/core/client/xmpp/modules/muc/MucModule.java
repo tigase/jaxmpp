@@ -19,8 +19,8 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.AbstractChatManager;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatManager;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
@@ -117,7 +117,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final EventType YouJoined = new EventType();
 
-	private ChatManager chatManager;
+	private AbstractChatManager chatManager;
 
 	private final Criteria crit;
 
@@ -196,7 +196,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		fireMucEvent(event, element, nickname, room, occupant);
 	}
 
-	public ChatManager getChatManager() {
+	public AbstractChatManager getChatManager() {
 		return chatManager;
 	}
 
@@ -389,7 +389,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		observable.removeListener(eventType, listener);
 	}
 
-	public void setChatManager(ChatManager chatManager) {
+	public void setChatManager(AbstractChatManager chatManager) {
 		this.chatManager = chatManager;
 	}
 

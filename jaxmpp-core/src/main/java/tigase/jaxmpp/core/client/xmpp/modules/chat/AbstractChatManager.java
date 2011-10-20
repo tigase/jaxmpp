@@ -14,38 +14,32 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class ChatManager {
+public abstract class AbstractChatManager {
 
-	private static long chatIds = 1;
+	protected final ArrayList<Chat> chats = new ArrayList<Chat>();
 
-	private final ArrayList<Chat> chats = new ArrayList<Chat>();
+	protected Observable observable;
 
-	private final Observable observable;
+	protected PacketWriter packetWriter;
 
-	private final PacketWriter packetWriter;
+	protected SessionObject sessionObject;
 
-	private final SessionObject sessionObject;
-
-	public ChatManager(Observable observable, SessionObject sessionObject, PacketWriter packetWriter) {
-		this.sessionObject = sessionObject;
-		this.packetWriter = packetWriter;
-		this.observable = observable;
+	protected AbstractChatManager() {
 	}
 
-	public void close(Chat chat) throws JaxmppException {
+	public boolean close(Chat chat) throws JaxmppException {
 		boolean x = this.chats.remove(chat);
 		if (x) {
 			MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatClosed);
 			event.setChat(chat);
 			observable.fireEvent(event);
 		}
+		return x;
 	}
 
 	public Chat createChat(JID jid) throws JaxmppException {
 		final String threadId = UIDGenerator.next();
-		Chat chat = new Chat(++chatIds, packetWriter);
-		chat.setThreadId(threadId);
-		chat.setJid(jid);
+		Chat chat = createChatInstance(jid, threadId);
 
 		this.chats.add(chat);
 
@@ -56,6 +50,8 @@ public class ChatManager {
 
 		return chat;
 	}
+
+	protected abstract Chat createChatInstance(final JID fromJid, final String threadId);
 
 	protected Chat getChat(JID jid, String threadId) {
 		Chat chat = null;
@@ -89,6 +85,21 @@ public class ChatManager {
 		return this.chats;
 	}
 
+	Observable getObservable() {
+		return observable;
+	}
+
+	PacketWriter getPacketWriter() {
+		return packetWriter;
+	}
+
+	SessionObject getSessionObject() {
+		return sessionObject;
+	}
+
+	protected void initialize() {
+	}
+
 	public boolean isChatOpenFor(final BareJID jid) {
 		for (Chat chat : this.chats) {
 			if (chat.getJid().getBareJid().equals(jid))
@@ -106,7 +117,7 @@ public class ChatManager {
 		Chat chat = getChat(fromJid, threadId);
 
 		if (chat == null) {
-			chat = new Chat(++chatIds, packetWriter);
+			chat = createChatInstance(fromJid, threadId);
 			chat.setJid(fromJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);
@@ -115,9 +126,39 @@ public class ChatManager {
 			event.setMessage(message);
 
 			observable.fireEvent(event.getType(), event);
+		} else {
+			update(chat, fromJid, threadId);
 		}
 
 		return chat;
+	}
+
+	void setObservable(Observable observable) {
+		this.observable = observable;
+	}
+
+	void setPacketWriter(PacketWriter packetWriter) {
+		this.packetWriter = packetWriter;
+	}
+
+	void setSessionObject(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
+
+	protected boolean update(final Chat chat, final JID fromJid, final String threadId) {
+		boolean changed = false;
+
+		if (!chat.getJid().equals(fromJid)) {
+			chat.setJid(fromJid);
+			changed = true;
+		}
+
+		if (chat.getThreadId() == null && threadId != null) {
+			chat.setThreadId(threadId);
+			changed = true;
+		}
+
+		return changed;
 	}
 
 }

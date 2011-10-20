@@ -53,11 +53,11 @@ public class Chat {
 		this.writer.write(msg);
 	}
 
-	void setJid(JID jid) {
+	public void setJid(JID jid) {
 		this.jid = jid;
 	}
 
-	void setThreadId(String threadId) {
+	public void setThreadId(String threadId) {
 		this.threadId = threadId;
 	}
 
