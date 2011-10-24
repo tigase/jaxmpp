@@ -35,7 +35,7 @@ public class DefaultSessionObject implements SessionObject {
 	public void clear() throws JaxmppException {
 		log.fine("Clearing properties!");
 		this.properties.clear();
-		roster.cler();
+		roster.clear();
 		presence.clear(true);
 	}
 

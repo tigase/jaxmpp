@@ -13,9 +13,11 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.XmppModulesManager.InitializingBean;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -31,7 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class RosterModule extends AbstractIQModule {
+public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 	public static class RosterEvent extends BaseEvent {
 
@@ -109,6 +111,8 @@ public class RosterModule extends AbstractIQModule {
 
 	private final Observable observable;
 
+	private final RosterCacheProvider versionProvider;
+
 	public RosterModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = new Observable(parentObservable);
@@ -121,6 +125,11 @@ public class RosterModule extends AbstractIQModule {
 			}
 
 			@Override
+			public void cleared() {
+				RosterModule.this.onRosterCleared();
+			}
+
+			@Override
 			public void remove(BareJID jid) throws XMLException, JaxmppException {
 				RosterModule.this.remove(jid);
 			}
@@ -130,6 +139,7 @@ public class RosterModule extends AbstractIQModule {
 				RosterModule.this.update(item);
 			}
 		});
+		this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
 	}
 
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
@@ -183,6 +193,42 @@ public class RosterModule extends AbstractIQModule {
 	@Override
 	public String[] getFeatures() {
 		return null;
+	}
+
+	public RosterCacheProvider getVersionProvider() {
+		return versionProvider;
+	}
+
+	@Override
+	public void init() throws JaxmppException {
+		loadFromCache();
+	}
+
+	private boolean isRosterVersioningAvailable() throws XMLException {
+		if (versionProvider == null)
+			return false;
+		Element features = sessionObject.getStreamFeatures();
+		if (features == null)
+			return false;
+		if (features.getChildrenNS("ver", "urn:xmpp:features:rosterver") != null)
+			return true;
+		return false;
+	}
+
+	private void loadFromCache() {
+		if (versionProvider != null) {
+			final RosterStore roster = sessionObject.getRoster();
+			Collection<RosterItem> items = versionProvider.loadCachedRoster();
+			if (items != null) {
+				for (RosterItem rosterItem : items) {
+					roster.addItem(rosterItem);
+				}
+			}
+		}
+	}
+
+	protected void onRosterCleared() {
+		loadFromCache();
 	}
 
 	@Override
@@ -251,8 +297,12 @@ public class RosterModule extends AbstractIQModule {
 
 	private void processRosterQuery(final Element query) throws JaxmppException {
 		List<Element> items = query.getChildren("item");
+		String ver = query.getAttribute("ver");
 		for (Element element : items) {
 			processRosterItem(element);
+		}
+		if (versionProvider != null && ver != null) {
+			versionProvider.updateReceivedVersion(ver);
 		}
 	}
 
@@ -304,7 +354,13 @@ public class RosterModule extends AbstractIQModule {
 	public void rosterRequest() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
-		iq.addChild(new DefaultElement("query", null, "jabber:iq:roster"));
+		DefaultElement query = new DefaultElement("query", null, "jabber:iq:roster");
+		if (isRosterVersioningAvailable()) {
+			String x = versionProvider.getCachedVersion();
+			if (x != null)
+				query.setAttribute("ver", x);
+		}
+		iq.addChild(query);
 
 		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
 
@@ -357,5 +413,4 @@ public class RosterModule extends AbstractIQModule {
 		});
 		writer.write(iq);
 	}
-
 }

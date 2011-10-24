@@ -21,6 +21,8 @@ public class RosterStore {
 		void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
 				JaxmppException;
 
+		void cleared();
+
 		void remove(BareJID jid) throws XMLException, JaxmppException;
 
 		void update(RosterItem item) throws XMLException, JaxmppException;
@@ -95,10 +97,15 @@ public class RosterStore {
 		return modifiedGroups;
 	}
 
-	public void cler() {
+	public void clear() {
 		synchronized (this.roster) {
 			roster.clear();
 		}
+		synchronized (this.groups) {
+			groups.clear();
+		}
+		if (this.handler != null)
+			handler.cleared();
 	}
 
 	public RosterItem get(BareJID jid) {
