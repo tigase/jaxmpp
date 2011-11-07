@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client.xmpp.stanzas;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
 
 public class Message extends Stanza {
 
@@ -17,7 +18,7 @@ public class Message extends Stanza {
 	}
 
 	public String getBody() throws XMLException {
-		return getChildElementValue("body");
+		return EscapeUtils.unescape(getChildElementValue("body"));
 	}
 
 	public String getSubject() throws XMLException {
@@ -34,7 +35,7 @@ public class Message extends Stanza {
 	}
 
 	public void setBody(String body) throws XMLException {
-		setChildElementValue("body", body);
+		setChildElementValue("body", EscapeUtils.escape(body));
 	}
 
 	public void setSubject(String subject) throws XMLException {
