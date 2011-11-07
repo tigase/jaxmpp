@@ -5,15 +5,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
+
 /**
  * Default implementation of XML Element object. This class should be used every
  * time when new XML Element is created.
  */
 public class DefaultElement implements Element {
-
-	private static final String[] decoded = { "&", "<", ">", "\"", "\'" };
-
-	private static final String[] encoded = { "&amp;", "&lt;", "&gt;", "&quot;", "&apos;" };
 
 	public final static Element create(final Element src) throws XMLException {
 		return create(src, -1);
@@ -30,24 +28,6 @@ public class DefaultElement implements Element {
 			}
 
 		return result;
-	}
-
-	protected static final String escape(String input) {
-		return translateAll(input, decoded, encoded);
-	}
-
-	private static final String translateAll(String input, String[] patterns, String[] replacements) {
-		String result = input;
-
-		for (int i = 0; i < patterns.length; i++) {
-			result = result.replace(patterns[i], replacements[i]);
-		}
-
-		return result;
-	}
-
-	protected static final String unescape(String input) {
-		return translateAll(input, encoded, decoded);
 	}
 
 	private Map<String, String> attributes;
@@ -100,7 +80,7 @@ public class DefaultElement implements Element {
 		if (xmlns != null && (parent == null || parent.getXMLNS() == null || !parent.getXMLNS().equals(xmlns))) {
 			builder.append(' ');
 			builder.append("xmlns=\"");
-			builder.append(escape(xmlns));
+			builder.append(EscapeUtils.escape(xmlns));
 			builder.append('"');
 		}
 
@@ -108,7 +88,7 @@ public class DefaultElement implements Element {
 			builder.append(' ');
 			builder.append(attr.getKey());
 			builder.append("=\"");
-			builder.append(escape(attr.getValue()));
+			builder.append(EscapeUtils.escape(attr.getValue()));
 			builder.append('"');
 		}
 
@@ -120,7 +100,7 @@ public class DefaultElement implements Element {
 			builder.append(element.getAsString());
 		}
 		if (value != null)
-			builder.append(escape(value));
+			builder.append(EscapeUtils.escape(value));
 		if (!(children.isEmpty() && value == null)) {
 			builder.append("</");
 			builder.append(name);
