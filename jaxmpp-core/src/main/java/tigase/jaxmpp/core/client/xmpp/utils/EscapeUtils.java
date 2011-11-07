@@ -2,7 +2,8 @@ package tigase.jaxmpp.core.client.xmpp.utils;
 
 public class EscapeUtils {
 
-	private static final String[][] ENTITIES = { { "&", "&amp;" }, { "<", "&lt;" }, { ">", "&gt;" }, { "\"", "&quot;" }, };
+	private static final String[][] ENTITIES = { { "&", "&amp;" }, { "<", "&lt;" }, { ">", "&gt;" }, { "\"", "&quot;" },
+			{ "'", "&apos;" }, };
 
 	public static String escape(String str) {
 		if (str == null)

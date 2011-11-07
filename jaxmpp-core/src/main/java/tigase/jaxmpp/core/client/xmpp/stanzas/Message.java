@@ -35,7 +35,7 @@ public class Message extends Stanza {
 	}
 
 	public void setBody(String body) throws XMLException {
-		setChildElementValue("body", EscapeUtils.escape(body));
+		setChildElementValue("body", body);
 	}
 
 	public void setSubject(String subject) throws XMLException {
