@@ -30,6 +30,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
+import tigase.jaxmpp.core.client.xmpp.modules.vcard.VCardModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class JaxmppCore {
@@ -217,6 +218,8 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new StreamFeaturesModule(observable, sessionObject, writer));
 		this.modulesManager.register(new SaslModule(authModule.getObservable(), sessionObject, writer));
 		this.modulesManager.register(new NonSaslAuthModule(authModule.getObservable(), sessionObject, writer));
+
+		this.modulesManager.register(new VCardModule(sessionObject, writer));
 
 		this.modulesManager.init();
 	}
