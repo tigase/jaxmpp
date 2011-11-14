@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.vcard;
 
 import java.io.Serializable;
+import java.util.List;
 
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -25,25 +26,43 @@ public class VCard implements Serializable {
 
 	}
 
+	private static String getChildValue(Element it, String string) throws XMLException {
+		List<Element> l = it.getChildren(string);
+		if (l == null || l.size() == 0)
+			return null;
+		return l.get(0).getValue();
+	}
+
+	private static boolean match(final Element it, final String elemName, final String... children) throws XMLException {
+		if (!elemName.equals(it.getName()))
+			return false;
+
+		for (String string : children) {
+			List<Element> l = it.getChildren(string);
+			if (l == null || l.size() == 0)
+				return false;
+		}
+
+		return true;
+	}
+
 	private String bday;
-
 	private String description;
-
 	private String fullName;
 	private String homeAddressCtry;
 	private String homeAddressLocality;
+
 	private String homeAddressPCode;
+
 	private String homeAddressRegion;
 
 	private String homeAddressStreet;
-
 	private String homeEmail;
-
 	private String homeTelFax;
 	private String homeTelMsg;
+
 	private String homeTelVoice;
 	private String jabberID;
-
 	private String nameFamily;
 	private String nameGiven;
 	private String nameMiddle;
@@ -51,9 +70,9 @@ public class VCard implements Serializable {
 	private String orgName;
 	private String orgUnit;
 	private String photoType;
+
 	private String photoVal;
 	private String role;
-
 	private String title;
 	private String url;
 	private String workAddressCtry;
@@ -61,10 +80,12 @@ public class VCard implements Serializable {
 	private String workAddressPCode;
 	private String workAddressRegion;
 	private String workAddressStreet;
+
 	private String workEmail;
 	private String workTelFax;
 
 	private String workTelMsg;
+
 	private String workTelVoice;
 
 	public String getBday() {
@@ -203,8 +224,51 @@ public class VCard implements Serializable {
 		if (!element.getName().equals("vCard") || !element.getXMLNS().equals("vcard-temp"))
 			throw new RuntimeException("Element isn't correct <vCard xmlns='vcard-temp'> vcard element");
 		for (final Element it : element.getChildren()) {
-			// TODO few more elements!!!
-			if ("FN".equals(it.getName())) {
+			if (match(it, "EMAIL", "WORK")) {
+				this.workEmail = getChildValue(it, "USERID");
+			} else if (match(it, "EMAIL", "HOME")) {
+				this.homeEmail = getChildValue(it, "USERID");
+			} else if (match(it, "ADR", "HOME")) {
+				for (Element e : it.getChildren()) {
+					if ("STREET".equals(e.getName())) {
+						this.homeAddressStreet = e.getValue();
+					} else if ("LOCALITY".equals(e.getName())) {
+						this.homeAddressLocality = e.getValue();
+					} else if ("REGION".equals(e.getName())) {
+						this.homeAddressRegion = e.getValue();
+					} else if ("PCODE".equals(e.getName())) {
+						this.homeAddressPCode = e.getValue();
+					} else if ("CTRY".equals(e.getName())) {
+						this.homeAddressCtry = e.getValue();
+					}
+				}
+			} else if (match(it, "ADR", "WORK")) {
+				for (Element e : it.getChildren()) {
+					if ("STREET".equals(e.getName())) {
+						this.workAddressStreet = e.getValue();
+					} else if ("LOCALITY".equals(e.getName())) {
+						this.workAddressLocality = e.getValue();
+					} else if ("REGION".equals(e.getName())) {
+						this.workAddressRegion = e.getValue();
+					} else if ("PCODE".equals(e.getName())) {
+						this.workAddressPCode = e.getValue();
+					} else if ("CTRY".equals(e.getName())) {
+						this.workAddressCtry = e.getValue();
+					}
+				}
+			} else if (match(it, "TEL", "WORK", "VOICE")) {
+				this.workTelVoice = getChildValue(it, "NUMBER");
+			} else if (match(it, "TEL", "WORK", "FAX")) {
+				this.workTelFax = getChildValue(it, "NUMBER");
+			} else if (match(it, "TEL", "WORK", "MSG")) {
+				this.workTelMsg = getChildValue(it, "NUMBER");
+			} else if (match(it, "TEL", "HOME", "VOICE")) {
+				this.homeTelVoice = getChildValue(it, "NUMBER");
+			} else if (match(it, "TEL", "HOME", "FAX")) {
+				this.homeTelFax = getChildValue(it, "NUMBER");
+			} else if (match(it, "TEL", "HOME", "MSG")) {
+				this.homeTelMsg = getChildValue(it, "NUMBER");
+			} else if ("FN".equals(it.getName())) {
 				this.fullName = it.getValue();
 			} else if ("N".equals(it.getName())) {
 				for (Element pit : it.getChildren()) {
