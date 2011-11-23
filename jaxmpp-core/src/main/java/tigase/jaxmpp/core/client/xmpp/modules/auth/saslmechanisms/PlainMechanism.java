@@ -23,7 +23,7 @@ public class PlainMechanism implements SaslMechanism {
 			JID userJID = sessionObject.getProperty(SessionObject.USER_JID);
 			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getPassword();
 
-			String base64 = Base64.encodeString(lreq);
+			String base64 = Base64.encode(lreq.getBytes());
 			return base64;
 		}
 		return null;

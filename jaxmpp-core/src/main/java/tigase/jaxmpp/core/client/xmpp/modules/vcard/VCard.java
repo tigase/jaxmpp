@@ -308,6 +308,8 @@ public class VCard implements Serializable {
 						this.photoType = pit.getValue();
 					} else if ("BINVAL".equals(pit.getName())) {
 						this.photoVal = pit.getValue();
+						if (this.photoVal != null)
+							this.photoVal = this.photoVal.replace("\n", "").trim();
 					}
 				}
 			}
