@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -16,7 +17,6 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.KeyManager;
@@ -34,6 +34,7 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -41,6 +42,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
@@ -50,6 +52,37 @@ import tigase.xml.SingletonFactory;
  * 
  */
 public class SocketConnector implements Connector {
+
+	public static interface DnsResolver {
+
+		List<Entry> resolve(String hostname);
+	}
+
+	public final static class Entry {
+
+		private final String hostname;
+
+		private final Integer port;
+
+		public Entry(String host, Integer port) {
+			this.hostname = host;
+			this.port = port;
+		}
+
+		public String getHostname() {
+			return hostname;
+		}
+
+		public Integer getPort() {
+			return port;
+		}
+
+		@Override
+		public String toString() {
+			return hostname + ":" + port;
+		}
+
+	}
 
 	public static class SocketConnectorEvent extends ConnectorEvent {
 
@@ -198,7 +231,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Socket timeout.
 	 */
-	private int SOCKET_TIMEOUT = 1000 * 60 * 5;
+	private int SOCKET_TIMEOUT = 1000 * 60;
 
 	private final Timer timer = new Timer(true);
 
@@ -261,6 +294,15 @@ public class SocketConnector implements Connector {
 	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
 		ConnectorEvent event = new SocketConnectorEvent(StreamTerminated);
 		this.observable.fireEvent(event.getType(), event);
+	}
+
+	private Entry getHostFromSessionObject() {
+		String serverHost = (String) sessionObject.getProperty(SERVER_HOST);
+		Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
+		if (serverHost == null)
+			return null;
+		return new Entry(serverHost, port == null ? 5222 : port);
+
 	}
 
 	@Override
@@ -497,9 +539,6 @@ public class SocketConnector implements Connector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		log.fine("Start connector.");
-		if (sessionObject.getProperty(SERVER_HOST) == null)
-			throw new JaxmppException("No Server Hostname specified");
-
 		if (sessionObject.getProperty(SessionObject.USER_JID) == null)
 			throw new JaxmppException("No user JID specified");
 
@@ -513,12 +552,26 @@ public class SocketConnector implements Connector {
 		setStage(State.connecting);
 
 		try {
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
-			Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
-			port = port == null ? 5222 : port;
+			Entry serverHost = getHostFromSessionObject();
+			if (serverHost == null) {
+				List<Entry> xx;
+				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
+				if (dnsResolver != null) {
+					xx = dnsResolver.resolve(((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+				} else {
+					xx = DNSResolver.resolve(((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+				}
 
-			log.finest("Starting socket " + ((String) sessionObject.getProperty(SERVER_HOST)) + ":" + port);
-			socket = new Socket((String) sessionObject.getProperty(SERVER_HOST), port);
+				if (xx.size() > 0) {
+					serverHost = xx.get(0);
+				}
+			}
+
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+
+			log.finest("Starting socket " + serverHost);
+			InetAddress x = InetAddress.getByName(serverHost.getHostname());
+			socket = new Socket(x, serverHost.getPort());
 			socket.setSoTimeout(SOCKET_TIMEOUT);
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
