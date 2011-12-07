@@ -334,8 +334,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			@Override
 			public void onSuccess(Stanza responseStanza) throws JaxmppException {
-				Element query = ((IQ) responseStanza).getQuery();
-				processRosterQuery(query);
 			}
 
 			@Override
