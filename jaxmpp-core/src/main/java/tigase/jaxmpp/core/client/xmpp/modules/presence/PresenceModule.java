@@ -235,7 +235,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		presence.setShow(show);
 		presence.setStatus(status);
 		presence.setPriority(priority);
-
+		if (sessionObject.getProperty(SessionObject.NICKNAME) != null) {
+			presence.setNickname((String) sessionObject.getProperty(SessionObject.NICKNAME));
+		}
 		if (fireBeforePresenceSend(presence))
 			return;
 

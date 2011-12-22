@@ -296,13 +296,15 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 	}
 
 	private void processRosterQuery(final Element query) throws JaxmppException {
-		List<Element> items = query.getChildren("item");
-		String ver = query.getAttribute("ver");
-		for (Element element : items) {
-			processRosterItem(element);
-		}
-		if (versionProvider != null && ver != null) {
-			versionProvider.updateReceivedVersion(ver);
+		if (query != null) {
+			List<Element> items = query.getChildren("item");
+			String ver = query.getAttribute("ver");
+			for (Element element : items) {
+				processRosterItem(element);
+			}
+			if (versionProvider != null && ver != null) {
+				versionProvider.updateReceivedVersion(ver);
+			}
 		}
 	}
 
