@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -18,6 +19,8 @@ public abstract class AbstractChatManager {
 
 	protected final ArrayList<Chat> chats = new ArrayList<Chat>();
 
+	protected ChatSelector chatSelector;
+
 	protected Observable observable;
 
 	protected PacketWriter packetWriter;
@@ -25,6 +28,8 @@ public abstract class AbstractChatManager {
 	protected SessionObject sessionObject;
 
 	protected AbstractChatManager() {
+		ChatSelector x = UniversalFactory.createInstance(ChatSelector.class.getName());
+		this.chatSelector = x == null ? new DefaultChatSelector() : x;
 	}
 
 	public boolean close(Chat chat) throws JaxmppException {
