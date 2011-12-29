@@ -188,7 +188,7 @@ public class SaslModule implements XmppModule {
 			if (mms != null)
 				for (Element element : mms) {
 					String n = element.getValue();
-					if (n != null && !n.isEmpty())
+					if (n != null && n.length() != 0)
 						result.add(n);
 				}
 		}
