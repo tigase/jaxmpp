@@ -205,14 +205,14 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (Exception e1) {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		event.setCaught(e);
 		observable.fireEvent(event);
 	}
 
 	@Override
 	protected void onResourceBinded(ResourceBindEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Connected);
+		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
 		observable.fireEvent(event);
 	}
 
@@ -231,14 +231,14 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		event.setCaught(be.getCaught());
 		observable.fireEvent(event);
 	}
 
 	@Override
 	protected void onStreamTerminated(ConnectorEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		event.setCaught(be.getCaught());
 		observable.fireEvent(event);
 	}
@@ -256,7 +256,7 @@ public class Jaxmpp extends JaxmppCore {
 					@Override
 					public void execute() {
 						try {
-							observable.fireEvent(BeforeSessionResoting, new JaxmppEvent(BeforeSessionResoting));
+							observable.fireEvent(BeforeSessionResoting, new JaxmppEvent(BeforeSessionResoting, sessionObject));
 							intLogin();
 						} catch (Exception e) {
 							e.printStackTrace();

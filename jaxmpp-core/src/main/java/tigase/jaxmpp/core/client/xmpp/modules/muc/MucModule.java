@@ -45,8 +45,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		private Room room;
 
-		public MucEvent(EventType type) {
-			super(type);
+		public MucEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public String getNickname() {
@@ -187,12 +187,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant)
 			throws JaxmppException {
-		MucEvent event = new MucEvent(NewRoomCreated);
+		MucEvent event = new MucEvent(NewRoomCreated, sessionObject);
 		fireMucEvent(event, element, nickname, room, occupant);
 	}
 
 	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
-		MucEvent event = new MucEvent(YouJoined);
+		MucEvent event = new MucEvent(YouJoined, sessionObject);
 		fireMucEvent(event, element, nickname, room, occupant);
 	}
 
@@ -268,7 +268,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
 		if (element.getType() == StanzaType.chat && chatManager != null) {
-			MessageEvent event = new MessageEvent(MessageModule.MessageReceived);
+			MessageEvent event = new MessageEvent(MessageModule.MessageReceived, sessionObject);
 			event.setMessage(element);
 			Chat chat = chatManager.process(element, observable);
 			if (chat != null) {
@@ -278,9 +278,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		} else {
 			MucEvent event;
 			if (element.getType() == StanzaType.error) {
-				event = new MucEvent(MessageError);
+				event = new MucEvent(MessageError, sessionObject);
 			} else {
-				event = new MucEvent(MucMessageReceived);
+				event = new MucEvent(MucMessageReceived, sessionObject);
 			}
 
 			event.setMessage(element);
@@ -301,13 +301,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (element.getType() == StanzaType.error && !room.isJoined() && nickname == null) {
 			room.setLeaved(true);
 			this.rooms.remove(room.getRoomJid());
-			MucEvent event = new MucEvent(RoomClosed);
+			MucEvent event = new MucEvent(RoomClosed, sessionObject);
 			event.setNickname(nickname);
 			event.setPresence(element);
 			event.setRoom(room);
 			observable.fireEvent(event);
 		} else if (element.getType() == StanzaType.error) {
-			MucEvent event = new MucEvent(PresenceError);
+			MucEvent event = new MucEvent(PresenceError, sessionObject);
 			event.setNickname(nickname);
 			event.setPresence(element);
 			event.setRoom(room);
@@ -348,11 +348,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			Occupant tmp = room.getTempOccupants().remove(nickname);
 			if (tmp != null) {
 				log.finer(element.getFrom() + " successfully changed nickname ");
-				event = new MucEvent(OccupantChangedNick);
+				event = new MucEvent(OccupantChangedNick, sessionObject);
 				event.setOldNickname(tmp.getNickname());
 				occupant = tmp;
 			} else {
-				event = new MucEvent(OccupantComes);
+				event = new MucEvent(OccupantComes, sessionObject);
 			}
 			occupant.setPresence(element);
 			room.add(occupant);
@@ -363,10 +363,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
 			occupant.setPresence(element);
 			room.remove(occupant);
-			event = new MucEvent(OccupantLeaved);
+			event = new MucEvent(OccupantLeaved, sessionObject);
 		} else {
 			occupant.setPresence(element);
-			event = new MucEvent(OccupantChangedPresence);
+			event = new MucEvent(OccupantChangedPresence, sessionObject);
 		}
 
 		fireMucEvent(event, element, nickname, room, occupant);

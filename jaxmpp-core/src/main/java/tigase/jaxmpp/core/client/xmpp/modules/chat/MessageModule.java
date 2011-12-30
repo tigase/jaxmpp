@@ -26,8 +26,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		private Message message;
 
-		public AbstractMessageEvent(EventType type) {
-			super(type);
+		public AbstractMessageEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Message getMessage() {
@@ -45,8 +45,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		private Chat chat;
 
-		public MessageEvent(EventType type) {
-			super(type);
+		public MessageEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Chat getChat() {
@@ -114,7 +114,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	@Override
 	public void process(Message element) throws JaxmppException {
-		MessageEvent event = new MessageEvent(MessageReceived);
+		MessageEvent event = new MessageEvent(MessageReceived, sessionObject);
 		event.setMessage(element);
 		Chat chat = chatManager.process(element, observable);
 		if (chat != null) {

@@ -50,13 +50,13 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 		private RosterItem item;
 
-		RosterEvent(EventType type, RosterItem item) {
-			this(type, item, null);
+		RosterEvent(EventType type, RosterItem item, ChangeAction action, SessionObject sessionObject) {
+			super(type, sessionObject);
+			this.item = item;
 		}
 
-		RosterEvent(EventType type, RosterItem item, ChangeAction action) {
-			super(type);
-			this.item = item;
+		RosterEvent(EventType type, RosterItem item, SessionObject sessionObject) {
+			this(type, item, null, sessionObject);
 		}
 
 		public Set<String> getChangedGroups() {
@@ -252,7 +252,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 			// remove item
 			HashSet<String> groupsOld = new HashSet<String>(sessionObject.getRoster().groups);
 			fill(currentItem, name, subscription, null, ask);
-			event = new RosterEvent(ItemRemoved, currentItem);
+			event = new RosterEvent(ItemRemoved, currentItem, sessionObject);
 			sessionObject.getRoster().removeItem(jid);
 			Set<String> modifiedGroups = sessionObject.getRoster().calculateModifiedGroups(groupsOld);
 			event.setChangedGroups(modifiedGroups);
@@ -260,7 +260,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		} else if (currentItem == null) {
 			// add new item
 			currentItem = new RosterItem(jid);
-			event = new RosterEvent(ItemAdded, currentItem);
+			event = new RosterEvent(ItemAdded, currentItem, sessionObject);
 			fill(currentItem, name, subscription, groups, ask);
 			Set<String> modifiedGroups = sessionObject.getRoster().addItem(currentItem);
 			event.setChangedGroups(modifiedGroups);
@@ -268,22 +268,22 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
 			fill(currentItem, name, subscription, null, ask);
-			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.askCancelled);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.askCancelled, sessionObject);
 			log.fine("Roster item " + jid + " ask cancelled");
 		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from
 				|| currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
 			fill(currentItem, name, subscription, null, ask);
-			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.unsubscribed);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.unsubscribed, sessionObject);
 			log.fine("Roster item " + jid + " unsubscribed");
 		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both
 				|| currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
 			fill(currentItem, name, subscription, null, ask);
-			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.subscribed);
+			event = new RosterEvent(ItemUpdated, currentItem, ChangeAction.subscribed, sessionObject);
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
-			event = new RosterEvent(ItemUpdated, currentItem);
+			event = new RosterEvent(ItemUpdated, currentItem, sessionObject);
 			HashSet<String> groupsOld = new HashSet<String>(sessionObject.getRoster().groups);
 			fill(currentItem, name, subscription, groups, ask);
 			Set<String> modifiedGroups = sessionObject.getRoster().calculateModifiedGroups(groupsOld);

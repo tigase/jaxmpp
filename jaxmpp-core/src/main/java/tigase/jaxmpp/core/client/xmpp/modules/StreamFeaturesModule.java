@@ -23,8 +23,8 @@ public class StreamFeaturesModule implements XmppModule {
 
 		private Element features;
 
-		public StreamFeaturesReceivedEvent(Element features) {
-			super(StreamFeaturesReceived);
+		public StreamFeaturesReceivedEvent(Element features, SessionObject sessionObject) {
+			super(StreamFeaturesReceived, sessionObject);
 			this.features = features;
 		}
 
@@ -75,7 +75,7 @@ public class StreamFeaturesModule implements XmppModule {
 	@Override
 	public void process(Element element) throws JaxmppException {
 		sessionObject.setStreamFeatures(element);
-		observable.fireEvent(StreamFeaturesReceived, new StreamFeaturesReceivedEvent(element));
+		observable.fireEvent(StreamFeaturesReceived, new StreamFeaturesReceivedEvent(element, sessionObject));
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {

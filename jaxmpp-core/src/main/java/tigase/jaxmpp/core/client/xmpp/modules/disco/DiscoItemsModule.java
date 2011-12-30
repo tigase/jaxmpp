@@ -37,8 +37,8 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 		private IQ requestStanza;
 
-		public DiscoItemEvent(EventType type) {
-			super(type);
+		public DiscoItemEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public ArrayList<Item> getItems() {
@@ -169,7 +169,7 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 		final String requestedNode = query.getAttribute("node");
 
-		DiscoItemEvent event = new DiscoItemEvent(ItemsRequested);
+		DiscoItemEvent event = new DiscoItemEvent(ItemsRequested, sessionObject);
 		event.setRequestStanza(element);
 		event.setNode(requestedNode);
 		observable.fireEvent(event);

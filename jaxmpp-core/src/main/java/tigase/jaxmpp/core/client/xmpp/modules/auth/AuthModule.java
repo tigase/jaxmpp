@@ -23,8 +23,8 @@ public class AuthModule implements XmppModule {
 
 		private static final long serialVersionUID = 1L;
 
-		public AuthEvent(EventType type) {
-			super(type);
+		public AuthEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 	}

@@ -82,8 +82,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		private JID pubSubJID;
 
-		public PubSubEvent(EventType type) {
-			super(type);
+		public PubSubEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Date getDelay() {
@@ -323,7 +323,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
 			Date delayTime) throws JaxmppException {
-		PubSubEvent event = new PubSubEvent(NotificationReceived);
+		PubSubEvent event = new PubSubEvent(NotificationReceived, sessionObject);
 		event.setMessage(message);
 		event.setPubSubJID(message.getFrom());
 		event.setNodeName(nodeName);

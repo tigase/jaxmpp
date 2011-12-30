@@ -72,8 +72,8 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 		private IQ requestStanza;
 
-		public DiscoInfoEvent(EventType type) {
-			super(type);
+		public DiscoInfoEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public String[] getFeatures() {
@@ -220,7 +220,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 		Element query = element.getChildrenNS("query", "http://jabber.org/protocol/disco#info");
 		final String requestedNode = query.getAttribute("node");
 
-		final DiscoInfoEvent event = new DiscoInfoEvent(InfoRequested);
+		final DiscoInfoEvent event = new DiscoInfoEvent(InfoRequested, sessionObject);
 		event.setIdentity(new Identity());
 		event.setRequestStanza(element);
 		event.setNode(requestedNode);

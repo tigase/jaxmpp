@@ -41,8 +41,8 @@ public abstract class JaxmppCore {
 
 		private Throwable caught;
 
-		public JaxmppEvent(EventType type) {
-			super(type);
+		public JaxmppEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Throwable getCaught() {

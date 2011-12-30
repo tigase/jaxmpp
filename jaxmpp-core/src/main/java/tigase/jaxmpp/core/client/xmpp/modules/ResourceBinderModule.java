@@ -32,8 +32,8 @@ public class ResourceBinderModule implements XmppModule {
 
 		private JID jid;
 
-		public ResourceBindEvent(EventType type) {
-			super(type);
+		public ResourceBindEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public ErrorCondition getError() {
@@ -91,7 +91,7 @@ public class ResourceBinderModule implements XmppModule {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
+				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
 				event.setError(error);
 				observable.fireEvent(ResourceBindError, event);
 			}
@@ -107,18 +107,18 @@ public class ResourceBinderModule implements XmppModule {
 				if (name != null) {
 					JID jid = JID.jidInstance(name);
 					sessionObject.setProperty(BINDED_RESOURCE_JID, jid);
-					ResourceBindEvent event = new ResourceBindEvent(ResourceBindSuccess);
+					ResourceBindEvent event = new ResourceBindEvent(ResourceBindSuccess, sessionObject);
 					event.setJid(jid);
 					observable.fireEvent(ResourceBindSuccess, event);
 				} else {
-					ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
+					ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
 					observable.fireEvent(ResourceBindError, event);
 				}
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError);
+				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
 				observable.fireEvent(ResourceBindError, event);
 			}
 		});

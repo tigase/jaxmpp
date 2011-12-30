@@ -35,8 +35,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		private String status;
 
-		public PresenceEvent(EventType type) {
-			super(type);
+		public PresenceEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public void cancel() {
@@ -130,7 +130,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	}
 
 	protected void contactOffline(final JID jid) throws JaxmppException {
-		PresenceEvent event = new PresenceEvent(ContactUnavailable);
+		PresenceEvent event = new PresenceEvent(ContactUnavailable, sessionObject);
 		event.setJid(jid);
 
 		observable.fireEvent(event);
@@ -144,7 +144,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	 * @throws JaxmppException
 	 */
 	protected boolean fireBeforePresenceSend(final Presence presence) throws JaxmppException {
-		PresenceEvent event = new PresenceEvent(BeforePresenceSend);
+		PresenceEvent event = new PresenceEvent(BeforePresenceSend, sessionObject);
 		event.setPresence(presence);
 
 		observable.fireEvent(BeforePresenceSend, event);
@@ -183,18 +183,18 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		if (type == StanzaType.subscribe) {
 			// subscribe
 			log.finer("Subscribe from " + fromJid);
-			event = new PresenceEvent(SubscribeRequest);
+			event = new PresenceEvent(SubscribeRequest, sessionObject);
 		} else if (!availableOld && availableNow) {
 			// sontact available
 			log.finer("Presence online from " + fromJid);
-			event = new PresenceEvent(ContactAvailable);
+			event = new PresenceEvent(ContactAvailable, sessionObject);
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
 			log.finer("Presence offline from " + fromJid);
-			event = new PresenceEvent(ContactUnavailable);
+			event = new PresenceEvent(ContactUnavailable, sessionObject);
 		} else {
 			log.finer("Presence change from " + fromJid);
-			event = new PresenceEvent(ContactChangedPresence);
+			event = new PresenceEvent(ContactChangedPresence, sessionObject);
 		}
 		event.setPresence(presence);
 		event.setJid(fromJid);
@@ -210,7 +210,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {
-		PresenceEvent event = new PresenceEvent(BeforeInitialPresence);
+		PresenceEvent event = new PresenceEvent(BeforeInitialPresence, sessionObject);
 		observable.fireEvent(event);
 
 		if (event.isCancelled())

@@ -27,8 +27,8 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		private IQ request;
 
-		public NonSaslAuthEvent(EventType type) {
-			super(type);
+		public NonSaslAuthEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public ErrorCondition getError() {
@@ -59,7 +59,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthStart);
+		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthStart, sessionObject);
 		event.setRequest(iq);
 		this.observable.fireEvent(event);
 	}
@@ -116,7 +116,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	protected void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure with condition: " + error);
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed);
+		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
 		event.setError(error);
 		observable.fireEvent(AuthModule.AuthFailed, event);
 	}
@@ -124,13 +124,13 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	protected void onSuccess(Stanza responseStanza) throws JaxmppException {
 		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
-		observable.fireEvent(AuthModule.AuthSuccess, new NonSaslAuthEvent(AuthModule.AuthSuccess));
+		observable.fireEvent(AuthModule.AuthSuccess, new NonSaslAuthEvent(AuthModule.AuthSuccess, sessionObject));
 	}
 
 	protected void onTimeout() throws JaxmppException {
 		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure because of timeout");
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed);
+		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
 		observable.fireEvent(AuthModule.AuthFailed, event);
 	}
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 /**
@@ -95,16 +96,6 @@ public class Observable {
 	}
 
 	/**
-	 * Fires {@linkplain BaseEvent BaseEvent}.
-	 * 
-	 * @param eventType
-	 * @throws JaxmppException
-	 */
-	public void fireEvent(final EventType eventType) throws JaxmppException {
-		fireEvent(eventType, new BaseEvent(eventType));
-	}
-
-	/**
 	 * Fires an event.
 	 * 
 	 * @param eventType
@@ -144,6 +135,16 @@ public class Observable {
 		if (parent != null) {
 			parent.fireEvent(eventType, event);
 		}
+	}
+
+	/**
+	 * Fires {@linkplain BaseEvent BaseEvent}.
+	 * 
+	 * @param eventType
+	 * @throws JaxmppException
+	 */
+	public void fireEvent(final EventType eventType, final SessionObject sessionObject) throws JaxmppException {
+		fireEvent(eventType, new BaseEvent(eventType, sessionObject));
 	}
 
 	/**

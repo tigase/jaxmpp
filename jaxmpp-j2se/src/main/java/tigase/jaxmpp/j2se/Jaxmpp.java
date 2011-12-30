@@ -154,7 +154,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		observable.fireEvent(event);
 	}
 
@@ -164,7 +164,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(Connected);
+		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
 		observable.fireEvent(event);
 	}
 
@@ -181,7 +181,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		observable.fireEvent(event);
 	}
 
@@ -191,7 +191,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected);
+		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		observable.fireEvent(event);
 	}
 

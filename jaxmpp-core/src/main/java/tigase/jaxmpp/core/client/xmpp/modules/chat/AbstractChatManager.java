@@ -35,7 +35,7 @@ public abstract class AbstractChatManager {
 	public boolean close(Chat chat) throws JaxmppException {
 		boolean x = this.chats.remove(chat);
 		if (x) {
-			MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatClosed);
+			MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatClosed, sessionObject);
 			event.setChat(chat);
 			observable.fireEvent(event);
 		}
@@ -48,7 +48,7 @@ public abstract class AbstractChatManager {
 
 		this.chats.add(chat);
 
-		MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated);
+		MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated, sessionObject);
 		event.setChat(chat);
 
 		observable.fireEvent(event.getType(), event);
@@ -126,7 +126,7 @@ public abstract class AbstractChatManager {
 			chat.setJid(fromJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);
-			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated);
+			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated, sessionObject);
 			event.setChat(chat);
 			event.setMessage(message);
 

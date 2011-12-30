@@ -89,8 +89,8 @@ public interface Connector {
 
 		private Element streamErrorElement;
 
-		public ConnectorEvent(EventType type) {
-			super(type);
+		public ConnectorEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Throwable getCaught() {

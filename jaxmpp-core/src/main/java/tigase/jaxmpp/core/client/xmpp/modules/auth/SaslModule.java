@@ -85,8 +85,8 @@ public class SaslModule implements XmppModule {
 
 		private SaslError error;
 
-		public SaslEvent(EventType type) {
-			super(type);
+		public SaslEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public SaslError getError() {
@@ -224,7 +224,7 @@ public class SaslModule implements XmppModule {
 
 	public void login() throws XMLException, JaxmppException {
 		log.fine("Try login with SASL");
-		observable.fireEvent(AuthModule.AuthStart, new SaslEvent(AuthModule.AuthStart));
+		observable.fireEvent(AuthModule.AuthStart, new SaslEvent(AuthModule.AuthStart, sessionObject));
 
 		SaslMechanism saslM = guessSaslMechanism();
 		if (saslM == null) {
@@ -274,7 +274,7 @@ public class SaslModule implements XmppModule {
 			error = SaslError.valueOf(n);
 		}
 		log.fine("Failure with condition: " + error);
-		SaslEvent event = new SaslEvent(AuthModule.AuthFailed);
+		SaslEvent event = new SaslEvent(AuthModule.AuthFailed, sessionObject);
 		event.setError(error);
 		observable.fireEvent(AuthModule.AuthFailed, event);
 	}
@@ -282,7 +282,7 @@ public class SaslModule implements XmppModule {
 	protected void processSuccess(Element element) throws JaxmppException {
 		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
-		observable.fireEvent(AuthModule.AuthSuccess, new SaslEvent(AuthModule.AuthSuccess));
+		observable.fireEvent(AuthModule.AuthSuccess, new SaslEvent(AuthModule.AuthSuccess, sessionObject));
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {

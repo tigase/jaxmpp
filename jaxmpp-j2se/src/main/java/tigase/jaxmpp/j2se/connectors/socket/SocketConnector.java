@@ -88,8 +88,8 @@ public class SocketConnector implements Connector {
 
 		private static final long serialVersionUID = 1L;
 
-		public SocketConnectorEvent(EventType type) {
-			super(type);
+		public SocketConnectorEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 	}
@@ -262,12 +262,12 @@ public class SocketConnector implements Connector {
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
-		ConnectorEvent event = new SocketConnectorEvent(Connected);
+		ConnectorEvent event = new SocketConnectorEvent(Connected, sessionObject);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(Error);
+		ConnectorEvent event = new SocketConnectorEvent(Error, sessionObject);
 		event.setStanza(response);
 		event.setCaught(caught);
 
@@ -286,13 +286,13 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(StanzaReceived);
+		ConnectorEvent event = new SocketConnectorEvent(StanzaReceived, sessionObject);
 		event.setStanza(response);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(StreamTerminated);
+		ConnectorEvent event = new SocketConnectorEvent(StreamTerminated, sessionObject);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
@@ -409,7 +409,7 @@ public class SocketConnector implements Connector {
 				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 					log.info("TLS completed " + arg0);
 					sessionObject.setProperty(ENCRYPTED_KEY, Boolean.TRUE);
-					ConnectorEvent event = new SocketConnectorEvent(EncryptionEstablished);
+					ConnectorEvent event = new SocketConnectorEvent(EncryptionEstablished, sessionObject);
 					try {
 						observable.fireEvent(EncryptionEstablished, event);
 					} catch (JaxmppException e) {
@@ -528,7 +528,7 @@ public class SocketConnector implements Connector {
 		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
-			ConnectorEvent e = new SocketConnectorEvent(StateChanged);
+			ConnectorEvent e = new SocketConnectorEvent(StateChanged, sessionObject);
 			observable.fireEvent(e);
 			if (state == State.disconnected) {
 				fireOnTerminate(sessionObject);
@@ -669,7 +669,7 @@ public class SocketConnector implements Connector {
 		try {
 			if (this.sessionObject.getProperty(RECONNECTING_KEY) == Boolean.TRUE) {
 				this.sessionObject.setProperty(RECONNECTING_KEY, null);
-				SocketConnectorEvent event = new SocketConnectorEvent(HostChanged);
+				SocketConnectorEvent event = new SocketConnectorEvent(HostChanged, sessionObject);
 				observable.fireEvent(HostChanged, event);
 				log.finest("Restarting...");
 				start();

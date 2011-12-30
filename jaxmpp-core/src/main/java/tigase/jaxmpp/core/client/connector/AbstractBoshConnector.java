@@ -31,8 +31,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		private int responseCode;
 		private String responseData;
 
-		public BoshConnectorEvent(EventType type) {
-			super(type);
+		public BoshConnectorEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
 		}
 
 		public Element getBody() {
@@ -119,13 +119,13 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(Connected);
+		BoshConnectorEvent event = new BoshConnectorEvent(Connected, sessionObject);
 		this.observable.fireEvent(event.getType(), event);
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
 			SessionObject sessionObject) throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(Error);
+		BoshConnectorEvent event = new BoshConnectorEvent(Error, sessionObject);
 		event.setResponseCode(responseCode);
 		event.setResponseData(responseData);
 		if (response != null) {
@@ -144,7 +144,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			throws JaxmppException {
 		try {
 			{
-				BoshConnectorEvent event = new BoshConnectorEvent(BodyReceived);
+				BoshConnectorEvent event = new BoshConnectorEvent(BodyReceived, sessionObject);
 				event.setResponseData(responseData);
 				event.setBody(response);
 				event.setResponseCode(responseCode);
@@ -154,7 +154,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			if (response != null) {
 				List<Element> c = response.getChildren();
 				for (Element ch : c) {
-					BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived);
+					BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived, sessionObject);
 					event.setResponseData(responseData);
 					event.setBody(response);
 					event.setResponseCode(responseCode);
@@ -171,7 +171,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnTerminate(int responseCode, String responseData, Element response, SessionObject sessionObject)
 			throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated);
+		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated, sessionObject);
 		event.setResponseCode(responseCode);
 		event.setResponseData(responseData);
 		event.setBody(response);
@@ -389,7 +389,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
-			ConnectorEvent e = new ConnectorEvent(StateChanged);
+			ConnectorEvent e = new ConnectorEvent(StateChanged, sessionObject);
 			observable.fireEvent(e);
 		}
 	}

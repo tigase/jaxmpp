@@ -2,6 +2,8 @@ package tigase.jaxmpp.core.client.observer;
 
 import java.io.Serializable;
 
+import tigase.jaxmpp.core.client.SessionObject;
+
 /**
  * Base class for all events in Jaxmpp.
  * 
@@ -14,10 +16,17 @@ public class BaseEvent implements Serializable {
 
 	private boolean handled;
 
-	private EventType type;
+	private final SessionObject sessionObject;
 
-	public BaseEvent(EventType type) {
+	private final EventType type;
+
+	public BaseEvent(EventType type, SessionObject sessionObject) {
 		this.type = type;
+		this.sessionObject = sessionObject;
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 
 	/**
