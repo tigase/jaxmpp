@@ -12,7 +12,7 @@ class DefaultChatManager extends AbstractChatManager {
 
 	@Override
 	protected Chat createChatInstance(JID jid, String threadId) {
-		Chat chat = new Chat(++chatIds, packetWriter);
+		Chat chat = new Chat(++chatIds, packetWriter, sessionObject);
 		chat.setJid(jid);
 		chat.setThreadId(threadId);
 		return chat;

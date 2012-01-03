@@ -144,7 +144,8 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
 			JaxmppException {
-		RosterItem item = new RosterItem(jid);
+		RosterItem item = new RosterItem(jid, sessionObject);
+		item.setData(RosterItem.ID_KEY, createId(jid));
 		fill(item, name, Subscription.none, groups, false);
 
 		IQ iq = IQ.create();
@@ -177,6 +178,10 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 	public void addListener(Listener<? extends BaseEvent> listener) {
 		observable.addListener(listener);
+	}
+
+	private long createId(BareJID jid) {
+		return (sessionObject.getUserJid() + "::" + jid).hashCode();
 	}
 
 	private void fireEvent(RosterEvent event) throws JaxmppException {
@@ -218,7 +223,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 	private void loadFromCache() {
 		if (versionProvider != null) {
 			final RosterStore roster = sessionObject.getRoster();
-			Collection<RosterItem> items = versionProvider.loadCachedRoster();
+			Collection<RosterItem> items = versionProvider.loadCachedRoster(sessionObject);
 			if (items != null) {
 				for (RosterItem rosterItem : items) {
 					roster.addItem(rosterItem);
@@ -259,7 +264,8 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 			log.fine("Roster item " + jid + " removed");
 		} else if (currentItem == null) {
 			// add new item
-			currentItem = new RosterItem(jid);
+			currentItem = new RosterItem(jid, sessionObject);
+			currentItem.setData(RosterItem.ID_KEY, createId(jid));
 			event = new RosterEvent(ItemAdded, currentItem, sessionObject);
 			fill(currentItem, name, subscription, groups, ask);
 			Set<String> modifiedGroups = sessionObject.getRoster().addItem(currentItem);
@@ -303,7 +309,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 				processRosterItem(element);
 			}
 			if (versionProvider != null && ver != null) {
-				versionProvider.updateReceivedVersion(ver);
+				versionProvider.updateReceivedVersion(sessionObject, ver);
 			}
 		}
 	}
@@ -356,7 +362,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		iq.setType(StanzaType.get);
 		DefaultElement query = new DefaultElement("query", null, "jabber:iq:roster");
 		if (isRosterVersioningAvailable()) {
-			String x = versionProvider.getCachedVersion();
+			String x = versionProvider.getCachedVersion(sessionObject);
 			if (x != null)
 				query.setAttribute("ver", x);
 		}

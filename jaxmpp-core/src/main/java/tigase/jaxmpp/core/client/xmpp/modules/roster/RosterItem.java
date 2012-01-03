@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.DataHolder;
+import tigase.jaxmpp.core.client.SessionObject;
 
 public class RosterItem {
 
@@ -32,6 +33,8 @@ public class RosterItem {
 		}
 	}
 
+	public static final String ID_KEY = "id";
+
 	private boolean ask;
 
 	private final DataHolder dataHolder = new DataHolder();
@@ -42,10 +45,13 @@ public class RosterItem {
 
 	private String name;
 
+	private final SessionObject sessionObject;
+
 	private Subscription subscription;
 
-	public RosterItem(BareJID jid) {
+	public RosterItem(BareJID jid, SessionObject sessionObject) {
 		this.jid = jid;
+		this.sessionObject = sessionObject;
 	}
 
 	@Override
@@ -65,8 +71,9 @@ public class RosterItem {
 		return groups;
 	}
 
-	public int getId() {
-		return hashCode();
+	public long getId() {
+		Long x = getData(ID_KEY);
+		return x == null ? 0 : x;
 	}
 
 	public BareJID getJid() {
@@ -75,6 +82,10 @@ public class RosterItem {
 
 	public String getName() {
 		return name;
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 
 	public Subscription getSubscription() {

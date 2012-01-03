@@ -554,12 +554,14 @@ public class SocketConnector implements Connector {
 		try {
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost == null) {
+				String x = ((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain();
+				log.info("Resolving SRV recrd of domain '" + x + "'");
 				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
 				if (dnsResolver != null) {
-					xx = dnsResolver.resolve(((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+					xx = dnsResolver.resolve(x);
 				} else {
-					xx = DNSResolver.resolve(((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+					xx = DNSResolver.resolve(x);
 				}
 
 				if (xx.size() > 0) {

@@ -68,6 +68,11 @@ public class DefaultSessionObject implements SessionObject {
 		return this.streamFeatures;
 	}
 
+	@Override
+	public JID getUserJid() {
+		return this.getProperty(USER_JID);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getUserProperty(String key) {

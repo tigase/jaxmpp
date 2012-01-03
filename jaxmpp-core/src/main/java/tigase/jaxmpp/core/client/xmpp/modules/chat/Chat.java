@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -18,12 +19,15 @@ public class Chat {
 
 	private JID jid;
 
+	private final SessionObject sessionObject;
+
 	private String threadId;
 
 	private final PacketWriter writer;
 
-	public Chat(long id, PacketWriter packetWriter) {
+	public Chat(long id, PacketWriter packetWriter, SessionObject sessionObject) {
 		this.id = id;
+		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}
 
@@ -33,6 +37,10 @@ public class Chat {
 
 	public JID getJid() {
 		return jid;
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 
 	public String getThreadId() {

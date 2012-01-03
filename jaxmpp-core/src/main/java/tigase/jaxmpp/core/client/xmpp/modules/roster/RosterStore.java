@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -133,13 +134,15 @@ public class RosterStore {
 	}
 
 	public Collection<? extends String> getGroups() {
-		return this.groups;
+		return Collections.unmodifiableCollection(this.groups);
 	}
 
 	void reloadGroups() {
-		groups.clear();
-		for (RosterItem i : this.roster.values()) {
-			groups.addAll(i.getGroups());
+		synchronized (groups) {
+			groups.clear();
+			for (RosterItem i : this.roster.values()) {
+				groups.addAll(i.getGroups());
+			}
 		}
 	}
 

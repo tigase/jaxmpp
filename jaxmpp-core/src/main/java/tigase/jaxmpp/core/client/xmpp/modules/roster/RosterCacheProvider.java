@@ -2,12 +2,14 @@ package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
 import java.util.Collection;
 
+import tigase.jaxmpp.core.client.SessionObject;
+
 public interface RosterCacheProvider {
 
-	String getCachedVersion();
+	String getCachedVersion(SessionObject sessionObject);
 
-	Collection<RosterItem> loadCachedRoster();
+	Collection<RosterItem> loadCachedRoster(SessionObject sessionObject);
 
-	void updateReceivedVersion(String ver);
+	void updateReceivedVersion(SessionObject sessionObject, String ver);
 
 }

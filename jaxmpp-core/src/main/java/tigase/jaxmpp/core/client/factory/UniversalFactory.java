@@ -12,6 +12,8 @@ public class UniversalFactory {
 
 	public static <T> T createInstance(String key) {
 		FactorySpi<T> spi = (FactorySpi<T>) instance().factories.get(key);
+		if (spi == null)
+			return null;
 		return spi.create();
 	}
 

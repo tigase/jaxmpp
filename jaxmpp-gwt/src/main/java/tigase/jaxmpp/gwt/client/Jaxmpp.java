@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -76,6 +77,11 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
+		this(new GwtSessionObject());
+	}
+
+	public Jaxmpp(SessionObject sessionObject) {
+		super(sessionObject);
 		this.timeoutChecker = new RepeatingCommand() {
 
 			@Override
@@ -96,7 +102,6 @@ public class Jaxmpp extends JaxmppCore {
 		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
 		this.connector.addListener(Connector.Error, this.streamErrorListener);
 
-		this.sessionObject = new GwtSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
 		sessionObject.setProperty(DiscoInfoModule.IDENTITY_TYPE_KEY, "web");

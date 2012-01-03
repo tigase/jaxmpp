@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -36,6 +37,11 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
+		this(new DefaultSessionObject());
+	}
+
+	public Jaxmpp(SessionObject sessionObject) {
+		super(sessionObject);
 		TimerTask checkTimeouts = new TimerTask() {
 
 			@Override
@@ -49,7 +55,6 @@ public class Jaxmpp extends JaxmppCore {
 		};
 		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
 
-		this.sessionObject = new DefaultSessionObject();
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
 		modulesInit();
@@ -68,7 +73,7 @@ public class Jaxmpp extends JaxmppCore {
 		disconnect(false);
 	}
 
-	public void disconnect(boolean b) throws JaxmppException {
+	public void disconnect(boolean snc) throws JaxmppException {
 		if (this.connector != null) {
 			try {
 				this.connector.stop();

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.SessionObject;
@@ -126,10 +127,10 @@ public class Observable {
 				}
 			}
 		} catch (JaxmppException e) {
+			log.log(Level.WARNING, "Problem on calling observers", e);
 			throw e;
 		} catch (Exception e) {
-			e.printStackTrace();
-			// log.log(Level.WARNING, "Problem on notifint observers", e);
+			log.log(Level.WARNING, "Problem on calling observers", e);
 			throw new JaxmppException(e);
 		}
 		if (parent != null) {

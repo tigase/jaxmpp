@@ -72,7 +72,7 @@ public abstract class JaxmppCore {
 
 	protected XmppSessionLogic sessionLogic;
 
-	protected SessionObject sessionObject;
+	protected final SessionObject sessionObject;
 
 	protected final Listener<ConnectorEvent> stanzaReceivedListener;
 
@@ -94,7 +94,8 @@ public abstract class JaxmppCore {
 		}
 	};
 
-	public JaxmppCore() {
+	public JaxmppCore(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());
 
 		modulesManager = new XmppModulesManager();
@@ -240,6 +241,10 @@ public abstract class JaxmppCore {
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> connectorListener) {
 		observable.removeListener(eventType, connectorListener);
+	}
+
+	public void removeListener(Listener<?> listener) {
+		observable.removeListener(listener);
 	}
 
 	public abstract void send(Stanza stanza) throws XMLException, JaxmppException;

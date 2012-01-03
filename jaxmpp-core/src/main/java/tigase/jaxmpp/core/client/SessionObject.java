@@ -33,6 +33,8 @@ public interface SessionObject extends UserProperties {
 
 	public Element getStreamFeatures();
 
+	public JID getUserJid();
+
 	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException;
 
 	public void setProperty(String key, Object value);
