@@ -136,12 +136,17 @@ public class Jaxmpp extends JaxmppCore {
 					Jaxmpp.this.wait();
 					log.finest("Waked up");
 				}
+			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+				JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
+				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
+				throw e;
+			}
+		} catch (JaxmppException e) {
+		//	onException(e);
+			throw e;
 		} catch (Exception e1) {
-			throw new JaxmppException(e1);
-		}
-		if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
-			JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
-			JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
+			JaxmppException e = new JaxmppException(e1);
+		//	onException(e);
 			throw e;
 		}
 	}

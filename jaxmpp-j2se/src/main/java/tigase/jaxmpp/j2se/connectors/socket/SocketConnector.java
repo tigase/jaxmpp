@@ -605,6 +605,8 @@ public class SocketConnector implements Connector {
 
 			fireOnConnected(sessionObject);
 		} catch (Exception e) {
+			stop();
+			onError(null, e);
 			throw new JaxmppException(e);
 		}
 	}
