@@ -21,6 +21,14 @@ public class BareJIDTest extends TestCase {
 		assertEquals("a", jid.getLocalpart());
 	}
 
+	public void testPercentJids() {
+		BareJID jid = BareJID.bareJIDInstance("-101100311719181%chat.facebook.com@domain.com");
+
+		assertEquals("domain.com", jid.getDomain());
+		assertEquals("-101100311719181%chat.facebook.com", jid.getLocalpart());
+		assertEquals("-101100311719181%chat.facebook.com@domain.com", jid.toString());
+	}
+
 	public void testToString() {
 		BareJID jid = BareJID.bareJIDInstance("a@b");
 		assertEquals("a@b", jid.toString());

@@ -34,6 +34,15 @@ public class JIDTest extends TestCase {
 		assertFalse(JID.jidInstance("a@b").equals(JID.jidInstance("a@b/c")));
 	}
 
+	public void testPercentJids() {
+		JID jid = JID.jidInstance("-101100311719181%chat.facebook.com@domain.com");
+
+		assertEquals("domain.com", jid.getDomain());
+		assertEquals("-101100311719181%chat.facebook.com", jid.getLocalpart());
+		assertNull(jid.getResource());
+		assertEquals("-101100311719181%chat.facebook.com@domain.com", jid.toString());
+	}
+
 	public void testToString() {
 		JID jid = JID.jidInstance("a@b");
 		assertEquals("a@b", jid.toString());

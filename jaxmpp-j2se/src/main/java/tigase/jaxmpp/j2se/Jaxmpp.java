@@ -142,11 +142,11 @@ public class Jaxmpp extends JaxmppCore {
 				throw e;
 			}
 		} catch (JaxmppException e) {
-		//	onException(e);
+			// onException(e);
 			throw e;
 		} catch (Exception e1) {
 			JaxmppException e = new JaxmppException(e1);
-		//	onException(e);
+			// onException(e);
 			throw e;
 		}
 	}

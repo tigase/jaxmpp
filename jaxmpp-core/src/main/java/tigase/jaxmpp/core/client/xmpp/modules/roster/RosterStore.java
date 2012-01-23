@@ -133,6 +133,10 @@ public class RosterStore {
 		return result;
 	}
 
+	public int getCount() {
+		return roster.size();
+	}
+
 	public Collection<? extends String> getGroups() {
 		return Collections.unmodifiableCollection(this.groups);
 	}

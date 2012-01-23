@@ -363,6 +363,10 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		DefaultElement query = new DefaultElement("query", null, "jabber:iq:roster");
 		if (isRosterVersioningAvailable()) {
 			String x = versionProvider.getCachedVersion(sessionObject);
+			if (sessionObject.getRoster().getCount() == 0) {
+				x = "";
+				versionProvider.updateReceivedVersion(sessionObject, x);
+			}
 			if (x != null)
 				query.setAttribute("ver", x);
 		}

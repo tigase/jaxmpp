@@ -231,7 +231,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Socket timeout.
 	 */
-	private int SOCKET_TIMEOUT = 1000 * 60;
+	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 
 	private final Timer timer = new Timer(true);
 
@@ -596,7 +596,7 @@ public class SocketConnector implements Connector {
 					}
 				}
 			};
-			long delay = SOCKET_TIMEOUT - SOCKET_TIMEOUT / 6;
+			long delay = SOCKET_TIMEOUT - 1000 * 5;
 
 			if (log.isLoggable(Level.CONFIG))
 				log.config("Whitespace ping period is setted to " + delay + "ms");
