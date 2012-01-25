@@ -26,8 +26,8 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -475,7 +475,7 @@ public class SocketConnector implements Connector {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<stream:stream ");
 
-		final JID from = sessionObject.getProperty(SessionObject.USER_JID);
+		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 		if (from != null) {
 			sb.append("from='").append(from.toString()).append("' ");
 		}
@@ -539,12 +539,12 @@ public class SocketConnector implements Connector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		log.fine("Start connector.");
-		if (sessionObject.getProperty(SessionObject.USER_JID) == null)
+		if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
 			throw new JaxmppException("No user JID specified");
 
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
-					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
 		if (sessionObject.getProperty(TRUST_MANAGER_KEY) == null)
 			sessionObject.setProperty(TRUST_MANAGER_KEY, dummyTrustManager);
@@ -554,7 +554,7 @@ public class SocketConnector implements Connector {
 		try {
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost == null) {
-				String x = ((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain();
+				String x = ((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain();
 				log.info("Resolving SRV recrd of domain '" + x + "'");
 				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());

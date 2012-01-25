@@ -43,7 +43,7 @@ public class MultiJaxmpp {
 	public <T extends JaxmppCore> void add(final T jaxmpp) {
 		synchronized (jaxmpps) {
 			jaxmpp.addListener(listener);
-			jaxmpps.put(jaxmpp.getSessionObject().getUserJid().getBareJid(), jaxmpp);
+			jaxmpps.put(jaxmpp.getSessionObject().getUserBareJid(), jaxmpp);
 			this.chats.addAll(jaxmpp.getModulesManager().getModule(MessageModule.class).getChatManager().getChats());
 		}
 	}
@@ -67,7 +67,7 @@ public class MultiJaxmpp {
 	}
 
 	public <T extends JaxmppCore> T get(final SessionObject sessionObject) {
-		return get(sessionObject.getUserJid().getBareJid());
+		return get(sessionObject.getUserBareJid());
 	}
 
 	public List<Chat> getChats() {
@@ -78,7 +78,7 @@ public class MultiJaxmpp {
 		synchronized (jaxmpps) {
 			this.chats.removeAll(jaxmpp.getModulesManager().getModule(MessageModule.class).getChatManager().getChats());
 			jaxmpp.removeListener(listener);
-			jaxmpps.remove(jaxmpp.getSessionObject().getUserJid().getBareJid());
+			jaxmpps.remove(jaxmpp.getSessionObject().getUserBareJid());
 		}
 	}
 

@@ -1,7 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -84,7 +84,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 		CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
 		if (callback == null)
 			callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
-		JID userJID = sessionObject.getProperty(SessionObject.USER_JID);
+		BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 
 		query.addChild(new DefaultElement("username", userJID.getLocalpart(), null));
 		query.addChild(new DefaultElement("password", callback.getPassword(), null));

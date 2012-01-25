@@ -1,7 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
-import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
@@ -20,7 +20,7 @@ public class PlainMechanism implements SaslMechanism {
 			CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
 			if (callback == null)
 				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
-			JID userJID = sessionObject.getProperty(SessionObject.USER_JID);
+			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getPassword();
 
 			String base64 = Base64.encode(lreq.getBytes());
@@ -42,7 +42,7 @@ public class PlainMechanism implements SaslMechanism {
 	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
 		return sessionObject.getProperty(SessionObject.PASSWORD) != null
-				&& sessionObject.getProperty(SessionObject.USER_JID) != null;
+				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
 	}
 
 	@Override

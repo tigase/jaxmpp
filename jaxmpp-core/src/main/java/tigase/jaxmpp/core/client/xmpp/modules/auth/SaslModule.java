@@ -213,7 +213,7 @@ public class SaslModule implements XmppModule {
 
 		// SaslMechanism result;
 		// if (sessionObject.getProperty(SessionObject.PASSWORD) == null
-		// || sessionObject.getProperty(SessionObject.USER_JID) == null) {
+		// || sessionObject.getProperty(SessionObject.USER_BARE_JID) == null) {
 		// result = new AnonymousMechanism();
 		// } else {
 		// result = new PlainMechanism();

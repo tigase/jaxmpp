@@ -69,8 +69,8 @@ public class DefaultSessionObject implements SessionObject {
 	}
 
 	@Override
-	public JID getUserJid() {
-		return this.getProperty(USER_JID);
+	public BareJID getUserBareJid() {
+		return this.getProperty(USER_BARE_JID);
 	}
 
 	@SuppressWarnings("unchecked")

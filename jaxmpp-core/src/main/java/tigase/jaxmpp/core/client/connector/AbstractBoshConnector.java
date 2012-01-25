@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -282,7 +282,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected Element prepareRetartBody() throws XMLException {
 		Element e = new DefaultElement("body");
-		final JID from = sessionObject.getProperty(SessionObject.USER_JID);
+		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 		if (from != null) {
 			e.setAttribute("from", from.toString());
 		}
@@ -396,12 +396,12 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		// if (sessionObject.getProperty(SessionObject.USER_JID) == null)
+		// if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
 		// throw new JaxmppException("No user JID specified");
 
 		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
 			sessionObject.setProperty(SessionObject.SERVER_NAME,
-					((JID) sessionObject.getProperty(SessionObject.USER_JID)).getDomain());
+					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
 		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		if (u == null)

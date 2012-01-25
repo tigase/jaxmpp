@@ -181,7 +181,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 	}
 
 	private long createId(BareJID jid) {
-		return (sessionObject.getUserJid() + "::" + jid).hashCode();
+		return (sessionObject.getUserBareJid() + "::" + jid).hashCode();
 	}
 
 	private void fireEvent(RosterEvent event) throws JaxmppException {

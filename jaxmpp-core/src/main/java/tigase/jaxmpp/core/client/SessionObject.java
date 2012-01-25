@@ -16,7 +16,7 @@ public interface SessionObject extends UserProperties {
 
 	public static final String SERVER_NAME = "serverName";
 
-	public static final String USER_JID = "userJid";
+	public static final String USER_BARE_JID = "userBareJid";
 
 	public void checkHandlersTimeout() throws JaxmppException;
 
@@ -33,7 +33,7 @@ public interface SessionObject extends UserProperties {
 
 	public Element getStreamFeatures();
 
-	public JID getUserJid();
+	public BareJID getUserBareJid();
 
 	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException;
 
