@@ -2,6 +2,7 @@ package tigase.jaxmpp.j2se;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
@@ -26,9 +27,19 @@ public class Jaxmpp extends JaxmppCore {
 
 	public static final String CONNECTOR_TYPE = "connectorType";
 
+	private static final Executor DEFAULT_EXECUTOR = new Executor() {
+
+		@Override
+		public void execute(Runnable command) {
+			(new Thread(command)).start();
+		}
+	};
+
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
+
+	private Executor executor;
 
 	private final Timer timer = new Timer(true);
 
@@ -38,10 +49,12 @@ public class Jaxmpp extends JaxmppCore {
 
 	public Jaxmpp() {
 		this(new DefaultSessionObject());
+		setExecutor(DEFAULT_EXECUTOR);
 	}
 
 	public Jaxmpp(SessionObject sessionObject) {
 		super(sessionObject);
+		setExecutor(DEFAULT_EXECUTOR);
 		TimerTask checkTimeouts = new TimerTask() {
 
 			@Override
@@ -87,6 +100,10 @@ public class Jaxmpp extends JaxmppCore {
 				}
 			}
 		}
+	}
+
+	public Executor getExecutor() {
+		return executor;
 	}
 
 	@Override
@@ -182,7 +199,7 @@ public class Jaxmpp extends JaxmppCore {
 	protected void onStanzaReceived(Element stanza) {
 		Runnable r = this.processor.process(stanza);
 		if (r != null)
-			(new Thread(r)).start();
+			executor.execute(r);
 	}
 
 	@Override
@@ -214,6 +231,13 @@ public class Jaxmpp extends JaxmppCore {
 	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
 		this.sessionObject.registerResponseHandler(stanza, asyncCallback);
 		this.writer.write(stanza);
+	}
+
+	public void setExecutor(Executor executor) {
+		if (executor == null)
+			this.executor = DEFAULT_EXECUTOR;
+		else
+			this.executor = executor;
 	}
 
 }
