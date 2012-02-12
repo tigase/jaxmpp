@@ -317,7 +317,7 @@ public class VCard implements Serializable {
 		}
 	}
 
-	Element makeElement() throws XMLException {
+	public Element makeElement() throws XMLException {
 		Element vcard = new DefaultElement("vCard", null, "vcard-temp");
 		add(vcard, "FN", this.fullName);
 		add(vcard, "N", new String[] { "FAMILY", "GIVEN", "MIDDLE" }, new String[] { this.nameFamily, this.nameGiven,
