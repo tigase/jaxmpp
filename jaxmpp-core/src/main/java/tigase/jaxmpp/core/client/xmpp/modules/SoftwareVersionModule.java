@@ -54,7 +54,7 @@ public class SoftwareVersionModule extends AbstractIQModule {
 
 	private final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("query", "jabber:iq:version"));
 
-	private final String[] FEATURES = new String[] { "urn:xmpp:ping" };
+	private final String[] FEATURES = new String[] { "jabber:iq:version" };
 
 	public SoftwareVersionModule(SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
