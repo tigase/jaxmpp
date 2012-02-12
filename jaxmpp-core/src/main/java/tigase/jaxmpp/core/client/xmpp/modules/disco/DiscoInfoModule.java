@@ -169,15 +169,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 				if (be.getNode() != null)
 					return;
 
-				be.setIdentity(new Identity());
-				String category = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
-				String type = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_TYPE_KEY);
-				String nme = DiscoInfoModule.this.sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
-				be.getIdentity().setCategory(category == null ? "client" : category);
-				be.getIdentity().setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
-				be.getIdentity().setType(type == null ? "pc" : type);
-
-				be.setFeatures(DiscoInfoModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
+				processDefaultDiscoEvent(be);
 			}
 		});
 	}
@@ -200,19 +192,38 @@ public class DiscoInfoModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-	public void getInfo(JID jid, AsyncCallback callback) throws XMLException, JaxmppException {
+	public void getInfo(JID jid, DiscoInfoAsyncCallback callback) throws XMLException, JaxmppException {
+		getInfo(jid, null, (AsyncCallback) callback);
+	}
+
+	public void getInfo(JID jid, String node, AsyncCallback callback) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(jid);
 		iq.setType(StanzaType.get);
-		iq.addChild(new DefaultElement("query", null, "http://jabber.org/protocol/disco#info"));
+		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/disco#info");
+		if (node != null)
+			query.setAttribute("node", node);
+		iq.addChild(query);
 
 		sessionObject.registerResponseHandler(iq, callback);
 		writer.write(iq);
-
 	}
 
-	public void getInfo(JID jid, DiscoInfoAsyncCallback callback) throws XMLException, JaxmppException {
-		getInfo(jid, (AsyncCallback) callback);
+	public void getInfo(JID jid, String node, DiscoInfoAsyncCallback callback) throws JaxmppException {
+		getInfo(jid, node, (AsyncCallback) callback);
+	}
+
+	public void processDefaultDiscoEvent(final DiscoInfoEvent be) {
+		be.setIdentity(new Identity());
+		String category = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
+		String type = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_TYPE_KEY);
+		String nme = DiscoInfoModule.this.sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
+		be.getIdentity().setCategory(category == null ? "client" : category);
+		be.getIdentity().setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
+		be.getIdentity().setType(type == null ? "pc" : type);
+
+		be.setFeatures(DiscoInfoModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
+
 	}
 
 	@Override
