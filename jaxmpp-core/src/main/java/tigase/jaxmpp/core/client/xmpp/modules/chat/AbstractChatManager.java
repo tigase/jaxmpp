@@ -59,31 +59,7 @@ public abstract class AbstractChatManager {
 	protected abstract Chat createChatInstance(final JID fromJid, final String threadId);
 
 	protected Chat getChat(JID jid, String threadId) {
-		Chat chat = null;
-
-		BareJID bareJID = jid.getBareJid();
-
-		for (Chat c : this.chats) {
-			if (!c.getJid().getBareJid().equals(bareJID)) {
-				continue;
-			}
-			if (threadId != null && c.getThreadId() != null && threadId.equals(c.getThreadId())) {
-				chat = c;
-				break;
-			}
-			if (jid.getResource() != null && c.getJid().getResource() != null
-					&& jid.getResource().equals(c.getJid().getResource())) {
-				chat = c;
-				break;
-			}
-			if (c.getJid().getResource() == null) {
-				c.setJid(jid);
-				chat = c;
-				break;
-			}
-
-		}
-		return chat;
+		return chatSelector.getChat(chats, jid, threadId);
 	}
 
 	public List<Chat> getChats() {
