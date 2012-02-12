@@ -18,6 +18,9 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
@@ -35,7 +38,7 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
-	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
+	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
@@ -166,6 +169,15 @@ public class Jaxmpp extends JaxmppCore {
 			// onException(e);
 			throw e;
 		}
+	}
+
+	@Override
+	protected void modulesInit() {
+		super.modulesInit();
+
+		this.modulesManager.register(new CapabilitiesModule(sessionObject, writer,
+				this.modulesManager.getModule(DiscoInfoModule.class), this.modulesManager.getModule(PresenceModule.class),
+				this.modulesManager));
 	}
 
 	@Override
