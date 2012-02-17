@@ -63,6 +63,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType ChatCreated = new EventType();
 
+	public static final EventType ChatUpdated = new EventType();
+
 	public static final Criteria CRIT = ElementCriteria.name("message");
 
 	public static final EventType MessageReceived = new EventType();

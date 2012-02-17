@@ -32,6 +32,12 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	public static abstract class DiscoInfoAsyncCallback implements AsyncCallback {
 
+		private String requestedNode;
+
+		public DiscoInfoAsyncCallback(final String requestedNode) {
+			this.requestedNode = requestedNode;
+		}
+
 		protected abstract void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
 				throws XMLException;
 
@@ -56,7 +62,8 @@ public class DiscoInfoModule extends AbstractIQModule {
 					feres.add(v);
 			}
 
-			onInfoReceived(query.getAttribute("node"), idres, feres);
+			String n = query.getAttribute("node");
+			onInfoReceived(n == null ? requestedNode : n, idres, feres);
 		}
 	}
 

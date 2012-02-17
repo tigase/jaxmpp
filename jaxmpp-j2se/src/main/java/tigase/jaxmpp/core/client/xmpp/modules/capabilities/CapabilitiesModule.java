@@ -201,10 +201,11 @@ public class CapabilitiesModule implements XmppModule {
 		if (cache.isCached(node + "#" + ver))
 			return;
 
-		discoInfoModule.getInfo(presence.getFrom(), node + "#" + ver, new DiscoInfoAsyncCallback() {
+		discoInfoModule.getInfo(presence.getFrom(), node + "#" + ver, new DiscoInfoAsyncCallback(node + "#" + ver) {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+				System.out.println("Error: " + error);
 			}
 
 			@Override
@@ -226,6 +227,7 @@ public class CapabilitiesModule implements XmppModule {
 
 			@Override
 			public void onTimeout() throws JaxmppException {
+				System.out.println("Timeout");
 			}
 		});
 

@@ -3,11 +3,13 @@ package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 import java.util.Collection;
 import java.util.Set;
 
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
+
 public interface CapabilitiesCache {
 
 	public Set<String> getFeatures(String node);
 
-	public String getIdentity(String node);
+	public Identity getIdentity(String node);
 
 	public boolean isCached(String node);
 

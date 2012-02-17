@@ -126,7 +126,7 @@ public abstract class AbstractChatManager {
 		this.sessionObject = sessionObject;
 	}
 
-	protected boolean update(final Chat chat, final JID fromJid, final String threadId) {
+	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
 		boolean changed = false;
 
 		if (!chat.getJid().equals(fromJid)) {
@@ -137,6 +137,12 @@ public abstract class AbstractChatManager {
 		if (chat.getThreadId() == null && threadId != null) {
 			chat.setThreadId(threadId);
 			changed = true;
+		}
+
+		if (changed) {
+			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatUpdated, sessionObject);
+			event.setChat(chat);
+			observable.fireEvent(event.getType(), event);
 		}
 
 		return changed;
