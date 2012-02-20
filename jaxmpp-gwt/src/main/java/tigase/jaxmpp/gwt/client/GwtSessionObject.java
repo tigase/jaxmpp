@@ -85,7 +85,7 @@ public class GwtSessionObject extends DefaultSessionObject {
 			properties.put(AbstractBoshConnector.RID_KEY, rid);
 			properties.put(ResourceBinderModule.BINDED_RESOURCE_JID, jid);
 			userProperties.put(NICKNAME, nick);
-			userProperties.put(USER_JID, userJid);
+			userProperties.put(USER_BARE_JID, userJid.getBareJid());
 			userProperties.put(SERVER_NAME, serverName);
 		} catch (RestoringSessionException e) {
 			throw e;
@@ -110,7 +110,7 @@ public class GwtSessionObject extends DefaultSessionObject {
 		// String
 		sb.append(makeEntry("nick", NICKNAME, userProperties)).append(",");
 		// JID
-		sb.append(makeEntry("userJid", USER_JID, userProperties)).append(",");
+		sb.append(makeEntry("userBareJid", USER_BARE_JID, userProperties)).append(",");
 		// Stri ng
 		sb.append(makeEntry("serverName", SERVER_NAME, userProperties));
 

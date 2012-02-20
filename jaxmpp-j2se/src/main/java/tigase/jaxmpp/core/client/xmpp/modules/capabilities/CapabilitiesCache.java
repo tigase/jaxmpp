@@ -11,6 +11,8 @@ public interface CapabilitiesCache {
 
 	public Identity getIdentity(String node);
 
+	public Set<String> getNodesWithFeature(String feature);
+
 	public boolean isCached(String node);
 
 	public void store(String node, String name, String category, String type, Collection<String> features);
