@@ -311,9 +311,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 				processRosterItem(element);
 			}
 
-			if (force && versionProvider != null && ver != null) {
-				versionProvider.setReceivedVersion(sessionObject, ver);
-			} else if (versionProvider != null && ver != null) {
+			if (versionProvider != null && ver != null) {
 				versionProvider.updateReceivedVersion(sessionObject, ver);
 			}
 		}
