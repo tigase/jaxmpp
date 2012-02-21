@@ -300,14 +300,20 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		fireEvent(event);
 	}
 
-	private void processRosterQuery(final Element query) throws JaxmppException {
+	private void processRosterQuery(final Element query, boolean force) throws JaxmppException {
 		if (query != null) {
+			if (force)
+				sessionObject.getRoster().removeAll();
+
 			List<Element> items = query.getChildren("item");
 			String ver = query.getAttribute("ver");
 			for (Element element : items) {
 				processRosterItem(element);
 			}
-			if (versionProvider != null && ver != null) {
+
+			if (force && versionProvider != null && ver != null) {
+				versionProvider.setReceivedVersion(sessionObject, ver);
+			} else if (versionProvider != null && ver != null) {
 				versionProvider.updateReceivedVersion(sessionObject, ver);
 			}
 		}
@@ -320,7 +326,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 			throw new XMPPException(ErrorCondition.not_allowed);
 
 		Element query = stanza.getQuery();
-		processRosterQuery(query);
+		processRosterQuery(query, false);
 	}
 
 	protected void remove(BareJID jid) throws XMLException, JaxmppException {
@@ -381,7 +387,8 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 			@Override
 			public void onSuccess(Stanza responseStanza) throws JaxmppException {
 				Element query = ((IQ) responseStanza).getQuery();
-				processRosterQuery(query);
+
+				processRosterQuery(query, true);
 			}
 
 			@Override
@@ -408,8 +415,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			@Override
 			public void onSuccess(Stanza responseStanza) throws JaxmppException {
-				Element query = ((IQ) responseStanza).getQuery();
-				processRosterQuery(query);
 			}
 
 			@Override

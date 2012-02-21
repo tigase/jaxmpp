@@ -99,12 +99,7 @@ public class RosterStore {
 	}
 
 	public void clear() {
-		synchronized (this.roster) {
-			roster.clear();
-		}
-		synchronized (this.groups) {
-			groups.clear();
-		}
+		removeAll();
 		if (this.handler != null)
 			handler.cleared();
 	}
@@ -153,6 +148,15 @@ public class RosterStore {
 	public void remove(BareJID jid) throws XMLException, JaxmppException {
 		if (handler != null)
 			this.handler.remove(jid);
+	}
+
+	public void removeAll() {
+		synchronized (this.roster) {
+			roster.clear();
+		}
+		synchronized (this.groups) {
+			groups.clear();
+		}
 	}
 
 	void removeItem(BareJID jid) {

@@ -10,6 +10,8 @@ public interface RosterCacheProvider {
 
 	Collection<RosterItem> loadCachedRoster(SessionObject sessionObject);
 
+	void setReceivedVersion(SessionObject sessionObject, String ver);
+
 	void updateReceivedVersion(SessionObject sessionObject, String ver);
 
 }
