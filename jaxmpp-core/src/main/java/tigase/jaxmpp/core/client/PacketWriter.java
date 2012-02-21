@@ -7,4 +7,8 @@ public interface PacketWriter {
 
 	void write(Element stanza) throws JaxmppException;
 
+	void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException;
+
+	void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException;
+
 }

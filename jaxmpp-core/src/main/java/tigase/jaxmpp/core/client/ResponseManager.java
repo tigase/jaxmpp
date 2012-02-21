@@ -24,29 +24,32 @@ public class ResponseManager {
 
 		private final JID jid;
 
+		private final long timeout;
+
 		private final long timestamp;
 
-		public Entry(JID jid, long timestamp, AsyncCallback callback) {
+		public Entry(JID jid, long timestamp, long timeout, AsyncCallback callback) {
 			super();
 			this.jid = jid;
 			this.timestamp = timestamp;
+			this.timeout = timeout;
 			this.callback = callback;
 		}
 
 	}
 
+	private static final long DEFAULT_TIMEOUT = 1000 * 60;
+
 	private final Map<String, Entry> handlers = new HashMap<String, Entry>();
 
-	private final Logger log = Logger.getLogger(this.getClass().getName());;
-
-	private long timeout = 1000 * 60;
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	public void checkTimeouts() throws JaxmppException {
 		long now = (new Date()).getTime();
 		Iterator<java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
 		while (it.hasNext()) {
 			java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
-			if (e.getValue().timestamp + timeout < now) {
+			if (e.getValue().timestamp + e.getValue().timeout < now) {
 				it.remove();
 				try {
 					e.getValue().callback.onTimeout();
@@ -101,7 +104,8 @@ public class ResponseManager {
 		return r;
 	}
 
-	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
+	public String registerResponseHandler(final Element stanza, final Long timeout, final AsyncCallback callback)
+			throws XMLException {
 		if (stanza == null)
 			return null;
 		String x = stanza.getAttribute("to");
@@ -112,7 +116,8 @@ public class ResponseManager {
 		}
 
 		if (callback != null) {
-			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(), callback);
+			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(),
+					timeout == null ? DEFAULT_TIMEOUT : timeout, callback);
 			this.handlers.put(id, entry);
 		}
 

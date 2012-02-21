@@ -92,7 +92,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		fireAuthStart(iq);
 
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+		writer.write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
@@ -110,7 +110,6 @@ public class NonSaslAuthModule extends AbstractIQModule {
 				NonSaslAuthModule.this.onTimeout();
 			}
 		});
-		writer.write(iq);
 	}
 
 	protected void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {

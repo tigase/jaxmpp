@@ -92,6 +92,19 @@ public abstract class JaxmppCore {
 				throw new JaxmppException(e);
 			}
 		}
+
+		@Override
+		public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+			sessionObject.registerResponseHandler(stanza, null, asyncCallback);
+			writer.write(stanza);
+		}
+
+		@Override
+		public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+			sessionObject.registerResponseHandler(stanza, timeout, asyncCallback);
+			writer.write(stanza);
+		}
+
 	};
 
 	public JaxmppCore(SessionObject sessionObject) {
@@ -247,9 +260,17 @@ public abstract class JaxmppCore {
 		observable.removeListener(listener);
 	}
 
-	public abstract void send(Stanza stanza) throws XMLException, JaxmppException;
+	public void send(Stanza stanza) throws XMLException, JaxmppException {
+		this.writer.write(stanza);
+	}
 
-	public abstract void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException;
+	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
+		this.writer.write(stanza, asyncCallback);
+	}
+
+	public void send(Stanza stanza, long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		this.writer.write(stanza, timeout, asyncCallback);
+	}
 
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		(this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID, subject, message);

@@ -87,7 +87,7 @@ public class ResourceBinderModule implements XmppModule {
 		iq.addChild(bind);
 		bind.addChild(new DefaultElement("resource", (String) sessionObject.getProperty(SessionObject.RESOURCE), null));
 
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+		writer.write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
@@ -122,7 +122,6 @@ public class ResourceBinderModule implements XmppModule {
 				observable.fireEvent(ResourceBindError, event);
 			}
 		});
-		writer.write(iq);
 	}
 
 	@Override

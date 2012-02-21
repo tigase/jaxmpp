@@ -155,8 +155,7 @@ public class DiscoItemsModule extends AbstractIQModule {
 		iq.setType(StanzaType.get);
 		iq.addChild(new DefaultElement("query", null, "http://jabber.org/protocol/disco#items"));
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void getItems(JID jid, DiscoItemsAsyncCallback callback) throws XMLException, JaxmppException {

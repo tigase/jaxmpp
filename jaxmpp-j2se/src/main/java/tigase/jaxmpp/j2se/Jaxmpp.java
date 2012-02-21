@@ -5,7 +5,6 @@ import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
@@ -21,7 +20,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindE
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
@@ -232,17 +230,6 @@ public class Jaxmpp extends JaxmppCore {
 		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		observable.fireEvent(event);
-	}
-
-	@Override
-	public void send(Stanza stanza) throws XMLException, JaxmppException {
-		this.writer.write(stanza);
-	}
-
-	@Override
-	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
-		this.sessionObject.registerResponseHandler(stanza, asyncCallback);
-		this.writer.write(stanza);
 	}
 
 	public void setExecutor(Executor executor) {

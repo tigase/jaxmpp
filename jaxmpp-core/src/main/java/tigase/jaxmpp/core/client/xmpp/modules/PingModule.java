@@ -57,8 +57,7 @@ public class PingModule extends AbstractIQModule {
 		iq.setTo(jidInstance);
 		iq.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
-		sessionObject.registerResponseHandler(iq, asyncCallback);
-		writer.write(iq);
+		writer.write(iq, asyncCallback);
 	}
 
 	public void ping(JID jidInstance, PingAsyncCallback asyncCallback) throws JaxmppException {

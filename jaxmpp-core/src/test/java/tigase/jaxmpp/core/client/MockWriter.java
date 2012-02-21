@@ -2,6 +2,7 @@ package tigase.jaxmpp.core.client;
 
 import java.util.ArrayList;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 
 public class MockWriter implements PacketWriter {
@@ -17,6 +18,16 @@ public class MockWriter implements PacketWriter {
 	@Override
 	public void write(Element stanza) {
 		elements.add(stanza);
+	}
+
+	@Override
+	public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		write(stanza);
+	}
+
+	@Override
+	public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		write(stanza);
 	}
 
 }

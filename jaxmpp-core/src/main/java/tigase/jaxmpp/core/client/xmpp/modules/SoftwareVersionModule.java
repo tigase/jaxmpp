@@ -66,8 +66,7 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		pingIq.setType(StanzaType.get);
 		pingIq.addChild(new DefaultElement("ping", null, "jabber:iq:version"));
 
-		sessionObject.registerResponseHandler(pingIq, callback);
-		writer.write(pingIq);
+		writer.write(pingIq, callback);
 	}
 
 	public void checkSoftwareVersion(JID jid, SoftwareVersionAsyncCallback callback) throws XMLException, JaxmppException {

@@ -129,8 +129,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 		iq.addChild(command);
 
-		sessionObject.registerResponseHandler(iq, asyncCallback);
-		writer.write(iq);
+		writer.write(iq, asyncCallback);
 	}
 
 	@Override

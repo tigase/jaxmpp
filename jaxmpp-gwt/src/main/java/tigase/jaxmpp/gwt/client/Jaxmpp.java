@@ -277,19 +277,9 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	}
 
-	@Override
-	public void send(Stanza stanza) throws XMLException, JaxmppException {
-		this.writer.write(stanza);
-	}
-
-	@Override
-	public void send(Stanza stanza, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
-		this.sessionObject.registerResponseHandler(stanza, asyncCallback);
-		this.writer.write(stanza);
-	}
-
 	public void storeSession() {
 		String s = ((GwtSessionObject) sessionObject).serialize();
 		Cookies.setCookie(COOKIE_RID_KEY, s);
 	}
+
 }

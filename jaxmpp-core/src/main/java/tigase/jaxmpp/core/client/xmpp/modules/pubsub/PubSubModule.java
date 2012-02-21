@@ -286,8 +286,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		options.addChild(form.createSubmitableElement(XDataType.submit));
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 
 	}
 
@@ -312,8 +311,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		item.setAttribute("id", itemId);
 		retract.addChild(item);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
@@ -352,8 +350,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		def.setAttribute("node", nodeName);
 		pubsub.addChild(def);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName,
@@ -379,8 +376,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		options.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(options);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID,
@@ -432,8 +428,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		item.addChild(payload);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, PublishAsyncCallback callback)
@@ -484,8 +479,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			items.addChild(item);
 		}
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
@@ -514,8 +508,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			pubsub.addChild(optionsElement);
 		}
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
@@ -544,8 +537,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		item.setAttribute("id", itemId);
 		unlock.addChild(item);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
@@ -566,8 +558,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		unsubscribe.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(unsubscribe);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)

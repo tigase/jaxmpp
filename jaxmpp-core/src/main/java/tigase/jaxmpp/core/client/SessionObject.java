@@ -35,7 +35,7 @@ public interface SessionObject extends UserProperties {
 
 	public BareJID getUserBareJid();
 
-	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException;
+	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException;
 
 	public void setProperty(String key, Object value);
 

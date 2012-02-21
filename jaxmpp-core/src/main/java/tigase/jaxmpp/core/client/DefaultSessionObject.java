@@ -80,8 +80,8 @@ public class DefaultSessionObject implements SessionObject {
 	}
 
 	@Override
-	public String registerResponseHandler(Element stanza, AsyncCallback callback) throws XMLException {
-		return responseManager.registerResponseHandler(stanza, callback);
+	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException {
+		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
 
 	@Override

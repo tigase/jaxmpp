@@ -212,8 +212,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 			query.setAttribute("node", node);
 		iq.addChild(query);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 	public void getInfo(JID jid, String node, DiscoInfoAsyncCallback callback) throws JaxmppException {

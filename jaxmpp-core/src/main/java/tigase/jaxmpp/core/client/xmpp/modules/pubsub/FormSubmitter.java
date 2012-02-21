@@ -42,8 +42,7 @@ public abstract class FormSubmitter {
 		Element payload = prepareIqPayload();
 		iq.addChild(payload);
 
-		sessionObject.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		writer.write(iq, callback);
 	}
 
 }

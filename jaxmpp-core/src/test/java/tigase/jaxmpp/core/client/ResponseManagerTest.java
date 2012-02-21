@@ -25,7 +25,7 @@ public class ResponseManagerTest extends TestCase {
 			er.setAttribute("id", "1");
 			er.setAttribute("from", "a@b.c");
 
-			rm.registerResponseHandler(es, new AsyncCallback() {
+			rm.registerResponseHandler(es, null, new AsyncCallback() {
 
 				@Override
 				public void onError(Stanza responseStanza, ErrorCondition error) {
@@ -79,7 +79,7 @@ public class ResponseManagerTest extends TestCase {
 			Element e2 = new DefaultElement("internal-server-error", null, "urn:ietf:params:xml:ns:xmpp-stanzas");
 			e1.addChild(e2);
 
-			rm.registerResponseHandler(es, new AsyncCallback() {
+			rm.registerResponseHandler(es, null, new AsyncCallback() {
 
 				@Override
 				public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {

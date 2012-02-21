@@ -56,8 +56,7 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 		iq.setTo(jid);
 		iq.addChild(new DefaultElement("vCard", null, "vcard-temp"));
 
-		sessionObject.registerResponseHandler(iq, asyncCallback);
-		writer.write(iq);
+		writer.write(iq, asyncCallback);
 	}
 
 	public void retrieveVCard(JID jid, VCardAsyncCallback asyncCallback) throws JaxmppException {

@@ -168,8 +168,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 			}
 		};
 
-		sessionObject.registerResponseHandler(iq, c);
-		writer.write(iq);
+		writer.write(iq, c);
 	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -332,7 +331,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		item.setAttribute("jid", jid.toString());
 		item.setAttribute("subscription", Subscription.remove.name());
 
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+		writer.write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
@@ -350,7 +349,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			}
 		});
-		writer.write(iq);
 	}
 
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -372,7 +370,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		}
 		iq.addChild(query);
 
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+		writer.write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
@@ -392,7 +390,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			}
 		});
-		writer.write(iq);
 	}
 
 	protected void update(RosterItem item) throws XMLException, JaxmppException {
@@ -401,7 +398,7 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
-		sessionObject.registerResponseHandler(iq, new AsyncCallback() {
+		writer.write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
@@ -421,6 +418,5 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			}
 		});
-		writer.write(iq);
 	}
 }
