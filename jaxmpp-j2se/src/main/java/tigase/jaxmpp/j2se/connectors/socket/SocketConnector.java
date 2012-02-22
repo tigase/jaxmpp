@@ -165,11 +165,14 @@ public class SocketConnector implements Connector {
 				if (!isInterrupted())
 					connector.onStreamTerminate();
 			} catch (Exception e) {
-				log.log(Level.WARNING, "Exception in worker", e);
-				try {
-					onErrorInThread(e);
-				} catch (JaxmppException e1) {
-					e1.printStackTrace();
+				if (SocketConnector.this.getState() != Connector.State.disconnecting
+						&& SocketConnector.this.getState() != Connector.State.disconnected) {
+					log.log(Level.WARNING, "Exception in worker", e);
+					try {
+						onErrorInThread(e);
+					} catch (JaxmppException e1) {
+						e1.printStackTrace();
+					}
 				}
 			} finally {
 				interrupt();
