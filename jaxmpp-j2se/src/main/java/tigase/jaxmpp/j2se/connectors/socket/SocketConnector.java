@@ -42,6 +42,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.xml.J2seElement;
@@ -259,7 +260,11 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
-		return new SocketXmppSessionLogic(this, modulesManager, sessionObject, writer);
+		if (sessionObject.getProperty(InBandRegistrationModule.IN_BAND_REGISTRATION_MODE_KEY) == Boolean.TRUE) {
+			log.info("Using XEP-0077 mode!!!!");
+			return new SocketInBandRegistrationXmppSessionLogic(this, modulesManager, sessionObject, writer);
+		} else
+			return new SocketXmppSessionLogic(this, modulesManager, sessionObject, writer);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
@@ -542,12 +547,6 @@ public class SocketConnector implements Connector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		log.fine("Start connector.");
-		if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
-			throw new JaxmppException("No user JID specified");
-
-		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
-			sessionObject.setProperty(SessionObject.SERVER_NAME,
-					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
 		if (sessionObject.getProperty(TRUST_MANAGER_KEY) == null)
 			sessionObject.setProperty(TRUST_MANAGER_KEY, dummyTrustManager);
@@ -557,7 +556,7 @@ public class SocketConnector implements Connector {
 		try {
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost == null) {
-				String x = ((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain();
+				String x = sessionObject.getProperty(SessionObject.SERVER_NAME);
 				log.info("Resolving SRV recrd of domain '" + x + "'");
 				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());

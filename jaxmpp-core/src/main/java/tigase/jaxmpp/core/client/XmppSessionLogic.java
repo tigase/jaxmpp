@@ -9,6 +9,8 @@ public interface XmppSessionLogic {
 		void onException(JaxmppException e) throws JaxmppException;;
 	}
 
+	public void beforeStart() throws JaxmppException;
+
 	public void bind(SessionListener listener) throws JaxmppException;
 
 	public void unbind() throws JaxmppException;

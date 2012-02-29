@@ -1,5 +1,6 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -85,6 +86,17 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			}
 		};
+	}
+
+	@Override
+	public void beforeStart() throws JaxmppException {
+		if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
+			throw new JaxmppException("No user JID specified");
+
+		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
+			sessionObject.setProperty(SessionObject.SERVER_NAME,
+					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
+
 	}
 
 	@Override

@@ -147,6 +147,7 @@ public class Jaxmpp extends JaxmppCore {
 		});
 
 		try {
+			this.sessionLogic.beforeStart();
 			this.connector.start();
 			this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
 			if (sync)

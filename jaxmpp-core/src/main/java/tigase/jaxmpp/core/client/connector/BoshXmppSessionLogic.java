@@ -95,6 +95,10 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	}
 
 	@Override
+	public void beforeStart() throws JaxmppException {
+	}
+
+	@Override
 	public void bind(SessionListener sessionListener) throws JaxmppException {
 		this.sessionListener = sessionListener;
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);

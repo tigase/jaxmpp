@@ -28,6 +28,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
+import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.vcard.VCardModule;
@@ -87,6 +88,7 @@ public abstract class JaxmppCore {
 			if (connector.getState() != Connector.State.connected)
 				throw new JaxmppException("Not connected!");
 			try {
+				System.out.println("S: " + stanza.getAsString());
 				connector.send(stanza);
 			} catch (XMLException e) {
 				throw new JaxmppException(e);
@@ -234,6 +236,7 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new NonSaslAuthModule(authModule.getObservable(), sessionObject, writer));
 
 		this.modulesManager.register(new VCardModule(sessionObject, writer));
+		this.modulesManager.register(new InBandRegistrationModule(observable, sessionObject, writer));
 
 		this.modulesManager.init();
 	}
