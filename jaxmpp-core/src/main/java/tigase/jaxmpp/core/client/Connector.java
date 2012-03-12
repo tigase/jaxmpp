@@ -167,6 +167,8 @@ public interface Connector {
 	 */
 	public final static EventType Error = new EventType();
 
+	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
+
 	/**
 	 * Event fires after creates XMPP Stream.
 	 * <p>

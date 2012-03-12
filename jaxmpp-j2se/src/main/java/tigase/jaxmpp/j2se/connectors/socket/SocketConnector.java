@@ -519,6 +519,7 @@ public class SocketConnector implements Connector {
 					log.finest("Send: " + t);
 				writer.write(t.getBytes());
 			} catch (IOException e) {
+				this.stop(true);
 				throw new JaxmppException(e);
 			}
 	}
@@ -591,11 +592,16 @@ public class SocketConnector implements Connector {
 
 				@Override
 				public void run() {
-					try {
-						keepalive();
-					} catch (JaxmppException e) {
-						log.log(Level.SEVERE, "Can't ping!", e);
-					}
+					new Thread() {
+						@Override
+						public void run() {
+							try {
+								keepalive();
+							} catch (JaxmppException e) {
+								log.log(Level.SEVERE, "Can't ping!", e);
+							}
+						}
+					}.start();
 				}
 			};
 			long delay = SOCKET_TIMEOUT - 1000 * 5;
@@ -603,7 +609,10 @@ public class SocketConnector implements Connector {
 			if (log.isLoggable(Level.CONFIG))
 				log.config("Whitespace ping period is setted to " + delay + "ms");
 
-			timer.schedule(pingTask, delay, delay);
+			if (sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == null
+					|| ((Boolean) sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+				timer.schedule(pingTask, delay, delay);
+			}
 
 			fireOnConnected(sessionObject);
 		} catch (Exception e) {
