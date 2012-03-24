@@ -194,6 +194,8 @@ public class SocketConnector implements Connector {
 
 	public static final String SERVER_PORT = "socket#ServerPort";
 
+	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
+
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
 
 	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
@@ -400,7 +402,11 @@ public class SocketConnector implements Connector {
 			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER_KEY);
 			final SSLSocketFactory factory;
 			if (trustManager == null) {
-				factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+				if (sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
+					factory = sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY);
+				} else {
+					factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+				}
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
 				ctx.init(new KeyManager[0], new TrustManager[] { trustManager }, new SecureRandom());
