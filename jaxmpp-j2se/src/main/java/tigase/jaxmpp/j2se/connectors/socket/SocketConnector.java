@@ -238,7 +238,7 @@ public class SocketConnector implements Connector {
 	 * Socket timeout.
 	 */
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
-
+	
 	private final Timer timer = new Timer(true);
 
 	private Worker worker;
@@ -415,7 +415,10 @@ public class SocketConnector implements Connector {
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
-			s1.setSoTimeout(SOCKET_TIMEOUT);
+			
+			if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null || !((Boolean) sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue()) {
+				s1.setSoTimeout(SOCKET_TIMEOUT);
+			}
 			s1.setUseClientMode(true);
 			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
@@ -583,7 +586,10 @@ public class SocketConnector implements Connector {
 			log.finest("Starting socket " + serverHost);
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
 			socket = new Socket(x, serverHost.getPort());
-			socket.setSoTimeout(SOCKET_TIMEOUT);
+			if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null || ((Boolean) sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue()) {
+				socket.setSoTimeout(SOCKET_TIMEOUT);
+			}
+//			writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
 			worker = new Worker(this);
