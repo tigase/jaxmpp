@@ -238,7 +238,7 @@ public class SocketConnector implements Connector {
 	 * Socket timeout.
 	 */
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
-	
+
 	private final Timer timer = new Timer(true);
 
 	private Worker worker;
@@ -415,10 +415,16 @@ public class SocketConnector implements Connector {
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
-			
-			if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null || !((Boolean) sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue()) {
-				s1.setSoTimeout(SOCKET_TIMEOUT);
-			}
+
+			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
+			// || !((Boolean)
+			// sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+			// {
+			// s1.setSoTimeout(SOCKET_TIMEOUT);
+			// }
+			s1.setSoTimeout(0);
+			s1.setKeepAlive(false);
+			s1.setTcpNoDelay(true);
 			s1.setUseClientMode(true);
 			s1.addHandshakeCompletedListener(new HandshakeCompletedListener() {
 
@@ -586,10 +592,16 @@ public class SocketConnector implements Connector {
 			log.finest("Starting socket " + serverHost);
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
 			socket = new Socket(x, serverHost.getPort());
-			if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null || ((Boolean) sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue()) {
-				socket.setSoTimeout(SOCKET_TIMEOUT);
-			}
-//			writer = new BufferedOutputStream(socket.getOutputStream());
+			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
+			// || ((Boolean)
+			// sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+			// {
+			// socket.setSoTimeout(SOCKET_TIMEOUT);
+			// }
+			socket.setSoTimeout(SOCKET_TIMEOUT);
+			socket.setKeepAlive(false);
+			socket.setTcpNoDelay(true);
+			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
 			reader = new InputStreamReader(socket.getInputStream());
 			worker = new Worker(this);

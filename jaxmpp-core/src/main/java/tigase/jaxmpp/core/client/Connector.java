@@ -149,7 +149,8 @@ public interface Connector {
 
 	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
 
-	public final static String DISABLE_SOCKET_TIMEOUT_KEY = "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
+	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
+	// "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
 
 	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
 
