@@ -21,7 +21,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class PingModule extends AbstractIQModule {
 
-	public abstract class PingAsyncCallback implements AsyncCallback {
+	public static abstract class PingAsyncCallback implements AsyncCallback {
 
 		private long pingTimestamp;
 
