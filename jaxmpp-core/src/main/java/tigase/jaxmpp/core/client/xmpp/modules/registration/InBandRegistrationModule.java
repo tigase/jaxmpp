@@ -102,9 +102,12 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		DefaultElement q = new DefaultElement("query", null, "jabber:iq:register");
 		iq.addChild(q);
-		q.addChild(new DefaultElement("username", username, null));
-		q.addChild(new DefaultElement("password", password, null));
-		q.addChild(new DefaultElement("email", email, null));
+		if (username != null && username.length() > 0)
+			q.addChild(new DefaultElement("username", username, null));
+		if (password != null && password.length() > 0)
+			q.addChild(new DefaultElement("password", password, null));
+		if (email != null && email.length() > 0)
+			q.addChild(new DefaultElement("email", email, null));
 
 		writer.write(iq, asyncCallback);
 
