@@ -22,7 +22,8 @@ public class BoshConnector extends AbstractBoshConnector {
 		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 
 		requestBuilder = new RequestBuilder(RequestBuilder.POST, u);
-		requestBuilder.setHeader("Connection", "close");
+                // in Chrome following line causes error (Connection: close is not allowed in new spec)
+//		requestBuilder.setHeader("Connection", "close");
 	}
 
 	@Override
