@@ -172,6 +172,10 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	private void intLogin() throws JaxmppException {
+                if (this.isConnected()) {
+                        this.connector.stop(true);
+                }
+                
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
