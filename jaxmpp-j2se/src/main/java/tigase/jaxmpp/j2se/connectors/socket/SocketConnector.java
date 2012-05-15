@@ -503,7 +503,9 @@ public class SocketConnector implements Connector {
 			sb.append("from='").append(from.toString()).append("' ");
 		}
 
-		sb.append("to='").append((String) sessionObject.getProperty(SessionObject.SERVER_NAME)).append("' ");
+		String to = from.getDomain();
+
+		sb.append("to='").append(to).append("' ");
 		sb.append("xmlns='jabber:client' ");
 		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
 		sb.append("version='1.0'>");
