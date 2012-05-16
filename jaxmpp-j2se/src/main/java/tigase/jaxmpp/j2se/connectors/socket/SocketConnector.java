@@ -499,13 +499,18 @@ public class SocketConnector implements Connector {
 		sb.append("<stream:stream ");
 
 		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+		String to;
 		if (from != null) {
+			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");
+		} else {
+			to = sessionObject.getProperty(SessionObject.SERVER_NAME);
 		}
 
-		String to = from.getDomain();
+		if (to != null) {
+			sb.append("to='").append(to).append("' ");
+		}
 
-		sb.append("to='").append(to).append("' ");
 		sb.append("xmlns='jabber:client' ");
 		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
 		sb.append("version='1.0'>");
