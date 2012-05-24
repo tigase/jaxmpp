@@ -7,12 +7,15 @@ import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class Room {
+
+	private final long id;
 
 	private boolean joined;
 
@@ -26,11 +29,15 @@ public class Room {
 
 	private final BareJID roomJid;
 
+	private final SessionObject sessionObject;
+
 	private final Map<String, Occupant> tempOccupants = new HashMap<String, Occupant>();
 
 	private final PacketWriter writer;
 
-	public Room(PacketWriter writer, BareJID roomJid, String nickname) {
+	public Room(long id, PacketWriter writer, BareJID roomJid, String nickname, SessionObject sessionObject) {
+		this.id = id;
+		this.sessionObject = sessionObject;
 		this.roomJid = roomJid;
 		this.nickname = nickname;
 		this.writer = writer;
@@ -39,6 +46,10 @@ public class Room {
 
 	public void add(Occupant occupant) throws XMLException {
 		this.presences.put(occupant.getNickname(), occupant);
+	}
+
+	public long getId() {
+		return id;
 	}
 
 	public String getNickname() {
@@ -51,6 +62,10 @@ public class Room {
 
 	public BareJID getRoomJid() {
 		return roomJid;
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 
 	public Map<String, Occupant> getTempOccupants() {

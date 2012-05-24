@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,6 +91,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		}
 
 	}
+
+	private static long chatIds = 1;
 
 	public static final EventType MessageError = new EventType();
 
@@ -210,6 +213,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		return null;
 	}
 
+	public Collection<Room> getRooms() {
+		return this.rooms.values();
+	}
+
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
 		return join(roomName, mucServer, nickname, null);
 	}
@@ -220,7 +227,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (this.rooms.containsKey(roomJid))
 			return this.rooms.get(roomJid);
 
-		Room room = new Room(writer, roomJid, nickname);
+		Room room = new Room(chatIds++, writer, roomJid, nickname, sessionObject);
 		register(room);
 
 		Presence presence = Presence.create();
