@@ -349,7 +349,7 @@ public class VCard implements Serializable {
 
 		add(vcard, "EMAIL", new String[] { "WORK", "USERID" }, new String[] { null, this.workEmail });
 
-		add(vcard, "PHOTO", new String[] { "TYPR", "BINVAL" }, new String[] { this.photoType, this.photoVal });
+		add(vcard, "PHOTO", new String[] { "TYPE", "BINVAL" }, new String[] { this.photoType, this.photoVal });
 
 		return vcard;
 	}
