@@ -94,6 +94,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private static long chatIds = 1;
 
+	public static final EventType JoinRequested = new EventType();
+
 	public static final EventType MessageError = new EventType();
 
 	public static final EventType MucMessageReceived = new EventType();
@@ -177,6 +179,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		fireYouJoinedEvent(null, null, room, null);
 	}
 
+	private void fireJoinRequestedEvent(Presence element, String nickname, Room room) throws JaxmppException {
+		MucEvent event = new MucEvent(JoinRequested, sessionObject);
+		fireMucEvent(event, element, nickname, room, null);
+	}
+
 	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant)
 			throws JaxmppException {
 		if (event == null)
@@ -241,6 +248,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		writer.write(presence);
 
+		fireJoinRequestedEvent(presence, nickname, room);
 		return room;
 	}
 
