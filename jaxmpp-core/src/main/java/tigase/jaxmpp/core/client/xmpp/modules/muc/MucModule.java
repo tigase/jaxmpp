@@ -1,6 +1,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,6 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
@@ -29,12 +29,15 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static class MucEvent extends AbstractMessageEvent {
 
 		private static final long serialVersionUID = 1L;
+
+		private Date date;
 
 		private String nickname;
 
@@ -48,6 +51,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public MucEvent(EventType type, SessionObject sessionObject) {
 			super(type, sessionObject);
+		}
+
+		public Date getDate() {
+			return date;
 		}
 
 		public String getNickname() {
@@ -68,6 +75,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public Room getRoom() {
 			return room;
+		}
+
+		public void setDate(Date date) {
+			this.date = date;
 		}
 
 		public void setNickname(String nickname) {
@@ -126,6 +137,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private final Criteria crit;
 
+	private final DateTimeFormat dtf;
+
 	private final Observable observable;
 
 	private final Map<BareJID, Room> rooms = new HashMap<BareJID, Room>();
@@ -146,6 +159,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 				return checkElement(element);
 			}
 		};
+		dtf = new DateTimeFormat();
+
 	}
 
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -235,18 +250,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return this.rooms.get(roomJid);
 
 		Room room = new Room(chatIds++, writer, roomJid, nickname, sessionObject);
+		room.setPassword(password);
 		register(room);
 
-		Presence presence = Presence.create();
-		presence.setTo(JID.jidInstance(roomJid, nickname));
-		final DefaultElement x = new DefaultElement("x", null, "http://jabber.org/protocol/muc");
-		presence.addChild(x);
-
-		if (password != null) {
-			x.addChild(new DefaultElement("password", password, null));
-		}
-
-		writer.write(presence);
+		Presence presence = room.rejoin();
 
 		fireJoinRequestedEvent(presence, nickname, room);
 		return room;
@@ -298,9 +305,19 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 				event = new MucEvent(MucMessageReceived, sessionObject);
 			}
 
+			final Element delay = element.getChildrenNS("delay", "urn:xmpp:delay");
+			Date delayTime;
+			if (delay != null && delay.getAttribute("stamp") != null) {
+				delayTime = dtf.parse(delay.getAttribute("stamp"));
+			} else {
+				delayTime = null;
+			}
+
 			event.setMessage(element);
 			event.setRoom(room);
 			event.setNickname(nickname);
+			event.setDate(delayTime == null ? new Date() : delayTime);
+			room.setLastMessageDate(event.date);
 			observable.fireEvent(event);
 		}
 	}
