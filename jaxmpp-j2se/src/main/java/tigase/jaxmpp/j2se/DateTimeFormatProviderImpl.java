@@ -2,18 +2,23 @@ package tigase.jaxmpp.j2se;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
 
 public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 
-	private final SimpleDateFormat d1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private final SimpleDateFormat d1;
 
-	private final SimpleDateFormat d2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+	public DateTimeFormatProviderImpl() {
+		d1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		d1.setTimeZone(TimeZone.getTimeZone("GMT"));
+	}
 
 	@Override
 	public String format(Date date) {
-		return d1.format(date);
+		Date d = new Date(date.getTime());
+		return d1.format(d);
 	}
 
 	@Override
@@ -21,11 +26,7 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 		try {
 			return d1.parse(t);
 		} catch (Exception e) {
-			try {
-				return d2.parse(t);
-			} catch (Exception e1) {
-				return null;
-			}
+			return null;
 		}
 	}
 
