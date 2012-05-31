@@ -101,7 +101,7 @@ public class Room {
 		if (lastMessageDate != null) {
 			DateTimeFormat dtf = new DateTimeFormat();
 			DefaultElement history = new DefaultElement("history", null, null);
-			// history.setAttribute("since", dtf.format(lastMessageDate));
+			history.setAttribute("since", dtf.format(lastMessageDate));
 			x.addChild(history);
 		}
 
@@ -128,7 +128,9 @@ public class Room {
 	}
 
 	void setLastMessageDate(Date date) {
-		this.lastMessageDate = date;
+		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
+			this.lastMessageDate = date;
+		}
 	}
 
 	public void setLeaved(boolean b) {
