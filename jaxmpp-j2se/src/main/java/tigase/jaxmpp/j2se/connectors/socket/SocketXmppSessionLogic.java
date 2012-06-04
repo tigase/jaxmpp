@@ -10,6 +10,8 @@ import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
+import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule.SessionEstablishmentEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
@@ -34,6 +36,10 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	private Listener<ResourceBindEvent> resourceBindListener;
 
 	private final Listener<AuthModule.AuthEvent> saslEventListener;
+
+	private Listener<SessionEstablishmentEvent> sessionEstablishmentListener;
+
+	private SessionEstablishmentModule sessionEstablishmentModule;
 
 	private SessionListener sessionListener;
 
@@ -86,6 +92,13 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			}
 		};
+		this.sessionEstablishmentListener = new Listener<SessionEstablishmentModule.SessionEstablishmentEvent>() {
+
+			@Override
+			public void handleEvent(SessionEstablishmentEvent be) throws JaxmppException {
+				sessionBindedAndEstablished();
+			}
+		};
 	}
 
 	@Override
@@ -105,11 +118,16 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
 		authModule = this.modulesManager.getModule(AuthModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
+		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
 
 		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
 		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
 		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
 		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentSuccess,
+				this.sessionEstablishmentListener);
+		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentError,
+				this.sessionEstablishmentListener);
 
 	}
 
@@ -127,15 +145,10 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	}
 
 	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
-		try {
-			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
-			roster.rosterRequest();
-
-			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
-			presence.sendInitialPresence();
-		} catch (XMLException e) {
-			e.printStackTrace();
-		}
+		if (SessionEstablishmentModule.isSessionEstablishingAvailable(sessionObject)) {
+			modulesManager.getModule(SessionEstablishmentModule.class).establish();
+		} else
+			sessionBindedAndEstablished();
 	}
 
 	protected void processSaslEvent(SaslEvent be) throws JaxmppException {
@@ -167,12 +180,30 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
+	private void sessionBindedAndEstablished() throws JaxmppException {
+		try {
+			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
+			roster.rosterRequest();
+
+			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
+			presence.sendInitialPresence();
+		} catch (XMLException e) {
+			e.printStackTrace();
+		}
+	}
+
 	@Override
 	public void unbind() throws JaxmppException {
 		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
 		authModule.removeListener(AuthModule.AuthSuccess, this.saslEventListener);
 		authModule.removeListener(AuthModule.AuthFailed, this.saslEventListener);
 		resourceBinder.removeListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+
+		this.sessionEstablishmentModule.removeListener(SessionEstablishmentModule.SessionEstablishmentSuccess,
+				this.sessionEstablishmentListener);
+		this.sessionEstablishmentModule.removeListener(SessionEstablishmentModule.SessionEstablishmentError,
+				this.sessionEstablishmentListener);
+
 	}
 
 }

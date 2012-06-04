@@ -14,6 +14,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.adhoc.AdHocCommansModule;
@@ -237,6 +238,8 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new VCardModule(sessionObject, writer));
 		this.modulesManager.register(new InBandRegistrationModule(observable, sessionObject, writer));
+
+		this.modulesManager.register(new SessionEstablishmentModule(observable, sessionObject, writer));
 
 		this.modulesManager.init();
 	}
