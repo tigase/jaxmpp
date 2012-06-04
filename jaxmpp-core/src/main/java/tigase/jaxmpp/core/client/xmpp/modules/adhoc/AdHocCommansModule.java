@@ -21,6 +21,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoEvent;
@@ -127,6 +128,10 @@ public class AdHocCommansModule extends AbstractIQModule {
 		if (action != null)
 			command.setAttribute("action", action.name());
 
+                if (data != null) {
+                        command.addChild(data.createSubmitableElement(XDataType.submit));
+                }
+                
 		iq.addChild(command);
 
 		writer.write(iq, asyncCallback);
