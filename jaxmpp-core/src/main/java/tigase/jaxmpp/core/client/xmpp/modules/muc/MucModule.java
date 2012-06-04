@@ -2,8 +2,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
@@ -13,6 +11,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -141,11 +140,18 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private final Observable observable;
 
-	private final Map<BareJID, Room> rooms = new HashMap<BareJID, Room>();
+	private AbstractRoomsManager roomsManager;
 
 	public MucModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = new Observable(parentObservable);
+
+		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
+		this.roomsManager = cm != null ? cm : new DefaultRoomsManager();
+		this.roomsManager.setObservable(this.observable);
+		this.roomsManager.setPacketWriter(packetWriter);
+		this.roomsManager.setSessionObject(sessionObject);
+		this.roomsManager.initialize();
 
 		this.crit = new Criteria() {
 
@@ -185,7 +191,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		final BareJID roomJid = BareJID.bareJIDInstance(from);
 
-		boolean result = this.rooms.containsKey(roomJid);
+		boolean result = this.roomsManager.contains(roomJid);
 
 		return result;
 	}
@@ -236,7 +242,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public Collection<Room> getRooms() {
-		return this.rooms.values();
+		return this.roomsManager.getRooms();
 	}
 
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
@@ -246,12 +252,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public Room join(final String roomName, final String mucServer, final String nickname, final String password)
 			throws XMLException, JaxmppException {
 		final BareJID roomJid = BareJID.bareJIDInstance(roomName, mucServer);
-		if (this.rooms.containsKey(roomJid))
-			return this.rooms.get(roomJid);
+		if (this.roomsManager.contains(roomJid))
+			return this.roomsManager.get(roomJid);
 
-		Room room = new Room(chatIds++, writer, roomJid, nickname, sessionObject);
-		room.setPassword(password);
-		register(room);
+		Room room = this.roomsManager.createRoomInstance(roomJid, nickname, password);
+		this.roomsManager.register(room);
 
 		Presence presence = room.rejoin();
 
@@ -267,7 +272,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			presence.setTo(JID.jidInstance(room.getRoomJid(), room.getNickname()));
 			writer.write(presence);
 		}
-		this.rooms.remove(room.getRoomJid());
+		this.roomsManager.remove(room);
 	}
 
 	@Override
@@ -284,7 +289,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		final JID from = element.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
-		Room room = this.rooms.get(roomJid);
+		Room room = this.roomsManager.get(roomJid);
 		if (room == null)
 			return;
 		// throw new XMPPException(ErrorCondition.service_unavailable);
@@ -326,13 +331,14 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		final JID from = element.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
-		Room room = this.rooms.get(roomJid);
+		Room room = this.roomsManager.get(roomJid);
 		if (room == null)
 			throw new XMPPException(ErrorCondition.service_unavailable);
 
 		if (element.getType() == StanzaType.error && !room.isJoined() && nickname == null) {
 			room.setLeaved(true);
-			this.rooms.remove(room.getRoomJid());
+			room.setJoined(false);
+			// this.rooms.remove(room.getRoomJid());
 			MucEvent event = new MucEvent(RoomClosed, sessionObject);
 			event.setNickname(nickname);
 			event.setPresence(element);
@@ -352,7 +358,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		if (element.getType() == StanzaType.unavailable && nickname.equals(room.getNickname())) {
 			room.setLeaved(true);
-			this.rooms.remove(room.getRoomJid());
+			// this.roomsManager.remove(room.getRoomJid());
 		}
 
 		final XMucUserElement xUser = XMucUserElement.extract(element);
@@ -390,6 +396,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			room.add(occupant);
 			if (!room.isJoined() && xUser != null && xUser.getStatuses().contains(110)) {
 				room.setJoined(true);
+				room.setLeaved(false);
 				fireYouJoinedEvent(element, nickname, room, occupant);
 			}
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
@@ -407,10 +414,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			fireNewRoomCreatedEvent(element, nickname, room, occupant);
 		}
 
-	}
-
-	public void register(Room room) {
-		this.rooms.put(room.getRoomJid(), room);
 	}
 
 	public void removeAllListeners() {

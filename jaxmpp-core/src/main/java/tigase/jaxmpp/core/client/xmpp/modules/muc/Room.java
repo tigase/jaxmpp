@@ -60,6 +60,10 @@ public class Room {
 		return id;
 	}
 
+	public Date getLastMessageDate() {
+		return lastMessageDate;
+	}
+
 	public String getNickname() {
 		return nickname;
 	}
@@ -127,7 +131,7 @@ public class Room {
 		this.joined = joined;
 	}
 
-	void setLastMessageDate(Date date) {
+	public void setLastMessageDate(Date date) {
 		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
 			this.lastMessageDate = date;
 		}
@@ -137,7 +141,7 @@ public class Room {
 		this.leaved = b;
 	}
 
-	void setPassword(String password) {
+	public void setPassword(String password) {
 		this.password = password;
 	}
 
