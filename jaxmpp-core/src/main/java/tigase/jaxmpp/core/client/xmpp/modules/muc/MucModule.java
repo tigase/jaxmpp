@@ -24,6 +24,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -127,6 +128,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	 * error.
 	 */
 	public static final EventType RoomClosed = new EventType();
+
+	public static final EventType StateChange = new EventType();
 
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
@@ -255,7 +258,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (this.roomsManager.contains(roomJid))
 			return this.roomsManager.get(roomJid);
 
-		Room room = this.roomsManager.createRoomInstance(roomJid, nickname, password);
+		Room room = this.roomsManager.createRoomInstance(observable, roomJid, nickname, password);
 		this.roomsManager.register(room);
 
 		Presence presence = room.rejoin();
@@ -265,8 +268,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public void leave(Room room) throws XMLException, JaxmppException {
-		if (!room.isLeaved()) {
-			room.setLeaved(true);
+		if (room.getState() == State.joined) {
+			room.setState(State.not_joined);
 			Presence presence = Presence.create();
 			presence.setType(StanzaType.unavailable);
 			presence.setTo(JID.jidInstance(room.getRoomJid(), room.getNickname()));
@@ -335,9 +338,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (room == null)
 			throw new XMPPException(ErrorCondition.service_unavailable);
 
-		if (element.getType() == StanzaType.error && !room.isJoined() && nickname == null) {
-			room.setLeaved(true);
-			room.setJoined(false);
+		if (element.getType() == StanzaType.error && room.getState() != State.joined && nickname == null) {
+			room.setState(State.not_joined);
 			// this.rooms.remove(room.getRoomJid());
 			MucEvent event = new MucEvent(RoomClosed, sessionObject);
 			event.setNickname(nickname);
@@ -357,7 +359,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return;
 
 		if (element.getType() == StanzaType.unavailable && nickname.equals(room.getNickname())) {
-			room.setLeaved(true);
+			room.setState(State.not_joined);
 			// this.roomsManager.remove(room.getRoomJid());
 		}
 
@@ -394,9 +396,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			}
 			occupant.setPresence(element);
 			room.add(occupant);
-			if (!room.isJoined() && xUser != null && xUser.getStatuses().contains(110)) {
-				room.setJoined(true);
-				room.setLeaved(false);
+			if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
+				room.setState(State.joined);
 				fireYouJoinedEvent(element, nickname, room, occupant);
 			}
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
