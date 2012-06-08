@@ -128,10 +128,10 @@ public class AdHocCommansModule extends AbstractIQModule {
 		if (action != null)
 			command.setAttribute("action", action.name());
 
-                if (data != null) {
-                        command.addChild(data.createSubmitableElement(XDataType.submit));
-                }
-                
+		if (data != null) {
+			command.addChild(data.createSubmitableElement(XDataType.submit));
+		}
+
 		iq.addChild(command);
 
 		writer.write(iq, asyncCallback);

@@ -149,25 +149,25 @@ public class DiscoItemsModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-        public void getItems(JID jid, AsyncCallback callback) throws XMLException, JaxmppException {
-                getItems(jid, null, callback);
-        }
+	public void getItems(JID jid, AsyncCallback callback) throws XMLException, JaxmppException {
+		getItems(jid, null, callback);
+	}
+
+	public void getItems(JID jid, DiscoItemsAsyncCallback callback) throws XMLException, JaxmppException {
+		getItems(jid, (AsyncCallback) callback);
+	}
 
 	public void getItems(JID jid, String node, AsyncCallback callback) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(jid);
 		iq.setType(StanzaType.get);
-                Element query = new DefaultElement("query", null, "http://jabber.org/protocol/disco#items");
-                if (node != null) {
-                        query.setAttribute("node", node);
-                }
+		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/disco#items");
+		if (node != null) {
+			query.setAttribute("node", node);
+		}
 		iq.addChild(query);
 
 		writer.write(iq, callback);
-	}
-
-	public void getItems(JID jid, DiscoItemsAsyncCallback callback) throws XMLException, JaxmppException {
-		getItems(jid, (AsyncCallback) callback);
 	}
 
 	@Override
