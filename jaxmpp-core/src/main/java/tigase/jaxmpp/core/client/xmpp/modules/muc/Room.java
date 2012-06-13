@@ -159,6 +159,7 @@ public class Room {
 			try {
 				observable.fireEvent(e);
 			} catch (JaxmppException e1) {
+				e1.printStackTrace();
 			}
 		}
 	}

@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore.Handler;
@@ -106,7 +107,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public PresenceModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		this.sessionObject.getPresence().setHandler(new Handler() {
 
 			@Override

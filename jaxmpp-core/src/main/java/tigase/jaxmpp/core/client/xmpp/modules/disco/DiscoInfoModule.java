@@ -18,6 +18,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -168,7 +169,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 			XmppModulesManager modulesManager) {
 		super(sessionObject, packetWriter);
 		this.modulesManager = modulesManager;
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		this.observable.addListener(new Listener<DiscoInfoEvent>() {
 
 			@Override

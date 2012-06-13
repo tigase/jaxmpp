@@ -53,7 +53,7 @@ public class BaseEvent implements Serializable {
 	 * 
 	 * @param b
 	 */
-	void setHandled(boolean b) {
+	public void setHandled(boolean b) {
 		this.handled = b;
 
 	}

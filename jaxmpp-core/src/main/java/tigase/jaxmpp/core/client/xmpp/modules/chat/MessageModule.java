@@ -14,6 +14,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -75,7 +76,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
 		this.chatManager.setObservable(this.observable);

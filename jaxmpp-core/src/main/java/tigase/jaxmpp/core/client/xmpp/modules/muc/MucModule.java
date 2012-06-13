@@ -16,6 +16,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
@@ -147,7 +148,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public MucModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 
 		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
 		this.roomsManager = cm != null ? cm : new DefaultRoomsManager();
@@ -258,7 +259,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (this.roomsManager.contains(roomJid))
 			return this.roomsManager.get(roomJid);
 
-		Room room = this.roomsManager.createRoomInstance(observable, roomJid, nickname, password);
+		Room room = this.roomsManager.createRoomInstance(roomJid, nickname, password);
 		this.roomsManager.register(room);
 
 		Presence presence = room.rejoin();
@@ -396,14 +397,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			}
 			occupant.setPresence(element);
 			room.add(occupant);
-			if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
-				room.setState(State.joined);
-				fireYouJoinedEvent(element, nickname, room, occupant);
-			}
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
 			occupant.setPresence(element);
 			room.remove(occupant);
 			event = new MucEvent(OccupantLeaved, sessionObject);
+		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
+			room.setState(State.joined);
+			event = new MucEvent(YouJoined, sessionObject);
 		} else {
 			occupant.setPresence(element);
 			event = new MucEvent(OccupantChangedPresence, sessionObject);

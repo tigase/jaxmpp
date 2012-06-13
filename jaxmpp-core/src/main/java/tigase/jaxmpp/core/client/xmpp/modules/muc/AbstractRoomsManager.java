@@ -23,8 +23,7 @@ public abstract class AbstractRoomsManager {
 		return this.rooms.containsKey(roomJid);
 	}
 
-	protected abstract Room createRoomInstance(Observable observable, final BareJID roomJid, final String nickname,
-			final String password);
+	protected abstract Room createRoomInstance(final BareJID roomJid, final String nickname, final String password);
 
 	public Room get(BareJID roomJid) {
 		return this.rooms.get(roomJid);

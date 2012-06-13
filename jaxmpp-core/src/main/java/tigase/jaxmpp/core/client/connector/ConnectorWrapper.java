@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -19,7 +20,7 @@ public class ConnectorWrapper implements Connector {
 	protected final Observable observable;
 
 	public ConnectorWrapper(Observable parentObservable) {
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 	}
 
 	@Override
