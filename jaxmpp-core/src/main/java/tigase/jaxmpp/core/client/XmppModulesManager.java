@@ -66,4 +66,11 @@ public class XmppModulesManager {
 		return plugin;
 	}
 
+	@SuppressWarnings("unchecked")
+	public <T extends XmppModule> T unregister(T plugin) {
+		this.modulesByClasses.remove((Class<XmppModule>) plugin.getClass());
+		this.modules.remove(plugin);
+		return plugin;
+	}
+	
 }
