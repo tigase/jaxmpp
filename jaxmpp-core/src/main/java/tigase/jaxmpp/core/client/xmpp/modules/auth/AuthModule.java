@@ -13,6 +13,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
@@ -82,7 +83,7 @@ public class AuthModule implements XmppModule {
 	private final SessionObject sessionObject;
 
 	public AuthModule(Observable parentObservable, SessionObject sessionObject, XmppModulesManager modulesManager) {
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		this.modulesManager = modulesManager;
 		this.sessionObject = sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());

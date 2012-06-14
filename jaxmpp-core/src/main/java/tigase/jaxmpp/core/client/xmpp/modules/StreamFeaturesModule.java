@@ -13,6 +13,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 
 public class StreamFeaturesModule implements XmppModule {
@@ -52,7 +53,7 @@ public class StreamFeaturesModule implements XmppModule {
 	protected final SessionObject sessionObject;
 
 	public StreamFeaturesModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		this.packetWriter = packetWriter;

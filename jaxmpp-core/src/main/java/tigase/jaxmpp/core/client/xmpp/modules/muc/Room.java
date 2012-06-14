@@ -10,8 +10,10 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MucEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -19,17 +21,21 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class Room {
 
+	public static enum State {
+		joined,
+		not_joined,
+		requested
+	}
+
 	private final long id;
 
-	private boolean joined;
-
 	private Date lastMessageDate;
-
-	private boolean leaved;
 
 	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	private String nickname;
+
+	private Observable observable;
 
 	private String password;
 
@@ -38,6 +44,8 @@ public class Room {
 	private final BareJID roomJid;
 
 	private final SessionObject sessionObject;
+
+	private State state = State.not_joined;
 
 	private final Map<String, Occupant> tempOccupants = new HashMap<String, Occupant>();
 
@@ -60,8 +68,16 @@ public class Room {
 		return id;
 	}
 
+	public Date getLastMessageDate() {
+		return lastMessageDate;
+	}
+
 	public String getNickname() {
 		return nickname;
+	}
+
+	public Observable getObservable() {
+		return observable;
 	}
 
 	public Map<String, Occupant> getPresences() {
@@ -76,16 +92,12 @@ public class Room {
 		return sessionObject;
 	}
 
+	public State getState() {
+		return state;
+	}
+
 	public Map<String, Occupant> getTempOccupants() {
 		return tempOccupants;
-	}
-
-	public boolean isJoined() {
-		return joined;
-	}
-
-	public boolean isLeaved() {
-		return leaved;
 	}
 
 	public Presence rejoin() throws JaxmppException {
@@ -105,6 +117,7 @@ public class Room {
 			x.addChild(history);
 		}
 
+		setState(State.requested);
 		writer.write(presence);
 
 		return presence;
@@ -123,22 +136,32 @@ public class Room {
 		this.writer.write(msg);
 	}
 
-	public void setJoined(boolean joined) {
-		this.joined = joined;
-	}
-
-	void setLastMessageDate(Date date) {
+	public void setLastMessageDate(Date date) {
 		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
 			this.lastMessageDate = date;
 		}
 	}
 
-	public void setLeaved(boolean b) {
-		this.leaved = b;
+	public void setObservable(Observable observable) {
+		this.observable = observable;
 	}
 
-	void setPassword(String password) {
+	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	void setState(State state) {
+		this.state = state;
+		if (observable != null) {
+			MucEvent e = new MucEvent(MucModule.StateChange, sessionObject);
+			e.setRoom(this);
+
+			try {
+				observable.fireEvent(e);
+			} catch (JaxmppException e1) {
+				e1.printStackTrace();
+			}
+		}
 	}
 
 }

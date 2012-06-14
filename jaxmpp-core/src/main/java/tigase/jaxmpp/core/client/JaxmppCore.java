@@ -9,6 +9,7 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
@@ -66,7 +67,7 @@ public abstract class JaxmppCore {
 
 	protected final XmppModulesManager modulesManager;
 
-	protected final Observable observable = new Observable(null);
+	protected final Observable observable;
 
 	protected Processor processor;
 
@@ -113,6 +114,7 @@ public abstract class JaxmppCore {
 	public JaxmppCore(SessionObject sessionObject) {
 		this.sessionObject = sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());
+		observable = ObservableFactory.instance(null);
 
 		modulesManager = new XmppModulesManager();
 
@@ -213,9 +215,10 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
 
+		MucModule mucModule = this.modulesManager.register(new MucModule(observable, sessionObject, writer));
+
 		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
 
-		MucModule mucModule = this.modulesManager.register(new MucModule(observable, sessionObject, writer));
 		final MessageModule messageModule = this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
 		mucModule.setChatManager(messageModule.getChatManager());
 

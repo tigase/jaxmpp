@@ -16,6 +16,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -94,7 +95,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected final SessionObject sessionObject;
 
 	public AbstractBoshConnector(Observable parentObservable, SessionObject sessionObject) {
-		this.observable = new Observable(parentObservable);
+		this.observable = ObservableFactory.instance(parentObservable);
 		this.log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		sessionObject.setProperty(DEFAULT_TIMEOUT_KEY, "30");
@@ -376,7 +377,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void setObservable(Observable observable) {
 		if (observable == null)
-			this.observable = new Observable(null);
+			this.observable = ObservableFactory.instance(null);
 		else
 			this.observable = observable;
 	}

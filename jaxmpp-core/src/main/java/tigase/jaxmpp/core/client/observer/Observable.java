@@ -1,12 +1,5 @@
 package tigase.jaxmpp.core.client.observer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
@@ -15,7 +8,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * {@linkplain BaseEvent events}.
  * 
  * <pre>
- * Observable observable = new Observable(null);
+ * Observable observable = ObservableFactory.instance(null);
  * observable.addListener(ResourceBinderModule.ResourceBindSuccess, new Listener&lt;ResourceBinderModule.ResourceBindEvent&gt;() {
  * 	public void handleEvent(ResourceBindEvent be) {
  * 	}
@@ -26,33 +19,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * @author bmalkow
  * 
  */
-public class Observable {
-
-	private final List<Listener<? extends BaseEvent>> everythingListener = new ArrayList<Listener<? extends BaseEvent>>();
-
-	private final Map<EventType, List<Listener<? extends BaseEvent>>> listeners = new HashMap<EventType, List<Listener<? extends BaseEvent>>>();
-
-	private final Logger log = Logger.getLogger(this.getClass().getName());
-
-	private final Observable parent;
-
-	/**
-	 * Creates new instance of Observable.
-	 */
-	public Observable() {
-		this(null);
-	}
-
-	/**
-	 * Creates new instance of Observable.
-	 * 
-	 * @param parent
-	 *            parent observable object. All events will be sent also to
-	 *            parent.
-	 */
-	public Observable(Observable parent) {
-		this.parent = parent;
-	}
+public interface Observable {
 
 	/**
 	 * Adds a listener bound by the given event type.
@@ -62,16 +29,7 @@ public class Observable {
 	 * @param listener
 	 *            the listener
 	 */
-	public void addListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
-		synchronized (this.listeners) {
-			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-			if (lst == null) {
-				lst = new ArrayList<Listener<? extends BaseEvent>>();
-				listeners.put(eventType, lst);
-			}
-			lst.add(listener);
-		}
-	}
+	public void addListener(final EventType eventType, Listener<? extends BaseEvent> listener);
 
 	/**
 	 * Add a listener bound by the all event types.
@@ -79,11 +37,7 @@ public class Observable {
 	 * @param listener
 	 *            the listener
 	 */
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		synchronized (this.everythingListener) {
-			this.everythingListener.add(listener);
-		}
-	}
+	public void addListener(Listener<? extends BaseEvent> listener);
 
 	/**
 	 * Fires an event.
@@ -92,9 +46,7 @@ public class Observable {
 	 *            event
 	 * @throws JaxmppException
 	 */
-	public void fireEvent(BaseEvent event) throws JaxmppException {
-		fireEvent(event.getType(), event);
-	}
+	public void fireEvent(BaseEvent event) throws JaxmppException;
 
 	/**
 	 * Fires an event.
@@ -104,39 +56,7 @@ public class Observable {
 	 * @param event
 	 *            event
 	 */
-	@SuppressWarnings("unchecked")
-	public void fireEvent(final EventType eventType, final BaseEvent event) throws JaxmppException {
-		try {
-			// if (log.isLoggable(Level.FINEST))
-			// log.finest("Fire event " + eventType);
-			synchronized (this.listeners) {
-				List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-				if (lst != null) {
-					event.setHandled(true);
-					for (Listener<? extends BaseEvent> listener : lst) {
-						((Listener<BaseEvent>) listener).handleEvent(event);
-					}
-				}
-			}
-			synchronized (everythingListener) {
-				if (!everythingListener.isEmpty()) {
-					event.setHandled(true);
-					for (Listener<? extends BaseEvent> listener : this.everythingListener) {
-						((Listener<BaseEvent>) listener).handleEvent(event);
-					}
-				}
-			}
-		} catch (JaxmppException e) {
-			log.log(Level.WARNING, "Problem on calling observers", e);
-			throw e;
-		} catch (Exception e) {
-			log.log(Level.WARNING, "Problem on calling observers", e);
-			throw new JaxmppException(e);
-		}
-		if (parent != null) {
-			parent.fireEvent(eventType, event);
-		}
-	}
+	public void fireEvent(final EventType eventType, final BaseEvent event) throws JaxmppException;
 
 	/**
 	 * Fires {@linkplain BaseEvent BaseEvent}.
@@ -144,21 +64,12 @@ public class Observable {
 	 * @param eventType
 	 * @throws JaxmppException
 	 */
-	public void fireEvent(final EventType eventType, final SessionObject sessionObject) throws JaxmppException {
-		fireEvent(eventType, new BaseEvent(eventType, sessionObject));
-	}
+	public void fireEvent(final EventType eventType, final SessionObject sessionObject) throws JaxmppException;
 
 	/**
 	 * Removes all listeners.
 	 */
-	public void removeAllListeners() {
-		synchronized (this.everythingListener) {
-			everythingListener.clear();
-		}
-		synchronized (this.listeners) {
-			listeners.clear();
-		}
-	}
+	public void removeAllListeners();
 
 	/**
 	 * Removes a listener.
@@ -168,17 +79,7 @@ public class Observable {
 	 * @param listener
 	 *            listener
 	 */
-	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
-		synchronized (this.listeners) {
-			List<Listener<? extends BaseEvent>> lst = listeners.get(eventType);
-			if (lst != null) {
-				lst.remove(listener);
-				if (lst.isEmpty()) {
-					listeners.remove(eventType);
-				}
-			}
-		}
-	}
+	public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener);
 
 	/**
 	 * Removes a listener.
@@ -188,10 +89,5 @@ public class Observable {
 	 * @param listener
 	 *            listener
 	 */
-	public void removeListener(Listener<? extends BaseEvent> listener) {
-		synchronized (this.everythingListener) {
-			this.everythingListener.remove(listener);
-		}
-	}
-
+	public void removeListener(Listener<? extends BaseEvent> listener);
 }

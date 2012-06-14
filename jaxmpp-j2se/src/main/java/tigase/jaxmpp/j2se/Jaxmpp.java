@@ -13,6 +13,9 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import tigase.jaxmpp.core.client.observer.ObservableFactory.FactorySpi;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -23,6 +26,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
+import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
 
 public class Jaxmpp extends JaxmppCore {
 
@@ -40,13 +44,25 @@ public class Jaxmpp extends JaxmppCore {
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
+	static {
+		ObservableFactory.setFactorySpi(new FactorySpi() {
+
+			@Override
+			public Observable create() {
+				return create(null);
+			}
+
+			@Override
+			public Observable create(Observable parent) {
+				return new ThreadSafeObservable(parent);
+			}
+		});
+		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
+	}
+
 	private Executor executor;
 
 	private final Timer timer = new Timer(true);
-
-	{
-		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
-	}
 
 	public Jaxmpp() {
 		this(new DefaultSessionObject());

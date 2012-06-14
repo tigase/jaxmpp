@@ -11,6 +11,7 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -55,7 +56,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 	public NonSaslAuthModule(Observable parent, SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
-		this.observable = new Observable(parent);
+		this.observable = ObservableFactory.instance(parent);
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {
