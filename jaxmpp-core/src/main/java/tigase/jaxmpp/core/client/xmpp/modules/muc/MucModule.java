@@ -124,7 +124,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final EventType PresenceError = new EventType();
 
-	/**
+	/**     
 	 * Local instance of Chat Room was closed because of, for example, presence
 	 * error.
 	 */
@@ -385,6 +385,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			room.remove(occupant);
 			room.getTempOccupants().put(newNickName, occupant);
 			log.finer(element.getFrom() + " wants to change nickname to " + newNickName);
+		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
+			room.setState(State.joined);
+			event = new MucEvent(YouJoined, sessionObject);
 		} else if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
 			Occupant tmp = room.getTempOccupants().remove(nickname);
 			if (tmp != null) {
@@ -401,9 +404,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			occupant.setPresence(element);
 			room.remove(occupant);
 			event = new MucEvent(OccupantLeaved, sessionObject);
-		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
-			room.setState(State.joined);
-			event = new MucEvent(YouJoined, sessionObject);
 		} else {
 			occupant.setPresence(element);
 			event = new MucEvent(OccupantChangedPresence, sessionObject);
