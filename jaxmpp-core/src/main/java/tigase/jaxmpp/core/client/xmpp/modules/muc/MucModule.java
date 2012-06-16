@@ -388,6 +388,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
 			room.setState(State.joined);
 			event = new MucEvent(YouJoined, sessionObject);
+                        occupant.setPresence(element);
+			room.add(occupant);
 		} else if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
 			Occupant tmp = room.getTempOccupants().remove(nickname);
 			if (tmp != null) {
