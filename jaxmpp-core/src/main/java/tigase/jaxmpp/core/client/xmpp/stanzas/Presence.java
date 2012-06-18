@@ -29,6 +29,18 @@ public class Presence extends Stanza {
 		return new Presence(new DefaultElement("presence"));
 	}
 
+	private String cacheNickname;
+
+	private boolean cacheNicknameSet = false;
+
+	private Integer cachePriority;
+
+	private Show cacheShow;
+
+	private String cacheStatus;
+
+	private boolean cacheStatusSet = false;
+
 	public Presence(Element element) throws XMLException {
 		super(element);
 		if (!"presence".equals(element.getName()))
@@ -36,25 +48,52 @@ public class Presence extends Stanza {
 	}
 
 	public String getNickname() throws XMLException {
-		return getChildElementValue("nick", "http://jabber.org/protocol/nick");
+		if (cacheNicknameSet)
+			return cacheNickname;
+
+		cacheNickname = getChildElementValue("nick", "http://jabber.org/protocol/nick");
+		cacheNicknameSet = true;
+
+		return cacheNickname;
 	}
 
 	public Integer getPriority() throws XMLException {
+		if (cachePriority != null)
+			return cachePriority;
+
 		String x = getChildElementValue("priority");
+		final Integer p;
 		if (x == null)
-			return 0;
-		return Integer.valueOf(x);
+			p = 0;
+		else
+			p = Integer.valueOf(x);
+
+		cachePriority = p;
+
+		return p;
 	}
 
 	public Show getShow() throws XMLException {
+		if (cacheShow != null)
+			return cacheShow;
+
 		String x = getChildElementValue("show");
+		final Show show;
 		if (x == null)
-			return Show.online;
-		return Show.valueOf(x);
+			show = Show.online;
+		else
+			show = Show.valueOf(x);
+		cacheShow = show;
+		return show;
 	}
 
 	public String getStatus() throws XMLException {
-		return getChildElementValue("status");
+		if (cacheStatusSet)
+			return cacheStatus;
+		cacheStatus = getChildElementValue("status");
+		cacheStatusSet = true;
+
+		return cacheStatus;
 	}
 
 	public void setNickname(String value) throws XMLException {
