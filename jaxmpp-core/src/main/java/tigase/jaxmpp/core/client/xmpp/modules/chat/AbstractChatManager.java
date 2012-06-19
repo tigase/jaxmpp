@@ -90,14 +90,19 @@ public abstract class AbstractChatManager {
 	}
 
 	public Chat process(Message message, Observable observable) throws JaxmppException {
-		if (message.getType() != StanzaType.chat)
+		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error 
+                        && message.getType() != StanzaType.headline)
 			return null;
 		final JID fromJid = message.getFrom();
 		final String threadId = message.getThread();
 
 		Chat chat = getChat(fromJid, threadId);
 
-		if (chat == null) {
+                if (chat == null && message.getBody() == null) {
+                        return null;
+                }
+                
+		if (chat == null) {                        
 			chat = createChatInstance(fromJid, threadId);
 			chat.setJid(fromJid);
 			chat.setThreadId(threadId);
