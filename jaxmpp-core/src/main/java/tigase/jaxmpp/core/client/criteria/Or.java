@@ -5,7 +5,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class Or implements Criteria {
 
-	private Criteria[] crits;
+	protected Criteria[] crits;
 
 	public Or(Criteria criteria) {
 		this.crits = new Criteria[] { criteria };

@@ -30,11 +30,11 @@ public class ElementCriteria implements Criteria {
 		return new ElementCriteria(null, new String[] { "xmlns" }, new String[] { xmlns });
 	}
 
-	private HashMap<String, String> attrs = new HashMap<String, String>();
+	protected HashMap<String, String> attrs = new HashMap<String, String>();
 
-	private String name;
+	protected String name;
 
-	private Criteria nextCriteria;
+	protected Criteria nextCriteria;
 
 	public ElementCriteria(String name, String[] attname, String[] attValue) {
 		this.name = name;
