@@ -84,6 +84,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public final static String RID_KEY = "BOSH#RID_KEY";
 
+        public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
+        
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
 	protected final Logger log;
@@ -135,6 +137,10 @@ public abstract class AbstractBoshConnector implements Connector {
 			} catch (XMLException e) {
 				event.setErrorElement(null);
 			}
+                        List<Element> streamError = response.getChildren("stream:error");
+                        if (streamError != null && !streamError.isEmpty()) {
+                                event.setStreamErrorElement(streamError.get(0));
+                        }
 		}
 		event.setBody(response);
 		event.setCaught(caught);
@@ -302,6 +308,11 @@ public abstract class AbstractBoshConnector implements Connector {
 		Element e = new DefaultElement("body");
 		e.setAttribute("content", "text/xml; charset=utf-8");
 		// e.setAttribute("from", data.fromUser);
+		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+                Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);    
+		if (from != null && seeOtherHost != null && seeOtherHost) {
+			e.setAttribute("from", from.toString());
+		}
 		e.setAttribute("hold", "1");
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.SERVER_NAME));
