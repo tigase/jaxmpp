@@ -51,12 +51,16 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public void retrieveVCard(JID jid, AsyncCallback asyncCallback) throws JaxmppException {
+		retrieveVCard(jid, null, asyncCallback);
+	}
+	
+	public void retrieveVCard(JID jid, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		iq.setTo(jid);
 		iq.addChild(new DefaultElement("vCard", null, "vcard-temp"));
 
-		writer.write(iq, asyncCallback);
+		writer.write(iq, timeout, asyncCallback);
 	}
 
 	public void retrieveVCard(JID jid, VCardAsyncCallback asyncCallback) throws JaxmppException {
