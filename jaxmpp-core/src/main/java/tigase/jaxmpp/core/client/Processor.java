@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -87,15 +88,17 @@ public class Processor {
 					&& (stanza.getAttribute("type").equals("error") || stanza.getAttribute("type").equals("result")))
 				return null;
 
-			final XmppModule module = xmppModulesManages.findModule(stanza);
-			if (module == null)
+			final List<XmppModule> modules = xmppModulesManages.findModules(stanza);
+			if (modules == null)
 				result = new FeatureNotImplementedResponse(Stanza.create(stanza), writer, sessionObject);
 			else {
 				result = new AbstractStanzaHandler(Stanza.create(stanza), writer, sessionObject) {
 
 					@Override
 					protected void process() throws XMLException, XMPPException, JaxmppException {
-						module.process(this.stanza);
+						for (XmppModule module : modules) {
+							module.process(this.stanza);
+						}
 					}
 				};
 			}

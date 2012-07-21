@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -21,13 +22,18 @@ public class XmppModulesManager {
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
 
-	public XmppModule findModule(final Element element) throws XMLException {
+	public List<XmppModule> findModules(final Element element) throws XMLException {
+		List<XmppModule> results = null;
 		for (XmppModule plugin : modules) {
 			if (plugin.getCriteria() != null && plugin.getCriteria().match(element)) {
-				return plugin;
+				if (results == null) {
+					results = new ArrayList<XmppModule>();
+				}
+				results.add(plugin);
+				break;
 			}
 		}
-		return null;
+		return results;
 	}
 
 	public Set<String> getAvailableFeatures() {
