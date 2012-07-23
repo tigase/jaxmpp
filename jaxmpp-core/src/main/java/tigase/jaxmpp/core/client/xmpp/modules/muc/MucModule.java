@@ -120,8 +120,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
-	private static long chatIds = 1;
-
 	public static final EventType JoinRequested = new EventType();
 
 	public static final EventType MessageError = new EventType();
