@@ -183,10 +183,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	private void sessionBindedAndEstablished() throws JaxmppException {
 		try {
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
-			roster.rosterRequest();
+                        if (roster != null) {
+                                roster.rosterRequest();
+                        }
 
 			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
-			presence.sendInitialPresence();
+                        if (presence != null) {
+                                presence.sendInitialPresence();
+                        }
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
