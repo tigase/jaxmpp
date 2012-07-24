@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Date;
 
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -50,6 +52,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		private Room room;
 
+		private XMucUserElement xMucUserElement;
+
 		public MucEvent(EventType type, SessionObject sessionObject) {
 			super(type, sessionObject);
 		}
@@ -78,6 +82,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return room;
 		}
 
+		public XMucUserElement getxMucUserElement() {
+			return xMucUserElement;
+		}
+
 		public void setDate(Date date) {
 			this.date = date;
 		}
@@ -102,9 +110,15 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			this.room = room;
 		}
 
-	}
+		public void setxMucUserElement(XMucUserElement xMucUserElement) {
+			this.xMucUserElement = xMucUserElement;
+		}
 
-	private static long chatIds = 1;
+		public void setXMucUserElement(XMucUserElement xUser) {
+			this.xMucUserElement = xUser;
+		}
+
+	}
 
 	public static final EventType JoinRequested = new EventType();
 
@@ -146,9 +160,19 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private AbstractRoomsManager roomsManager;
 
-	public MucModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
+	public MucModule(Observable parentObservable, final SessionObject sessionObject, PacketWriter packetWriter) {
 		super(sessionObject, packetWriter);
 		this.observable = ObservableFactory.instance(parentObservable);
+		parentObservable.addListener(Connector.StateChanged, new Listener<ConnectorEvent>() {
+
+			@Override
+			public void handleEvent(ConnectorEvent be) throws JaxmppException {
+				Connector.State s = sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY);
+				if (s == null || s == Connector.State.disconnected || s == Connector.State.disconnecting) {
+					onNetworkDisconnected();
+				}
+			}
+		});
 
 		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
 		this.roomsManager = cm != null ? cm : new DefaultRoomsManager();
@@ -206,29 +230,30 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private void fireJoinRequestedEvent(Presence element, String nickname, Room room) throws JaxmppException {
 		MucEvent event = new MucEvent(JoinRequested, sessionObject);
-		fireMucEvent(event, element, nickname, room, null);
+		fireMucEvent(event, element, nickname, room, null, null);
 	}
 
-	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant)
-			throws JaxmppException {
+	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant,
+			XMucUserElement xUser) throws JaxmppException {
 		if (event == null)
 			return;
 		event.setNickname(nickname);
 		event.setPresence(element);
 		event.setRoom(room);
 		event.setOccupant(occupant);
+		event.setXMucUserElement(xUser);
 		observable.fireEvent(event);
 	}
 
 	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant)
 			throws JaxmppException {
 		MucEvent event = new MucEvent(NewRoomCreated, sessionObject);
-		fireMucEvent(event, element, nickname, room, occupant);
+		fireMucEvent(event, element, nickname, room, occupant, null);
 	}
 
 	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
 		MucEvent event = new MucEvent(YouJoined, sessionObject);
-		fireMucEvent(event, element, nickname, room, occupant);
+		fireMucEvent(event, element, nickname, room, occupant, null);
 	}
 
 	public AbstractChatManager getChatManager() {
@@ -284,6 +309,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		observable.fireEvent(event);
 	}
 
+	protected void onNetworkDisconnected() {
+		for (Room r : roomsManager.getRooms()) {
+			r.setState(State.not_joined);
+		}
+	}
+
 	@Override
 	public void process(Stanza element) throws JaxmppException {
 		if (element instanceof Message)
@@ -316,6 +347,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			if (element.getType() == StanzaType.error) {
 				event = new MucEvent(MessageError, sessionObject);
 			} else {
+				if (room.getState() != State.joined) {
+					room.setState(State.joined);
+				}
 				event = new MucEvent(MucMessageReceived, sessionObject);
 			}
 
@@ -367,6 +401,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (element.getType() == StanzaType.unavailable && nickname.equals(room.getNickname())) {
 			room.setState(State.not_joined);
 			// this.roomsManager.remove(room.getRoomJid());
+		} else if (room.getState() != State.joined) {
+			room.setState(State.joined);
 		}
 
 		final XMucUserElement xUser = XMucUserElement.extract(element);
@@ -416,7 +452,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			event = new MucEvent(OccupantChangedPresence, sessionObject);
 		}
 
-		fireMucEvent(event, element, nickname, room, occupant);
+		fireMucEvent(event, element, nickname, room, occupant, xUser);
 
 		if (xUser != null && xUser.getStatuses().contains(201)) {
 			fireNewRoomCreatedEvent(element, nickname, room, occupant);
