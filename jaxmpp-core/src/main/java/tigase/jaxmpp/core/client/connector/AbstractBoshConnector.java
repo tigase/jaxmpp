@@ -84,8 +84,6 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public final static String RID_KEY = "BOSH#RID_KEY";
 
-        public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
-        
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
 	protected final Logger log;

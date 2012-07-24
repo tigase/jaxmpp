@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
@@ -90,7 +91,9 @@ public abstract class JaxmppCore {
 			if (connector.getState() != Connector.State.connected)
 				throw new JaxmppException("Not connected!");
 			try {
-				System.out.println("S: " + stanza.getAsString());
+				if (stanza != null && log.isLoggable(Level.FINEST)) {
+                                        log.finest("SENT: " + stanza.toString());
+                                }
 				connector.send(stanza);
 			} catch (XMLException e) {
 				throw new JaxmppException(e);

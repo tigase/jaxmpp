@@ -39,8 +39,6 @@ public class ObservableFactory {
 		else
 			o = DEFAULT_FACTORY_SPI.create(parent);
 
-		System.out.println("Observer: " + o);
-
 		return o;
 	}
 
