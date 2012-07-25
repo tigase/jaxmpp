@@ -468,6 +468,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		observable.removeListener(eventType, listener);
 	}
 
+	public void removeListener(Listener<MucEvent> mucListener) {
+		this.observable.removeListener(mucListener);
+	}
+
 	public void setChatManager(AbstractChatManager chatManager) {
 		this.chatManager = chatManager;
 	}
