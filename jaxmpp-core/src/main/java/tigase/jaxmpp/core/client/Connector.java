@@ -172,7 +172,9 @@ public interface Connector {
 
 	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
 
-	/**
+        public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
+        
+        /**
 	 * Event fires after creates XMPP Stream.
 	 * <p>
 	 * Filled fields:

@@ -151,7 +151,6 @@ public class SocketConnector implements Connector {
 					while ((elem = elems.poll()) != null) {
 						if (log.isLoggable(Level.FINEST))
 							log.finest("RECV: " + elem.toString());
-						System.out.println("R: " + elem.toString());
 						if (elem != null && elem.getXMLNS() != null
 								&& elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
 							connector.onTLSStanza(elem);
@@ -502,7 +501,8 @@ public class SocketConnector implements Connector {
 
 		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 		String to;
-		if (from != null) {
+                Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);    
+		if (from != null && (seeOtherHost == null || seeOtherHost)) {
 			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");
 		} else {
