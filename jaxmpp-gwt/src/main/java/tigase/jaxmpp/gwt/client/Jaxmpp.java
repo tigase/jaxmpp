@@ -171,7 +171,7 @@ public class Jaxmpp extends JaxmppCore {
 		return writer;
 	}
 
-	private void intLogin() throws JaxmppException {                
+	private void intLogin() throws JaxmppException {
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
@@ -197,10 +197,10 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void login() throws JaxmppException {
-                if (this.isConnected()) {
-                        this.connector.stop(true);
-                }
-                
+		if (this.isConnected()) {
+			this.connector.stop(true);
+		}
+
 		lastRid = null;
 		this.sessionObject.clear();
 		intLogin();

@@ -92,8 +92,8 @@ public abstract class JaxmppCore {
 				throw new JaxmppException("Not connected!");
 			try {
 				if (stanza != null && log.isLoggable(Level.FINEST)) {
-                                        log.finest("SENT: " + stanza.toString());
-                                }
+					log.finest("SENT: " + stanza.toString());
+				}
 				connector.send(stanza);
 			} catch (XMLException e) {
 				throw new JaxmppException(e);

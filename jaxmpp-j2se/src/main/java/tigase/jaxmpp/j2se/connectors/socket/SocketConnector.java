@@ -501,7 +501,7 @@ public class SocketConnector implements Connector {
 
 		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 		String to;
-                Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);    
+		Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);
 		if (from != null && (seeOtherHost == null || seeOtherHost)) {
 			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");

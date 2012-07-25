@@ -148,14 +148,15 @@ public class GwtElement implements Element {
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
 			if (node instanceof com.google.gwt.xml.client.Element) {
-                                return new GwtElement((com.google.gwt.xml.client.Element) node);
-                        }
-                }
-                
-                return null;
-                // first child may not be Element it can be Node only!!
-//		com.google.gwt.xml.client.Element c = (com.google.gwt.xml.client.Element) xmlElement.getFirstChild();
-//		return c == null ? null : new GwtElement(c);
+				return new GwtElement((com.google.gwt.xml.client.Element) node);
+			}
+		}
+
+		return null;
+		// first child may not be Element it can be Node only!!
+		// com.google.gwt.xml.client.Element c =
+		// (com.google.gwt.xml.client.Element) xmlElement.getFirstChild();
+		// return c == null ? null : new GwtElement(c);
 	}
 
 	@Override

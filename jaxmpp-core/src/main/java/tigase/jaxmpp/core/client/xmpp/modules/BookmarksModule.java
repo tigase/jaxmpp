@@ -5,6 +5,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
 import java.util.List;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -20,67 +21,66 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
- *
+ * 
  * @author andrzej
  */
-public class BookmarksModule extends AbstractIQModule  {
+public class BookmarksModule extends AbstractIQModule {
 
-        private static final String BOOKMARKS_XMLNS = "storage:bookmarks";
-        
-        private static final Criteria CRIT = ElementCriteria.name("storage", BOOKMARKS_XMLNS);
+	public static abstract class BookmarksAsyncCallback implements AsyncCallback {
 
-        private static final String[] FEATURES = { BOOKMARKS_XMLNS };
-        
-        public static abstract class BookmarksAsyncCallback implements AsyncCallback {
+		public abstract void onBookmarksReceived(List<Element> bookmarks);
 
-                @Override
-                public void onSuccess(final Stanza stanza) throws XMLException {
-                        Element query = stanza.getChildrenNS("query", "jabber:iq:private");
-                        Element storage = query.getChildrenNS("storage", BOOKMARKS_XMLNS);
-                        onBookmarksReceived(storage.getChildren());
-                }
-                
-                public abstract void onBookmarksReceived(List<Element> bookmarks);
-        }
-        
-        
-        public BookmarksModule(SessionObject sessionObject, PacketWriter packetWriter) {
-                super(sessionObject, packetWriter);
-        }
-        
-        @Override
-        protected void processGet(IQ element) throws JaxmppException {
-                throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
-        }
+		@Override
+		public void onSuccess(final Stanza stanza) throws XMLException {
+			Element query = stanza.getChildrenNS("query", "jabber:iq:private");
+			Element storage = query.getChildrenNS("storage", BOOKMARKS_XMLNS);
+			onBookmarksReceived(storage.getChildren());
+		}
+	}
 
-        @Override
-        protected void processSet(IQ element) throws JaxmppException {
-                throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
-        }
+	private static final String BOOKMARKS_XMLNS = "storage:bookmarks";
 
-        @Override
-        public Criteria getCriteria() {
-                return CRIT;
-        }
+	private static final Criteria CRIT = ElementCriteria.name("storage", BOOKMARKS_XMLNS);
 
-        @Override
-        public String[] getFeatures() {
-                return FEATURES;
-        }
+	private static final String[] FEATURES = { BOOKMARKS_XMLNS };
 
-        public void retrieveBookmarks(BookmarksAsyncCallback callback) throws JaxmppException {
-                IQ iq = IQ.create();
-                iq.setType(StanzaType.get);
-                
-                Element query = new DefaultElement("query");
-                query.setXMLNS("jabber:iq:private");
-                iq.addChild(query);
-                
-                Element storage = new DefaultElement("storage");
-                storage.setXMLNS(BOOKMARKS_XMLNS);
-                query.addChild(storage);
-                
-                this.writer.write(iq, callback);
-        }
-        
+	public BookmarksModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
+	}
+
+	@Override
+	public Criteria getCriteria() {
+		return CRIT;
+	}
+
+	@Override
+	public String[] getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	protected void processGet(IQ element) throws JaxmppException {
+		throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
+	}
+
+	@Override
+	protected void processSet(IQ element) throws JaxmppException {
+		throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
+	}
+
+	public void retrieveBookmarks(BookmarksAsyncCallback callback) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		Element query = new DefaultElement("query");
+		query.setXMLNS("jabber:iq:private");
+		iq.addChild(query);
+
+		Element storage = new DefaultElement("storage");
+		storage.setXMLNS(BOOKMARKS_XMLNS);
+		query.addChild(storage);
+
+		this.writer.write(iq, callback);
+	}
+
 }

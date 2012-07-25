@@ -135,10 +135,10 @@ public abstract class AbstractBoshConnector implements Connector {
 			} catch (XMLException e) {
 				event.setErrorElement(null);
 			}
-                        List<Element> streamError = response.getChildren("stream:error");
-                        if (streamError != null && !streamError.isEmpty()) {
-                                event.setStreamErrorElement(streamError.get(0));
-                        }
+			List<Element> streamError = response.getChildren("stream:error");
+			if (streamError != null && !streamError.isEmpty()) {
+				event.setStreamErrorElement(streamError.get(0));
+			}
 		}
 		event.setBody(response);
 		event.setCaught(caught);
@@ -307,7 +307,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		e.setAttribute("content", "text/xml; charset=utf-8");
 		// e.setAttribute("from", data.fromUser);
 		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-                Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);    
+		Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);
 		if (from != null && seeOtherHost != null && seeOtherHost) {
 			e.setAttribute("from", from.toString());
 		}

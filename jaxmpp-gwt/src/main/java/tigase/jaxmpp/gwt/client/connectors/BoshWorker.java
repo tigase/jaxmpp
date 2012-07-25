@@ -1,5 +1,7 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
+import java.util.List;
+
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -13,7 +15,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.xml.client.XMLParser;
-import java.util.List;
 
 public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
@@ -71,13 +72,13 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 						return;
 					}
 					final String type = response == null ? null : response.getAttribute("type");
-                                        final List<Element> streamError = response == null ? null : response.getChildren("stream:error");
+					final List<Element> streamError = response == null ? null : response.getChildren("stream:error");
 					if (type != null && "terminate".equals(type)) {
 						BoshWorker.this.onTerminate(responseCode, t, response);
 					} else if (type != null && "error".equals(type)) {
 						BoshWorker.this.onError(responseCode, t, response, null);
-                                        } else if (streamError != null && !streamError.isEmpty()) {
-                                                BoshWorker.this.onError(responseCode, t, response, null);
+					} else if (streamError != null && !streamError.isEmpty()) {
+						BoshWorker.this.onError(responseCode, t, response, null);
 					} else if (type == null) {
 						BoshWorker.this.onSuccess(responseCode, t, response);
 					} else
