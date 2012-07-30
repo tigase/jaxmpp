@@ -1,5 +1,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
@@ -309,9 +310,18 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		observable.fireEvent(event);
 	}
 
-	protected void onNetworkDisconnected() {
+	protected void onNetworkDisconnected() throws XMLException, JaxmppException {
 		for (Room r : roomsManager.getRooms()) {
 			r.setState(State.not_joined);
+
+			ArrayList<Occupant> ocs = new ArrayList<Occupant>();
+			ocs.addAll(r.getPresences().values());
+			for (Occupant occupant : ocs) {
+				MucEvent event = new MucEvent(OccupantLeaved, sessionObject);
+				r.remove(occupant);
+				fireMucEvent(event, null, occupant.getNickname(), r, occupant, null);
+			}
+
 		}
 	}
 
