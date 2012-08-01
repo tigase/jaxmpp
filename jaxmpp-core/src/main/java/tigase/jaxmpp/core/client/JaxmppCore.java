@@ -39,6 +39,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class JaxmppCore {
 
+	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
+
 	public static class JaxmppEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -94,6 +96,13 @@ public abstract class JaxmppCore {
 				if (stanza != null && log.isLoggable(Level.FINEST)) {
 					log.finest("SENT: " + stanza.toString());
 				}
+
+				final Boolean autoId = sessionObject.getProperty(AUTOADD_STANZA_ID_KEY);
+
+				if (autoId != null && autoId.booleanValue() && !stanza.getAttributes().containsKey("id")) {
+					stanza.setAttribute("id", UIDGenerator.next());
+				}
+
 				connector.send(stanza);
 			} catch (XMLException e) {
 				throw new JaxmppException(e);
