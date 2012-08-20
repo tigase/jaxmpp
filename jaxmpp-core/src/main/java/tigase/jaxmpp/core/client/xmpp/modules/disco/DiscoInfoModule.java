@@ -126,15 +126,15 @@ public class DiscoInfoModule extends AbstractIQModule {
 		private String type;
 
 		public String getCategory() {
-			return category;
+			return category == null ? "" : category;
 		}
 
 		public String getName() {
-			return name;
+			return name == null ? "" : name;
 		}
 
 		public String getType() {
-			return type;
+			return type == null ? "" : type;
 		}
 
 		public void setCategory(String category) {
