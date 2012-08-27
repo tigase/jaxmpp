@@ -2,5 +2,10 @@
 .settings
 .settings
 .project
-*/target/**
-*/war/**
+jaxmpp-core/bin
+jaxmpp-core/target
+jaxmpp-gwt/bin
+jaxmpp-gwt/target
+jaxmpp-gwt/war
+jaxmpp-j2se/bin
+jaxmpp-j2se/target
