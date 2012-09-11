@@ -1,23 +1,19 @@
 /*
- * Tigase Jabber/XMPP Server
- * Copyright (C) 2004-2007 "Artur Hefczyc" <artur.hefczyc@tigase.org>
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
- *
- * $Rev: 2129 $
- * Last modified by $Author: kobit $
- * $Date: 2010-03-20 17:07:33 +0100 (sob, 20 mar 2010) $
  */
 
 package tigase.jaxmpp.j2se.connectors.socket;
