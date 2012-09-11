@@ -81,6 +81,27 @@ public class BookmarksModule extends AbstractIQModule {
 		throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
 	}
 
+	public void publishBookmarks(List<Element> bookmarks, AsyncCallback callback) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.set);
+
+		Element query = new DefaultElement("query");
+		query.setXMLNS("jabber:iq:private");
+		iq.addChild(query);
+
+		Element storage = new DefaultElement("storage");
+		storage.setXMLNS(BOOKMARKS_XMLNS);
+		query.addChild(storage);
+
+		if (bookmarks != null) {
+			for (Element bookmark : bookmarks) {
+				storage.addChild(bookmark);
+			}
+		}
+
+		this.writer.write(iq, callback);
+	}
+
 	public void retrieveBookmarks(BookmarksAsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
@@ -93,27 +114,6 @@ public class BookmarksModule extends AbstractIQModule {
 		storage.setXMLNS(BOOKMARKS_XMLNS);
 		query.addChild(storage);
 
-		this.writer.write(iq, callback);
-	}
-
-	public void publishBookmarks(List<Element> bookmarks, AsyncCallback callback) throws JaxmppException {
-		IQ iq = IQ.create();
-		iq.setType(StanzaType.set);
-
-		Element query = new DefaultElement("query");
-		query.setXMLNS("jabber:iq:private");
-		iq.addChild(query);
-
-		Element storage = new DefaultElement("storage");
-		storage.setXMLNS(BOOKMARKS_XMLNS);
-		query.addChild(storage);
-		
-		if (bookmarks != null) {
-			for (Element bookmark : bookmarks) {
-				storage.addChild(bookmark);
-			}
-		}
-		
 		this.writer.write(iq, callback);
 	}
 }

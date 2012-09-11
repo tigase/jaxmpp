@@ -56,8 +56,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class JaxmppCore {
 
-	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
-
 	public static class JaxmppEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -76,6 +74,8 @@ public abstract class JaxmppCore {
 			this.caught = throwable;
 		}
 	}
+
+	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
 
 	public static final EventType Connected = new EventType();
 
@@ -192,6 +192,15 @@ public abstract class JaxmppCore {
 	}
 
 	public abstract void disconnect() throws JaxmppException;
+
+	/**
+	 * Returns configurator.
+	 * 
+	 * This wrapper for SessionObject.
+	 * 
+	 * @return configuration
+	 */
+	public abstract <T extends ConnectionConfiguration> T getConnectionConfiguration();
 
 	public Connector getConnector() {
 		return connector;

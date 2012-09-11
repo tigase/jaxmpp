@@ -136,6 +136,15 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public ConnectionConfiguration getConnectionConfiguration() {
+		return new ConnectionConfiguration(this.sessionObject);
+	}
+
 	public Executor getExecutor() {
 		return executor;
 	}
