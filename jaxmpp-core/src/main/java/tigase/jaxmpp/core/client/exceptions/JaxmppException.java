@@ -17,26 +17,29 @@
  */
 package tigase.jaxmpp.core.client.exceptions;
 
+/**
+ * Base Exception class in library.
+ * 
+ * @author bmalkow
+ */
 public class JaxmppException extends Exception {
+
+	private static final long serialVersionUID = 1L;
 
 	public JaxmppException() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public JaxmppException(String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 
 	public JaxmppException(String message, Throwable cause) {
 		super(message, cause);
-		// TODO Auto-generated constructor stub
 	}
 
 	public JaxmppException(Throwable cause) {
 		super(cause);
-		// TODO Auto-generated constructor stub
 	}
 
 }

@@ -23,39 +23,140 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
+/**
+ * Session object is for store state of connection, modules etc.
+ * 
+ * All states will be removed on reset ({@linkplain SessionObject#clear()
+ * clear()} method}).
+ * 
+ * @author bmalkow
+ * 
+ */
 public interface SessionObject extends UserProperties {
 
+	/**
+	 * Name of property used to keep users nickname
+	 */
 	public static final String NICKNAME = "nickname";
 
+	/**
+	 * Name of property used to keep users password
+	 */
 	public static final String PASSWORD = "password";
 
+	/**
+	 * Name of property used to keep XMPP resource
+	 */
 	public static final String RESOURCE = "resource";
 
+	/**
+	 * Name of property used to keep name of server. Usually it is equals to
+	 * hostname of users JID.
+	 */
 	public static final String SERVER_NAME = "serverName";
 
+	/**
+	 * Name of property used to keep users JID
+	 */
 	public static final String USER_BARE_JID = "userBareJid";
 
+	/**
+	 * Method for process <code><iq/></code> stanzas without response.
+	 * 
+	 * @throws JaxmppException
+	 */
 	public void checkHandlersTimeout() throws JaxmppException;
 
+	/**
+	 * Reset state. Clears all properties stored by modules. Users properties
+	 * are keeped.
+	 * 
+	 * @throws JaxmppException
+	 */
 	public void clear() throws JaxmppException;
 
+	/**
+	 * Returns Store of known presences.
+	 * 
+	 * @return presence store
+	 */
 	public PresenceStore getPresence();
 
+	/**
+	 * Returns property
+	 * 
+	 * @param key
+	 *            property name
+	 * @return property
+	 */
 	public <T> T getProperty(String key);
 
+	/**
+	 * Returns handler for response of sent <code><iq/></code> stanza.
+	 * 
+	 * @param element
+	 *            reponse <code><iq/></code> stanza.
+	 * @param writer
+	 *            Packet writer
+	 * @return Runnable object with handler
+	 * @throws XMLException
+	 */
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException;
 
+	/**
+	 * Returns roster store
+	 * 
+	 * @return roster
+	 */
 	public RosterStore getRoster();
 
+	/**
+	 * Returns XMPP Stream features
+	 * 
+	 * @return element with features
+	 */
 	public Element getStreamFeatures();
 
+	/**
+	 * Returns users JID
+	 * 
+	 * @return
+	 */
 	public BareJID getUserBareJid();
 
+	/**
+	 * Register callback for response of sent <code><iq/></code> stanza.
+	 * 
+	 * @param stanza
+	 *            sent <code><iq/></code> stanza.
+	 * @param timeout
+	 *            timeout. After it method
+	 *            {@linkplain AsyncCallback#onTimeout() onTimeout()} will be
+	 *            called.
+	 * @param callback
+	 *            callback
+	 * @return id of stanza
+	 * @throws XMLException
+	 */
 	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException;
 
+	/**
+	 * Set property.
+	 * 
+	 * @param key
+	 *            property name
+	 * @param value
+	 *            property value. <code>null</code> to unset property.
+	 */
 	public void setProperty(String key, Object value);
 
+	/**
+	 * Set XMPP Stream features
+	 * 
+	 * @param element
+	 *            element contains features
+	 */
 	public void setStreamFeatures(Element element);
 
 }

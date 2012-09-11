@@ -17,6 +17,12 @@
  */
 package tigase.jaxmpp.core.client;
 
+/**
+ * Unique IDs generator. Used for attribute 'id' in stanzas.
+ * 
+ * @author bmalkow
+ * 
+ */
 public abstract class UIDGenerator {
 
 	private static final class UIDGenerator1 extends UIDGenerator {
@@ -157,15 +163,15 @@ public abstract class UIDGenerator {
 
 	private final static UIDGenerator generator = new UIDGenerator3();
 
-	public static void main(String[] args) {
-		for (int i = 0; i < 100; i++)
-			System.out.println(UIDGenerator.next());
-	}
-
+	/**
+	 * Generate next id;
+	 * 
+	 * @return unique id
+	 */
 	public static String next() {
 		return generator.nextUID();
 	}
 
-	public abstract String nextUID();
+	protected abstract String nextUID();
 
 }

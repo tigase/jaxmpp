@@ -17,10 +17,33 @@
  */
 package tigase.jaxmpp.core.client;
 
+/**
+ * Interface to keep user properties.
+ * 
+ * User properties are not removed on state reset.
+ * 
+ * @author bmalkow
+ * 
+ */
 public interface UserProperties {
 
+	/**
+	 * Get user property.
+	 * 
+	 * @param key
+	 *            property name
+	 * @return property or <code>null</code> if property isn't set.
+	 */
 	public <T> T getUserProperty(String key);
 
+	/**
+	 * Set user property.
+	 * 
+	 * @param key
+	 *            property name
+	 * @param value
+	 *            property value. <code>null</code> to unset property
+	 */
 	public void setUserProperty(String key, Object value);
 
 }

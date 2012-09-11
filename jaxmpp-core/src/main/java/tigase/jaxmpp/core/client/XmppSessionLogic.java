@@ -19,11 +19,16 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
+/**
+ * Interface for classes with session logic.
+ * 
+ * @author bmalkow
+ */
 public interface XmppSessionLogic {
 
 	public static interface SessionListener {
 
-		void onException(JaxmppException e) throws JaxmppException;;
+		void onException(JaxmppException e) throws JaxmppException;
 	}
 
 	public void beforeStart() throws JaxmppException;

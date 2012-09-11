@@ -27,6 +27,12 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * XMPP Modules Manager. This manager finds correct module to handle given
+ * incoming stanza.
+ * 
+ * @author bmalkow
+ */
 public class XmppModulesManager {
 
 	public static interface InitializingBean {
@@ -39,6 +45,14 @@ public class XmppModulesManager {
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
 
+	/**
+	 * Finds collection of modules that can handle stanza.
+	 * 
+	 * @param element
+	 *            incoming stanza.
+	 * @return list of modules that can handle stanza.
+	 * @throws XMLException
+	 */
 	public List<XmppModule> findModules(final Element element) throws XMLException {
 		List<XmppModule> results = null;
 		for (XmppModule plugin : modules) {
@@ -53,6 +67,11 @@ public class XmppModulesManager {
 		return results;
 	}
 
+	/**
+	 * Returns all features registered by modules.
+	 * 
+	 * @return Set of features.
+	 */
 	public Set<String> getAvailableFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		for (XmppModule plugin : this.modules) {
@@ -66,6 +85,13 @@ public class XmppModulesManager {
 		return result;
 	}
 
+	/**
+	 * Return module implementation by module class.
+	 * 
+	 * @param moduleClass
+	 *            module class
+	 * @return module implementation
+	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
 		return (T) this.modulesByClasses.get(moduleClass);
@@ -82,6 +108,13 @@ public class XmppModulesManager {
 		}
 	}
 
+	/**
+	 * Register XmppModule.
+	 * 
+	 * @param plugin
+	 *            module
+	 * @return module
+	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T register(T plugin) {
 		this.modulesByClasses.put((Class<XmppModule>) plugin.getClass(), plugin);
@@ -89,11 +122,18 @@ public class XmppModulesManager {
 		return plugin;
 	}
 
+	/**
+	 * Unregisters module.
+	 * 
+	 * @param plugin
+	 *            module to unregister
+	 * @return unregistered module. <code>null</code> if module wasn't
+	 *         registered.
+	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T unregister(T plugin) {
-		this.modulesByClasses.remove(plugin.getClass());
 		this.modules.remove(plugin);
-		return plugin;
+		return (T) this.modulesByClasses.remove(plugin.getClass());
 	}
 
 }
