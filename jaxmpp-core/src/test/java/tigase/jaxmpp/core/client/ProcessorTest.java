@@ -31,7 +31,7 @@ public class ProcessorTest extends TestCase {
 
 	public ProcessorTest() {
 		SessionObject sessionObject = new DefaultSessionObject();
-		this.writer = new MockWriter();
+		this.writer = new MockWriter(sessionObject);
 
 		XmppModulesManager xmppModulesManages = new XmppModulesManager();
 		xmppModulesManages.register(new PingModule(sessionObject, writer));

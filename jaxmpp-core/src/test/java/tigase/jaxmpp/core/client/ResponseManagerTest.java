@@ -28,7 +28,7 @@ public class ResponseManagerTest extends TestCase {
 
 	private final ResponseManager rm = new ResponseManager();
 
-	private final MockWriter writer = new MockWriter();
+	private final MockWriter writer = new MockWriter(new DefaultSessionObject());
 
 	public void test01() {
 		try {

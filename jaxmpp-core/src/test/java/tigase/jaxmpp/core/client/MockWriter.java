@@ -26,6 +26,12 @@ public class MockWriter implements PacketWriter {
 
 	private final ArrayList<Element> elements = new ArrayList<Element>();
 
+	private SessionObject sessionObject;
+
+	public MockWriter(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
+
 	public Element poll() {
 		if (elements.size() == 0)
 			return null;
@@ -39,11 +45,13 @@ public class MockWriter implements PacketWriter {
 
 	@Override
 	public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		sessionObject.registerResponseHandler(stanza, null, asyncCallback);
 		write(stanza);
 	}
 
 	@Override
 	public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		sessionObject.registerResponseHandler(stanza, null, asyncCallback);
 		write(stanza);
 	}
 

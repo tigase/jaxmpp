@@ -59,7 +59,7 @@ public class PubSubModuleTest {
 	private final MockWriter writer;
 
 	public PubSubModuleTest() {
-		this.writer = new MockWriter();
+		this.writer = new MockWriter(sessionObject);
 
 		XmppModulesManager xmppModulesManages = new XmppModulesManager();
 		xmppModulesManages.register(new PingModule(sessionObject, writer));
