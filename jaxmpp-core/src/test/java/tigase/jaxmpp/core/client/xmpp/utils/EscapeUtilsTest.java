@@ -27,7 +27,7 @@ public class EscapeUtilsTest {
 	public void testEscape() {
 		assertEquals("&lt;a&gt;&quot;&amp;&lt;a&gt;", EscapeUtils.escape("<a>\"&<a>"));
 		assertEquals("&lt;a&gt;", EscapeUtils.escape("<a>"));
-		assertEquals("&lt;a b=&quot;x'x&quot;&gt;", EscapeUtils.escape("<a b=\"x'x\">"));
+		assertEquals("&lt;a b=&quot;x&apos;x&quot;&gt;", EscapeUtils.escape("<a b=\"x'x\">"));
 	}
 
 	@Test
