@@ -206,6 +206,10 @@ public abstract class JaxmppCore {
 		return connector;
 	}
 
+	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
+		return modulesManager.getModule(moduleClass);
+	}
+
 	public XmppModulesManager getModulesManager() {
 		return modulesManager;
 	}
