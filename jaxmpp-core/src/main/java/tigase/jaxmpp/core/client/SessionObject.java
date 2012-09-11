@@ -101,8 +101,7 @@ public interface SessionObject extends UserProperties {
 	 * @return Runnable object with handler
 	 * @throws XMLException
 	 */
-	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
-			throws XMLException;
+	public Runnable getResponseHandler(final Element element, PacketWriter writer) throws XMLException;
 
 	/**
 	 * Returns roster store

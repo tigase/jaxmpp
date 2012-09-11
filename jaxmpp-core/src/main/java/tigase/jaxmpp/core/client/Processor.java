@@ -97,7 +97,7 @@ public class Processor {
 
 	public Runnable process(final Element stanza) {
 		try {
-			Runnable result = sessionObject.getResponseHandler(stanza, writer, sessionObject);
+			Runnable result = sessionObject.getResponseHandler(stanza, writer);
 			if (result != null)
 				return result;
 

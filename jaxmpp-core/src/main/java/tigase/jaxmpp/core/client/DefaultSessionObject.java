@@ -71,8 +71,8 @@ public class DefaultSessionObject implements SessionObject {
 	}
 
 	@Override
-	public Runnable getResponseHandler(Element element, PacketWriter writer, SessionObject sessionObject) throws XMLException {
-		return responseManager.getResponseHandler(element, writer, sessionObject);
+	public Runnable getResponseHandler(Element element, PacketWriter writer) throws XMLException {
+		return responseManager.getResponseHandler(element, writer, this);
 	}
 
 	@Override

@@ -103,7 +103,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		org.junit.Assert.assertTrue("Callback not called", check[0]);
 	}
 
@@ -208,7 +208,7 @@ public class PubSubModuleTest {
 		item.setAttribute("id", "123");
 		publish.addChild(item);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer, sessionObject);
+		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
 
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
@@ -262,7 +262,7 @@ public class PubSubModuleTest {
 		uns.setAttribute("feature", "publish");
 		error.addChild(uns);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer, sessionObject);
+		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
@@ -323,7 +323,7 @@ public class PubSubModuleTest {
 		items.addChild(item0);
 		item0.addChild(new DefaultElement("payload", "dupa_01", "tigase:test"));
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -375,7 +375,7 @@ public class PubSubModuleTest {
 		subs.setAttribute("subscription", "subscribed");
 		pubsub.addChild(subs);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -416,7 +416,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 
 		Message message = Message.create();
@@ -490,7 +490,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "pubsub.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 }
