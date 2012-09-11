@@ -79,13 +79,13 @@ public class Processor {
 		}
 	}
 
-	private final SessionObject sessionObject;
+	private final DefaultSessionObject sessionObject;
 
 	private final PacketWriter writer;
 
 	private final XmppModulesManager xmppModulesManages;
 
-	public Processor(XmppModulesManager xmppModulesManages, final SessionObject sessionObject, final PacketWriter writer) {
+	public Processor(XmppModulesManager xmppModulesManages, final DefaultSessionObject sessionObject, final PacketWriter writer) {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 		this.xmppModulesManages = xmppModulesManages;

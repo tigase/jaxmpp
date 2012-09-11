@@ -95,7 +95,7 @@ public abstract class JaxmppCore {
 
 	protected XmppSessionLogic sessionLogic;
 
-	protected final SessionObject sessionObject;
+	protected final DefaultSessionObject sessionObject;
 
 	protected final Listener<ConnectorEvent> stanzaReceivedListener;
 
@@ -141,7 +141,7 @@ public abstract class JaxmppCore {
 	};
 
 	public JaxmppCore(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
+		this.sessionObject = (DefaultSessionObject) sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());
 		observable = ObservableFactory.instance(null);
 

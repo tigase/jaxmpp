@@ -76,6 +76,16 @@ public class ResponseManager {
 		}
 	}
 
+	/**
+	 * Returns handler for response of sent <code><iq/></code> stanza.
+	 * 
+	 * @param element
+	 *            reponse <code><iq/></code> stanza.
+	 * @param writer
+	 *            Packet writer
+	 * @return Runnable object with handler
+	 * @throws XMLException
+	 */
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws XMLException {
 		final String id = element.getAttribute("id");
@@ -121,6 +131,20 @@ public class ResponseManager {
 		return r;
 	}
 
+	/**
+	 * Register callback for response of sent <code><iq/></code> stanza.
+	 * 
+	 * @param stanza
+	 *            sent <code><iq/></code> stanza.
+	 * @param timeout
+	 *            timeout. After it method
+	 *            {@linkplain AsyncCallback#onTimeout() onTimeout()} will be
+	 *            called.
+	 * @param callback
+	 *            callback
+	 * @return id of stanza
+	 * @throws XMLException
+	 */
 	public String registerResponseHandler(final Element stanza, final Long timeout, final AsyncCallback callback)
 			throws XMLException {
 		if (stanza == null)

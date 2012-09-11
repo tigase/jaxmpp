@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
@@ -92,18 +91,6 @@ public interface SessionObject extends UserProperties {
 	public <T> T getProperty(String key);
 
 	/**
-	 * Returns handler for response of sent <code><iq/></code> stanza.
-	 * 
-	 * @param element
-	 *            reponse <code><iq/></code> stanza.
-	 * @param writer
-	 *            Packet writer
-	 * @return Runnable object with handler
-	 * @throws XMLException
-	 */
-	public Runnable getResponseHandler(final Element element, PacketWriter writer) throws XMLException;
-
-	/**
 	 * Returns roster store
 	 * 
 	 * @return roster
@@ -123,22 +110,6 @@ public interface SessionObject extends UserProperties {
 	 * @return
 	 */
 	public BareJID getUserBareJid();
-
-	/**
-	 * Register callback for response of sent <code><iq/></code> stanza.
-	 * 
-	 * @param stanza
-	 *            sent <code><iq/></code> stanza.
-	 * @param timeout
-	 *            timeout. After it method
-	 *            {@linkplain AsyncCallback#onTimeout() onTimeout()} will be
-	 *            called.
-	 * @param callback
-	 *            callback
-	 * @return id of stanza
-	 * @throws XMLException
-	 */
-	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException;
 
 	/**
 	 * Set property.

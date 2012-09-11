@@ -70,7 +70,6 @@ public class DefaultSessionObject implements SessionObject {
 		return t;
 	}
 
-	@Override
 	public Runnable getResponseHandler(Element element, PacketWriter writer) throws XMLException {
 		return responseManager.getResponseHandler(element, writer, this);
 	}
@@ -96,7 +95,6 @@ public class DefaultSessionObject implements SessionObject {
 		return (T) this.userProperties.get(key);
 	}
 
-	@Override
 	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException {
 		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
