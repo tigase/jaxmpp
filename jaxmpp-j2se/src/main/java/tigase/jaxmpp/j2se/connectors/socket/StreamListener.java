@@ -19,7 +19,11 @@ package tigase.jaxmpp.j2se.connectors.socket;
 
 import java.util.Map;
 
+import tigase.xml.Element;
+
 public interface StreamListener {
+
+	void nextElement(Element element);
 
 	void xmppStreamClosed();
 

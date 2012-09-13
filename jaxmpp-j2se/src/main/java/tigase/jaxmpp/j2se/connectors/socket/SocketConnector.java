@@ -28,7 +28,6 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -122,6 +121,15 @@ public class SocketConnector implements Connector {
 		private final XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListener() {
 
 			@Override
+			public void nextElement(tigase.xml.Element element) {
+				try {
+					processElement(element);
+				} catch (JaxmppException e) {
+					log.log(Level.SEVERE, "Error on processing element", e);
+				}
+			}
+
+			@Override
 			public void xmppStreamClosed() {
 				try {
 					if (log.isLoggable(Level.FINEST))
@@ -162,22 +170,6 @@ public class SocketConnector implements Connector {
 				while (connector.reader != null && !isInterrupted() && (r = connector.reader.read(buffer)) != -1
 						&& connector.getState() != Connector.State.disconnected) {
 					parser.parse(domHandler, buffer, 0, r);
-
-					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
-					tigase.xml.Element elem;
-					while ((elem = elems.poll()) != null) {
-						if (log.isLoggable(Level.FINEST))
-							log.finest("RECV: " + elem.toString());
-						if (elem != null && elem.getXMLNS() != null
-								&& elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
-							connector.onTLSStanza(elem);
-						} else
-							try {
-								connector.onResponse(new J2seElement(elem));
-							} catch (JaxmppException e) {
-								onErrorInThread(e);
-							}
-					}
 				}
 				// if (log.isLoggable(Level.FINEST))
 				log.finest(hashCode() + "Disconnecting: state=" + connector.getState() + "; buffer=" + r + "   " + this);
@@ -245,6 +237,8 @@ public class SocketConnector implements Connector {
 	protected Observable observable;
 
 	private TimerTask pingTask;
+
+	private boolean preventAgainstFireErrors = false;
 
 	private Reader reader;
 
@@ -363,6 +357,9 @@ public class SocketConnector implements Connector {
 		if (response != null) {
 			Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
 			if (seeOtherHost != null) {
+				if (log.isLoggable(Level.FINE))
+					log.fine("Received see-other-host=" + seeOtherHost.getValue());
+				preventAgainstFireErrors = true;
 				reconnect(seeOtherHost.getValue());
 				return;
 			}
@@ -477,6 +474,19 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	public void processElement(tigase.xml.Element elem) throws JaxmppException {
+		if (log.isLoggable(Level.FINEST))
+			log.finest("RECV: " + elem.toString());
+		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
+			onTLSStanza(elem);
+		} else
+			try {
+				onResponse(new J2seElement(elem));
+			} catch (JaxmppException e) {
+				onErrorInThread(e);
+			}
+	}
+
 	private void reconnect(final String newHost) {
 		log.info("See other host: " + newHost);
 		try {
@@ -580,7 +590,7 @@ public class SocketConnector implements Connector {
 			log.fine("Connector state changed: " + s + "->" + state);
 			ConnectorEvent e = new SocketConnectorEvent(StateChanged, sessionObject);
 			observable.fireEvent(e);
-			if (state == State.disconnected) {
+			if (!preventAgainstFireErrors && state == State.disconnected) {
 				fireOnTerminate(sessionObject);
 			}
 		}
@@ -588,6 +598,7 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
+		preventAgainstFireErrors = false;
 		log.fine("Start connector.");
 
 		if (sessionObject.getProperty(TRUST_MANAGER_KEY) == null)
@@ -615,8 +626,12 @@ public class SocketConnector implements Connector {
 
 			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
-			log.finest("Starting socket " + serverHost);
+			if (log.isLoggable(Level.FINER))
+				log.finer("Preparing connection to " + serverHost);
+
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
+			if (log.isLoggable(Level.FINEST))
+				log.finest("Starting socket " + x + ":" + serverHost.getPort());
 			socket = new Socket(x, serverHost.getPort());
 			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
 			// || ((Boolean)

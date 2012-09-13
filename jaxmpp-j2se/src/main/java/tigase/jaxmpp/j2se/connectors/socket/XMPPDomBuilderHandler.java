@@ -23,9 +23,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Stack;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -67,7 +65,6 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 	// ~--- fields
 	// ---------------------------------------------------------------
 
-	private LinkedList<Element> all_roots = new LinkedList<Element>();
 	private ElementFactory customFactory = null;
 	private Stack<Element> el_stack = new Stack<Element>();
 	private boolean error = false;
@@ -152,7 +149,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 		Element elem = el_stack.pop();
 
 		if (el_stack.isEmpty()) {
-			all_roots.offer(elem);
+			service.nextElement(elem);
 
 			if (log.isLoggable(Level.FINEST)) {
 				log.finest("Adding new request: " + elem.toString());
@@ -181,16 +178,6 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	// ~--- get methods
 	// ----------------------------------------------------------
-
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @return
-	 */
-	public Queue<Element> getParsedElements() {
-		return all_roots;
-	}
 
 	// ~--- methods
 	// --------------------------------------------------------------
