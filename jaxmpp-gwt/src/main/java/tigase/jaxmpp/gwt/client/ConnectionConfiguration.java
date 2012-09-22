@@ -15,44 +15,28 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
+package tigase.jaxmpp.gwt.client;
 
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 
-public class AnonymousMechanism implements SaslMechanism {
+/**
+ * Connection configuration object.
+ */
+public class ConnectionConfiguration extends tigase.jaxmpp.core.client.ConnectionConfiguration {
 
-	public AnonymousMechanism() {
+	ConnectionConfiguration(SessionObject sessionObject) {
+		super(sessionObject);
 	}
 
-	@Override
-	public String evaluateChallenge(String input, SessionObject sessionObjec) {
-		return null;
-	}
+	/**
+	 * Set BOSH Service URL.
+	 * 
+	 * @param boshService
+	 *            BOSH service URL
+	 */
+	public void setBoshService(String boshService) {
+		sessionObject.setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, boshService);
 
-	@Override
-	public Status getStatus() {
-		return null;
 	}
-
-	@Override
-	public String getStatusMessage() {
-		return null;
-	}
-
-	@Override
-	public boolean isAllowedToUse(SessionObject sessionObject) {
-		return true;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return false;
-	}
-
-	@Override
-	public String name() {
-		return "ANONYMOUS";
-	}
-
 }

@@ -1,3 +1,20 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client.xmpp.modules.jingle;
 
 import java.util.List;
@@ -21,12 +38,30 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class JingleModule extends AbstractIQModule {
 
-	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
-	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
+	public static class JingleSessionAcceptEvent extends JingleSessionEvent {
 
-	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
+		private static final long serialVersionUID = 1L;
 
-	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
+		private final Element description;
+		private final Element transport;
+
+		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
+				Element transport) {
+			super(JingleSessionAccept, sessionObject, sender, sid);
+
+			this.description = description;
+			this.transport = transport;
+		}
+
+		public Element getDescription() {
+			return description;
+		}
+
+		public Element getTransport() {
+			return transport;
+		}
+
+	}
 
 	public static class JingleSessionEvent extends BaseEvent {
 
@@ -48,6 +83,24 @@ public class JingleModule extends AbstractIQModule {
 
 		public String getSid() {
 			return sid;
+		}
+
+	}
+
+	public static class JingleSessionInfoEvent extends JingleSessionEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private final Element info;
+
+		public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, Element info) {
+			super(JingleSessionInfo, sessionObject, sender, sid);
+
+			this.info = info;
+		}
+
+		public Element getInfo() {
+			return info;
 		}
 
 	}
@@ -77,31 +130,6 @@ public class JingleModule extends AbstractIQModule {
 
 	}
 
-	public static class JingleSessionAcceptEvent extends JingleSessionEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private final Element description;
-		private final Element transport;
-
-		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				Element transport) {
-			super(JingleSessionAccept, sessionObject, sender, sid);
-
-			this.description = description;
-			this.transport = transport;
-		}
-
-		public Element getDescription() {
-			return description;
-		}
-
-		public Element getTransport() {
-			return transport;
-		}
-
-	}
-
 	public static class JingleSessionTerminateEvent extends JingleSessionEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -112,28 +140,18 @@ public class JingleModule extends AbstractIQModule {
 
 	}
 
-	public static class JingleSessionInfoEvent extends JingleSessionEvent {
+	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
 
-		private static final long serialVersionUID = 1L;
+	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
 
-		private final Element info;
+	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
 
-		public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, Element info) {
-			super(JingleSessionInfo, sessionObject, sender, sid);
+	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
 
-			this.info = info;
-		}
-
-		public Element getInfo() {
-			return info;
-		}
-
-	}
-
-	public static final EventType JingleSessionInitiation = new EventType();
 	public static final EventType JingleSessionAccept = new EventType();
-	public static final EventType JingleSessionTerminate = new EventType();
 	public static final EventType JingleSessionInfo = new EventType();
+	public static final EventType JingleSessionInitiation = new EventType();
+	public static final EventType JingleSessionTerminate = new EventType();
 
 	private final Observable observable;
 
@@ -141,6 +159,36 @@ public class JingleModule extends AbstractIQModule {
 		super(sessionObject, packetWriter);
 
 		observable = ObservableFactory.instance(parentObservable);
+	}
+
+	public void acceptSession(JID jid, String sid, String name, Element description, Element transport) throws JaxmppException {
+		IQ iq = IQ.create();
+
+		iq.setTo(jid);
+		iq.setType(StanzaType.set);
+
+		Element jingle = new DefaultElement("jingle");
+		jingle.setXMLNS(JINGLE_XMLNS);
+		jingle.setAttribute("action", "session-accept");
+		jingle.setAttribute("sid", sid);
+
+		jingle.setAttribute("initiator", jid.toString());
+
+		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		jingle.setAttribute("responder", initiator.toString());
+
+		iq.addChild(jingle);
+
+		Element content = new DefaultElement("content");
+		content.setAttribute("creator", "initiator");
+		content.setAttribute("name", name);
+
+		jingle.addChild(content);
+
+		content.addChild(description);
+		content.addChild(transport);
+
+		writer.write(iq);
 	}
 
 	@Override
@@ -151,6 +199,37 @@ public class JingleModule extends AbstractIQModule {
 	@Override
 	public String[] getFeatures() {
 		return FEATURES;
+	}
+
+	public void initiateSession(JID jid, String sid, String name, Element description, List<Element> transports)
+			throws JaxmppException {
+		IQ iq = IQ.create();
+
+		iq.setTo(jid);
+		iq.setType(StanzaType.set);
+
+		Element jingle = new DefaultElement("jingle");
+		jingle.setXMLNS(JINGLE_XMLNS);
+		jingle.setAttribute("action", "session-initiate");
+		jingle.setAttribute("sid", sid);
+
+		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		jingle.setAttribute("initiator", initiator.toString());
+
+		iq.addChild(jingle);
+
+		Element content = new DefaultElement("content");
+		content.setAttribute("creator", "initiator");
+		content.setAttribute("name", name);
+
+		jingle.addChild(content);
+
+		content.addChild(description);
+		for (Element transport : transports) {
+			content.addChild(transport);
+		}
+
+		writer.write(iq);
 	}
 
 	@Override
@@ -200,67 +279,6 @@ public class JingleModule extends AbstractIQModule {
 		response.setTo(iq.getFrom());
 
 		writer.write(response);
-	}
-
-	public void initiateSession(JID jid, String sid, String name, Element description, List<Element> transports)
-			throws JaxmppException {
-		IQ iq = IQ.create();
-
-		iq.setTo(jid);
-		iq.setType(StanzaType.set);
-
-		Element jingle = new DefaultElement("jingle");
-		jingle.setXMLNS(JINGLE_XMLNS);
-		jingle.setAttribute("action", "session-initiate");
-		jingle.setAttribute("sid", sid);
-
-		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		jingle.setAttribute("initiator", initiator.toString());
-
-		iq.addChild(jingle);
-
-		Element content = new DefaultElement("content");
-		content.setAttribute("creator", "initiator");
-		content.setAttribute("name", name);
-
-		jingle.addChild(content);
-
-		content.addChild(description);
-		for (Element transport : transports) {
-			content.addChild(transport);
-		}
-
-		writer.write(iq);
-	}
-
-	public void acceptSession(JID jid, String sid, String name, Element description, Element transport) throws JaxmppException {
-		IQ iq = IQ.create();
-
-		iq.setTo(jid);
-		iq.setType(StanzaType.set);
-
-		Element jingle = new DefaultElement("jingle");
-		jingle.setXMLNS(JINGLE_XMLNS);
-		jingle.setAttribute("action", "session-accept");
-		jingle.setAttribute("sid", sid);
-
-		jingle.setAttribute("initiator", jid.toString());
-
-		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		jingle.setAttribute("responder", initiator.toString());
-
-		iq.addChild(jingle);
-
-		Element content = new DefaultElement("content");
-		content.setAttribute("creator", "initiator");
-		content.setAttribute("name", name);
-
-		jingle.addChild(content);
-
-		content.addChild(description);
-		content.addChild(transport);
-
-		writer.write(iq);
 	}
 
 	public void terminateSession(JID jid, String sid, JID initiator) throws JaxmppException {

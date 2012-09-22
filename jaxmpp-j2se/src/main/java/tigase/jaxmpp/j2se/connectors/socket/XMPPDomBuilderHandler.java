@@ -1,23 +1,19 @@
 /*
- * Tigase Jabber/XMPP Server
- * Copyright (C) 2004-2007 "Artur Hefczyc" <artur.hefczyc@tigase.org>
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
- *
- * $Rev: 2129 $
- * Last modified by $Author: kobit $
- * $Date: 2010-03-20 17:07:33 +0100 (sob, 20 mar 2010) $
  */
 
 package tigase.jaxmpp.j2se.connectors.socket;
@@ -27,9 +23,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 import java.util.Arrays;
 import java.util.EmptyStackException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Stack;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -71,7 +65,6 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 	// ~--- fields
 	// ---------------------------------------------------------------
 
-	private LinkedList<Element> all_roots = new LinkedList<Element>();
 	private ElementFactory customFactory = null;
 	private Stack<Element> el_stack = new Stack<Element>();
 	private boolean error = false;
@@ -156,7 +149,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 		Element elem = el_stack.pop();
 
 		if (el_stack.isEmpty()) {
-			all_roots.offer(elem);
+			service.nextElement(elem);
 
 			if (log.isLoggable(Level.FINEST)) {
 				log.finest("Adding new request: " + elem.toString());
@@ -185,16 +178,6 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	// ~--- get methods
 	// ----------------------------------------------------------
-
-	/**
-	 * Method description
-	 * 
-	 * 
-	 * @return
-	 */
-	public Queue<Element> getParsedElements() {
-		return all_roots;
-	}
 
 	// ~--- methods
 	// --------------------------------------------------------------

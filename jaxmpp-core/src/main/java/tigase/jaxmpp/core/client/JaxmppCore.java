@@ -1,3 +1,20 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client;
 
 import java.util.logging.Level;
@@ -39,8 +56,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class JaxmppCore {
 
-	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
-
 	public static class JaxmppEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -60,6 +75,8 @@ public abstract class JaxmppCore {
 		}
 	}
 
+	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
+
 	public static final EventType Connected = new EventType();
 
 	public static final EventType Disconnected = new EventType();
@@ -78,7 +95,7 @@ public abstract class JaxmppCore {
 
 	protected XmppSessionLogic sessionLogic;
 
-	protected final SessionObject sessionObject;
+	protected final DefaultSessionObject sessionObject;
 
 	protected final Listener<ConnectorEvent> stanzaReceivedListener;
 
@@ -124,7 +141,7 @@ public abstract class JaxmppCore {
 	};
 
 	public JaxmppCore(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
+		this.sessionObject = (DefaultSessionObject) sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());
 		observable = ObservableFactory.instance(null);
 
@@ -176,8 +193,21 @@ public abstract class JaxmppCore {
 
 	public abstract void disconnect() throws JaxmppException;
 
+	/**
+	 * Returns configurator.
+	 * 
+	 * This wrapper for SessionObject.
+	 * 
+	 * @return configuration
+	 */
+	public abstract <T extends ConnectionConfiguration> T getConnectionConfiguration();
+
 	public Connector getConnector() {
 		return connector;
+	}
+
+	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
+		return modulesManager.getModule(moduleClass);
 	}
 
 	public XmppModulesManager getModulesManager() {

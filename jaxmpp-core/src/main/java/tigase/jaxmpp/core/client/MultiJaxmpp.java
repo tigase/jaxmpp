@@ -1,3 +1,20 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client;
 
 import java.util.ArrayList;
@@ -45,7 +62,7 @@ public class MultiJaxmpp {
 		synchronized (jaxmpps) {
 			jaxmpp.addListener(listener);
 			jaxmpps.put(jaxmpp.getSessionObject().getUserBareJid(), jaxmpp);
-			this.chats.addAll(jaxmpp.getModulesManager().getModule(MessageModule.class).getChatManager().getChats());
+			this.chats.addAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
 		}
 	}
 
@@ -77,7 +94,7 @@ public class MultiJaxmpp {
 
 	public <T extends JaxmppCore> void remove(final T jaxmpp) {
 		synchronized (jaxmpps) {
-			this.chats.removeAll(jaxmpp.getModulesManager().getModule(MessageModule.class).getChatManager().getChats());
+			this.chats.removeAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
 			jaxmpp.removeListener(listener);
 			jaxmpps.remove(jaxmpp.getSessionObject().getUserBareJid());
 		}

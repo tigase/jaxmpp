@@ -1,3 +1,20 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client.xmpp.modules.pubsub;
 
 import static org.junit.Assert.assertEquals;
@@ -11,7 +28,6 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.MockWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -35,14 +51,14 @@ public class PubSubModuleTest {
 
 	private final PubSubModule pubsub;
 
-	private final SessionObject sessionObject = new DefaultSessionObject();
+	private final DefaultSessionObject sessionObject = new DefaultSessionObject();
 
 	private final TPath tpath = new TPath();
 
 	private final MockWriter writer;
 
 	public PubSubModuleTest() {
-		this.writer = new MockWriter();
+		this.writer = new MockWriter(sessionObject);
 
 		XmppModulesManager xmppModulesManages = new XmppModulesManager();
 		xmppModulesManages.register(new PingModule(sessionObject, writer));
@@ -86,7 +102,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		org.junit.Assert.assertTrue("Callback not called", check[0]);
 	}
 
@@ -191,7 +207,7 @@ public class PubSubModuleTest {
 		item.setAttribute("id", "123");
 		publish.addChild(item);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer, sessionObject);
+		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
 
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
@@ -245,7 +261,7 @@ public class PubSubModuleTest {
 		uns.setAttribute("feature", "publish");
 		error.addChild(uns);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer, sessionObject);
+		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
@@ -306,7 +322,7 @@ public class PubSubModuleTest {
 		items.addChild(item0);
 		item0.addChild(new DefaultElement("payload", "dupa_01", "tigase:test"));
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -358,7 +374,7 @@ public class PubSubModuleTest {
 		subs.setAttribute("subscription", "subscribed");
 		pubsub.addChild(subs);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -399,7 +415,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 
 		Message message = Message.create();
@@ -473,7 +489,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "pubsub.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer, sessionObject).run();
+		this.sessionObject.getResponseHandler(responseIq, writer).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 }
