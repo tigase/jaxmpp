@@ -31,7 +31,7 @@ public class GwtElement implements Element {
 
 	@Override
 	public Element addChild(Element child) throws XMLException {
-		com.google.gwt.xml.client.Element a = XMLParser.parse(child.toString()).getDocumentElement();
+		com.google.gwt.xml.client.Element a = XMLParser.parse(child.getAsString()).getDocumentElement();
 		this.xmlElement.appendChild(a);
 		GwtElement c = new GwtElement(a);
 		return c;
