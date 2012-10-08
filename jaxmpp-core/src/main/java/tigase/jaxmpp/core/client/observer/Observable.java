@@ -101,8 +101,6 @@ public interface Observable {
 	/**
 	 * Removes a listener.
 	 * 
-	 * @param eventType
-	 *            type of event
 	 * @param listener
 	 *            listener
 	 */

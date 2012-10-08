@@ -36,6 +36,45 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
+/**
+ * Module to handle messages.
+ * 
+ * <dl>
+ * <dt><b>Events:</b></dt>
+ * 
+ * <dd><b>{@link MessageModule#ChatClosed ChatClosed}</b> : {@link MessageEvent
+ * MessageEvent} ()<br>
+ * <div>Fires when Chat object is destroyed (for example by calling method
+ * {@linkplain MessageModule#close(Chat) close()})</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * <dd><b>{@link MessageModule#ChatCreated ChatCreated}</b> :
+ * {@link MessageEvent MessageEvent} ()<br>
+ * <div>Fires when new Chat object is created. It will be called after receiving
+ * new message from buddy and on execute
+ * {@linkplain MessageModule#createChat(JID) createChat()}.</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * <dd><b>{@link MessageModule#ChatUpdated ChatUpdated}</b> :
+ * {@link MessageEvent MessageEvent} ()<br>
+ * <div>Fires when some data in Chat object is changed. For example when JID is
+ * changed (buddy changed resource) or threadid is setted.</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * <dd><b>{@link MessageModule#MessageReceived MessageReceived}</b> :
+ * {@link MessageEvent MessageEvent} ()<br>
+ * <div>Fires when message is received.</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * </dl>
+ * 
+ * @author bmalkow
+ * 
+ */
 public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static abstract class AbstractMessageEvent extends BaseEvent {
@@ -83,7 +122,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType ChatUpdated = new EventType();
 
-	public static final Criteria CRIT = ElementCriteria.name("message");
+	private static final Criteria CRIT = ElementCriteria.name("message");
 
 	public static final EventType MessageReceived = new EventType();
 
@@ -102,18 +141,45 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		this.chatManager.initialize();
 	}
 
+	/**
+	 * Adds a listener bound by the given event type.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            the listener
+	 */
 	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
+	/**
+	 * Add a listener bound by the all event types.
+	 * 
+	 * @param listener
+	 *            the listener
+	 */
 	public void addListener(Listener<MessageEvent> listener) {
 		observable.addListener(listener);
 	}
 
+	/**
+	 * Destroy chat object.
+	 * 
+	 * @param chat
+	 *            chat object
+	 */
 	public void close(Chat chat) throws JaxmppException {
 		chatManager.close(chat);
 	}
 
+	/**
+	 * Creates new chat object.
+	 * 
+	 * @param jid
+	 *            destination JID
+	 * @return chat object
+	 */
 	public Chat createChat(JID jid) throws JaxmppException {
 		return this.chatManager.createChat(jid);
 	}
@@ -122,20 +188,34 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		return chatManager;
 	}
 
+	/**
+	 * Returns all chat objects.
+	 * 
+	 * @return collection of chat objects.
+	 */
 	public List<Chat> getChats() {
 		return this.chatManager.getChats();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] getFeatures() {
 		return null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void process(Message element) throws JaxmppException {
 		MessageEvent event = new MessageEvent(MessageReceived, sessionObject);
@@ -147,14 +227,38 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		observable.fireEvent(event.getType(), event);
 	}
 
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            listener
+	 */
 	public void removeListener(EventType eventType, Listener<MessageEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
 
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param listener
+	 *            listener
+	 */
 	public void removeListener(Listener<MessageEvent> listener) {
 		observable.removeListener(listener);
 	}
 
+	/**
+	 * Sends message. It don't creates chat object.
+	 * 
+	 * @param toJID
+	 *            recipient's JID
+	 * @param subject
+	 *            subject of message
+	 * @param message
+	 *            message
+	 */
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setSubject(subject);

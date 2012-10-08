@@ -206,6 +206,14 @@ public abstract class JaxmppCore {
 		return connector;
 	}
 
+	/**
+	 * Return module implementation by module class. This method calls
+	 * {@linkplain XmppModulesManager#getModule(Class)}.
+	 * 
+	 * @param moduleClass
+	 *            module class
+	 * @return module implementation
+	 */
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
 		return modulesManager.getModule(moduleClass);
 	}
