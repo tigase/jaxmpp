@@ -67,6 +67,16 @@ public abstract class ConnectionConfiguration {
 	}
 
 	/**
+	 * Set users JabberID.
+	 * 
+	 * @param jid
+	 *            JabberID
+	 */
+	public void setUserJID(String jid) {
+		setUserJID(BareJID.bareJIDInstance(jid));
+	}
+
+	/**
 	 * Set users password.
 	 * 
 	 * @param password
