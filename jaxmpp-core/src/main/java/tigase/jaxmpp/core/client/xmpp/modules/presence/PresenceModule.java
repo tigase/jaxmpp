@@ -116,6 +116,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static final EventType ContactUnavailable = new EventType();
 
+	public static final EventType ContactUnsubscribed = new EventType();
+
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
 	public static final EventType SubscribeRequest = new EventType();
@@ -198,7 +200,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		final StanzaType type = presence.getType();
 
 		PresenceEvent event;
-		if (type == StanzaType.subscribe) {
+		if (type == StanzaType.unsubscribed) {
+			event = new PresenceEvent(ContactUnsubscribed, sessionObject);
+		} else if (type == StanzaType.subscribe) {
 			// subscribe
 			log.finer("Subscribe from " + fromJid);
 			event = new PresenceEvent(SubscribeRequest, sessionObject);
