@@ -110,6 +110,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		observable.addListener(listener);
 	}
 
+	public void close(Chat chat) throws JaxmppException {
+		chatManager.close(chat);
+	}
+
 	public Chat createChat(JID jid) throws JaxmppException {
 		return this.chatManager.createChat(jid);
 	}
