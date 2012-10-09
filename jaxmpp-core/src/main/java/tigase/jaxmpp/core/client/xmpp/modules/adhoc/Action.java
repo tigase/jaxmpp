@@ -17,6 +17,12 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 
+/**
+ * Command Actions.
+ * 
+ * @author bmalkow
+ * 
+ */
 public enum Action {
 	/**
 	 * The command should be canceled.

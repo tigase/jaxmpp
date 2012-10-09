@@ -23,6 +23,10 @@ import java.util.Map;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
+/**
+ * Class to provide request data to ad-hoc command.
+ * 
+ */
 public class AdHocRequest {
 
 	private final Action action;
@@ -48,26 +52,62 @@ public class AdHocRequest {
 		this.sessions = sessions;
 	}
 
+	/**
+	 * Returns Action selected by client.
+	 * 
+	 * @return {@linkplain Action Action}
+	 */
 	public Action getAction() {
 		return action;
 	}
 
+	/**
+	 * Return Data Form sent by client in request.
+	 * 
+	 * @return {@linkplain JabberDataElement Data Form}
+	 */
 	public JabberDataElement getForm() {
 		return form;
 	}
 
+	/**
+	 * Returns IQ stanza constains command request.
+	 * 
+	 * @return IQ stanza
+	 */
 	public IQ getIq() {
 		return iq;
 	}
 
+	/**
+	 * Returns called node of ad-hoc command.
+	 * 
+	 * @return node name
+	 */
 	public String getNode() {
 		return node;
 	}
 
+	/**
+	 * Returns current {@linkplain Session Session}. If there is no session
+	 * related, creates one.
+	 * 
+	 * @return {@linkplain Session Session}
+	 */
 	public Session getSession() {
 		return getSession(true);
 	}
 
+	/**
+	 * Returns current {@linkplain Session Session}. If there is no session
+	 * related, creates one if <code>createNew</code> is <code>true</code>.
+	 * 
+	 * @param createNew
+	 *            <code>true</code> to create new session.
+	 * @return {@linkplain Session Session} or <code>null</code> if
+	 *         <code>createNew</code> is <code>false</code> and request hasn't
+	 *         Session.
+	 */
 	public Session getSession(boolean createNew) {
 		if (session == null && sessionId != null) {
 			session = this.sessions.get(sessionId);
@@ -81,6 +121,12 @@ public class AdHocRequest {
 		return session;
 	}
 
+	/**
+	 * Return session ID, or <code>null</code> if request hasn't
+	 * {@linkplain Session Session}.
+	 * 
+	 * @return session ID if present.
+	 */
 	public String getSessionId() {
 		return sessionId;
 	}

@@ -52,25 +52,61 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Module to handle ad-hoc commands.
+ * 
+ * @author bmalkow
+ */
+
 public class AdHocCommansModule extends AbstractIQModule {
 
+	/**
+	 * Callback to handle result of ad-hoc command.
+	 * 
+	 */
 	public static abstract class AdHocCommansAsyncCallback implements AsyncCallback {
 
 		private Element command;
 
 		private IQ response;
 
+		/**
+		 * Return &lt;command xmlns='http://jabber.org/protocol/commands' /&gt;
+		 * element of returned stanza.
+		 * 
+		 * @return return command element.
+		 */
 		protected Element getCommand() {
 			return command;
 		}
 
+		/**
+		 * Reutrns IQ stanza with response.
+		 * 
+		 * @return IQ stanza
+		 */
 		protected IQ getResponse() {
 			return response;
 		}
 
+		/**
+		 * Method called when response of ad-hoc command is received.
+		 * 
+		 * @param sessionid
+		 *            ID of session. May be <code>null</code>.
+		 * @param node
+		 *            node
+		 * @param status
+		 *            status of command execution
+		 * @param data
+		 *            Data Form
+		 */
 		protected abstract void onResponseReceived(String sessionid, String node, State status, JabberDataElement data)
 				throws JaxmppException;
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void onSuccess(final Stanza responseStanza) throws JaxmppException {
 			this.response = (IQ) responseStanza;
@@ -136,6 +172,20 @@ public class AdHocCommansModule extends AbstractIQModule {
 		});
 	}
 
+	/**
+	 * Calls ad-hoc command on remote resource.
+	 * 
+	 * @param toJID
+	 *            remote ad-hoc command executor.
+	 * @param node
+	 *            node
+	 * @param action
+	 *            action
+	 * @param data
+	 *            Data Form
+	 * @param asyncCallback
+	 *            callback
+	 */
 	public void execute(JID toJID, String node, Action action, JabberDataElement data, AsyncCallback asyncCallback)
 			throws JaxmppException {
 		IQ iq = IQ.create();
@@ -281,6 +331,12 @@ public class AdHocCommansModule extends AbstractIQModule {
 		writer.write(result);
 	}
 
+	/**
+	 * Registers new ad-hoc command.
+	 * 
+	 * @param command
+	 *            command to register
+	 */
 	public void register(final AdHocCommand command) {
 		final String node = command.getNode();
 		this.commands.put(node, command);

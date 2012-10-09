@@ -17,6 +17,11 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 
+/**
+ * Ad-hoc command execution state.
+ * 
+ * @author bmalkow
+ */
 public enum State {
 
 	/**

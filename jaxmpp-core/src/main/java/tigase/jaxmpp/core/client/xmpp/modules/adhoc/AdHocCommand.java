@@ -20,16 +20,52 @@ package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
+/**
+ * Base interface for implementing own ad-hoc commands.
+ * 
+ * @author bmalkow
+ * 
+ */
 public interface AdHocCommand {
 
+	/**
+	 * Returns features what are implemented by command.
+	 * 
+	 * @return array of features
+	 */
 	String[] getFeatures();
 
+	/**
+	 * Return human readable name of command.
+	 * 
+	 * @return name of command
+	 */
 	String getName();
 
+	/**
+	 * Return node name of command.
+	 * 
+	 * @return node name
+	 */
 	String getNode();
 
+	/**
+	 * Main method to handle ad-hoc requests.
+	 * 
+	 * @param request
+	 *            ad-hoc command request
+	 * @param response
+	 *            response
+	 */
 	void handle(AdHocRequest request, AdHocResponse response) throws JaxmppException;
 
+	/**
+	 * This method allows to authorization sender.
+	 * 
+	 * @param jid
+	 *            JID of method caller.
+	 * @return <code>true</code> if jid is allowed to call command.
+	 */
 	boolean isAllowed(JID jid);
 
 }

@@ -21,6 +21,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class for help handle longer conversation with client. It allows to keep data
+ * between requests.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class Session {
 
 	private final Map<String, Object> data = new HashMap<String, Object>();
@@ -35,23 +42,53 @@ public class Session {
 		this.sessionId = sessionId;
 	}
 
+	/**
+	 * Return object stored in session.
+	 * 
+	 * @param key
+	 *            name of stored object
+	 * @return stored object or <code>null</code> is no object with given name.
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getData(String key) {
 		return (T) this.data.get(key);
 	}
 
+	/**
+	 * Return default action used in last {@linkplain AdHocResponse}.
+	 * 
+	 * @return {@linkplain Action}
+	 */
 	Action getDefaultAction() {
 		return defaultAction == null ? Action.execute : defaultAction;
 	}
 
+	/**
+	 * Return timestamp of last request.
+	 * 
+	 * @return timestamp of last request.
+	 */
 	public Date getLastRequest() {
 		return lastRequest;
 	}
 
+	/**
+	 * Return session ID.
+	 * 
+	 * @return session ID.
+	 */
 	public String getSessionId() {
 		return sessionId;
 	}
 
+	/**
+	 * Store object in session.
+	 * 
+	 * @param key
+	 *            name of object.
+	 * @param data
+	 *            object to store.
+	 */
 	public <T> void setData(String key, T data) {
 		this.data.put(key, data);
 	}

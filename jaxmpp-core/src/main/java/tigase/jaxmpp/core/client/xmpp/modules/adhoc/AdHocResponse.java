@@ -23,6 +23,12 @@ import java.util.Set;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 
+/**
+ * Class for helping sending response to the client.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class AdHocResponse {
 
 	private final Set<Action> availableActions = new HashSet<Action>();
@@ -40,35 +46,82 @@ public class AdHocResponse {
 		this.writer = writer;
 	}
 
+	/**
+	 * Returns collection of available action. All actions should be added to
+	 * this collection.
+	 * 
+	 * @return collection of available actions.
+	 */
 	public Set<Action> getAvailableActions() {
 		return availableActions;
 	}
 
+	/**
+	 * Returns default action
+	 * 
+	 * @return {@linkplain Action} <code>null</code> is no action has no been
+	 *         set.
+	 */
 	public Action getDefaultAction() {
 		return defaultAction;
 	}
 
+	/**
+	 * Return response Data Form.
+	 * 
+	 * @return {@linkplain JabberDataElement Data Form}. <code>null</code> is no
+	 *         data has no been set.
+	 */
 	public JabberDataElement getForm() {
 		return form;
 	}
 
+	/**
+	 * Return state of execution.
+	 * 
+	 * @return {@linkplain State state}. <code>null</code> is no state has no
+	 *         been set.
+	 */
 	public State getState() {
 		return state;
 	}
 
+	/**
+	 * Return writer.
+	 * 
+	 * @return {@linkplain PacketWriter writer}
+	 */
 	public PacketWriter getWriter() {
 		return writer;
 	}
 
+	/**
+	 * Set default action. It also adds default action to available actions.
+	 * 
+	 * @param defaultAction
+	 *            {@linkplain Action}
+	 */
 	public void setDefaultAction(Action defaultAction) {
 		this.availableActions.add(defaultAction);
 		this.defaultAction = defaultAction;
 	}
 
+	/**
+	 * Set reponse data form.
+	 * 
+	 * @param form
+	 *            {@linkplain JabberDataElement Data Form}
+	 */
 	public void setForm(JabberDataElement form) {
 		this.form = form;
 	}
 
+	/**
+	 * Set execution state.
+	 * 
+	 * @param state
+	 *            {@linkplain State}
+	 */
 	public void setState(State state) {
 		this.state = state;
 	}
