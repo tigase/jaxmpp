@@ -61,7 +61,6 @@ public class XmppModulesManager {
 					results = new ArrayList<XmppModule>();
 				}
 				results.add(plugin);
-				break;
 			}
 		}
 		return results;

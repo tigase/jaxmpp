@@ -40,11 +40,7 @@ import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.AbstractChatManager;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -168,8 +164,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final EventType YouJoined = new EventType();
 
-	private AbstractChatManager chatManager;
-
 	private final Criteria crit;
 
 	private final DateTimeFormat dtf;
@@ -224,22 +218,20 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	protected boolean checkElement(Element element) throws XMLException {
-		if (!element.getName().equals("message") && !element.getName().equals("presence"))
-			return false;
-
 		final String from = element.getAttribute("from");
 		if (from == null)
 			return false;
 
 		final String type = element.getAttribute("type");
-		if (type != null && type.equals("groupchat"))
+
+		if (element.getName().equals("message") && type != null && type.equals("groupchat"))
 			return true;
-
-		final BareJID roomJid = BareJID.bareJIDInstance(from);
-
-		boolean result = this.roomsManager.contains(roomJid);
-
-		return result;
+		if (element.getName().equals("presence")) {
+			final BareJID roomJid = BareJID.bareJIDInstance(from);
+			boolean result = this.roomsManager.contains(roomJid);
+			return result;
+		} else
+			return false;
 	}
 
 	public void enable(Room room) throws JaxmppException {
@@ -272,10 +264,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
 		MucEvent event = new MucEvent(YouJoined, sessionObject);
 		fireMucEvent(event, element, nickname, room, occupant, null);
-	}
-
-	public AbstractChatManager getChatManager() {
-		return chatManager;
 	}
 
 	@Override
@@ -361,40 +349,30 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return;
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
-		if (element.getType() == StanzaType.chat && chatManager != null) {
-			MessageEvent event = new MessageEvent(MessageModule.MessageReceived, sessionObject);
-			event.setMessage(element);
-			Chat chat = chatManager.process(element, observable);
-			if (chat != null) {
-				event.setChat(chat);
-			}
-			observable.fireEvent(event.getType(), event);
+		MucEvent event;
+		if (element.getType() == StanzaType.error) {
+			event = new MucEvent(MessageError, sessionObject);
 		} else {
-			MucEvent event;
-			if (element.getType() == StanzaType.error) {
-				event = new MucEvent(MessageError, sessionObject);
-			} else {
-				if (room.getState() != State.joined) {
-					room.setState(State.joined);
-				}
-				event = new MucEvent(MucMessageReceived, sessionObject);
+			if (room.getState() != State.joined) {
+				room.setState(State.joined);
 			}
-
-			final Element delay = element.getChildrenNS("delay", "urn:xmpp:delay");
-			Date delayTime;
-			if (delay != null && delay.getAttribute("stamp") != null) {
-				delayTime = dtf.parse(delay.getAttribute("stamp"));
-			} else {
-				delayTime = null;
-			}
-
-			event.setMessage(element);
-			event.setRoom(room);
-			event.setNickname(nickname);
-			event.setDate(delayTime == null ? new Date() : delayTime);
-			room.setLastMessageDate(event.date);
-			observable.fireEvent(event);
+			event = new MucEvent(MucMessageReceived, sessionObject);
 		}
+
+		final Element delay = element.getChildrenNS("delay", "urn:xmpp:delay");
+		Date delayTime;
+		if (delay != null && delay.getAttribute("stamp") != null) {
+			delayTime = dtf.parse(delay.getAttribute("stamp"));
+		} else {
+			delayTime = null;
+		}
+
+		event.setMessage(element);
+		event.setRoom(room);
+		event.setNickname(nickname);
+		event.setDate(delayTime == null ? new Date() : delayTime);
+		room.setLastMessageDate(event.date);
+		observable.fireEvent(event);
 	}
 
 	protected void processPresence(Presence element) throws JaxmppException {
@@ -497,10 +475,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public void removeListener(Listener<MucEvent> mucListener) {
 		this.observable.removeListener(mucListener);
-	}
-
-	public void setChatManager(AbstractChatManager chatManager) {
-		this.chatManager = chatManager;
 	}
 
 }

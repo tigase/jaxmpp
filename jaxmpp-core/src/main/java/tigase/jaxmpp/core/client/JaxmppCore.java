@@ -265,12 +265,11 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
 
-		MucModule mucModule = this.modulesManager.register(new MucModule(observable, sessionObject, writer));
+		this.modulesManager.register(new MucModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
 
-		final MessageModule messageModule = this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
-		mucModule.setChatManager(messageModule.getChatManager());
+		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
 
 		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(observable, sessionObject,
 				writer, modulesManager));

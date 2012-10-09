@@ -24,7 +24,6 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.criteria.Criteria;
-import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
@@ -32,6 +31,7 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -122,7 +122,21 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType ChatUpdated = new EventType();
 
-	private static final Criteria CRIT = ElementCriteria.name("message");
+	private static final Criteria CRIT = new Criteria() {
+
+		@Override
+		public Criteria add(Criteria criteria) {
+			return null;
+		}
+
+		@Override
+		public boolean match(Element element) throws XMLException {
+			final String type = element.getAttribute("type");
+			if (type == null || !type.equals("groupchat"))
+				return true;
+			return false;
+		}
+	};
 
 	public static final EventType MessageReceived = new EventType();
 
