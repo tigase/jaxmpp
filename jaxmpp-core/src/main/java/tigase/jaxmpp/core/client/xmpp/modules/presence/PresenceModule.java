@@ -25,7 +25,6 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -122,11 +121,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static final EventType SubscribeRequest = new EventType();
 
-	private final Observable observable;
-
 	public PresenceModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		this.sessionObject.getPresence().setHandler(new Handler() {
 
 			@Override
@@ -139,14 +135,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 				PresenceModule.this.setPresence(show, status, priority);
 			}
 		});
-	}
-
-	public void addListener(EventType eventType, Listener<PresenceEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<PresenceEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	protected void contactOffline(final JID jid) throws JaxmppException {
@@ -225,10 +213,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		event.setPriority(presence.getPriority());
 
 		observable.fireEvent(event);
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {

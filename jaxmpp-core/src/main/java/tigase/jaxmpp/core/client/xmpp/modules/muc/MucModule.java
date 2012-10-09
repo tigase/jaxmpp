@@ -32,7 +32,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -168,13 +167,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private final DateTimeFormat dtf;
 
-	private final Observable observable;
-
 	private AbstractRoomsManager roomsManager;
 
 	public MucModule(Observable parentObservable, final SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		parentObservable.addListener(Connector.StateChanged, new Listener<ConnectorEvent>() {
 
 			@Override
@@ -207,14 +203,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		};
 		dtf = new DateTimeFormat();
 
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	protected boolean checkElement(Element element) throws XMLException {
@@ -463,18 +451,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			fireNewRoomCreatedEvent(element, nickname, room, occupant);
 		}
 
-	}
-
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	public void removeListener(Listener<MucEvent> mucListener) {
-		this.observable.removeListener(mucListener);
 	}
 
 }

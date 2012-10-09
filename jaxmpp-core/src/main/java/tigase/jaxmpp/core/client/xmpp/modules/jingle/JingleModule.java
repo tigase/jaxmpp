@@ -153,12 +153,8 @@ public class JingleModule extends AbstractIQModule {
 	public static final EventType JingleSessionInitiation = new EventType();
 	public static final EventType JingleSessionTerminate = new EventType();
 
-	private final Observable observable;
-
 	public JingleModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-
-		observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 	}
 
 	public void acceptSession(JID jid, String sid, String name, Element description, Element transport) throws JaxmppException {

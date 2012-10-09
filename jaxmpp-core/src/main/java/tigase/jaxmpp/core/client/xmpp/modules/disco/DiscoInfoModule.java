@@ -180,13 +180,10 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	private final XmppModulesManager modulesManager;
 
-	private final Observable observable;
-
 	public DiscoInfoModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter,
 			XmppModulesManager modulesManager) {
-		super(sessionObject, packetWriter);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		this.modulesManager = modulesManager;
-		this.observable = ObservableFactory.instance(parentObservable);
 		this.observable.addListener(new Listener<DiscoInfoEvent>() {
 
 			@Override
@@ -197,14 +194,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 				processDefaultDiscoEvent(be);
 			}
 		});
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	@Override
@@ -289,14 +278,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 	@Override
 	protected void processSet(IQ element) throws XMPPException, XMLException, JaxmppException {
 		throw new XMPPException(ErrorCondition.not_allowed);
-	}
-
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 }

@@ -31,7 +31,6 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -142,19 +141,8 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#items" };
 
-	private final Observable observable;
-
 	public DiscoItemsModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 	}
 
 	@Override
@@ -220,14 +208,6 @@ public class DiscoItemsModule extends AbstractIQModule {
 	@Override
 	protected void processSet(IQ element) throws XMPPException, XMLException, JaxmppException {
 		throw new XMPPException(ErrorCondition.not_allowed);
-	}
-
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 }

@@ -26,6 +26,10 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -34,13 +38,40 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public abstract class AbstractIQModule implements XmppModule {
 
 	protected final Logger log;
+
+	protected final Observable observable;
+
 	protected final SessionObject sessionObject;
+
 	protected final PacketWriter writer;
 
-	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	public AbstractIQModule(Observable observable, SessionObject sessionObject, PacketWriter packetWriter) {
 		log = Logger.getLogger(this.getClass().getName());
+		this.observable = observable;
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
+	}
+
+	/**
+	 * Adds a listener bound by the given event type.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            the listener
+	 */
+	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
+
+	/**
+	 * Add a listener bound by the all event types.
+	 * 
+	 * @param listener
+	 *            the listener
+	 */
+	public void addListener(Listener<? extends BaseEvent> listener) {
+		observable.addListener(listener);
 	}
 
 	@Override
@@ -62,4 +93,33 @@ public abstract class AbstractIQModule implements XmppModule {
 	protected abstract void processGet(IQ element) throws JaxmppException;
 
 	protected abstract void processSet(IQ element) throws JaxmppException;
+
+	/**
+	 * Removes all listeners.
+	 */
+	public void removeAllListeners() {
+		observable.removeAllListeners();
+	}
+
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            listener
+	 */
+	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.removeListener(eventType, listener);
+	}
+
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param listener
+	 *            listener
+	 */
+	public void removeListener(Listener<? extends BaseEvent> listener) {
+		observable.removeListener(listener);
+	}
 }

@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import junit.framework.TestCase;
+import tigase.jaxmpp.core.client.observer.DefaultObservable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -33,8 +34,9 @@ public class ProcessorTest extends TestCase {
 		DefaultSessionObject sessionObject = new DefaultSessionObject();
 		this.writer = new MockWriter(sessionObject);
 
+		DefaultObservable observable = new DefaultObservable();
 		XmppModulesManager xmppModulesManages = new XmppModulesManager();
-		xmppModulesManages.register(new PingModule(sessionObject, writer));
+		xmppModulesManages.register(new PingModule(observable, sessionObject, writer));
 		this.processor = new Processor(xmppModulesManages, sessionObject, writer);
 	}
 

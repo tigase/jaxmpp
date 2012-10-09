@@ -33,6 +33,7 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.tpath.TPath;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.DefaultObservable;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -60,8 +61,9 @@ public class PubSubModuleTest {
 	public PubSubModuleTest() {
 		this.writer = new MockWriter(sessionObject);
 
+		DefaultObservable observable = new DefaultObservable();
 		XmppModulesManager xmppModulesManages = new XmppModulesManager();
-		xmppModulesManages.register(new PingModule(sessionObject, writer));
+		xmppModulesManages.register(new PingModule(observable, sessionObject, writer));
 		this.pubsub = new PubSubModule(null, sessionObject, this.writer);
 	}
 

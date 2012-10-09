@@ -33,7 +33,6 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -273,20 +272,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	private final DateTimeFormat dtf;
 
-	private final Observable observable;
-
 	public PubSubModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		dtf = new DateTimeFormat();
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	public void configureSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement form,
@@ -452,14 +440,6 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, PublishAsyncCallback callback)
 			throws XMLException, JaxmppException {
 		publishItem(pubSubJID, nodeName, itemId, payload, (AsyncCallback) callback);
-	}
-
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 	public void retrieveItem(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws XMLException, JaxmppException {

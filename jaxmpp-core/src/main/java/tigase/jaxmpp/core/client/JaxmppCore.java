@@ -276,10 +276,11 @@ public abstract class JaxmppCore {
 		final DiscoItemsModule discoItemsModule = this.modulesManager.register(new DiscoItemsModule(observable, sessionObject,
 				writer));
 
-		this.modulesManager.register(new AdHocCommansModule(sessionObject, writer, discoItemsModule, discoInfoModule));
+		this.modulesManager.register(new AdHocCommansModule(observable, sessionObject, writer, discoItemsModule,
+				discoInfoModule));
 
-		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
-		this.modulesManager.register(new PingModule(sessionObject, writer));
+		this.modulesManager.register(new SoftwareVersionModule(observable, sessionObject, writer));
+		this.modulesManager.register(new PingModule(observable, sessionObject, writer));
 		this.modulesManager.register(new ResourceBinderModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new RosterModule(observable, sessionObject, writer));
@@ -288,7 +289,7 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new SaslModule(authModule.getObservable(), sessionObject, writer));
 		this.modulesManager.register(new NonSaslAuthModule(authModule.getObservable(), sessionObject, writer));
 
-		this.modulesManager.register(new VCardModule(sessionObject, writer));
+		this.modulesManager.register(new VCardModule(observable, sessionObject, writer));
 		this.modulesManager.register(new InBandRegistrationModule(observable, sessionObject, writer));
 
 		this.modulesManager.register(new SessionEstablishmentModule(observable, sessionObject, writer));

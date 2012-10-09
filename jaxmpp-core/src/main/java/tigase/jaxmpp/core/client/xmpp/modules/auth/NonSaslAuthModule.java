@@ -69,11 +69,8 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:auth" }));
 
-	private final Observable observable;
-
 	public NonSaslAuthModule(Observable parent, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parent);
+		super(ObservableFactory.instance(parent), sessionObject, packetWriter);
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {

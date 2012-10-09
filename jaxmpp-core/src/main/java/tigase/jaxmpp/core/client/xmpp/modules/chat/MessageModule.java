@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -142,39 +141,14 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	private final AbstractChatManager chatManager;
 
-	private final Observable observable;
-
 	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
 		this.chatManager.setObservable(this.observable);
 		this.chatManager.setPacketWriter(packetWriter);
 		this.chatManager.setSessionObject(sessionObject);
 		this.chatManager.initialize();
-	}
-
-	/**
-	 * Adds a listener bound by the given event type.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(EventType eventType, Listener<MessageEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	/**
-	 * Add a listener bound by the all event types.
-	 * 
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(Listener<MessageEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	/**
@@ -239,28 +213,6 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			event.setChat(chat);
 		}
 		observable.fireEvent(event.getType(), event);
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(EventType eventType, Listener<MessageEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(Listener<MessageEvent> listener) {
-		observable.removeListener(listener);
 	}
 
 	/**

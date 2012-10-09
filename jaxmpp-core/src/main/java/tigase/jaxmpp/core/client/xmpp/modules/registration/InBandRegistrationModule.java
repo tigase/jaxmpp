@@ -27,7 +27,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -78,19 +77,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		return registrationSupported;
 	}
 
-	private final Observable observable;
-
 	public InBandRegistrationModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 	}
 
 	@Override
@@ -141,18 +129,6 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		q.addChild(new DefaultElement("remove"));
 
 		writer.write(iq, asyncCallback);
-	}
-
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	public void removeListener(Listener<? extends BaseEvent> listener) {
-		observable.removeListener(listener);
 	}
 
 	public void start() throws JaxmppException {

@@ -37,7 +37,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -127,13 +126,10 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		return Subscription.valueOf(x);
 	}
 
-	private final Observable observable;
-
 	private final RosterCacheProvider versionProvider;
 
 	public RosterModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
-		this.observable = ObservableFactory.instance(parentObservable);
+		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override
@@ -187,14 +183,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		};
 
 		writer.write(iq, c);
-	}
-
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
 	}
 
 	private long createId(BareJID jid) {
@@ -371,10 +359,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 			}
 		});
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 	public void rosterRequest() throws XMLException, JaxmppException {
