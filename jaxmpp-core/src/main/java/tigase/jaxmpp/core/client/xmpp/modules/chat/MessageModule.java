@@ -86,6 +86,11 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			super(type, sessionObject);
 		}
 
+		/**
+		 * Return received message.
+		 * 
+		 * @return message
+		 */
 		public Message getMessage() {
 			return message;
 		}
@@ -105,6 +110,11 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			super(type, sessionObject);
 		}
 
+		/**
+		 * Return chat related to message.
+		 * 
+		 * @return chat. May be <code>null</code>.
+		 */
 		public Chat getChat() {
 			return chat;
 		}
