@@ -244,8 +244,6 @@ public interface Connector {
 
 	public void restartStream() throws XMLException, JaxmppException;
 
-	public void send(byte[] buffer) throws JaxmppException;
-
 	public void send(final Element stanza) throws XMLException, JaxmppException;
 
 	public void setObservable(Observable observable);

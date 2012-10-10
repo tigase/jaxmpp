@@ -549,7 +549,6 @@ public class SocketConnector implements Connector {
 		send(sb.toString().getBytes());
 	}
 
-	@Override
 	public void send(byte[] buffer) throws JaxmppException {
 		if (writer != null)
 			try {
@@ -568,6 +567,14 @@ public class SocketConnector implements Connector {
 				String t = stanza.getAsString();
 				if (log.isLoggable(Level.FINEST))
 					log.finest("Send: " + t);
+
+				try {
+					SocketConnectorEvent event = new SocketConnectorEvent(StanzaSending, sessionObject);
+					event.setStanza(stanza);
+					observable.fireEvent(event);
+				} catch (Exception e) {
+				}
+
 				writer.write(t.getBytes());
 			} catch (IOException e) {
 				this.stop(true);

@@ -95,11 +95,6 @@ public class ConnectorWrapper implements Connector {
 	}
 
 	@Override
-	public void send(byte[] buffer) throws JaxmppException {
-		connector.send(buffer);
-	}
-
-	@Override
 	public void send(Element stanza) throws XMLException, JaxmppException {
 		connector.send(stanza);
 	}

@@ -378,7 +378,6 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 	}
 
-	@Override
 	public void send(byte[] buffer) throws JaxmppException {
 		if (getState() == State.connected) {
 			if (buffer != null && buffer.length > 0) {
