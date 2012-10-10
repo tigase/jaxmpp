@@ -20,12 +20,24 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of Boolean field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide an either-or choice between two
+ * options. The default value is "false".</blockquote>
+ * </p>
+ */
 public class BooleanField extends AbstractField<Boolean> {
 
 	BooleanField(Element element) throws XMLException {
 		super("boolean", element);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Boolean getFieldValue() throws XMLException {
 		final String t = getChildElementValue("value");
@@ -37,6 +49,9 @@ public class BooleanField extends AbstractField<Boolean> {
 			return Boolean.FALSE;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(Boolean value) throws XMLException {
 		if (value == null)

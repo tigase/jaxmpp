@@ -24,12 +24,31 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of list-multi field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide one or more options from among many. A
+ * form-submitting entity chooses one or more items from among the options
+ * presented by the form-processing entity and MUST NOT insert new options. The
+ * form-submitting entity MUST NOT modify the order of items as received from
+ * the form-processing entity, since the order of items MAY be
+ * significant.</blockquote>
+ * </p>
+ */
 public class ListMultiField extends AbstractField<String[]> {
 
 	ListMultiField(Element element) throws XMLException {
 		super("list-multi", element);
 	}
 
+	/**
+	 * Adds value to field.
+	 * 
+	 * @param value
+	 *            value to add
+	 */
 	public void addFieldValue(String... value) throws XMLException {
 		if (value != null)
 			for (String string : value) {
@@ -37,6 +56,14 @@ public class ListMultiField extends AbstractField<String[]> {
 			}
 	}
 
+	/**
+	 * Adds option to field.
+	 * 
+	 * @param label
+	 *            label of option
+	 * @param value
+	 *            value of option
+	 */
 	public void addOption(String label, String value) throws XMLException {
 		DefaultElement o = new DefaultElement("option");
 		if (label != null)
@@ -45,6 +72,9 @@ public class ListMultiField extends AbstractField<String[]> {
 		addChild(o);
 	}
 
+	/**
+	 * Removes all options.
+	 */
 	public void clearOptions() throws XMLException {
 		List<Element> lls = getChildren("option");
 		if (lls != null)
@@ -53,6 +83,9 @@ public class ListMultiField extends AbstractField<String[]> {
 			}
 	}
 
+	/**
+	 * Removes all values.
+	 */
 	public void clearValues() throws XMLException {
 		List<Element> lls = getChildren("value");
 		if (lls != null)
@@ -61,6 +94,9 @@ public class ListMultiField extends AbstractField<String[]> {
 			}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] getFieldValue() throws XMLException {
 		ArrayList<String> result = new ArrayList<String>();
@@ -72,6 +108,9 @@ public class ListMultiField extends AbstractField<String[]> {
 		return result.toArray(new String[] {});
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String[] value) throws XMLException {
 		clearValues();

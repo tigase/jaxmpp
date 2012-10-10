@@ -23,12 +23,30 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of list-single field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide one option from among many. A
+ * form-submitting entity chooses one item from among the options presented by
+ * the form-processing entity and MUST NOT insert new options.</blockquote>
+ * </p>
+ */
 public class ListSingleField extends AbstractField<String> {
 
 	ListSingleField(Element element) throws XMLException {
 		super("list-single", element);
 	}
 
+	/**
+	 * Adds option to field.
+	 * 
+	 * @param label
+	 *            label of option
+	 * @param value
+	 *            value of option
+	 */
 	public void addOption(String label, String value) throws XMLException {
 		DefaultElement o = new DefaultElement("option");
 		if (label != null)
@@ -37,6 +55,9 @@ public class ListSingleField extends AbstractField<String> {
 		addChild(o);
 	}
 
+	/**
+	 * Removes all options.
+	 */
 	public void clearOptions() throws XMLException {
 		List<Element> lls = getChildren("option");
 		if (lls != null)
@@ -45,11 +66,17 @@ public class ListSingleField extends AbstractField<String> {
 			}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFieldValue() throws XMLException {
 		return getChildElementValue("value");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String value) throws XMLException {
 		setChildElementValue("value", value);

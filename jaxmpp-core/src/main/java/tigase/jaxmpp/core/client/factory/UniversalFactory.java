@@ -19,14 +19,44 @@ package tigase.jaxmpp.core.client.factory;
 
 import java.util.HashMap;
 
+/**
+ * Provides methods to inject alternative implementation of object in several
+ * points in this library.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class UniversalFactory {
 
+	private UniversalFactory() {
+	}
+
+	/**
+	 * Interface for object factory.
+	 * 
+	 * @param <T>
+	 *            type of created objects.
+	 */
 	public static interface FactorySpi<T> {
+
+		/**
+		 * Creates new instance of class.
+		 * 
+		 * @return
+		 */
 		T create();
 	}
 
 	private static UniversalFactory instance;
 
+	/**
+	 * Creates instance of object with given name.
+	 * 
+	 * @param key
+	 *            name of object.
+	 * @return instance of object or <code>null</code> if no factory is
+	 *         registered for that name.
+	 */
 	public static <T> T createInstance(String key) {
 		FactorySpi<T> spi = (FactorySpi<T>) instance().factories.get(key);
 		if (spi == null)
@@ -40,6 +70,14 @@ public class UniversalFactory {
 		return instance;
 	}
 
+	/**
+	 * Registers object factory with name.
+	 * 
+	 * @param key
+	 *            name of object factory.
+	 * @param spi
+	 *            implementation of factory.
+	 */
 	public static void setSpi(String key, FactorySpi<?> spi) {
 		instance().factories.put(key, spi);
 	}

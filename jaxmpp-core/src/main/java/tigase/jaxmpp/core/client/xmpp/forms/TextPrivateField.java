@@ -20,17 +20,33 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of text-private field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide a single line or word of text, which
+ * shall be obscured in an interface (e.g., with multiple instances of the
+ * asterisk character).</blockquote>
+ * </p>
+ */
 public class TextPrivateField extends AbstractField<String> {
 
 	TextPrivateField(Element element) throws XMLException {
 		super("text-private", element);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFieldValue() throws XMLException {
 		return getChildElementValue("value");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String value) throws XMLException {
 		setChildElementValue("value", value);

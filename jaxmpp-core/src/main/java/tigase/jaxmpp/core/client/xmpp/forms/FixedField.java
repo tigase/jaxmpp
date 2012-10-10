@@ -20,17 +20,35 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of Fixed field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * is intended for data description (e.g., human-readable text such as "section"
+ * headers) rather than data gathering or provision. The &lt;value/&gt; child
+ * SHOULD NOT contain newlines (the \n and \r characters); instead an
+ * application SHOULD generate multiple fixed fields, each with one
+ * &lt;value/&gt; child.</blockquote>
+ * </p>
+ */
 public class FixedField extends AbstractField<String> {
 
 	FixedField(Element element) throws XMLException {
 		super("fixed", element);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFieldValue() throws XMLException {
 		return getChildElementValue("value");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String value) throws XMLException {
 		setChildElementValue("value", value);

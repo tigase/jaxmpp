@@ -22,6 +22,12 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Abstract class to implement fields.
+ * 
+ * @param <T>
+ *            type of field
+ */
 public abstract class AbstractField<T> extends ElementWrapper implements Field<T> {
 
 	AbstractField(String elementType, Element element) throws XMLException {
@@ -30,41 +36,65 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 			setAttribute("type", elementType);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getDesc() throws XMLException {
 		return getChildElementValue("desc");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getLabel() throws XMLException {
 		return getAttribute("label");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getType() throws XMLException {
 		return getAttribute("type");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getVar() throws XMLException {
 		return getAttribute("var");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isRequired() throws XMLException {
 		return getFirstChild("required") != null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setDesc(String desc) throws XMLException {
 		setChildElementValue("desc", desc);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setLabel(String label) throws XMLException {
 		setAttribute("label", label);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setRequired(boolean value) throws XMLException {
 		Element b = getFirstChild("required");
@@ -76,6 +106,9 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setVar(String var) throws XMLException {
 		setAttribute("var", var);

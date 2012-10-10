@@ -24,12 +24,26 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of text-multi field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide multiple lines of text.</blockquote>
+ * </p>
+ */
 public class TextMultiField extends AbstractField<String[]> {
 
 	TextMultiField(Element element) throws XMLException {
 		super("text-multi", element);
 	}
 
+	/**
+	 * Adds value to field.
+	 * 
+	 * @param value
+	 *            value to add
+	 */
 	public void addFieldValue(String... value) throws XMLException {
 		if (value != null)
 			for (String string : value) {
@@ -37,6 +51,9 @@ public class TextMultiField extends AbstractField<String[]> {
 			}
 	}
 
+	/**
+	 * Removes all values.
+	 */
 	public void clearValues() throws XMLException {
 		List<Element> lls = getChildren("value");
 		if (lls != null)
@@ -45,6 +62,9 @@ public class TextMultiField extends AbstractField<String[]> {
 			}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String[] getFieldValue() throws XMLException {
 		ArrayList<String> result = new ArrayList<String>();
@@ -56,6 +76,9 @@ public class TextMultiField extends AbstractField<String[]> {
 		return result.toArray(new String[] {});
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String[] value) throws XMLException {
 		clearValues();

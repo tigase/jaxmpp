@@ -20,17 +20,34 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of text-single field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'>The field
+ * enables an entity to gather or provide a single line or word of text, which
+ * may be shown in an interface. This field type is the default and MUST be
+ * assumed if a form-submitting entity receives a field type it does not
+ * understand.</blockquote>
+ * </p>
+ */
 public class TextSingleField extends AbstractField<String> {
 
 	TextSingleField(Element element) throws XMLException {
 		super("text-single", element);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFieldValue() throws XMLException {
 		return getChildElementValue("value");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String value) throws XMLException {
 		setChildElementValue("value", value);

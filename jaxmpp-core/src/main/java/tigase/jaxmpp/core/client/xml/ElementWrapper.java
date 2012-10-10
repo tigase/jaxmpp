@@ -20,6 +20,12 @@ package tigase.jaxmpp.core.client.xml;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Wrapper for {@linkplain Element} class.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class ElementWrapper implements Element {
 
 	private final Element element;
@@ -28,31 +34,49 @@ public class ElementWrapper implements Element {
 		this.element = element;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element addChild(Element child) throws XMLException {
 		return element.addChild(child);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		return this.element.equals(obj);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getAsString() throws XMLException {
 		return element.getAsString();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getAttribute(String attName) throws XMLException {
 		return element.getAttribute(attName);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map<String, String> getAttributes() throws XMLException {
 		return element.getAttributes();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getChildAfter(Element child) throws XMLException {
 		return element.getChildAfter(child);
@@ -68,26 +92,41 @@ public class ElementWrapper implements Element {
 		return b == null ? null : b.getValue();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<Element> getChildren() throws XMLException {
 		return element.getChildren();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<Element> getChildren(String name) throws XMLException {
 		return element.getChildren(name);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<Element> getChildrenNS(String xmlns) throws XMLException {
 		return element.getChildrenNS(xmlns);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		return element.getChildrenNS(name, xmlns);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getFirstChild() throws XMLException {
 		return element.getFirstChild();
@@ -98,51 +137,81 @@ public class ElementWrapper implements Element {
 		return l != null && !l.isEmpty() ? l.get(0) : null;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getName() throws XMLException {
 		return element.getName();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getNextSibling() throws XMLException {
 		return element.getNextSibling();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getParent() throws XMLException {
 		return element.getParent();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getValue() throws XMLException {
 		return element.getValue();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getXMLNS() throws XMLException {
 		return element.getXMLNS();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int hashCode() {
 		return this.element.hashCode();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeAttribute(String key) throws XMLException {
 		element.removeAttribute(key);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeChild(Element child) throws XMLException {
 		element.removeChild(child);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setAttribute(String key, String value) throws XMLException {
 		element.setAttribute(key, value);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setAttributes(Map<String, String> attrs) throws XMLException {
 		element.setAttributes(attrs);
@@ -174,16 +243,25 @@ public class ElementWrapper implements Element {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setParent(Element parent) throws XMLException {
 		element.setParent(parent);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setValue(String value) throws XMLException {
 		element.setValue(value);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setXMLNS(String xmlns) throws XMLException {
 		element.setXMLNS(xmlns);

@@ -20,17 +20,34 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Implementation of Hidden field type.
+ * <p>
+ * <blockquote
+ * cite='http://xmpp.org/extensions/xep-0004.html#protocol-formtypes'> The field
+ * is not shown to the form-submitting entity, but instead is returned with the
+ * form. The form-submitting entity SHOULD NOT modify the value of a hidden
+ * field, but MAY do so if such behavior is defined for the "using protocol".
+ * </blockquote>
+ * </p>
+ */
 public class HiddenField extends AbstractField<String> {
 
 	HiddenField(Element element) throws XMLException {
 		super("hidden", element);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String getFieldValue() throws XMLException {
 		return getChildElementValue("value");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setFieldValue(String value) throws XMLException {
 		setChildElementValue("value", value);

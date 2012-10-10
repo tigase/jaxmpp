@@ -17,6 +17,10 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
+/**
+ * Types of form.
+ * 
+ */
 public enum XDataType {
 	/**
 	 * The form-submitting entity has cancelled submission of data to the
