@@ -25,16 +25,41 @@ import java.util.Map.Entry;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Simple implementation of Criteria to check element name and its attributes..
+ * 
+ */
 public class ElementCriteria implements Criteria {
 
+	/**
+	 * Makes criteria object what accepts all elements.
+	 * 
+	 * @return criteria
+	 */
 	public static final ElementCriteria empty() {
 		return new ElementCriteria(null, null, null);
 	}
 
+	/**
+	 * Makes criteria object to check name of element.
+	 * 
+	 * @param name
+	 *            expected element name.
+	 * @return criteria
+	 */
 	public static final ElementCriteria name(String name) {
 		return new ElementCriteria(name, null, null);
 	}
 
+	/**
+	 * Makes criteria object to check name of element and its namespace.
+	 * 
+	 * @param name
+	 *            expected name of element.
+	 * @param xmlns
+	 *            expected xmlns
+	 * @return criteria
+	 */
 	public static final ElementCriteria name(String name, String xmlns) {
 		return new ElementCriteria(name, new String[] { "xmlns" }, new String[] { xmlns });
 	}
@@ -43,6 +68,13 @@ public class ElementCriteria implements Criteria {
 		return new ElementCriteria(name, attNames, attValues);
 	}
 
+	/**
+	 * Makes criteria checking only xmlns attribute.
+	 * 
+	 * @param xmlns
+	 *            expected xmlns
+	 * @return criteria
+	 */
 	public static final ElementCriteria xmlns(String xmlns) {
 		return new ElementCriteria(null, new String[] { "xmlns" }, new String[] { xmlns });
 	}
@@ -53,6 +85,17 @@ public class ElementCriteria implements Criteria {
 
 	protected Criteria nextCriteria;
 
+	/**
+	 * Construct criteria.
+	 * 
+	 * @param name
+	 *            name of element. If <code>null</code> then any elements name
+	 *            will be accepted;
+	 * @param attname
+	 *            names of required attributes
+	 * @param attValue
+	 *            value of requird attrivutes
+	 */
 	public ElementCriteria(String name, String[] attname, String[] attValue) {
 		this.name = name;
 		if (attname != null && attValue != null) {
@@ -62,6 +105,9 @@ public class ElementCriteria implements Criteria {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Criteria add(Criteria criteria) {
 		if (this.nextCriteria == null) {
@@ -73,10 +119,8 @@ public class ElementCriteria implements Criteria {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see tigase.criteria.Criteria#match(tigase.xml.Element)
+	/**
+	 * {@inheritDoc}
 	 */
 	@Override
 	public boolean match(Element element) throws XMLException {

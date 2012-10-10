@@ -17,13 +17,46 @@
  */
 package tigase.jaxmpp.core.client.criteria;
 
+import tigase.jaxmpp.core.client.XmppModule;
+import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Base interface to check if given stanza may be processed by specific module.
+ * This class is used by {@linkplain XmppModule} and
+ * {@linkplain XmppModulesManager} to check what modules can handle received
+ * stanza.
+ * 
+ * @author bmalkow
+ * 
+ */
 public interface Criteria {
 
+	/**
+	 * Adds restriction for deeper level of elements.
+	 * <p>
+	 * For example:<br/>
+	 * If you have structure of elements:
+	 * <code>&lt;A&gt;&lt;B&gt;&lt;/B&gt;&lt;/A&gt;</code><br/>
+	 * then, to check elements <code>A</code> and <code>B</code> you should use
+	 * construction like this: <code>critToCheckA.add(critToCheckB);</code>
+	 * <p>
+	 * 
+	 * 
+	 * @param criteria
+	 *            restriction to add
+	 * @return
+	 */
 	Criteria add(Criteria criteria);
 
+	/**
+	 * This method checks if element match to conditions.
+	 * 
+	 * @param element
+	 *            element to check
+	 * @return <code>true</code> if element match.
+	 */
 	boolean match(Element element) throws XMLException;
 
 }

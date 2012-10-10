@@ -20,27 +20,31 @@ package tigase.jaxmpp.core.client.criteria;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Criteria implementation to realize OR operator.
+ * 
+ * @author bmalkow
+ * 
+ */
 public class Or implements Criteria {
 
 	protected Criteria[] crits;
 
-	public Or(Criteria criteria) {
-		this.crits = new Criteria[] { criteria };
+	public Or(Criteria... criterias) {
+		this.crits = criterias;
 	}
 
-	public Or(Criteria criteria1, Criteria criteria2) {
-		this.crits = new Criteria[] { criteria1, criteria2 };
-	}
-
-	public Or(Criteria[] criteria) {
-		this.crits = criteria;
-	}
-
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Criteria add(Criteria criteria) {
 		throw new RuntimeException("Or.add() is not implemented!");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean match(Element element) throws XMLException {
 		for (int i = 0; i < crits.length; i++) {
