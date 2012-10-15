@@ -327,7 +327,7 @@ public abstract class JaxmppCore {
 		this.writer.write(stanza, asyncCallback);
 	}
 
-	public void send(Stanza stanza, long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+	public void send(Stanza stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		this.writer.write(stanza, timeout, asyncCallback);
 	}
 
