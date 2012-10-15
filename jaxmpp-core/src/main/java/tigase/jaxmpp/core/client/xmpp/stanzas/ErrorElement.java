@@ -24,6 +24,10 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Class wrap around &lt;error/&gt; elements in stanza.
+ * 
+ */
 public class ErrorElement extends ElementWrapper {
 
 	public static ErrorElement extract(Element stanza) throws XMLException {
@@ -37,10 +41,20 @@ public class ErrorElement extends ElementWrapper {
 		super(element);
 	}
 
+	/**
+	 * Return error code.
+	 * 
+	 * @return error code
+	 */
 	public String getCode() throws XMLException {
 		return getAttribute("code");
 	}
 
+	/**
+	 * Return error condition.
+	 * 
+	 * @return {@linkplain ErrorCondition}
+	 */
 	public ErrorCondition getCondition() throws XMLException {
 		List<Element> cs = getChildrenNS("urn:ietf:params:xml:ns:xmpp-stanzas");
 		for (Element element : cs) {
@@ -51,6 +65,11 @@ public class ErrorElement extends ElementWrapper {
 		return null;
 	}
 
+	/**
+	 * Return human readable error description.
+	 * 
+	 * @return error description
+	 */
 	public String getText() throws XMLException {
 		Element e = getChildrenNS("text", "urn:ietf:params:xml:ns:xmpp-stanzas");
 		if (e != null)
@@ -59,6 +78,11 @@ public class ErrorElement extends ElementWrapper {
 			return null;
 	}
 
+	/**
+	 * Return error type.
+	 * 
+	 * @return error type
+	 */
 	public String getType() throws XMLException {
 		return getAttribute("type");
 	}

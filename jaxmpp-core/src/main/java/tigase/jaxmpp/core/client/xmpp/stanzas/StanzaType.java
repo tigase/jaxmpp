@@ -19,15 +19,28 @@ package tigase.jaxmpp.core.client.xmpp.stanzas;
 
 public enum StanzaType {
 	chat,
+	/**
+	 * The stanza reports an error that has occurred regarding processing or
+	 * delivery of a get or set request.
+	 */
 	error,
+	/**
+	 * The stanza requests information, inquires about what data is needed in
+	 * order to complete further operations, etc.
+	 */
 	get,
-
 	groupchat,
 	headline,
 	normal,
 	probe,
-
+	/**
+	 * The stanza is a response to a successful get or set request.
+	 */
 	result,
+	/**
+	 * The stanza provides data that is needed for an operation to be completed,
+	 * sets new values, replaces existing values, etc.
+	 */
 	set,
 	subscribe,
 	subscribed,

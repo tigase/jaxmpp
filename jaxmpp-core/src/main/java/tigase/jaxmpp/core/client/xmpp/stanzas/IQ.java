@@ -23,6 +23,10 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Representation of IQ stanza.
+ * 
+ */
 public class IQ extends Stanza {
 
 	public static final IQ create() throws XMLException {
@@ -35,6 +39,11 @@ public class IQ extends Stanza {
 			throw new RuntimeException("Wrong element name: " + element.getName());
 	}
 
+	/**
+	 * Return &lt;query/&gt; child element.
+	 * 
+	 * @return <code>null</code> is &lt;query/&gt; doesn't exists
+	 */
 	public Element getQuery() throws XMLException {
 		List<Element> q = this.getChildren("query");
 		return q != null && q.size() > 0 ? q.get(0) : null;

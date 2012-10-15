@@ -33,7 +33,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class ResponseManager {
 
-	// TODO add timeout handling
 
 	private static final class Entry {
 

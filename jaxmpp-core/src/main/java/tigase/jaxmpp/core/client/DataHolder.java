@@ -23,10 +23,12 @@ public class DataHolder {
 
 	private final HashMap<String, Object> data = new HashMap<String, Object>();
 
+	@SuppressWarnings("unchecked")
 	public <T> T getData(String key) {
 		return (T) this.data.get(key);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T> T removeData(String key) {
 		return (T) this.data.remove(key);
 	}

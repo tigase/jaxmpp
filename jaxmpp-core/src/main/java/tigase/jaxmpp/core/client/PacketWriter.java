@@ -20,12 +20,43 @@ package tigase.jaxmpp.core.client;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 
+/**
+ * Interface for writing to XMPP Stream.
+ * 
+ */
 public interface PacketWriter {
 
+	/**
+	 * Write a element to Stream.
+	 * 
+	 * @param stanza
+	 *            {@linkplain Element} to write
+	 */
 	void write(Element stanza) throws JaxmppException;
 
+	/**
+	 * Write a (IQ) stanza element to Stream and register callback with default
+	 * timeout.
+	 * 
+	 * @param stanza
+	 *            {@linkplain Element} to write
+	 * @param asyncCallback
+	 *            {@linkplain AsyncCallback} to register
+	 */
 	void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException;
 
+	/**
+	 * Write a (IQ) stanza element to Stream and register callback with given
+	 * timeout.
+	 * 
+	 * @param stanza
+	 *            stanza {@linkplain Element} to write
+	 * @param timeout
+	 *            time after which will be execute
+	 *            {@linkplain AsyncCallback#onTimeout()}
+	 * @param asyncCallback
+	 *            asyncCallback {@linkplain AsyncCallback} to register
+	 */
 	void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException;
 
 }

@@ -33,6 +33,10 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 
+/**
+ * Class for keeping many instances of {@linkplain JaxmppCore}
+ * 
+ */
 public class MultiJaxmpp {
 
 	private final ArrayList<Chat> chats = new ArrayList<Chat>();
@@ -58,6 +62,12 @@ public class MultiJaxmpp {
 		};
 	}
 
+	/**
+	 * Register implementation of {@linkplain JaxmppCore}
+	 * 
+	 * @param jaxmpp
+	 *            {@linkplain JaxmppCore} instance
+	 */
 	public <T extends JaxmppCore> void add(final T jaxmpp) {
 		synchronized (jaxmpps) {
 			jaxmpp.addListener(listener);
@@ -66,32 +76,80 @@ public class MultiJaxmpp {
 		}
 	}
 
+	/**
+	 * Adds a listener bound by the given event type.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            the listener
+	 */
 	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.addListener(eventType, listener);
 	}
 
+	/**
+	 * Add a listener bound by the all event types.
+	 * 
+	 * @param listener
+	 *            the listener
+	 */
 	public void addListener(Listener<? extends BaseEvent> listener) {
 		observable.addListener(listener);
 	}
 
+	/**
+	 * Returns collection of registered instances of {@linkplain JaxmppCore}
+	 * 
+	 * @return collection
+	 */
 	public Collection<JaxmppCore> get() {
 		return Collections.unmodifiableCollection(jaxmpps.values());
 	}
 
+	/**
+	 * Return instance of {@linkplain JaxmppCore} connected registered for
+	 * specific user account.
+	 * 
+	 * @param userJid
+	 *            user account
+	 * @return {@linkplain JaxmppCore}
+	 */
+	@SuppressWarnings("unchecked")
 	public <T extends JaxmppCore> T get(final BareJID userJid) {
 		synchronized (jaxmpps) {
 			return (T) jaxmpps.get(userJid);
 		}
 	}
 
+	/**
+	 * Returns instance of {@linkplain JaxmppCore} connected registered for
+	 * specific user account represented by {@linkplain SessionObject}.
+	 * 
+	 * @param sessionObject
+	 *            {@linkplain SessionObject} related to user account
+	 * @return {@linkplain JaxmppCore}
+	 */
 	public <T extends JaxmppCore> T get(final SessionObject sessionObject) {
 		return get(sessionObject.getUserBareJid());
 	}
 
+	/**
+	 * Returns collection of all known {@linkplain Chat} from all registered
+	 * {@linkplain JaxmppCore}.
+	 * 
+	 * @return collection of chats
+	 */
 	public List<Chat> getChats() {
 		return Collections.unmodifiableList(chats);
 	}
 
+	/**
+	 * Unregisters {@linkplain JaxmppCore}.
+	 * 
+	 * @param jaxmpp
+	 *            {@linkplain JaxmppCore} to unregister.
+	 */
 	public <T extends JaxmppCore> void remove(final T jaxmpp) {
 		synchronized (jaxmpps) {
 			this.chats.removeAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
@@ -100,14 +158,31 @@ public class MultiJaxmpp {
 		}
 	}
 
+	/**
+	 * Removes all listeners.
+	 */
 	public void removeAllListeners() {
 		observable.removeAllListeners();
 	}
 
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param eventType
+	 *            type of event
+	 * @param listener
+	 *            listener
+	 */
 	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
 		observable.removeListener(eventType, listener);
 	}
 
+	/**
+	 * Removes a listener.
+	 * 
+	 * @param listener
+	 *            listener
+	 */
 	public void removeListener(Listener<? extends BaseEvent> listener) {
 		observable.removeListener(listener);
 	}

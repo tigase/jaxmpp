@@ -26,14 +26,32 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  */
 public interface XmppSessionLogic {
 
+	/**
+	 * Interface for session listener.
+	 * 
+	 */
 	public static interface SessionListener {
 
 		void onException(JaxmppException e) throws JaxmppException;
 	}
 
+	/**
+	 * Method executed just before login process is started. In this method
+	 * implementation should register listeners.
+	 */
 	public void beforeStart() throws JaxmppException;
 
-	public void bind(SessionListener listener) throws JaxmppException;
+	/**
+	 * Set {@linkplain SessionListener}.
+	 * 
+	 * @param listener
+	 *            {@linkplain SessionListener}
+	 */
+	public void setSessionListener(SessionListener listener) throws JaxmppException;
 
+	/**
+	 * In this method implementation must unregister all previously registered
+	 * listeners.
+	 */
 	public void unbind() throws JaxmppException;
 }

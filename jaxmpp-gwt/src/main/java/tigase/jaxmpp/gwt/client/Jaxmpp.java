@@ -206,7 +206,7 @@ public class Jaxmpp extends JaxmppCore {
 		this.connectorWrapper.setConnector(new BoshConnector(observable, this.sessionObject));
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
-		this.sessionLogic.bind(new SessionListener() {
+		this.sessionLogic.setSessionListener(new SessionListener() {
 
 			@Override
 			public void onException(JaxmppException e) throws JaxmppException {

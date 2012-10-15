@@ -27,6 +27,10 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
+/**
+ * Default representation of {@linkplain SessionObject}
+ * 
+ */
 public class DefaultSessionObject implements SessionObject {
 
 	private final Logger log = Logger.getLogger(this.getClass().getName());
@@ -43,11 +47,17 @@ public class DefaultSessionObject implements SessionObject {
 
 	protected final Map<String, Object> userProperties = new HashMap<String, Object>();
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void checkHandlersTimeout() throws JaxmppException {
 		this.responseManager.checkTimeouts();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void clear() throws JaxmppException {
 		log.fine("Clearing properties!");
@@ -56,11 +66,17 @@ public class DefaultSessionObject implements SessionObject {
 		presence.clear(true);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public PresenceStore getPresence() {
 		return presence;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
@@ -70,25 +86,40 @@ public class DefaultSessionObject implements SessionObject {
 		return t;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Runnable getResponseHandler(Element element, PacketWriter writer) throws XMLException {
 		return responseManager.getResponseHandler(element, writer, this);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public RosterStore getRoster() {
 		return roster;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Element getStreamFeatures() {
 		return this.streamFeatures;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public BareJID getUserBareJid() {
 		return this.getProperty(USER_BARE_JID);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getUserProperty(String key) {
@@ -99,16 +130,25 @@ public class DefaultSessionObject implements SessionObject {
 		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setProperty(String key, Object value) {
 		this.properties.put(key, value);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setStreamFeatures(Element element) {
 		this.streamFeatures = element;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void setUserProperty(String key, Object value) {
 		if (value == null)

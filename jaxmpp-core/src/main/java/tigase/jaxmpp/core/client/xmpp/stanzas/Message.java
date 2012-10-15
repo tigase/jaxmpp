@@ -22,6 +22,10 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
 
+/**
+ * Representation od Message stanza.
+ * 
+ */
 public class Message extends Stanza {
 
 	public static final Message create() throws XMLException {
@@ -34,31 +38,67 @@ public class Message extends Stanza {
 			throw new RuntimeException("Wrong element name: " + element.getName());
 	}
 
+	/**
+	 * Return message body.
+	 * 
+	 * @return message body.
+	 */
 	public String getBody() throws XMLException {
 		return EscapeUtils.unescape(getChildElementValue("body"));
 	}
 
+	/**
+	 * Returns subject of message.
+	 * 
+	 * @return subject of message
+	 */
 	public String getSubject() throws XMLException {
 		return getChildElementValue("subject");
 	}
 
+	/**
+	 * Returns thread-id.
+	 * 
+	 * @return thread-id
+	 */
 	public String getThread() throws XMLException {
 		return getChildElementValue("thread");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public StanzaType getType() throws XMLException {
 		return super.getType(StanzaType.normal);
 	}
 
+	/**
+	 * Sets body of message.
+	 * 
+	 * @param body
+	 *            body of message
+	 */
 	public void setBody(String body) throws XMLException {
 		setChildElementValue("body", body);
 	}
 
+	/**
+	 * Sets subject of message.
+	 * 
+	 * @param subject
+	 *            subject of message
+	 */
 	public void setSubject(String subject) throws XMLException {
 		setChildElementValue("subject", subject);
 	}
 
+	/**
+	 * Sets thread-id of message.
+	 * 
+	 * @param thread
+	 *            thread-id
+	 */
 	public void setThread(String thread) throws XMLException {
 		setChildElementValue("thread", thread);
 	}

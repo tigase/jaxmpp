@@ -180,7 +180,7 @@ public class Jaxmpp extends JaxmppCore {
 		connector.addListener(Connector.Error, this.streamErrorListener);
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
-		this.sessionLogic.bind(new SessionListener() {
+		this.sessionLogic.setSessionListener(new SessionListener() {
 
 			@Override
 			public void onException(JaxmppException e) throws JaxmppException {

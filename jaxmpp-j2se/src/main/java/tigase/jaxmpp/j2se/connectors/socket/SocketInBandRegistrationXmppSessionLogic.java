@@ -86,7 +86,7 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 	}
 
 	@Override
-	public void bind(SessionListener sessionListener) throws JaxmppException {
+	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
 		this.sessionListener = sessionListener;
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
 		registrationModule = this.modulesManager.getModule(InBandRegistrationModule.class);

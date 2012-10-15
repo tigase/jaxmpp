@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -27,6 +28,11 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
+/**
+ * Class for process incoming stanza. This clas produces {@linkplain Runnable}
+ * that can be started by {@linkplain Executor}.
+ * 
+ */
 public class Processor {
 
 	public static class FeatureNotImplementedResponse extends AbstractStanzaHandler {
@@ -95,6 +101,13 @@ public class Processor {
 		return xmppModulesManages;
 	}
 
+	/**
+	 * Process received stanza.
+	 * 
+	 * @param stanza
+	 *            received stanza
+	 * @return {@linkplain Runnable}
+	 */
 	public Runnable process(final Element stanza) {
 		try {
 			Runnable result = sessionObject.getResponseHandler(stanza, writer);

@@ -26,8 +26,20 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Abstract representation of Stanza.
+ * 
+ */
 public abstract class Stanza extends ElementWrapper {
 
+	/**
+	 * Creates new stanza.
+	 * 
+	 * @param element
+	 *            element containing stanza.
+	 * @return specific implementation od Stanza: {@linkplain IQ},
+	 *         {@linkplain Message} or {@linkplain Presence}.
+	 */
 	public static final Stanza create(final Element element) throws XMLException {
 		if (element instanceof Stanza)
 			return (Stanza) element;
@@ -47,6 +59,12 @@ public abstract class Stanza extends ElementWrapper {
 		super(element);
 	}
 
+	/**
+	 * Returns {@linkplain ErrorCondition} element.
+	 * 
+	 * @return {@linkplain ErrorCondition}. <code>null</code> is element not
+	 *         present.
+	 */
 	public ErrorCondition getErrorCondition() throws XMLException {
 		List<Element> es = getChildren("error");
 		final Element error;
@@ -65,24 +83,53 @@ public abstract class Stanza extends ElementWrapper {
 		return errorCondition;
 	}
 
+	/**
+	 * Returns 'from' attribute.
+	 * 
+	 * @return {@linkplain JID}
+	 */
 	public JID getFrom() throws XMLException {
 		String t = getAttribute("from");
 		return t == null ? null : JID.jidInstance(t);
 	}
 
+	/**
+	 * Returns id of stanza.
+	 * 
+	 * @return id of stanza
+	 */
 	public String getId() throws XMLException {
 		return getAttribute("id");
 	}
 
+	/**
+	 * Returns 'to' attribute.
+	 * 
+	 * @return {@linkplain JID}
+	 */
 	public JID getTo() throws XMLException {
 		String t = getAttribute("to");
 		return t == null ? null : JID.jidInstance(t);
 	}
 
+	/**
+	 * Returns type of stanza.
+	 * 
+	 * @return {@linkplain StanzaType}. <code>null</code> if type not present.
+	 */
 	public StanzaType getType() throws XMLException {
 		return getType(null);
 	}
 
+	/**
+	 * Returns type of stanza.
+	 * 
+	 * @param defaultValue
+	 *            default value. Will be returned if type of stanza id
+	 *            <code>null</code>.
+	 * @return {@linkplain StanzaType}. <code>defaultValue</code> if type not
+	 *         present.
+	 */
 	public StanzaType getType(StanzaType defaultValue) throws XMLException {
 		try {
 			String x = getAttribute("type");
@@ -94,6 +141,12 @@ public abstract class Stanza extends ElementWrapper {
 		}
 	}
 
+	/**
+	 * Sets 'from' attribute.
+	 * 
+	 * @param jid
+	 *            {@linkplain JID}
+	 */
 	public void setFrom(JID jid) throws XMLException {
 		if (jid == null)
 			removeAttribute("from");
@@ -101,10 +154,23 @@ public abstract class Stanza extends ElementWrapper {
 			setAttribute("from", jid.toString());
 	}
 
+	/**
+	 * Sets id of stanza
+	 * 
+	 * @param id
+	 *            id
+	 * @throws XMLException
+	 */
 	public void setId(String id) throws XMLException {
 		setAttribute("id", id);
 	}
 
+	/**
+	 * Sets 'to' attribute.
+	 * 
+	 * @param jid
+	 *            {@linkplain JID}
+	 */
 	public void setTo(JID jid) throws XMLException {
 		if (jid == null)
 			removeAttribute("to");
@@ -112,6 +178,12 @@ public abstract class Stanza extends ElementWrapper {
 			setAttribute("to", jid.toString());
 	}
 
+	/**
+	 * Sets type of stanza.
+	 * 
+	 * @param type
+	 *            {@linkplain StanzaType}
+	 */
 	public void setType(StanzaType type) throws XMLException {
 		if (type != null)
 			setAttribute("type", type.name());

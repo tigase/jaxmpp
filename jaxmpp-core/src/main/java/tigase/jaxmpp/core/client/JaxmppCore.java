@@ -54,6 +54,27 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.vcard.VCardModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
+/**
+ * Base abstract class for implementation platform-specific jaxmpp clients.
+ * 
+ * <dl>
+ * <dt><b>Events:</b></dt>
+ * 
+ * <dd><b>{@link JaxmppCore#Connected Connected}</b> : {@link JaxmppEvent
+ * JaxmppEvent} ()<br>
+ * <div>Fires when client is fully connected.</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * <dd><b>{@link JaxmppCore#Disconnected Disconnected}</b> : {@link JaxmppEvent
+ * JaxmppEvent} ()<br>
+ * <div>Fires when client disconnects.</div>
+ * <ul>
+ * </ul></dd>
+ * 
+ * </dd>
+ * 
+ */
 public abstract class JaxmppCore {
 
 	public static class JaxmppEvent extends BaseEvent {

@@ -21,13 +21,37 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Representation of Presence stanza.
+ * 
+ */
 public class Presence extends Stanza {
 
+	/**
+	 * Availability sub-state
+	 * 
+	 */
 	public static enum Show {
+		/**
+		 * The entity or resource is temporarily away.
+		 */
 		away(3),
+		/**
+		 * The entity or resource is actively interested in chatting.
+		 */
 		chat(5),
+		/**
+		 * The entity or resource is busy (dnd = "Do Not Disturb").
+		 */
 		dnd(1),
+		/**
+		 * The entity or resource is online and available.
+		 */
 		online(4),
+		/**
+		 * The entity or resource is away for an extended period (xa =
+		 * "eXtended Away").
+		 */
 		xa(2);
 
 		private final int weight;
@@ -42,6 +66,11 @@ public class Presence extends Stanza {
 
 	}
 
+	/**
+	 * Creates new instance of stanza.
+	 * 
+	 * @return {@linkplain Presence}
+	 */
 	public static Presence create() throws XMLException {
 		return new Presence(new DefaultElement("presence"));
 	}
@@ -64,6 +93,13 @@ public class Presence extends Stanza {
 			throw new RuntimeException("Wrong element name: " + element.getName());
 	}
 
+	/**
+	 * Returns nickname. Nickname is defined in <a
+	 * href='http://xmpp.org/extensions/xep-0172.html'>XEP-0172: User
+	 * Nickname</a>.
+	 * 
+	 * @return nickname or <code>null</code> if not present.
+	 */
 	public String getNickname() throws XMLException {
 		if (cacheNicknameSet)
 			return cacheNickname;
@@ -74,6 +110,11 @@ public class Presence extends Stanza {
 		return cacheNickname;
 	}
 
+	/**
+	 * Returns priority level of resource.
+	 * 
+	 * @return priority level.
+	 */
 	public Integer getPriority() throws XMLException {
 		if (cachePriority != null)
 			return cachePriority;
@@ -90,6 +131,11 @@ public class Presence extends Stanza {
 		return p;
 	}
 
+	/**
+	 * Return avaiability substate.
+	 * 
+	 * @return {@linkplain Show}
+	 */
 	public Show getShow() throws XMLException {
 		if (cacheShow != null)
 			return cacheShow;
@@ -104,6 +150,11 @@ public class Presence extends Stanza {
 		return show;
 	}
 
+	/**
+	 * Returns natural-language description of an entity's availability.
+	 * 
+	 * @return status
+	 */
 	public String getStatus() throws XMLException {
 		if (cacheStatusSet)
 			return cacheStatus;
@@ -113,23 +164,51 @@ public class Presence extends Stanza {
 		return cacheStatus;
 	}
 
-	public void setNickname(String value) throws XMLException {
-		setChildElementValue("nick", "http://jabber.org/protocol/nick", value == null ? null : value.toString());
+	/**
+	 * Sets nickname. Nickname is defined in <a
+	 * href='http://xmpp.org/extensions/xep-0172.html'>XEP-0172: User
+	 * Nickname</a>.
+	 * 
+	 * @param nickname
+	 *            nickname
+	 */
+	public void setNickname(String nickname) throws XMLException {
+		setChildElementValue("nick", "http://jabber.org/protocol/nick", nickname == null ? null : nickname.toString());
 	}
 
+	/**
+	 * Sets priority level of resource.
+	 * 
+	 * @param value
+	 * @throws XMLException
+	 */
 	public void setPriority(Integer value) throws XMLException {
 		setChildElementValue("priority", value == null ? null : value.toString());
 	}
 
-	public void setShow(Show value) throws XMLException {
-		if (value == null || value == Show.online)
+	/**
+	 * Sets avaiability sub-state.
+	 * 
+	 * @param show
+	 *            {@linkplain Show}
+	 * @throws XMLException
+	 */
+	public void setShow(Show show) throws XMLException {
+		if (show == null || show == Show.online)
 			setChildElementValue("show", null);
 		else
-			setChildElementValue("show", value.name());
+			setChildElementValue("show", show.name());
 	}
 
-	public void setStatus(String value) throws XMLException {
-		setChildElementValue("status", value);
+	/**
+	 * Sets natural-language description of an entity's availability.
+	 * 
+	 * @param status
+	 *            description
+	 * @throws XMLException
+	 */
+	public void setStatus(String status) throws XMLException {
+		setChildElementValue("status", status);
 	}
 
 }
