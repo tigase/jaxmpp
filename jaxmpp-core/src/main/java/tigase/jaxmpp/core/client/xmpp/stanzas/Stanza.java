@@ -22,6 +22,7 @@ import java.util.List;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -40,7 +41,7 @@ public abstract class Stanza extends ElementWrapper {
 	 * @return specific implementation od Stanza: {@linkplain IQ},
 	 *         {@linkplain Message} or {@linkplain Presence}.
 	 */
-	public static final Stanza create(final Element element) throws XMLException {
+	public static final Stanza create(final Element element) throws JaxmppException {
 		if (element instanceof Stanza)
 			return (Stanza) element;
 		final String name = element.getName();
@@ -50,9 +51,11 @@ public abstract class Stanza extends ElementWrapper {
 			return new Message(element);
 		else if ("presence".equals(name))
 			return new Presence(element);
-		else
-			return new Stanza(element) {
-			};
+		else {
+			JaxmppException e = new JaxmppException("Unkown stanza type '" + name + "'");
+			e.printStackTrace();
+			throw e;
+		}
 	}
 
 	public Stanza(Element element) {

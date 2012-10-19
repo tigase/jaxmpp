@@ -33,7 +33,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class ResponseManager {
 
-
 	private static final class Entry {
 
 		private final AsyncCallback callback;
@@ -86,7 +85,7 @@ public class ResponseManager {
 	 * @throws XMLException
 	 */
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
-			throws XMLException {
+			throws JaxmppException {
 		final String id = element.getAttribute("id");
 		if (id == null)
 			return null;

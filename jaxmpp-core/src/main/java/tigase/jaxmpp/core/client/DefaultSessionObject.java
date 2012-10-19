@@ -89,7 +89,7 @@ public class DefaultSessionObject implements SessionObject {
 	/**
 	 * {@inheritDoc}
 	 */
-	public Runnable getResponseHandler(Element element, PacketWriter writer) throws XMLException {
+	public Runnable getResponseHandler(Element element, PacketWriter writer) throws JaxmppException {
 		return responseManager.getResponseHandler(element, writer, this);
 	}
 

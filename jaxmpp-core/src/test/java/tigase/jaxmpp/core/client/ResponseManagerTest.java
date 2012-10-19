@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client;
 
 import junit.framework.TestCase;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -70,7 +71,7 @@ public class ResponseManagerTest extends TestCase {
 
 			assertEquals("response", writer.poll().getName());
 
-		} catch (XMLException e1) {
+		} catch (JaxmppException e1) {
 			e1.printStackTrace();
 			fail(e1.getMessage());
 		}
@@ -125,7 +126,7 @@ public class ResponseManagerTest extends TestCase {
 
 			assertEquals("response", writer.poll().getName());
 
-		} catch (XMLException e1) {
+		} catch (JaxmppException e1) {
 			e1.printStackTrace();
 			fail(e1.getMessage());
 		}
