@@ -86,6 +86,9 @@ public class ResponseManager {
 	 */
 	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
 			throws JaxmppException {
+		if (!Stanza.canBeConverted(element))
+			return null;
+
 		final String id = element.getAttribute("id");
 		if (id == null)
 			return null;
@@ -98,17 +101,16 @@ public class ResponseManager {
 
 		this.handlers.remove(id);
 
-		final Stanza stanza = element instanceof Stanza ? (Stanza) element : Stanza.create(element);
-		AbstractStanzaHandler r = new AbstractStanzaHandler(stanza, writer, sessionObject) {
+		AbstractStanzaHandler r = new AbstractStanzaHandler(element, writer, sessionObject) {
 
 			@Override
 			protected void process() throws JaxmppException {
-				final String type = this.stanza.getAttribute("type");
+				final String type = this.element.getAttribute("type");
 
 				if (type != null && type.equals("result")) {
-					entry.callback.onSuccess(this.stanza);
+					entry.callback.onSuccess(Stanza.create(this.element));
 				} else if (type != null && type.equals("error")) {
-					List<Element> es = this.stanza.getChildren("error");
+					List<Element> es = this.element.getChildren("error");
 					final Element error;
 					if (es != null && es.size() > 0)
 						error = es.get(0);
@@ -122,7 +124,7 @@ public class ResponseManager {
 							errorCondition = ErrorCondition.getByElementName(conds.get(0).getName());
 						}
 					}
-					entry.callback.onError(this.stanza, errorCondition);
+					entry.callback.onError(Stanza.create(this.element), errorCondition);
 				}
 			}
 		};

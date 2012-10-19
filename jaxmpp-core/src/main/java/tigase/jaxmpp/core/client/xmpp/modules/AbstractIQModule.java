@@ -76,7 +76,7 @@ public abstract class AbstractIQModule implements XmppModule {
 
 	@Override
 	public void process(Element $element) throws JaxmppException {
-		final Stanza stanza = $element instanceof Stanza ? (Stanza) $element : Stanza.create($element);
+		final Stanza stanza = Stanza.create($element);
 		final StanzaType type = stanza.getType();
 
 		if (stanza instanceof IQ && type == StanzaType.set)

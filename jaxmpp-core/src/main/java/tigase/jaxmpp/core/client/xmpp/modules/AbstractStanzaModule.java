@@ -70,7 +70,7 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	@Override
 	@SuppressWarnings("unchecked")
 	public void process(Element element) throws JaxmppException {
-		final T stanza = element instanceof Stanza ? (T) element : (T) Stanza.create(element);
+		final T stanza = (T) Stanza.create(element);
 		process(stanza);
 	}
 

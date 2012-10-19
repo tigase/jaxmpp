@@ -20,20 +20,19 @@ package tigase.jaxmpp.core.client;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class AbstractStanzaHandler implements Runnable {
 
-	protected final SessionObject sessionObject;
+	protected final Element element;
 
-	protected final Stanza stanza;
+	protected final SessionObject sessionObject;
 
 	protected final PacketWriter writer;
 
-	public AbstractStanzaHandler(Stanza stanza, PacketWriter writer, SessionObject sessionObject) {
+	public AbstractStanzaHandler(Element element, PacketWriter writer, SessionObject sessionObject) {
 		super();
 		this.writer = writer;
-		this.stanza = stanza;
+		this.element = element;
 		this.sessionObject = sessionObject;
 	}
 
@@ -47,7 +46,7 @@ public abstract class AbstractStanzaHandler implements Runnable {
 				// }catch(XMPPException e){
 			} catch (Exception e) {
 				e.printStackTrace();
-				Element errorResult = Processor.createError(stanza, e);
+				Element errorResult = Processor.createError(element, e);
 				if (errorResult != null)
 					writer.write(errorResult);
 			}

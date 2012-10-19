@@ -141,7 +141,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		@Override
 		public boolean match(Element element) throws XMLException {
 			final String type = element.getAttribute("type");
-			if (type == null || !type.equals("groupchat"))
+			if ("message".equals(element.getName()) && (type == null || !type.equals("groupchat")))
 				return true;
 			return false;
 		}

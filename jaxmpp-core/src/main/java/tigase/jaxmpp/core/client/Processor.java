@@ -39,13 +39,13 @@ public class Processor {
 
 		protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-		public FeatureNotImplementedResponse(Stanza stanza, PacketWriter writer, SessionObject sessionObject) {
-			super(stanza, writer, sessionObject);
+		public FeatureNotImplementedResponse(Element element, PacketWriter writer, SessionObject sessionObject) {
+			super(element, writer, sessionObject);
 		}
 
 		@Override
 		protected void process() throws XMLException, XMPPException {
-			log.fine(ErrorCondition.feature_not_implemented.name() + " " + stanza.getAsString());
+			log.fine(ErrorCondition.feature_not_implemented.name() + " " + element.getAsString());
 			throw new XMPPException(ErrorCondition.feature_not_implemented);
 		}
 
@@ -104,30 +104,33 @@ public class Processor {
 	/**
 	 * Process received stanza.
 	 * 
-	 * @param stanza
+	 * @param element
 	 *            received stanza
 	 * @return {@linkplain Runnable}
 	 */
-	public Runnable process(final Element stanza) {
+	public Runnable process(final Element receivedElement) {
 		try {
-			Runnable result = sessionObject.getResponseHandler(stanza, writer);
+			final Element element = Stanza.canBeConverted(receivedElement) ? Stanza.create(receivedElement) : receivedElement;
+
+			Runnable result = sessionObject.getResponseHandler(element, writer);
 			if (result != null)
 				return result;
 
-			if (stanza.getName().equals("iq") && stanza.getAttribute("type") != null
-					&& (stanza.getAttribute("type").equals("error") || stanza.getAttribute("type").equals("result")))
+			if (element.getName().equals("iq") && element.getAttribute("type") != null
+					&& (element.getAttribute("type").equals("error") || element.getAttribute("type").equals("result")))
 				return null;
 
-			final List<XmppModule> modules = xmppModulesManages.findModules(stanza);
+			final List<XmppModule> modules = xmppModulesManages.findModules(element);
+
 			if (modules == null)
-				result = new FeatureNotImplementedResponse(Stanza.create(stanza), writer, sessionObject);
+				result = new FeatureNotImplementedResponse(element, writer, sessionObject);
 			else {
-				result = new AbstractStanzaHandler(Stanza.create(stanza), writer, sessionObject) {
+				result = new AbstractStanzaHandler(element, writer, sessionObject) {
 
 					@Override
 					protected void process() throws XMLException, XMPPException, JaxmppException {
 						for (XmppModule module : modules) {
-							module.process(this.stanza);
+							module.process(this.element);
 						}
 					}
 				};

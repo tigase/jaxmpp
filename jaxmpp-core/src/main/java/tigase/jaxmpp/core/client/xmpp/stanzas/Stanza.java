@@ -33,6 +33,37 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  */
 public abstract class Stanza extends ElementWrapper {
 
+	public static class UnkownStanzaTypeException extends JaxmppException {
+
+		private static final long serialVersionUID = 1L;
+
+		public UnkownStanzaTypeException() {
+			super();
+		}
+
+		public UnkownStanzaTypeException(String message) {
+			super(message);
+		}
+
+		public UnkownStanzaTypeException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public UnkownStanzaTypeException(Throwable cause) {
+			super(cause);
+		}
+
+	}
+
+	public static boolean canBeConverted(final Element element) throws XMLException {
+		if (element instanceof Stanza)
+			return true;
+		else {
+			final String name = element.getName();
+			return ("presence".equals(name) || "message".equals(name) || "iq".equals(name));
+		}
+	}
+
 	/**
 	 * Creates new stanza.
 	 * 
@@ -52,8 +83,7 @@ public abstract class Stanza extends ElementWrapper {
 		else if ("presence".equals(name))
 			return new Presence(element);
 		else {
-			JaxmppException e = new JaxmppException("Unkown stanza type '" + name + "'");
-			e.printStackTrace();
+			JaxmppException e = new UnkownStanzaTypeException("Unkown stanza type '" + name + "'");
 			throw e;
 		}
 	}
