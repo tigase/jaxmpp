@@ -78,7 +78,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * <br/>
  * <dt><b>Properties:</b></dt>
  * 
- * <dd><b>{@link Connector#TRUST_MANAGER_KEY TRUST_MANAGER}</b>: Custom
+ * <dd><b>{@link Connector#TRUST_MANAGERS_KEY TRUST_MANAGER}</b>: Custom
  * {@link TrustManager TrustManager} instead of dummy (accespts all
  * certificates) builded in.</dd>
  * 
@@ -237,10 +237,10 @@ public interface Connector {
 
 	/**
 	 * Key for define {@linkplain SessionObject#setUserProperty(String, Object)
-	 * property}. Custom {@link TrustManager TrustManager} instead of dummy
-	 * (accespts all certificates) builded in.
+	 * property}. Custom array of {@link TrustManager TrustManagers[]} instead
+	 * of dummy (accepts all certificates) builded in.
 	 */
-	public static final String TRUST_MANAGER_KEY = "TRUST_MANAGER_KEY";
+	public static final String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
 
 	/**
 	 * Adds a listener bound by the given event type.

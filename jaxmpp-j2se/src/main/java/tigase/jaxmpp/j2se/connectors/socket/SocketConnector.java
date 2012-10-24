@@ -414,9 +414,9 @@ public class SocketConnector implements Connector {
 		log.fine("Proceeding TLS");
 		try {
 			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
-			TrustManager trustManager = sessionObject.getProperty(TRUST_MANAGER_KEY);
+			TrustManager[] trustManagers = sessionObject.getProperty(TRUST_MANAGERS_KEY);
 			final SSLSocketFactory factory;
-			if (trustManager == null) {
+			if (trustManagers == null) {
 				if (sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
 					factory = sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY);
 				} else {
@@ -424,7 +424,7 @@ public class SocketConnector implements Connector {
 				}
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
-				ctx.init(new KeyManager[0], new TrustManager[] { trustManager }, new SecureRandom());
+				ctx.init(new KeyManager[0], trustManagers, new SecureRandom());
 				factory = ctx.getSocketFactory();
 			}
 
@@ -608,8 +608,8 @@ public class SocketConnector implements Connector {
 		preventAgainstFireErrors = false;
 		log.fine("Start connector.");
 
-		if (sessionObject.getProperty(TRUST_MANAGER_KEY) == null)
-			sessionObject.setProperty(TRUST_MANAGER_KEY, dummyTrustManager);
+		if (sessionObject.getProperty(TRUST_MANAGERS_KEY) == null)
+			sessionObject.setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
 
 		setStage(State.connecting);
 
