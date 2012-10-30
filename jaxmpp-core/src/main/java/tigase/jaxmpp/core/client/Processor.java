@@ -18,7 +18,6 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
