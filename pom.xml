@@ -55,6 +55,24 @@
 						<encoding>UTF-8</encoding>
 					</configuration>
 				</plugin>
+				<plugin>
+				    <groupId>org.apache.maven.plugins</groupId>
+				    <artifactId>maven-source-plugin</artifactId>
+				    <executions>
+				        <execution>
+				            <id>attach-sources</id>
+				            <goals>
+				                <goal>jar-no-fork</goal>
+				            </goals>
+				        </execution>
+				        <execution>
+				            <id>attach-test-sources</id>
+				            <goals>
+				                <goal>test-jar-no-fork</goal>
+				            </goals>
+				        </execution>
+				    </executions>
+				</plugin>				
 			</plugins>
 		</pluginManagement>
 		<extensions>
@@ -98,7 +116,5 @@
 			<url>scp://maven.tigase.org:/home/webapp/maven-repository</url>
 		</snapshotRepository>
 	</distributionManagement>
-
-
 
 </project>
