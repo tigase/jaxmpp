@@ -33,6 +33,11 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 
+/**
+ * Module for <a href=
+ * 'http://xmpp.org/rfcs/rfc6120.html#streams-negotiation-features'>Stream
+ * Features</a>.
+ */
 public class StreamFeaturesModule implements XmppModule {
 
 	public static class StreamFeaturesReceivedEvent extends BaseEvent {
@@ -59,6 +64,9 @@ public class StreamFeaturesModule implements XmppModule {
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
 
+	/**
+	 * Event fires when stream features are received.
+	 */
 	public static final EventType StreamFeaturesReceived = new EventType();
 
 	protected final Logger log;

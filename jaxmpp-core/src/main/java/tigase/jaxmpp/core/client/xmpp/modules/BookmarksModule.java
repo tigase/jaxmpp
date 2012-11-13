@@ -36,11 +36,17 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
+ * Implementation of <a
+ * href='http://xmpp.org/extensions/xep-0049.html'>XEP-0049: Private XML
+ * Storage</a>.
  * 
  * @author andrzej
  */
 public class BookmarksModule extends AbstractIQModule {
 
+	/**
+	 * Bookmarks callback.
+	 */
 	public static abstract class BookmarksAsyncCallback implements AsyncCallback {
 
 		public abstract void onBookmarksReceived(List<Element> bookmarks);
@@ -83,6 +89,14 @@ public class BookmarksModule extends AbstractIQModule {
 		throw new XMPPException(XMPPException.ErrorCondition.not_allowed);
 	}
 
+	/**
+	 * Send list of bookmarks to private storage.
+	 * 
+	 * @param bookmarks
+	 *            collections of elements with bookmarks.
+	 * @param callback
+	 *            callback
+	 */
 	public void publishBookmarks(List<Element> bookmarks, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
@@ -104,6 +118,12 @@ public class BookmarksModule extends AbstractIQModule {
 		this.writer.write(iq, callback);
 	}
 
+	/**
+	 * Retrieve bookmarks from private storage.
+	 * 
+	 * @param callback
+	 *            callback to handle response.
+	 */
 	public void retrieveBookmarks(BookmarksAsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);

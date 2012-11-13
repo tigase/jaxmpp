@@ -90,8 +90,20 @@ public abstract class AbstractIQModule implements XmppModule {
 		}
 	}
 
+	/**
+	 * Method for processing stanza <code>&lt;iq type='get'&gt;</code>.
+	 * 
+	 * @param element
+	 *            incoming XMPP stanza
+	 */
 	protected abstract void processGet(IQ element) throws JaxmppException;
 
+	/**
+	 * Method for processing stanza <code>&lt;iq type='set'&gt;</code>.
+	 * 
+	 * @param element
+	 *            incoming XMPP stanza
+	 */
 	protected abstract void processSet(IQ element) throws JaxmppException;
 
 	/**

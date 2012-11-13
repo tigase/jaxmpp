@@ -38,12 +38,25 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Implementation of <a href='http://xmpp.org/extensions/xep-0199.html'>XEP-0199
+ * XMPP Ping</a>.
+ */
 public class PingModule extends AbstractIQModule {
 
+	/**
+	 * Ping callback.
+	 */
 	public static abstract class PingAsyncCallback implements AsyncCallback {
 
 		private long pingTimestamp;
 
+		/**
+		 * Called on success.
+		 * 
+		 * @param time
+		 *            ping time
+		 */
 		protected abstract void onPong(final long time);
 
 		@Override
@@ -70,15 +83,31 @@ public class PingModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-	public void ping(JID jidInstance, AsyncCallback asyncCallback) throws JaxmppException {
+	/**
+	 * Ping given XMPP entity.
+	 * 
+	 * @param jid
+	 *            entity to ping.
+	 * @param asyncCallback
+	 *            general callback
+	 */
+	public void ping(JID jid, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
-		iq.setTo(jidInstance);
+		iq.setTo(jid);
 		iq.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
 		writer.write(iq, asyncCallback);
 	}
 
+	/**
+	 * Ping given XMPP entity.
+	 * 
+	 * @param jid
+	 *            entity to ping.
+	 * @param asyncCallback
+	 *            ping callback
+	 */
 	public void ping(JID jidInstance, PingAsyncCallback asyncCallback) throws JaxmppException {
 		asyncCallback.pingTimestamp = (new Date()).getTime();
 		ping(jidInstance, (AsyncCallback) asyncCallback);

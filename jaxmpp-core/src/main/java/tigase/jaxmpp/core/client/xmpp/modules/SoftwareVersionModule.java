@@ -38,8 +38,16 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Implementation of <a
+ * href='http://xmpp.org/extensions/xep-0092.html'>XEP-0092: Software
+ * Version</a>.
+ */
 public class SoftwareVersionModule extends AbstractIQModule {
 
+	/**
+	 * Software version callback.
+	 */
 	public static abstract class SoftwareVersionAsyncCallback implements AsyncCallback {
 
 		@Override
@@ -53,15 +61,37 @@ public class SoftwareVersionModule extends AbstractIQModule {
 			}
 		}
 
+		/**
+		 * Called on success.
+		 * 
+		 * @param name
+		 *            received software name
+		 * @param version
+		 *            received software version
+		 * @param os
+		 *            received operating system name
+		 */
 		protected abstract void onVersionReceived(final String name, final String version, final String os) throws XMLException;
 	}
 
+	/**
+	 * Default software name.
+	 */
 	public final static String DEFAULT_NAME_VAL = "Tigase based software";
 
+	/**
+	 * Key to keep software name in {@link SessionObject}.
+	 */
 	public final static String NAME_KEY = "SOFTWARE_VERSION#NAME_KEY";
 
+	/**
+	 * Key to keep operating system name in {@link SessionObject}.
+	 */
 	public final static String OS_KEY = "SOFTWARE_VERSION#OS_KEY";
 
+	/**
+	 * Key to keep software version in {@link SessionObject}.
+	 */
 	public final static String VERSION_KEY = "SOFTWARE_VERSION#VERSION_KEY";
 
 	private static String getFirst(List<Element> list) throws XMLException {
@@ -79,7 +109,15 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 	}
 
-	public void checkSoftwareVersion(JID jid, AsyncCallback callback) throws XMLException, JaxmppException {
+	/**
+	 * Requests software version for given entity.
+	 * 
+	 * @param jid
+	 *            entity
+	 * @param callback
+	 *            general callback
+	 */
+	public void checkSoftwareVersion(JID jid, AsyncCallback callback) throws JaxmppException {
 		IQ pingIq = IQ.create();
 		pingIq.setTo(jid);
 		pingIq.setType(StanzaType.get);
@@ -88,6 +126,14 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		writer.write(pingIq, callback);
 	}
 
+	/**
+	 * Requests software version for given entity.
+	 * 
+	 * @param jid
+	 *            entity
+	 * @param callback
+	 *            software version callback
+	 */
 	public void checkSoftwareVersion(JID jid, SoftwareVersionAsyncCallback callback) throws XMLException, JaxmppException {
 		checkSoftwareVersion(jid, (AsyncCallback) callback);
 	}

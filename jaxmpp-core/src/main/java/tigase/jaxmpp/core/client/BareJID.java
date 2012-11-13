@@ -17,19 +17,37 @@
  */
 package tigase.jaxmpp.core.client;
 
+/**
+ * XMPP entity address form <code>&lt;localpart@domainpart&gt;</code>
+ */
 public class BareJID implements Comparable<BareJID> {
 
+	/**
+	 * Creates instance of {@link BareJID}.
+	 * 
+	 * @param jid
+	 *            string contains full JID or bare JID
+	 * @return bare JID
+	 */
 	public static BareJID bareJIDInstance(String jid) {
 		String[] parsedJid = parseJID(jid);
-
 		return bareJIDInstance(parsedJid[0], parsedJid[1]);
 	}
 
+	/**
+	 * Creates instance of {@link BareJID}.
+	 * 
+	 * @param p_localpart
+	 *            localpart
+	 * @param p_domain
+	 *            domainpart
+	 * @return bare JID
+	 */
 	public static BareJID bareJIDInstance(String p_localpart, String p_domain) {
 		return new BareJID(p_localpart, p_domain);
 	}
 
-	public static String[] parseJID(String jid) {
+	static String[] parseJID(String jid) {
 		String[] result = new String[3];
 
 		// Cut off the resource part first
@@ -48,11 +66,7 @@ public class BareJID implements Comparable<BareJID> {
 		return result;
 	}
 
-	static String toString(BareJID bareJid, String p_resource) {
-		return bareJid.toString() + (((p_resource != null) && (p_resource.length() > 0)) ? "/" + p_resource : "");
-	}
-
-	static String toString(String p_localpart, String p_domain) {
+	private static String toString(String p_localpart, String p_domain) {
 		return (((p_localpart != null) && (p_localpart.length() > 0)) ? (p_localpart + "@" + p_domain) : p_domain);
 	}
 
@@ -86,10 +100,20 @@ public class BareJID implements Comparable<BareJID> {
 		return result;
 	}
 
+	/**
+	 * Return domainpart.
+	 * 
+	 * @return domainpart
+	 */
 	public String getDomain() {
 		return domain;
 	}
 
+	/**
+	 * Return localpart.
+	 * 
+	 * @return localpart
+	 */
 	public String getLocalpart() {
 		return localpart;
 	}

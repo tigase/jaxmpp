@@ -40,6 +40,10 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Module for <a href='http://xmpp.org/rfcs/rfc6120.html#bind'>Resource
+ * Binding</a>.
+ */
 public class ResourceBinderModule implements XmppModule {
 
 	public static final class ResourceBindEvent extends BaseEvent {
@@ -71,10 +75,20 @@ public class ResourceBinderModule implements XmppModule {
 		}
 	}
 
+	/**
+	 * Property name for retrieve binded resource from
+	 * {@linkplain SessionObject}.
+	 */
 	public static final String BINDED_RESOURCE_JID = "jaxmpp#bindedResource";
 
+	/**
+	 * Event fires on binding error.
+	 */
 	public static final EventType ResourceBindError = new EventType();
 
+	/**
+	 * Event fires on binding success.
+	 */
 	public static final EventType ResourceBindSuccess = new EventType();
 
 	protected final Logger log;
