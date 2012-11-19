@@ -350,7 +350,8 @@ public class SocketConnector implements Connector {
 	public void keepalive() throws JaxmppException {
 		if (sessionObject.getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
 			return;
-		send(new byte[] { 32 });
+		if (getState() == State.disconnected)
+			send(new byte[] { 32 });
 	}
 
 	protected void onError(Element response, Throwable caught) throws JaxmppException {
