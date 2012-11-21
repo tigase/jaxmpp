@@ -34,6 +34,12 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 public interface SessionObject extends UserProperties {
 
 	/**
+	 * Name of property used to keep logical name of XMPP server. Usually it is
+	 * equals to hostname of users JID.
+	 */
+	public static final String DOMAIN_NAME = "domainName";
+
+	/**
 	 * Name of property used to keep users nickname
 	 */
 	public static final String NICKNAME = "nickname";
@@ -49,10 +55,11 @@ public interface SessionObject extends UserProperties {
 	public static final String RESOURCE = "resource";
 
 	/**
-	 * Name of property used to keep name of server. Usually it is equals to
-	 * hostname of users JID.
+	 * Name of property used to keep logical name of XMPP server. Usually it is
+	 * equals to hostname of users JID.
 	 */
-	public static final String SERVER_NAME = "serverName";
+	@Deprecated
+	public static final String SERVER_NAME = "domainName";
 
 	/**
 	 * Name of property used to keep users JID

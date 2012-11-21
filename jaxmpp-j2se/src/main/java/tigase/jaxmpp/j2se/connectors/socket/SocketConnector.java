@@ -534,7 +534,7 @@ public class SocketConnector implements Connector {
 			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");
 		} else {
-			to = sessionObject.getProperty(SessionObject.SERVER_NAME);
+			to = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
 		}
 
 		if (to != null) {
@@ -617,7 +617,7 @@ public class SocketConnector implements Connector {
 		try {
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost == null) {
-				String x = sessionObject.getProperty(SessionObject.SERVER_NAME);
+				String x = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
 				log.info("Resolving SRV recrd of domain '" + x + "'");
 				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());

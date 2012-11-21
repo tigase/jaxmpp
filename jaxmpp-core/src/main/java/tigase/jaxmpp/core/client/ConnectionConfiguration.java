@@ -47,6 +47,17 @@ public abstract class ConnectionConfiguration {
 	}
 
 	/**
+	 * Set logical name of XMPP server. Usually it is equals to hostname of
+	 * users JID and is set automatically.
+	 * 
+	 * @param domainName
+	 *            logical name of XMPP server.
+	 */
+	public void setDomain(String domainName) {
+		sessionObject.setUserProperty(SessionObject.DOMAIN_NAME, domainName);
+	}
+
+	/**
 	 * Set XMPP resource.
 	 * 
 	 * @param resource

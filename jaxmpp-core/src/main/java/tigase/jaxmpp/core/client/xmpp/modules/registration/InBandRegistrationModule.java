@@ -104,7 +104,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	public void register(String username, String password, String email, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.SERVER_NAME)));
+		iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.DOMAIN_NAME)));
 
 		DefaultElement q = new DefaultElement("query", null, "jabber:iq:register");
 		iq.addChild(q);
@@ -122,7 +122,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	public void removeAccount(AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.SERVER_NAME)));
+		iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.DOMAIN_NAME)));
 
 		DefaultElement q = new DefaultElement("query", null, "jabber:iq:register");
 		iq.addChild(q);
@@ -138,7 +138,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		} else {
 			IQ iq = IQ.create();
 			iq.setType(StanzaType.get);
-			iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.SERVER_NAME)));
+			iq.setTo(JID.jidInstance((String) sessionObject.getProperty(SessionObject.DOMAIN_NAME)));
 
 			iq.addChild(new DefaultElement("query", null, "jabber:iq:register"));
 

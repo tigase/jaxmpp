@@ -120,31 +120,13 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	@Override
 	public void beforeStart() throws JaxmppException {
-		if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
-			throw new JaxmppException("No user JID specified");
+		if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) == null
+				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
+			throw new JaxmppException("No user JID or server name specified");
 
-		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
-			sessionObject.setProperty(SessionObject.SERVER_NAME,
+		if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) == null)
+			sessionObject.setProperty(SessionObject.DOMAIN_NAME,
 					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
-
-	}
-
-	@Override
-	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
-		this.sessionListener = sessionListener;
-		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
-		authModule = this.modulesManager.getModule(AuthModule.class);
-		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
-		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
-
-		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
-		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
-		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentSuccess,
-				this.sessionEstablishmentListener);
-		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentError,
-				this.sessionEstablishmentListener);
 
 	}
 
@@ -211,6 +193,25 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
+		this.sessionListener = sessionListener;
+		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
+		authModule = this.modulesManager.getModule(AuthModule.class);
+		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
+		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
+
+		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
+		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
+		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentSuccess,
+				this.sessionEstablishmentListener);
+		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentError,
+				this.sessionEstablishmentListener);
+
 	}
 
 	@Override

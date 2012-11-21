@@ -310,7 +310,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
-		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.SERVER_NAME));
+		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.DOMAIN_NAME));
 		e.setAttribute("xml:lang", "en");
 		e.setAttribute("xmpp:restart", "true");
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
@@ -330,7 +330,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 		e.setAttribute("hold", "1");
 		e.setAttribute("rid", nextRid().toString());
-		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.SERVER_NAME));
+		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.DOMAIN_NAME));
 		e.setAttribute("secure", "true");
 		e.setAttribute("wait", (String) sessionObject.getProperty(DEFAULT_TIMEOUT_KEY));
 		e.setAttribute("xml:lang", "en");
@@ -425,8 +425,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		// if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
 		// throw new JaxmppException("No user JID specified");
 
-		if (sessionObject.getProperty(SessionObject.SERVER_NAME) == null)
-			sessionObject.setProperty(SessionObject.SERVER_NAME,
+		if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) == null)
+			sessionObject.setProperty(SessionObject.DOMAIN_NAME,
 					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
 		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);

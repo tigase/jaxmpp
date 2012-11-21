@@ -103,7 +103,7 @@ public class GwtSessionObject extends DefaultSessionObject {
 			properties.put(ResourceBinderModule.BINDED_RESOURCE_JID, jid);
 			userProperties.put(NICKNAME, nick);
 			userProperties.put(USER_BARE_JID, userJid.getBareJid());
-			userProperties.put(SERVER_NAME, serverName);
+			userProperties.put(DOMAIN_NAME, serverName);
 		} catch (RestoringSessionException e) {
 			throw e;
 		} catch (Exception e) {
@@ -129,7 +129,7 @@ public class GwtSessionObject extends DefaultSessionObject {
 		// JID
 		sb.append(makeEntry("userBareJid", USER_BARE_JID, userProperties)).append(",");
 		// Stri ng
-		sb.append(makeEntry("serverName", SERVER_NAME, userProperties));
+		sb.append(makeEntry("serverName", DOMAIN_NAME, userProperties));
 
 		sb.append("}");
 
