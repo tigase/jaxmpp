@@ -301,6 +301,44 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		configureSubscription(pubSubJID, nodeName, subscriberJID, form, (AsyncCallback) callback);
 	}
 
+	/**
+	 * Create node on PubSub Service.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address
+	 * @param nodeName
+	 *            name of node to be created
+	 * @param callback
+	 *            callback
+	 */
+	public void createNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element create = new DefaultElement("create");
+		create.setAttribute("node", nodeName);
+		pubsub.addChild(create);
+
+		writer.write(iq, callback);
+	}
+
+	/**
+	 * Create node on PubSub Service.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address
+	 * @param nodeName
+	 *            name of node to be created
+	 * @param callback
+	 *            callback
+	 */
+	public void createNode(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
+		createNode(pubSubJID, nodeName, (AsyncCallback) callback);
+	}
+
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
 			JaxmppException {
 		final IQ iq = IQ.create();
@@ -323,6 +361,44 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
 			throws XMLException, JaxmppException {
 		deleteItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
+	}
+
+	/**
+	 * Delete node from PubSub service.
+	 * 
+	 * @param pubSubJID
+	 *            address of PubSub service
+	 * @param nodeName
+	 *            na of node to delete
+	 * @param callback
+	 *            callback
+	 */
+	public void deleteNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.set);
+		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub#owner");
+		iq.addChild(pubsub);
+
+		final Element delete = new DefaultElement("delete");
+		delete.setAttribute("node", nodeName);
+		pubsub.addChild(delete);
+
+		writer.write(iq, callback);
+	}
+
+	/**
+	 * Delete node from PubSub service.
+	 * 
+	 * @param pubSubJID
+	 *            address of PubSub service
+	 * @param nodeName
+	 *            na of node to delete
+	 * @param callback
+	 *            callback
+	 */
+	public void deleteNode(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
+		deleteNode(pubSubJID, nodeName, (AsyncCallback) callback);
 	}
 
 	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
