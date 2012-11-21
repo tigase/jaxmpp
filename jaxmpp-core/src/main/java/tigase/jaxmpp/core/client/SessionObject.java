@@ -82,6 +82,13 @@ public interface SessionObject extends UserProperties {
 	public void clear() throws JaxmppException;
 
 	/**
+	 * Returns users JID binded on server.
+	 * 
+	 * @return Jabber ID
+	 */
+	public JID getBindedJid();
+
+	/**
 	 * Returns Store of known presences.
 	 * 
 	 * @return presence store

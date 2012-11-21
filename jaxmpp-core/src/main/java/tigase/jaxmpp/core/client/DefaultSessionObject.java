@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
@@ -64,6 +65,14 @@ public class DefaultSessionObject implements SessionObject {
 		this.properties.clear();
 		roster.clear();
 		presence.clear(true);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public JID getBindedJid() {
+		return getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 	}
 
 	/**
