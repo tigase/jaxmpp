@@ -132,8 +132,10 @@ public interface SessionObject extends UserProperties {
 	 *            property name
 	 * @param value
 	 *            property value. <code>null</code> to unset property.
+	 * 
+	 * @return instance of <code>this</code> {@linkplain SessionObject}
 	 */
-	public void setProperty(String key, Object value);
+	public SessionObject setProperty(String key, Object value);
 
 	/**
 	 * Set XMPP Stream features

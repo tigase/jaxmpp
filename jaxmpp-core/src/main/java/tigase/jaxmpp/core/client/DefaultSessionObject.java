@@ -143,8 +143,9 @@ public class DefaultSessionObject implements SessionObject {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setProperty(String key, Object value) {
+	public SessionObject setProperty(String key, Object value) {
 		this.properties.put(key, value);
+		return this;
 	}
 
 	/**
@@ -159,10 +160,11 @@ public class DefaultSessionObject implements SessionObject {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setUserProperty(String key, Object value) {
+	public UserProperties setUserProperty(String key, Object value) {
 		if (value == null)
 			this.userProperties.remove(key);
 		this.userProperties.put(key, value);
+		return this;
 	}
 
 }

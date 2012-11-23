@@ -34,7 +34,7 @@ public interface UserProperties {
 	 *            property name
 	 * @return property or <code>null</code> if property isn't set.
 	 */
-	public <T> T getUserProperty(String key);
+	<T> T getUserProperty(String key);
 
 	/**
 	 * Set user property.
@@ -43,7 +43,9 @@ public interface UserProperties {
 	 *            property name
 	 * @param value
 	 *            property value. <code>null</code> to unset property
+	 * 
+	 * @return instance of <code>this</code> {@linkplain UserProperties}
 	 */
-	public void setUserProperty(String key, Object value);
+	UserProperties setUserProperty(String key, Object value);
 
 }
