@@ -145,10 +145,14 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
 		try {
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
-			roster.rosterRequest();
+			if (roster != null) {
+				roster.rosterRequest();
+			}
 
 			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
-			presence.sendInitialPresence();
+			if (presence != null) {
+				presence.sendInitialPresence();
+			}
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
