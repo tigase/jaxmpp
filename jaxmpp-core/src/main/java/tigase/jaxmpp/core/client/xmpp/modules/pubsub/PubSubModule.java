@@ -270,6 +270,17 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	private static final String QUEUEING_XMLNS = "urn:xmpp:pubsub:queueing:0";
 
+	/**
+	 * Create empty <code>jabber:x:data</code> element prepared to submit.
+	 * 
+	 * @return empty submitable node configuration element.
+	 */
+	public static JabberDataElement createNodeConfiguration() throws JaxmppException {
+		JabberDataElement c = new JabberDataElement(XDataType.submit);
+		c.addHiddenField("FORM_TYPE", "http://jabber.org/protocol/pubsub#node_config");
+		return c;
+	}
+
 	private final DateTimeFormat dtf;
 
 	public PubSubModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
@@ -312,6 +323,22 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
+		createNode(pubSubJID, nodeName, null, callback);
+	}
+
+	/**
+	 * Create node on PubSub Service.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address
+	 * @param nodeName
+	 *            name of node to be created
+	 * @param config
+	 *            node configuration
+	 * @param callback
+	 *            callback
+	 */
+	public void createNode(BareJID pubSubJID, String nodeName, Element config, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -321,6 +348,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final Element create = new DefaultElement("create");
 		create.setAttribute("node", nodeName);
 		pubsub.addChild(create);
+
+		if (config != null) {
+			final Element configure = new DefaultElement("configure");
+			configure.addChild(config);
+			pubsub.addChild(configure);
+		}
 
 		writer.write(iq, callback);
 	}
@@ -332,11 +365,30 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            PubSub service address
 	 * @param nodeName
 	 *            name of node to be created
+	 * @param config
+	 *            node configuration
+	 * @param callback
+	 *            callback
+	 */
+	public void createNode(BareJID pubSubJID, String nodeName, Element config, PubSubAsyncCallback callback)
+			throws JaxmppException {
+		createNode(pubSubJID, nodeName, config, (AsyncCallback) callback);
+	}
+
+	/**
+	 * Create node on PubSub Service.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address
+	 * @param nodeName
+	 *            name of node to be created
+	 * @param config
+	 *            node configuration
 	 * @param callback
 	 *            callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
-		createNode(pubSubJID, nodeName, (AsyncCallback) callback);
+		createNode(pubSubJID, nodeName, null, (AsyncCallback) callback);
 	}
 
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
