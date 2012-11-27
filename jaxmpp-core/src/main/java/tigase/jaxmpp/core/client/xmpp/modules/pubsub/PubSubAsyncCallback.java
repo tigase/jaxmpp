@@ -22,8 +22,8 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
@@ -31,10 +31,11 @@ public abstract class PubSubAsyncCallback implements AsyncCallback {
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
-	protected abstract void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition);
+	protected abstract void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition)
+			throws JaxmppException;
 
 	@Override
-	public final void onError(Stanza responseStanza, ErrorCondition errorCondition) throws XMLException {
+	public final void onError(Stanza responseStanza, ErrorCondition errorCondition) throws JaxmppException {
 		List<Element> errors = responseStanza.getChildren("error");
 		Element error = errors == null || errors.isEmpty() ? null : errors.get(0);
 		PubSubErrorCondition pubSubErrorCondition = null;

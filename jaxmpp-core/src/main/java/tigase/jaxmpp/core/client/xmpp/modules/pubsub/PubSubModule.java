@@ -65,7 +65,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		public abstract void onPublish(String itemId);
 
 		@Override
-		public void onSuccess(Stanza responseStanza) throws XMLException {
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> publishs = pubsub.getChildren("publish");
 			Element publish = publishs == null || publishs.isEmpty() ? null : publishs.get(0);
@@ -187,7 +187,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
 
 		@Override
-		public void onSuccess(Stanza responseStanza) throws XMLException {
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			final Element event = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> tmp = event == null ? null : event.getChildren("items");
 			final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
@@ -215,7 +215,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		protected abstract void onSubscribe(IQ response, String node, JID jid, String subID, Subscription subscription);
 
 		@Override
-		public void onSuccess(Stanza responseStanza) throws XMLException {
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 			List<Element> subscriptions = pubsub.getChildren("subscription");
 			Element subscription = subscriptions == null || subscriptions.isEmpty() ? null : subscriptions.get(0);
@@ -235,7 +235,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JID jid, JabberDataElement form);
 
 		@Override
-		public void onSuccess(Stanza responseStanza) throws XMLException {
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			try {
 				final Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
 				List<Element> tmp = pubsub.getChildren("options");
@@ -391,7 +391,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		createNode(pubSubJID, nodeName, null, (AsyncCallback) callback);
 	}
 
-	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
+	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException,
 			JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
@@ -411,7 +411,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		deleteItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
 	}
 
@@ -473,7 +473,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
@@ -488,7 +488,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName,
-			SubscriptionOptionsAsyncCallback callback) throws XMLException, JaxmppException {
+			SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
 		getDefaultSubscriptionConfiguration(pubSubJID, nodeName, (AsyncCallback) callback);
 	}
 
@@ -498,7 +498,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
@@ -514,7 +514,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID,
-			SubscriptionOptionsAsyncCallback callback) throws XMLException, JaxmppException {
+			SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
 		getSubscriptionConfiguration(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
@@ -545,7 +545,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -566,26 +566,24 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, PublishAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		publishItem(pubSubJID, nodeName, itemId, payload, (AsyncCallback) callback);
 	}
 
-	public void retrieveItem(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws XMLException, JaxmppException {
+	public void retrieveItem(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, null, null, callback);
 	}
 
-	public void retrieveItem(BareJID pubSubJID, String nodeName, RetrieveItemsAsyncCallback callback) throws XMLException,
-			JaxmppException {
+	public void retrieveItem(BareJID pubSubJID, String nodeName, RetrieveItemsAsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, null, null, callback);
 	}
 
-	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
-			JaxmppException {
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, Integer maxItems, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
@@ -609,12 +607,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
-			AsyncCallback callback) throws XMLException, JaxmppException {
+			AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -638,17 +636,16 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
-			SubscriptionAsyncCallback callback) throws XMLException, JaxmppException {
+			SubscriptionAsyncCallback callback) throws JaxmppException {
 		subscribe(pubSubJID, nodeName, subscriberJID, options, (AsyncCallback) callback);
 	}
 
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, SubscriptionAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		subscribe(pubSubJID, nodeName, subscriberJID, null, (AsyncCallback) callback);
 	}
 
-	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws XMLException,
-			JaxmppException {
+	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -667,12 +664,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		unlockItem(pubSubJID, nodeName, itemId, (AsyncCallback) callback);
 	}
 
-	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback) throws XMLException,
-			JaxmppException {
+	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
+			throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -688,7 +685,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		unsubscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
