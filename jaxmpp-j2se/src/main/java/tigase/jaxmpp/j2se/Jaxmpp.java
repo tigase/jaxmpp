@@ -47,6 +47,16 @@ import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
 
 public class Jaxmpp extends JaxmppCore {
 
+	private class LoginTimeoutTask extends TimerTask {
+
+		@Override
+		public void run() {
+			synchronized (Jaxmpp.this) {
+				Jaxmpp.this.notify();
+			}
+		}
+	}
+
 	public static final String CONNECTOR_TYPE = "connectorType";
 
 	private static final Executor DEFAULT_EXECUTOR = new Executor() {
@@ -58,6 +68,8 @@ public class Jaxmpp extends JaxmppCore {
 	};
 
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
+
+	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
@@ -78,6 +90,8 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	private Executor executor;
+
+	private TimerTask loginTimeoutTask;
 
 	private final Timer timer = new Timer(true);
 
@@ -192,11 +206,21 @@ public class Jaxmpp extends JaxmppCore {
 			this.sessionLogic.beforeStart();
 			this.connector.start();
 			this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
-			if (sync)
+			if (sync) {
+				loginTimeoutTask = new LoginTimeoutTask();
+				Long delay = sessionObject.getProperty(LOGIN_TIMEOUT_KEY);
+				log.finest("Starting LoginTimeoutTask");
+				timer.schedule(loginTimeoutTask, delay == null ? 1000 * 60 * 5 : delay);
 				synchronized (Jaxmpp.this) {
 					Jaxmpp.this.wait();
 					log.finest("Waked up");
 				}
+				if (loginTimeoutTask != null) {
+					log.finest("Canceling LoginTimeoutTask");
+					loginTimeoutTask.cancel();
+					loginTimeoutTask = null;
+				}
+			}
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 				JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
