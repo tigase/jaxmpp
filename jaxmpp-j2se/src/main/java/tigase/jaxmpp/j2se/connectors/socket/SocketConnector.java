@@ -743,9 +743,13 @@ public class SocketConnector implements Connector {
 	}
 
 	private void terminateStream() throws JaxmppException {
-		String x = "</stream:stream>";
-		log.fine("Terminating XMPP Stream");
-		send(x.getBytes());
+		final State state = getState();
+		if (state == State.connected || state == State.connecting) {
+			String x = "</stream:stream>";
+			log.fine("Terminating XMPP Stream");
+			send(x.getBytes());
+		} else
+			log.fine("Stream terminate not sent, because of connection state==" + state);
 	}
 
 	private void workerTerminated(final Worker worker) {
