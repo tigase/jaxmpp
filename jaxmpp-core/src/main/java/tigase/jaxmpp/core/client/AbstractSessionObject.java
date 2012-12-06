@@ -146,7 +146,12 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	@Override
 	public SessionObject setProperty(String key, Object value) {
-		this.properties.put(key, value);
+                if (value == null) {
+                        this.properties.remove(key);
+                }
+                else {                        
+                        this.properties.put(key, value);
+                }
 		return this;
 	}
 
