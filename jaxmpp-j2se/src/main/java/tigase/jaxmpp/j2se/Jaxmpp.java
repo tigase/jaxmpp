@@ -190,7 +190,7 @@ public class Jaxmpp extends JaxmppCore {
 			this.connector = null;
 		}
 
-		this.connector = getConnector();
+		this.connector = createConnector();
 
 		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
 		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
