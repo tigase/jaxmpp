@@ -128,6 +128,17 @@ public class Jaxmpp extends JaxmppCore {
 		sessionObject.checkHandlersTimeout();
 	}
 
+	protected Connector createConnector() throws JaxmppException {
+		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using SocketConnector");
+			return new SocketConnector(observable, this.sessionObject);
+		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using BOSHConnector");
+			return new BoshConnector(observable, this.sessionObject);
+		} else
+			throw new JaxmppException("Unknown connector type");
+	}
+
 	@Override
 	public void disconnect() throws JaxmppException {
 		disconnect(false);
@@ -179,14 +190,7 @@ public class Jaxmpp extends JaxmppCore {
 			this.connector = null;
 		}
 
-		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using SocketConnector");
-			this.connector = new SocketConnector(observable, this.sessionObject);
-		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using BOSHConnector");
-			this.connector = new BoshConnector(observable, this.sessionObject);
-		} else
-			throw new JaxmppException("Unknown connector type");
+		this.connector = getConnector();
 
 		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
 		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
