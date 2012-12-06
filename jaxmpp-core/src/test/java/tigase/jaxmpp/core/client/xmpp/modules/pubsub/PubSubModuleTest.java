@@ -25,9 +25,9 @@ import java.util.Collection;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.MockWriter;
+import tigase.jaxmpp.core.client.TestSessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -52,7 +52,7 @@ public class PubSubModuleTest {
 
 	private final PubSubModule pubsub;
 
-	private final DefaultSessionObject sessionObject = new DefaultSessionObject();
+	private final TestSessionObject sessionObject = new TestSessionObject();
 
 	private final TPath tpath = new TPath();
 

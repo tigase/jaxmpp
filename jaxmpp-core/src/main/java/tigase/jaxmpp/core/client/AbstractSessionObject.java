@@ -17,7 +17,6 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -32,21 +31,24 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
  * Default representation of {@linkplain SessionObject}
  * 
  */
-public class DefaultSessionObject implements SessionObject {
+public abstract class AbstractSessionObject implements SessionObject {
 
-	private final Logger log = Logger.getLogger(this.getClass().getName());
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-	protected final PresenceStore presence = new PresenceStore();
+	protected PresenceStore presence;
 
-	protected final Map<String, Object> properties = new HashMap<String, Object>();
+	protected Map<String, Object> properties;
 
-	protected final ResponseManager responseManager = new ResponseManager();
+	protected ResponseManager responseManager;
 
-	protected final RosterStore roster = new RosterStore();
+	protected RosterStore roster;
 
 	protected Element streamFeatures;
 
-	protected final Map<String, Object> userProperties = new HashMap<String, Object>();
+	protected Map<String, Object> userProperties;
+
+	protected AbstractSessionObject() {
+	}
 
 	/**
 	 * {@inheritDoc}

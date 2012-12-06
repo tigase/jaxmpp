@@ -40,7 +40,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
- * Module for <a href='http://xmpp.org/rfcs/rfc3921.html#session'>Session Establishment</a>.
+ * Module for <a href='http://xmpp.org/rfcs/rfc3921.html#session'>Session
+ * Establishment</a>.
  */
 public class SessionEstablishmentModule implements XmppModule {
 

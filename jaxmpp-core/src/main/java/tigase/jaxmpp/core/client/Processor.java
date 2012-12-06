@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -84,13 +85,13 @@ public class Processor {
 		}
 	}
 
-	private final DefaultSessionObject sessionObject;
+	private final AbstractSessionObject sessionObject;
 
 	private final PacketWriter writer;
 
 	private final XmppModulesManager xmppModulesManages;
 
-	public Processor(XmppModulesManager xmppModulesManages, final DefaultSessionObject sessionObject, final PacketWriter writer) {
+	public Processor(XmppModulesManager xmppModulesManages, final AbstractSessionObject sessionObject, final PacketWriter writer) {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 		this.xmppModulesManages = xmppModulesManages;

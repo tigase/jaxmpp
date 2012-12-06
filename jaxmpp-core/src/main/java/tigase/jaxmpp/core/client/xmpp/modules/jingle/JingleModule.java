@@ -141,13 +141,13 @@ public class JingleModule extends AbstractIQModule {
 
 	}
 
-	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
-
 	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
 
-	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
+	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
 
 	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
+
+	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
 
 	public static final EventType JingleSessionAccept = new EventType();
 	public static final EventType JingleTransportInfo = new EventType();
