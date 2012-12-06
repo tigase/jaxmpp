@@ -115,19 +115,6 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	public void beforeStart() throws JaxmppException {
 	}
 
-	@Override
-	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
-		this.sessionListener = sessionListener;
-		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
-		authModule = this.modulesManager.getModule(AuthModule.class);
-		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
-
-		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
-		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
-		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-	}
-
 	protected void processException(JaxmppException e) throws JaxmppException {
 		if (sessionListener != null)
 			sessionListener.onException(e);
@@ -177,6 +164,19 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
+		this.sessionListener = sessionListener;
+		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
+		authModule = this.modulesManager.getModule(AuthModule.class);
+		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
+
+		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
+		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
+		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
 	}
 
 	@Override

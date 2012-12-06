@@ -17,17 +17,21 @@
  */
 package tigase.jaxmpp.gwt.client;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import tigase.jaxmpp.core.client.DefaultSessionObject;
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.ResponseManager;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
 
-public class GwtSessionObject extends DefaultSessionObject {
+public class GwtSessionObject extends AbstractSessionObject {
 
 	public static final class RestoringSessionException extends Exception {
 		public RestoringSessionException(String message) {
@@ -70,6 +74,14 @@ public class GwtSessionObject extends DefaultSessionObject {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public GwtSessionObject() {
+		presence = new PresenceStore();
+		properties = new HashMap<String, Object>();
+		responseManager = new ResponseManager();
+		roster = new RosterStore();
+		userProperties = new HashMap<String, Object>();
 	}
 
 	private CharSequence makeEntry(String jsonKey, String propsKey, Map<String, Object> map) {

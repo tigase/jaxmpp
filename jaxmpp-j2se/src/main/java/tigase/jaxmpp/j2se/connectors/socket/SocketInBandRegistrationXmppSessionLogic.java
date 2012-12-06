@@ -85,16 +85,6 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 
 	}
 
-	@Override
-	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
-		this.sessionListener = sessionListener;
-		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
-		registrationModule = this.modulesManager.getModule(InBandRegistrationModule.class);
-
-		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		registrationModule.addListener(this.registrationListener);
-	}
-
 	protected void processException(JaxmppException e) throws JaxmppException {
 		if (sessionListener != null)
 			sessionListener.onException(e);
@@ -116,6 +106,16 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
+		this.sessionListener = sessionListener;
+		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
+		registrationModule = this.modulesManager.getModule(InBandRegistrationModule.class);
+
+		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
+		registrationModule.addListener(this.registrationListener);
 	}
 
 	@Override

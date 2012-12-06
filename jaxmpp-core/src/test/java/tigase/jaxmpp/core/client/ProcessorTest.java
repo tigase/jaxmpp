@@ -31,7 +31,7 @@ public class ProcessorTest extends TestCase {
 	private MockWriter writer;
 
 	public ProcessorTest() {
-		DefaultSessionObject sessionObject = new DefaultSessionObject();
+		TestSessionObject sessionObject = new TestSessionObject();
 		this.writer = new MockWriter(sessionObject);
 
 		DefaultObservable observable = new DefaultObservable();

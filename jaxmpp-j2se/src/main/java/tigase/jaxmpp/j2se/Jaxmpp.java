@@ -24,7 +24,6 @@ import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
-import tigase.jaxmpp.core.client.DefaultSessionObject;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -96,7 +95,7 @@ public class Jaxmpp extends JaxmppCore {
 	private final Timer timer = new Timer(true);
 
 	public Jaxmpp() {
-		this(new DefaultSessionObject());
+		this(new J2SESessionObject());
 		setExecutor(DEFAULT_EXECUTOR);
 	}
 

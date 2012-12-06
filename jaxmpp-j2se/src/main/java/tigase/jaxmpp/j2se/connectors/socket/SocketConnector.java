@@ -364,9 +364,8 @@ public class SocketConnector implements Connector {
 				reconnect(seeOtherHost.getValue());
 				return;
 			}
-
-			stop();
 		}
+		stop();
 		fireOnError(response, caught, sessionObject);
 	}
 

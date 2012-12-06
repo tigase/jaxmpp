@@ -33,7 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class ResponseManager {
 
-	private static final class Entry {
+	protected static final class Entry {
 
 		private final AsyncCallback callback;
 
@@ -53,15 +53,15 @@ public class ResponseManager {
 
 	}
 
-	private static final long DEFAULT_TIMEOUT = 1000 * 60;
+	protected static final long DEFAULT_TIMEOUT = 1000 * 60;
 
 	private final Map<String, Entry> handlers = new HashMap<String, Entry>();
 
-	private final Logger log = Logger.getLogger(this.getClass().getName());
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	public void checkTimeouts() throws JaxmppException {
 		long now = (new Date()).getTime();
-		Iterator<java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.handlers.entrySet().iterator();
+		Iterator<java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.getHandlers().entrySet().iterator();
 		while (it.hasNext()) {
 			java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
 			if (e.getValue().timestamp + e.getValue().timeout < now) {
@@ -72,6 +72,10 @@ public class ResponseManager {
 				}
 			}
 		}
+	}
+
+	protected Map<String, Entry> getHandlers() {
+		return handlers;
 	}
 
 	/**
@@ -92,14 +96,14 @@ public class ResponseManager {
 		final String id = element.getAttribute("id");
 		if (id == null)
 			return null;
-		final Entry entry = this.handlers.get(id);
+		final Entry entry = this.getHandlers().get(id);
 		if (entry == null)
 			return null;
 
 		if (!verify(element, entry, sessionObject))
 			return null;
 
-		this.handlers.remove(id);
+		this.getHandlers().remove(id);
 
 		AbstractStanzaHandler r = new AbstractStanzaHandler(element, writer, sessionObject) {
 
@@ -159,7 +163,7 @@ public class ResponseManager {
 		if (callback != null) {
 			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(),
 					timeout == null ? DEFAULT_TIMEOUT : timeout, callback);
-			this.handlers.put(id, entry);
+			this.getHandlers().put(id, entry);
 		}
 
 		return id;

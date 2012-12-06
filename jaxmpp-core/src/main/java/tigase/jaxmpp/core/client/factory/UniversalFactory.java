@@ -28,9 +28,6 @@ import java.util.HashMap;
  */
 public class UniversalFactory {
 
-	private UniversalFactory() {
-	}
-
 	/**
 	 * Interface for object factory.
 	 * 
@@ -83,5 +80,8 @@ public class UniversalFactory {
 	}
 
 	private final HashMap<String, FactorySpi<?>> factories = new HashMap<String, FactorySpi<?>>();
+
+	private UniversalFactory() {
+	}
 
 }
