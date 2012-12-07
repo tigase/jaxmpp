@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>tigase</groupId>
 			<artifactId>tigase-xmltools</artifactId>
-			<version>3.3.6-SNAPSHOT</version>
+			<version>3.4.2</version>
 		</dependency>
 		<dependency>
 			<groupId>dnsjava</groupId>
