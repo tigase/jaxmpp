@@ -44,22 +44,22 @@ public class JingleModule extends AbstractIQModule {
 		private static final long serialVersionUID = 1L;
 
 		private final Element description;
-		private final Element transport;
+		private final List<Element> transports;
 
 		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				Element transport) {
+				List<Element> transports) {
 			super(JingleSessionAccept, sessionObject, sender, sid);
 
 			this.description = description;
-			this.transport = transport;
+			this.transports = transports;
 		}
 
 		public Element getDescription() {
 			return description;
 		}
 
-		public Element getTransport() {
-			return transport;
+		public List<Element> getTransport() {
+			return transports;
 		}
 
 	}
@@ -289,7 +289,7 @@ public class JingleModule extends AbstractIQModule {
 						description, transports));
 			} else if ("session-accept".equals(action)) {
 				observable.fireEvent(JingleSessionAccept, new JingleSessionAcceptEvent(sessionObject, from, sid, description,
-						transports.get(0)));
+						transports));
 			}
 		}
 
