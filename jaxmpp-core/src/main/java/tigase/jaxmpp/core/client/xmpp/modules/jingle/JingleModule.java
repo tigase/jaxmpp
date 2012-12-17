@@ -44,22 +44,22 @@ public class JingleModule extends AbstractIQModule {
 		private static final long serialVersionUID = 1L;
 
 		private final Element description;
-		private final Element transport;
+		private final List<Element> transports;
 
 		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				Element transport) {
+				List<Element> transports) {
 			super(JingleSessionAccept, sessionObject, sender, sid);
 
 			this.description = description;
-			this.transport = transport;
+			this.transports = transports;
 		}
 
 		public Element getDescription() {
 			return description;
 		}
 
-		public Element getTransport() {
-			return transport;
+		public List<Element> getTransport() {
+			return transports;
 		}
 
 	}
@@ -101,6 +101,24 @@ public class JingleModule extends AbstractIQModule {
 		}
 
 		public Element getContent() {
+			return content;
+		}
+
+	}
+
+        public static class JingleSessionInfoEvent extends JingleSessionEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private final List<Element> content;
+
+		public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content) {
+			super(JingleTransportInfo, sessionObject, sender, sid);
+
+			this.content = content;
+		}
+
+		public List<Element> getContent() {
 			return content;
 		}
 
@@ -150,6 +168,7 @@ public class JingleModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
 
 	public static final EventType JingleSessionAccept = new EventType();
+	public static final EventType JingleSessionInfo = new EventType();
 	public static final EventType JingleTransportInfo = new EventType();
 	public static final EventType JingleSessionInitiation = new EventType();
 	public static final EventType JingleSessionTerminate = new EventType();
@@ -243,10 +262,10 @@ public class JingleModule extends AbstractIQModule {
 		Element jingle = iq.getChildrenNS("jingle", JINGLE_XMLNS);
 
 		List<Element> contents = jingle.getChildren("content");
-		if (contents == null || contents.isEmpty()) {
-			// no point in parsing this any more
-			return;
-		}
+//		if (contents == null || contents.isEmpty()) {
+//			// no point in parsing this any more
+//			return;
+//		}
 
 		JID from = iq.getFrom();
 		String sid = jingle.getAttribute("sid");
@@ -255,8 +274,8 @@ public class JingleModule extends AbstractIQModule {
 		if ("session-terminate".equals(action)) {
 			observable.fireEvent(JingleSessionTerminate, new JingleSessionTerminateEvent(sessionObject, from, sid));
 		} else if ("session-info".equals(action)) {
-//			List<Element> infos = jingle.getChildrenNS("urn:xmpp:jingle:apps:rtp:info:1");
-//			Element info = (infos != null && !infos.isEmpty()) ? infos.get(0) : null;
+			observable.fireEvent(JingleSessionInfo, new JingleSessionInfoEvent(sessionObject, from, sid, jingle.getChildren()));
+		} else if ("transport-info".equals(action)) {
 			observable.fireEvent(JingleTransportInfo, new JingleTransportInfoEvent(sessionObject, from, sid, contents.get(0)));
 		} else {
 			Element content = contents.get(0);
@@ -270,7 +289,7 @@ public class JingleModule extends AbstractIQModule {
 						description, transports));
 			} else if ("session-accept".equals(action)) {
 				observable.fireEvent(JingleSessionAccept, new JingleSessionAcceptEvent(sessionObject, from, sid, description,
-						transports.get(0)));
+						transports));
 			}
 		}
 
