@@ -30,7 +30,6 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModulesManager.InitializingBean;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -43,6 +42,7 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem.Subscription;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.RosterEvent.ChangeAction;
@@ -50,7 +50,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class RosterModule extends AbstractIQModule implements InitializingBean {
+public class RosterModule extends AbstractIQModule implements InitializingModule {
 
 	public static class RosterEvent extends BaseEvent {
 
@@ -185,6 +185,23 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 		writer.write(iq, c);
 	}
 
+	@Override
+	public void afterRegister() {
+		loadFromCache();
+	}
+
+	@Override
+	public void beforeRegister() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void beforeUnregister() {
+		// TODO Auto-generated method stub
+
+	}
+
 	private long createId(BareJID jid) {
 		return (sessionObject.getUserBareJid() + "::" + jid).hashCode();
 	}
@@ -207,11 +224,6 @@ public class RosterModule extends AbstractIQModule implements InitializingBean {
 
 	public RosterCacheProvider getVersionProvider() {
 		return versionProvider;
-	}
-
-	@Override
-	public void init() throws JaxmppException {
-		loadFromCache();
 	}
 
 	private boolean isRosterVersioningAvailable() throws XMLException {

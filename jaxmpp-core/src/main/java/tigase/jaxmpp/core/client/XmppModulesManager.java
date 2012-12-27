@@ -24,8 +24,13 @@ import java.util.List;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
+import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 
 /**
  * XMPP Modules Manager. This manager finds correct module to handle given
@@ -35,15 +40,20 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  */
 public class XmppModulesManager {
 
-	public static interface InitializingBean {
-
-		void init() throws JaxmppException;
-
-	}
+	private boolean initialized = false;
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
+
+	private PacketWriter packetWriter;
+
+	private Observable parentObservable;
+
+	public XmppModulesManager(Observable parent, PacketWriter packetWriter) {
+		this.parentObservable = parent;
+		this.packetWriter = packetWriter;
+	}
 
 	/**
 	 * Finds collection of modules that can handle stanza.
@@ -97,12 +107,10 @@ public class XmppModulesManager {
 	}
 
 	public void init() {
+		this.initialized = true;
 		for (XmppModule mod : this.modules) {
-			if (mod instanceof InitializingBean) {
-				try {
-					((InitializingBean) mod).init();
-				} catch (JaxmppException e) {
-				}
+			if (mod instanceof InitializingModule) {
+				((InitializingModule) mod).afterRegister();
 			}
 		}
 	}
@@ -116,8 +124,26 @@ public class XmppModulesManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T register(T plugin) {
+		if (plugin instanceof ObservableAware) {
+			Observable observable = ObservableFactory.instance(parentObservable);
+			((ObservableAware) plugin).setObservable(observable);
+		}
+
+		if (plugin instanceof PacketWriterAware) {
+			((PacketWriterAware) plugin).setPacketWriter(packetWriter);
+		}
+
+		if (plugin instanceof InitializingModule) {
+			((InitializingModule) plugin).beforeRegister();
+		}
+
 		this.modulesByClasses.put((Class<XmppModule>) plugin.getClass(), plugin);
 		this.modules.add(plugin);
+
+		if (initialized && plugin instanceof InitializingModule) {
+			((InitializingModule) plugin).afterRegister();
+		}
+
 		return plugin;
 	}
 
@@ -128,9 +154,14 @@ public class XmppModulesManager {
 	 *            module to unregister
 	 * @return unregistered module. <code>null</code> if module wasn't
 	 *         registered.
+	 * @throws JaxmppException
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends XmppModule> T unregister(T plugin) {
+	public <T extends XmppModule> T unregister(T plugin) throws JaxmppException {
+		if (plugin instanceof InitializingModule) {
+			((InitializingModule) plugin).beforeUnregister();
+		}
+
 		this.modules.remove(plugin);
 		return (T) this.modulesByClasses.remove(plugin.getClass());
 	}

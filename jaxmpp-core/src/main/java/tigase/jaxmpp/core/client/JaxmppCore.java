@@ -166,7 +166,7 @@ public abstract class JaxmppCore {
 		this.log = Logger.getLogger(this.getClass().getName());
 		observable = ObservableFactory.instance(null);
 
-		modulesManager = new XmppModulesManager();
+		modulesManager = new XmppModulesManager(observable, writer);
 
 		this.resourceBindListener = new Listener<ResourceBindEvent>() {
 

@@ -62,7 +62,7 @@ public class PubSubModuleTest {
 		this.writer = new MockWriter(sessionObject);
 
 		DefaultObservable observable = new DefaultObservable();
-		XmppModulesManager xmppModulesManages = new XmppModulesManager();
+		XmppModulesManager xmppModulesManages = new XmppModulesManager(observable, writer);
 		xmppModulesManages.register(new PingModule(observable, sessionObject, writer));
 		this.pubsub = new PubSubModule(null, sessionObject, this.writer);
 	}
