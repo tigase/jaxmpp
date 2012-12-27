@@ -32,11 +32,14 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.xml.client.XMLParser;
+import java.util.LinkedList;
 
 public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	private final RequestCallback callback;
 
+        private final BoshConnector connector;
+        
 	private Element element;
 
 	private Request request;
@@ -47,9 +50,12 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	private boolean terminated = false;
 
-	public BoshWorker(RequestBuilder requestBuilder, SessionObject sessionObject, Element element) throws XMLException {
+	public BoshWorker(BoshConnector connector, RequestBuilder requestBuilder, SessionObject sessionObject, Element element) throws XMLException {
+                this.connector = connector;
+                // set current worker to this instance
+                this.connector.setCurrentWorker(this);
 		this.requestBuilder = requestBuilder;
-		this.element = element;
+                this.element = element;
 		this.rid = element.getAttribute("rid");
 		if (this.rid == null)
 			throw new RuntimeException("rid must be defined");
@@ -111,18 +117,25 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 		};
 	}
 
+        public void appendToBody(Element stanza) throws XMLException {
+                this.element.addChild(stanza);
+        }
+        
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
 		if (!(obj instanceof BoshWorker))
 			return false;
-
+                
 		return ((BoshWorker) obj).rid.equals(rid);
 	}
 
 	@Override
 	public void execute() {
+                // we are sending data so nothing more can be added to request after now
+                this.connector.setCurrentWorker(null);
+                
 		if (terminated)
 			return;
 		try {
@@ -168,6 +181,8 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	@Override
 	public String toString() {
-		return "rid=" + rid;
+                if (rid != null)
+                        return "rid=" + rid;
+                return super.toString();
 	}
 }

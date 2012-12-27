@@ -33,6 +33,8 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	private final RequestBuilder requestBuilder;
 
+        private BoshWorker currentWorker = null;
+        
 	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
 		super(parentObservable, sessionObject);
 
@@ -46,7 +48,11 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	@Override
 	protected void processSendData(Element element) throws XMLException, JaxmppException {
-		BoshWorker worker = new BoshWorker(requestBuilder, sessionObject, element) {
+                if (element == null) {
+                        return;
+                }
+                
+		BoshWorker worker = new BoshWorker(this, requestBuilder, sessionObject, element) {
 
 			@Override
 			protected void onError(int responseCode, String responseData, Element response, Throwable caught)
@@ -78,4 +84,23 @@ public class BoshConnector extends AbstractBoshConnector {
 		Scheduler.get().scheduleDeferred(worker);
 	}
 
+        @Override
+        protected Element prepareBody(Element payload) throws XMLException {
+                // trying to reuse BoshWorker if data is not sent yet
+                if (currentWorker != null) {
+                        currentWorker.appendToBody(payload);
+                        return null;
+                }
+                
+                return super.prepareBody(payload);
+        }
+        
+        /**
+         * Keep handle to current BoshWorker instance until stanza is sent
+         * 
+         * @param worker 
+         */
+        protected void setCurrentWorker(BoshWorker worker) {
+                this.currentWorker = worker;
+        }
 }
