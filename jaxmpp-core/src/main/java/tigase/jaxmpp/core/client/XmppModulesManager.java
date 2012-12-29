@@ -154,14 +154,12 @@ public class XmppModulesManager {
 	 *            module to unregister
 	 * @return unregistered module. <code>null</code> if module wasn't
 	 *         registered.
-	 * @throws JaxmppException
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends XmppModule> T unregister(T plugin) throws JaxmppException {
+	public <T extends XmppModule> T unregister(final T plugin) {
 		if (plugin instanceof InitializingModule) {
 			((InitializingModule) plugin).beforeUnregister();
 		}
-
 		this.modules.remove(plugin);
 		return (T) this.modulesByClasses.remove(plugin.getClass());
 	}
