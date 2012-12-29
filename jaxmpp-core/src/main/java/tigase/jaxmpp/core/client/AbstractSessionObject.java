@@ -146,12 +146,11 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	@Override
 	public SessionObject setProperty(String key, Object value) {
-                if (value == null) {
-                        this.properties.remove(key);
-                }
-                else {                        
-                        this.properties.put(key, value);
-                }
+		if (value == null) {
+			this.properties.remove(key);
+		} else {
+			this.properties.put(key, value);
+		}
 		return this;
 	}
 
@@ -170,7 +169,8 @@ public abstract class AbstractSessionObject implements SessionObject {
 	public UserProperties setUserProperty(String key, Object value) {
 		if (value == null)
 			this.userProperties.remove(key);
-		this.userProperties.put(key, value);
+		else
+			this.userProperties.put(key, value);
 		return this;
 	}
 
