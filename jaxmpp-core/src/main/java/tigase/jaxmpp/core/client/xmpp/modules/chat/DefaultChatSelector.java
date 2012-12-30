@@ -22,6 +22,9 @@ import java.util.List;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 
+/**
+ * Selects chat based on jid, resource and thread-id.
+ */
 public class DefaultChatSelector implements ChatSelector {
 
 	@Override

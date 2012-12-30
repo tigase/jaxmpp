@@ -26,11 +26,12 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Representation chat with specified interlocutor.
+ */
 public class Chat {
 
 	public static final EventType MessageReceived = new EventType();
-
-	private boolean closed = false;
 
 	private final long id;
 
@@ -42,32 +43,63 @@ public class Chat {
 
 	private final PacketWriter writer;
 
+	/**
+	 * Creates new chat representation object.
+	 * 
+	 * @param id
+	 *            internal object identifier.
+	 * @param packetWriter
+	 *            packet writer related to chat.
+	 * @param sessionObject
+	 *            session object related to chat.
+	 */
 	public Chat(long id, PacketWriter packetWriter, SessionObject sessionObject) {
 		this.id = id;
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}
 
+	/**
+	 * Return internal identifier of chat object.
+	 */
 	public long getId() {
 		return id;
 	}
 
+	/**
+	 * Returns interlocutor JID.
+	 * 
+	 * @return interlocutor JID.
+	 */
 	public JID getJid() {
 		return jid;
 	}
 
+	/**
+	 * Return {@linkplain SessionObject} related to this chat.
+	 * 
+	 * @return {@linkplain SessionObject} related to this chat.
+	 */
 	public SessionObject getSessionObject() {
 		return sessionObject;
 	}
 
+	/**
+	 * Returns thread-id.
+	 * 
+	 * @return thread-id or <code>null</code> if not present.
+	 */
 	public String getThreadId() {
 		return threadId;
 	}
 
-	public boolean isClosed() {
-		return closed;
-	}
-
+	/**
+	 * Sends message in current chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 * 
+	 * @param body
+	 *            message to send.
+	 */
 	public void sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(jid);
@@ -78,10 +110,22 @@ public class Chat {
 		this.writer.write(msg);
 	}
 
+	/**
+	 * Sets interlocutor JID.
+	 * 
+	 * @param jid
+	 *            interlocutor JID.
+	 */
 	public void setJid(JID jid) {
 		this.jid = jid;
 	}
 
+	/**
+	 * Sets thread-id.
+	 * 
+	 * @param threadId
+	 *            thread-id.
+	 */
 	public void setThreadId(String threadId) {
 		this.threadId = threadId;
 	}

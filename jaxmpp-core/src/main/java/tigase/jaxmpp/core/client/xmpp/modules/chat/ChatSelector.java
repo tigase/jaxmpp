@@ -21,8 +21,23 @@ import java.util.List;
 
 import tigase.jaxmpp.core.client.JID;
 
+/**
+ * Interface for implement right {@linkplain Chat} based on sender JID and
+ * thread id.
+ */
 public interface ChatSelector {
 
+	/**
+	 * Selects chat from list based on specified JID and thread id.
+	 * 
+	 * @param chats
+	 *            list of chats.
+	 * @param jid
+	 *            sender JID
+	 * @param threadId
+	 *            thread-id
+	 * @return chat or <code>null</code> if not matched.
+	 */
 	Chat getChat(List<Chat> chats, JID jid, String threadId);
 
 }

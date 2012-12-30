@@ -22,6 +22,10 @@ import java.util.List;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 
+/**
+ * Selects chat based on bare JID only.
+ * 
+ */
 public class JidOnlyChatSelector implements ChatSelector {
 
 	@Override
