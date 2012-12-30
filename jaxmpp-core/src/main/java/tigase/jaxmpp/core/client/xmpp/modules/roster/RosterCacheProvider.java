@@ -21,12 +21,39 @@ import java.util.Collection;
 
 import tigase.jaxmpp.core.client.SessionObject;
 
+/**
+ * Interface for implement roster cache. For example to store roster on clients
+ * machine.
+ */
 public interface RosterCacheProvider {
 
+	/**
+	 * Returns version of cached roster.
+	 * 
+	 * @param sessionObject
+	 *            session object
+	 * @return version id
+	 */
 	String getCachedVersion(SessionObject sessionObject);
 
+	/**
+	 * Loads cached roster.
+	 * 
+	 * @param sessionObject
+	 * 
+	 * @return collection of loaded roster items.
+	 */
 	Collection<RosterItem> loadCachedRoster(SessionObject sessionObject);
 
+	/**
+	 * Update roster cache. {@linkplain RosterStore} should be get from session
+	 * object.
+	 * 
+	 * @param sessionObject
+	 *            session object.
+	 * @param ver
+	 *            version of roster.
+	 */
 	void updateReceivedVersion(SessionObject sessionObject, String ver);
 
 }

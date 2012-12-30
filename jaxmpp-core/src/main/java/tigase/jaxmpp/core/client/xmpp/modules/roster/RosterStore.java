@@ -32,6 +32,9 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Storage for keeping roster.
+ */
 public class RosterStore {
 
 	static interface Handler {
@@ -56,17 +59,50 @@ public class RosterStore {
 
 	protected final Map<BareJID, RosterItem> roster = new HashMap<BareJID, RosterItem>();
 
+	/**
+	 * Adds new contact to roster.
+	 * 
+	 * @param jid
+	 *            JID of buddy
+	 * @param name
+	 *            name of buddy
+	 * @param asyncCallback
+	 *            callback
+	 */
 	public void add(BareJID jid, String name, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
 		add(jid, name, new ArrayList<String>(), asyncCallback);
-
 	}
 
+	/**
+	 * Adds new contact to roster.
+	 * 
+	 * @param jid
+	 *            JID of buddy
+	 * @param name
+	 *            name of buddy
+	 * @param groups
+	 *            collection of groups name
+	 * @param asyncCallback
+	 *            callback
+	 */
 	public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
 			JaxmppException {
 		if (this.handler != null)
 			this.handler.add(jid, name, groups, asyncCallback);
 	}
 
+	/**
+	 * Adds new contact to roster.
+	 * 
+	 * @param jid
+	 *            JID of buddy
+	 * @param name
+	 *            name of buddy
+	 * @param groups
+	 *            array of groups name
+	 * @param asyncCallback
+	 *            callback
+	 */
 	public void add(BareJID jid, String name, String[] groups, AsyncCallback asyncCallback) throws XMLException,
 			JaxmppException {
 		ArrayList<String> x = new ArrayList<String>();
@@ -115,22 +151,44 @@ public class RosterStore {
 		return modifiedGroups;
 	}
 
+	/**
+	 * Clears storage.
+	 */
 	public void clear() {
 		removeAll();
 		if (this.handler != null)
 			handler.cleared();
 	}
 
+	/**
+	 * Returns {@linkplain RosterItem} of given bare JID.
+	 * 
+	 * @param jid
+	 *            bare JID.
+	 * @return roster item.
+	 */
 	public RosterItem get(BareJID jid) {
 		synchronized (this.roster) {
 			return this.roster.get(jid);
 		}
 	}
 
+	/**
+	 * Returns all buddies from roster.
+	 * 
+	 * @return all roster items.
+	 */
 	public List<RosterItem> getAll() {
 		return getAll(null);
 	}
 
+	/**
+	 * Returns all roster items selected by selector.
+	 * 
+	 * @param predicate
+	 *            selector.
+	 * @return all matched roster items.
+	 */
 	public List<RosterItem> getAll(final Predicate predicate) {
 		ArrayList<RosterItem> result = new ArrayList<RosterItem>();
 		synchronized (this.roster) {
@@ -145,10 +203,20 @@ public class RosterStore {
 		return result;
 	}
 
+	/**
+	 * Returns number of roster items in storage.
+	 * 
+	 * @return number of roster items in storage.
+	 */
 	public int getCount() {
 		return roster.size();
 	}
 
+	/**
+	 * Get all known groups of buddies.
+	 * 
+	 * @return collection of group names.
+	 */
 	public Collection<? extends String> getGroups() {
 		return Collections.unmodifiableCollection(this.groups);
 	}
@@ -162,7 +230,13 @@ public class RosterStore {
 		}
 	}
 
-	public void remove(BareJID jid) throws XMLException, JaxmppException {
+	/**
+	 * Removes buddy from roster.
+	 * 
+	 * @param jid
+	 *            jid of buddy to remove.
+	 */
+	public void remove(BareJID jid) throws JaxmppException {
 		if (handler != null)
 			this.handler.remove(jid);
 	}
@@ -186,7 +260,13 @@ public class RosterStore {
 		this.handler = handler;
 	}
 
-	public void update(RosterItem item) throws XMLException, JaxmppException {
+	/**
+	 * Sends changed RosterItem to server.
+	 * 
+	 * @param item
+	 *            changed roster item.
+	 */
+	public void update(RosterItem item) throws JaxmppException {
 		if (this.handler != null)
 			this.handler.update(item);
 

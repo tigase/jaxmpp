@@ -50,6 +50,9 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Module for roster manipulation.
+ */
 public class RosterModule extends AbstractIQModule implements InitializingModule {
 
 	public static class RosterEvent extends BaseEvent {
@@ -373,6 +376,9 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		});
 	}
 
+	/**
+	 * Requests for roster. Roster will be send by server asynchronously.
+	 */
 	public void rosterRequest() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);

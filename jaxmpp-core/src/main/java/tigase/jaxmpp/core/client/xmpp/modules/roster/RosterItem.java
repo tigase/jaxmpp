@@ -23,13 +23,35 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.DataHolder;
 import tigase.jaxmpp.core.client.SessionObject;
 
+/**
+ * Roster item. Contains information about buddy in roster.
+ */
 public class RosterItem {
 
+	/**
+	 * Susbcription state.
+	 */
 	public static enum Subscription {
+		/**
+		 * The user and the contact have subscriptions to each other's presence
+		 * (also called a "mutual subscription").
+		 */
 		both(true, true),
+		/**
+		 * The contact has a subscription to the user's presence, but the user
+		 * does not have a subscription to the contact's presence.
+		 */
 		from(true, false),
+		/**
+		 * The user does not have a subscription to the contact's presence, and
+		 * the contact does not have a subscription to the user's presence.
+		 */
 		none(false, false),
 		remove(false, false),
+		/**
+		 * The user has a subscription to the contact's presence, but the
+		 * contact does not have a subscription to the user's presence.
+		 */
 		to(false, true);
 
 		private final boolean sFrom;
@@ -80,31 +102,68 @@ public class RosterItem {
 		return ((RosterItem) obj).jid.equals(this.jid);
 	}
 
+	/**
+	 * Returns object stored by {@linkplain RosterItem#setData(String, Object)}.
+	 * 
+	 * @param key
+	 *            the key whose associated value is to be returned
+	 * @return object or <code>null</code> if object doesn't exists.
+	 */
 	public <T> T getData(String key) {
 		return dataHolder.getData(key);
 	}
 
+	/**
+	 * Returns groups associated to roster item.
+	 * 
+	 * @return
+	 */
 	public ArrayList<String> getGroups() {
 		return groups;
 	}
 
+	/**
+	 * Returns internal RosterItem object ID.
+	 * 
+	 * @return object id.
+	 */
 	public long getId() {
 		Long x = getData(ID_KEY);
 		return x == null ? 0 : x;
 	}
 
+	/**
+	 * Returns JID of buddy.
+	 * 
+	 * @return JID of buddy.
+	 */
 	public BareJID getJid() {
 		return jid;
 	}
 
+	/**
+	 * Returns name of buddy.
+	 * 
+	 * @return name of buddy.
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Returns session object related to roster item.
+	 * 
+	 * @return session object.
+	 */
 	public SessionObject getSessionObject() {
 		return sessionObject;
 	}
 
+	/**
+	 * Returns subscription state.
+	 * 
+	 * @return subscription state.
+	 */
 	public Subscription getSubscription() {
 		return subscription;
 	}
@@ -114,10 +173,22 @@ public class RosterItem {
 		return jid.hashCode();
 	}
 
+	/**
+	 * Checks if subscription was requested.
+	 * 
+	 * @return <code>true</code> subscription of this buddy was requested.
+	 */
 	public boolean isAsk() {
 		return ask;
 	}
 
+	/**
+	 * Removes data stored by {@linkplain RosterItem#setData(String, Object)}.
+	 * 
+	 * @param key
+	 *            the key whose associated value is to be removed
+	 * @return removed value or <code>null</code> if value was not saved.
+	 */
 	public <T> T removeData(String key) {
 		return dataHolder.removeData(key);
 	}
@@ -126,6 +197,15 @@ public class RosterItem {
 		this.ask = ask;
 	}
 
+	/**
+	 * Store object in roster item. Object will not be stored on server or in
+	 * local cache.
+	 * 
+	 * @param key
+	 *            the key whose associated value is to be saved
+	 * @param value
+	 *            values to save
+	 */
 	public void setData(String key, Object value) {
 		dataHolder.setData(key, value);
 	}
