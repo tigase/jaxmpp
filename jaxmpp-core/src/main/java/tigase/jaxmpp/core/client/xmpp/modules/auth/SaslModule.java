@@ -44,6 +44,9 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.PlainMechanism;
 
+/**
+ * Module for SASL authentication.
+ */
 public class SaslModule implements XmppModule {
 
 	public static enum SaslError {

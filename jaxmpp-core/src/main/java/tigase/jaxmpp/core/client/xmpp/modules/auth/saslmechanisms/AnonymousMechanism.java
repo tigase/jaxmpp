@@ -31,23 +31,8 @@ public class AnonymousMechanism implements SaslMechanism {
 	}
 
 	@Override
-	public Status getStatus() {
-		return null;
-	}
-
-	@Override
-	public String getStatusMessage() {
-		return null;
-	}
-
-	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
 		return true;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return false;
 	}
 
 	@Override

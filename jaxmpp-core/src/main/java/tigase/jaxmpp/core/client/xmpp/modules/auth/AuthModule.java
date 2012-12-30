@@ -35,6 +35,11 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
 
+/**
+ * Module used for authentication. This module automatically selects better
+ * authentication module to use. Currently it choose between
+ * {@linkplain SaslModule} and {@linkplain NonSaslAuthModule}.
+ */
 public class AuthModule implements XmppModule {
 
 	public static class AuthEvent extends BaseEvent {
@@ -56,7 +61,7 @@ public class AuthModule implements XmppModule {
 		}
 
 		@Override
-		public String getPassword() {
+		public String getCredential() {
 			return sessionObject.getProperty(SessionObject.PASSWORD);
 		}
 
@@ -135,10 +140,10 @@ public class AuthModule implements XmppModule {
 		final Boolean forceNonSasl = sessionObject.getProperty(FORCE_NON_SASL);
 
 		final Element features = sessionObject.getStreamFeatures();
-		boolean saslSupported = (forceNonSasl == null || !forceNonSasl.booleanValue()) && features != null
-				&& features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
-		boolean nonSaslSupported = !saslSupported || features == null
-				|| features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
+		boolean saslSupported = saslModule != null && (forceNonSasl == null || !forceNonSasl.booleanValue())
+				&& features != null && features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
+		boolean nonSaslSupported = nonSaslModule != null
+				&& (!saslSupported || features == null || features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null);
 
 		if (log.isLoggable(Level.FINER))
 			log.finer("Authenticating with " + (saslSupported ? "SASL" : "-") + " " + (nonSaslSupported ? "Non-SASL" : "-"));
@@ -148,6 +153,8 @@ public class AuthModule implements XmppModule {
 				saslModule.login();
 			else if (nonSaslSupported)
 				nonSaslModule.login();
+			else
+				throw new JaxmppException("Both authentication methods are forbidden");
 		} catch (UnsupportedSaslMechanisms e) {
 			if (nonSaslModule == null || !nonSaslSupported)
 				throw e;

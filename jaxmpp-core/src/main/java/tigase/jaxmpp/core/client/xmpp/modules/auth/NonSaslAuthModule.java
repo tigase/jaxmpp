@@ -35,6 +35,11 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Implementaion of <a href='http://xmpp.org/extensions/xep-0078.html'>XEP-0078:
+ * Non-SASL Authentication</a>.
+ * 
+ */
 public class NonSaslAuthModule extends AbstractIQModule {
 
 	public static class NonSaslAuthEvent extends AuthModule.AuthEvent {
@@ -102,7 +107,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 		BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 
 		query.addChild(new DefaultElement("username", userJID.getLocalpart(), null));
-		query.addChild(new DefaultElement("password", callback.getPassword(), null));
+		query.addChild(new DefaultElement("password", callback.getCredential(), null));
 		// query.addChild(new DefaultElement("resource", "x", null));
 
 		fireAuthStart(iq);

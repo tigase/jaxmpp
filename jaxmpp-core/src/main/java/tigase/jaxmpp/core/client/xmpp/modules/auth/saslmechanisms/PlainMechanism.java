@@ -38,7 +38,7 @@ public class PlainMechanism implements SaslMechanism {
 			if (callback == null)
 				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
 			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getPassword();
+			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
 			return base64;
@@ -47,24 +47,9 @@ public class PlainMechanism implements SaslMechanism {
 	}
 
 	@Override
-	public Status getStatus() {
-		return null;
-	}
-
-	@Override
-	public String getStatusMessage() {
-		return null;
-	}
-
-	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
 		return sessionObject.getProperty(SessionObject.PASSWORD) != null
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return false;
 	}
 
 	@Override

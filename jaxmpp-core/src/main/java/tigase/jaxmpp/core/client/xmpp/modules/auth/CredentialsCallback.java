@@ -17,8 +17,18 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
+import tigase.jaxmpp.core.client.SessionObject;
+
+/**
+ * With this callback user password may be not stored in
+ * {@linkplain SessionObject} but may be calculated my class.
+ * <p>
+ * Callback must be stored in {@linkplain SessionObject} with key
+ * {@linkplain AuthModule#CREDENTIALS_CALLBACK}.
+ * </p>
+ */
 public interface CredentialsCallback {
 
-	String getPassword();
+	String getCredential();
 
 }

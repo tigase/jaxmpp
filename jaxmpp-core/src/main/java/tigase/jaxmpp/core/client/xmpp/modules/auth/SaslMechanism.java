@@ -19,24 +19,39 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.SessionObject;
 
+/**
+ * Interface for implementing SASL mechanisms.
+ */
 public interface SaslMechanism {
 
-	public static enum Status {
-		CONTINUE,
-		ERROR,
-		SUCCESS
-	}
-
+	/**
+	 * Evaluating challenge received from server.
+	 * 
+	 * @param input
+	 *            received data
+	 * @param sessionObject
+	 *            current {@linkplain SessionObject}
+	 * @return calculated response
+	 */
 	String evaluateChallenge(String input, SessionObject sessionObject);
 
-	Status getStatus();
-
-	String getStatusMessage();
-
+	/**
+	 * This method is used to check if mechanism can be used with current
+	 * session. For example if no username and passowrd is stored in
+	 * sessionObject, then PlainMechanism can't be used.
+	 * 
+	 * @param sessionObject
+	 *            current {@linkplain SessionObject}
+	 * @return <code>true</code> if mechanism can be used it current XMPP
+	 *         session.
+	 */
 	boolean isAllowedToUse(SessionObject sessionObject);
 
-	boolean isComplete();
-
+	/**
+	 * Return mechanism name.
+	 * 
+	 * @return mechanism name.
+	 */
 	String name();
 
 }
