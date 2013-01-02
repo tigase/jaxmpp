@@ -44,6 +44,10 @@ import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
 
+/**
+ * Main library class for using in standalone, Android and other J2SE compatible
+ * application.
+ */
 public class Jaxmpp extends JaxmppCore {
 
 	private class LoginTimeoutTask extends TimerTask {
@@ -174,10 +178,20 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
+	/**
+	 * Connects to server in sync mode. 
+	 */
 	public void login() throws JaxmppException {
 		login(true);
 	}
 
+	/**
+	 * Connects to server.
+	 * 
+	 * @param sync
+	 *            <code>true</code> to start method in sync mode. In sync mode
+	 *            whole connecting process will be done in this method.
+	 */
 	public void login(boolean sync) throws JaxmppException {
 		this.sessionObject.clear();
 
@@ -302,6 +316,13 @@ public class Jaxmpp extends JaxmppCore {
 		observable.fireEvent(event);
 	}
 
+	/**
+	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
+	 * modules.
+	 * 
+	 * @param executor
+	 *            executor
+	 */
 	public void setExecutor(Executor executor) {
 		if (executor == null)
 			this.executor = DEFAULT_EXECUTOR;

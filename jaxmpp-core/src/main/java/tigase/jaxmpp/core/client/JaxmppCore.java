@@ -278,6 +278,9 @@ public abstract class JaxmppCore {
 			this.connector.keepalive();
 	}
 
+	/**
+	 * Connects to server.
+	 */
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
