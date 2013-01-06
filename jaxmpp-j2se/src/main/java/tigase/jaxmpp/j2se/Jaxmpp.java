@@ -231,7 +231,9 @@ public class Jaxmpp extends JaxmppCore {
 				synchronized (Jaxmpp.this) {
 					Jaxmpp.this.wait();
 					log.finest("Waked up");
+					Jaxmpp.this.wait(512);
 				}
+
 				if (loginTimeoutTask != null) {
 					log.finest("Canceling LoginTimeoutTask");
 					loginTimeoutTask.cancel();

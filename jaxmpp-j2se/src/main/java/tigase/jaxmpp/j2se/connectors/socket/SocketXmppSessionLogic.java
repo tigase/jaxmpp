@@ -18,6 +18,8 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -60,6 +62,8 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private SessionListener sessionListener;
 
+	private final Listener<ConnectorEvent> connectorListener;
+
 	private final SessionObject sessionObject;
 
 	private final Listener<StreamFeaturesReceivedEvent> streamFeaturesEventListener;
@@ -69,6 +73,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
 		this.sessionObject = sessionObject;
+
+		this.connectorListener = new Listener<Connector.ConnectorEvent>() {
+
+			@Override
+			public void handleEvent(Connector.ConnectorEvent be) throws JaxmppException {
+				processConnectorEvents(be);
+			}
+		};
 
 		this.streamFeaturesEventListener = new Listener<StreamFeaturesModule.StreamFeaturesReceivedEvent>() {
 
@@ -116,6 +128,29 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 				sessionBindedAndEstablished();
 			}
 		};
+	}
+
+	protected void processConnectorEvents(ConnectorEvent be) throws JaxmppException {
+		if (be.getType() == Connector.Error && be.getCaught() != null) {
+			Throwable e1 = extractCauseException(be.getCaught());
+			JaxmppException e = (JaxmppException) (e1 instanceof JaxmppException ? e1 : new JaxmppException(e1));
+			processException(e);
+		}
+	}
+
+	static Throwable extractCauseException(Throwable ex) {
+		Throwable th = ex.getCause();
+		if (th == null)
+			return ex;
+
+		for (int i = 0; i < 4; i++) {
+			if (!(th instanceof JaxmppException))
+				return th;
+			if (th.getCause() == null)
+				return th;
+			th = th.getCause();
+		}
+		return ex;
 	}
 
 	@Override
@@ -203,6 +238,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
 
+		connector.addListener(Connector.Error, connectorListener);
 		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
 		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
 		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
@@ -216,6 +252,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	@Override
 	public void unbind() throws JaxmppException {
+		connector.removeListener(Connector.Error, connectorListener);
 		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
 		authModule.removeListener(AuthModule.AuthSuccess, this.saslEventListener);
 		authModule.removeListener(AuthModule.AuthFailed, this.saslEventListener);
