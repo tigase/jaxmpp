@@ -31,7 +31,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 /**
  * Storage for keep received presences of buddies.
  */
-public class PresenceStore {
+public abstract class PresenceStore {
 
 	static interface Handler {
 
@@ -41,13 +41,13 @@ public class PresenceStore {
 
 	}
 
-	private Map<BareJID, Presence> bestPresence = new HashMap<BareJID, Presence>();
+	protected Map<BareJID, Presence> bestPresence;
 
-	private Handler handler;
+	protected Handler handler;
 
-	private Map<JID, Presence> presenceByJid = new HashMap<JID, Presence>();
+	protected Map<JID, Presence> presenceByJid;
 
-	private Map<BareJID, Map<String, Presence>> presencesMapByBareJid = new HashMap<BareJID, Map<String, Presence>>();
+	protected Map<BareJID, Map<String, Presence>> presencesMapByBareJid;
 
 	/**
 	 * Removes all known presence information.
@@ -68,7 +68,6 @@ public class PresenceStore {
 			}
 		} else
 			bestPresence.clear();
-
 		presencesMapByBareJid.clear();
 	}
 
@@ -133,7 +132,6 @@ public class PresenceStore {
 			}
 		}
 		return result;
-
 	}
 
 	void setHandler(Handler handler) {

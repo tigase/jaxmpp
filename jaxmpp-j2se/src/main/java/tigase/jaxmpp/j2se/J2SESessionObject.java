@@ -9,7 +9,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 public class J2SESessionObject extends AbstractSessionObject {
 
 	public J2SESessionObject() {
-		presence = new PresenceStore();
+		presence = new J2SEPresenceStore();
 		properties = new ConcurrentHashMap<String, Object>();
 		responseManager = new ThreadSafeResponseManager();
 		roster = new RosterStore();

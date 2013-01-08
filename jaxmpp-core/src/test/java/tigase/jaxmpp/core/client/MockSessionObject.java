@@ -5,10 +5,10 @@ import java.util.HashMap;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
-public class TestSessionObject extends AbstractSessionObject {
+public class MockSessionObject extends AbstractSessionObject {
 
-	public TestSessionObject() {
-		presence = new PresenceStore();
+	public MockSessionObject() {
+		presence = new MockPresenceStore();
 		properties = new HashMap<String, Object>();
 		responseManager = new ResponseManager();
 		roster = new RosterStore();
