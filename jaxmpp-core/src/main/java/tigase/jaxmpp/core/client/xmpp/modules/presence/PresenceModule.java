@@ -150,7 +150,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	public static final EventType BeforePresenceSend = new EventType();
 
 	/**
-	 * Event fired when contact is available.
+	 * Event fired when contact (understood as bare JID) becomes available.
+	 * Fired when first resource of JID becomes available.
 	 */
 	public static final EventType ContactAvailable = new EventType();
 
@@ -160,7 +161,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	public static final EventType ContactChangedPresence = new EventType();
 
 	/**
-	 * Event fired when contact goes offline.
+	 * Event fired when contact (understood as bare JID) goes offline. Fired
+	 * when no more resources are available.
 	 */
 	public static final EventType ContactUnavailable = new EventType();
 
@@ -242,32 +244,45 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		final StanzaType type = presence.getType();
 
-		PresenceEvent event;
 		if (type == StanzaType.unsubscribed) {
-			event = new PresenceEvent(ContactUnsubscribed, sessionObject);
+			PresenceEvent event = preparePresenceEvent(ContactUnsubscribed, presence);
+			observable.fireEvent(event);
 		} else if (type == StanzaType.subscribe) {
 			// subscribe
 			log.finer("Subscribe from " + fromJid);
-			event = new PresenceEvent(SubscribeRequest, sessionObject);
+			PresenceEvent event = preparePresenceEvent(SubscribeRequest, presence);
+			observable.fireEvent(event);
 		} else if (!availableOld && availableNow) {
 			// sontact available
 			log.finer("Presence online from " + fromJid);
-			event = new PresenceEvent(ContactAvailable, sessionObject);
+			fireContactChangedPresenceEvent(presence);
+			PresenceEvent event = preparePresenceEvent(ContactAvailable, presence);
+			observable.fireEvent(event);
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
 			log.finer("Presence offline from " + fromJid);
-			event = new PresenceEvent(ContactUnavailable, sessionObject);
+			fireContactChangedPresenceEvent(presence);
+			PresenceEvent event = preparePresenceEvent(ContactUnavailable, presence);
+			observable.fireEvent(event);
 		} else {
 			log.finer("Presence change from " + fromJid);
-			event = new PresenceEvent(ContactChangedPresence, sessionObject);
+			fireContactChangedPresenceEvent(presence);
 		}
+	}
+
+	private void fireContactChangedPresenceEvent(Presence presence) throws JaxmppException {
+		PresenceEvent event = preparePresenceEvent(ContactChangedPresence, presence);
+		observable.fireEvent(event);
+	}
+
+	private PresenceEvent preparePresenceEvent(EventType type, Presence presence) throws XMLException {
+		PresenceEvent event = new PresenceEvent(type, sessionObject);
 		event.setPresence(presence);
-		event.setJid(fromJid);
+		event.setJid(presence.getFrom());
 		event.setShow(presence.getShow());
 		event.setStatus(presence.getStatus());
 		event.setPriority(presence.getPriority());
-
-		observable.fireEvent(event);
+		return event;
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {
