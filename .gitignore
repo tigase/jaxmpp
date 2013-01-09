@@ -10,3 +10,7 @@ jaxmpp-gwt/war
 jaxmpp-j2se/bin
 jaxmpp-j2se/target
 target
+.gradle
+jaxmpp-j2se/build
+jaxmpp-core/build
+jaxmpp-gwt/build
