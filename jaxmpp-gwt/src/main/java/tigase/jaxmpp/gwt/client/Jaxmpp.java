@@ -53,6 +53,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Cookies;
+import tigase.jaxmpp.gwt.client.connectors.WebSocket;
+import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
 
 public class Jaxmpp extends JaxmppCore {
 
@@ -197,13 +199,25 @@ public class Jaxmpp extends JaxmppCore {
 		return writer;
 	}
 
+        protected Connector createConnector() {
+                String url = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
+                if (url.startsWith("ws:")) {                        
+                        if (!WebSocket.isSupported()) {
+                                throw new RuntimeException("WebSocket protocol is not supported by browser");
+                        }
+                        return new WebSocketConnector(this.observable, this.sessionObject);
+                }
+
+                return new BoshConnector(observable, this.sessionObject);
+        }
+        
 	private void intLogin() throws JaxmppException {
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
 		}
 
-		this.connectorWrapper.setConnector(new BoshConnector(observable, this.sessionObject));
+		this.connectorWrapper.setConnector(createConnector());
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
 		this.sessionLogic.setSessionListener(new SessionListener() {
