@@ -26,9 +26,9 @@ public class MockWriter implements PacketWriter {
 
 	private final ArrayList<Element> elements = new ArrayList<Element>();
 
-	private TestSessionObject sessionObject;
+	private MockSessionObject sessionObject;
 
-	public MockWriter(TestSessionObject sessionObject) {
+	public MockWriter(MockSessionObject sessionObject) {
 		this.sessionObject = sessionObject;
 	}
 

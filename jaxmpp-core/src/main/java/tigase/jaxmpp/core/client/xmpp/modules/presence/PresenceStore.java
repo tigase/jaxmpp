@@ -28,7 +28,10 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 
-public class PresenceStore {
+/**
+ * Storage for keep received presences of buddies.
+ */
+public abstract class PresenceStore {
 
 	static interface Handler {
 
@@ -38,19 +41,22 @@ public class PresenceStore {
 
 	}
 
-	private Map<BareJID, Presence> bestPresence = new HashMap<BareJID, Presence>();
+	protected Map<BareJID, Presence> bestPresence;
 
-	private Handler handler;
+	protected Handler handler;
 
-	private Map<JID, Presence> presenceByJid = new HashMap<JID, Presence>();
+	protected Map<JID, Presence> presenceByJid;
 
-	private Map<BareJID, Map<String, Presence>> presencesMapByBareJid = new HashMap<BareJID, Map<String, Presence>>();
+	protected Map<BareJID, Map<String, Presence>> presencesMapByBareJid;
 
+	/**
+	 * Removes all known presence information.
+	 */
 	public void clear() throws JaxmppException {
 		clear(true);
 	}
 
-	public void clear(boolean notify) throws JaxmppException {
+	void clear(boolean notify) throws JaxmppException {
 		presenceByJid.clear();
 
 		if (notify) {
@@ -62,18 +68,39 @@ public class PresenceStore {
 			}
 		} else
 			bestPresence.clear();
-
 		presencesMapByBareJid.clear();
 	}
 
+	/**
+	 * Returns presence stanza with highest priority of goven bare JID.
+	 * 
+	 * @param jid
+	 *            JID of sender
+	 * @return {@linkplain Presence} stanza or <code>null</code> if not found.
+	 */
 	public Presence getBestPresence(final BareJID jid) throws XMLException {
 		return this.bestPresence.get(jid);
 	}
 
+	/**
+	 * Returns presence stanza of given JID.
+	 * 
+	 * @param jid
+	 *            JID of sender
+	 * @return {@linkplain Presence} stanza or <code>null</code> if not found.
+	 */
 	public Presence getPresence(final JID jid) {
 		return this.presenceByJid.get(jid);
 	}
 
+	/**
+	 * Returns map of all known resources and related presences stanza of given
+	 * bare JID.
+	 * 
+	 * @param jid
+	 *            basre JID of sender
+	 * @return map contains resource (key) and related presence stanza (value).
+	 */
 	public Map<String, Presence> getPresences(BareJID jid) {
 		return this.presencesMapByBareJid.get(jid);
 	}
@@ -105,7 +132,6 @@ public class PresenceStore {
 			}
 		}
 		return result;
-
 	}
 
 	void setHandler(Handler handler) {
@@ -116,7 +142,7 @@ public class PresenceStore {
 		this.handler.setPresence(show, status, priority);
 	}
 
-	public void update(final Presence presence) throws XMLException {
+	protected void update(final Presence presence) throws XMLException {
 		final JID from = presence.getFrom();
 		if (from == null)
 			return;
@@ -133,7 +159,7 @@ public class PresenceStore {
 		updateBestPresence(presence);
 	}
 
-	private void updateBestPresence(final Presence presence) throws XMLException {
+	protected void updateBestPresence(final Presence presence) throws XMLException {
 		final BareJID bareFrom = presence.getFrom().getBareJid();
 		this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
 

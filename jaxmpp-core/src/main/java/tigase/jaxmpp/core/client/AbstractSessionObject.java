@@ -66,7 +66,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 		log.fine("Clearing properties!");
 		this.properties.clear();
 		roster.clear();
-		presence.clear(true);
+		presence.clear();
 	}
 
 	/**

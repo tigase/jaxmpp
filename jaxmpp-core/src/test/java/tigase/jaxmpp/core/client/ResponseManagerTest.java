@@ -29,7 +29,7 @@ public class ResponseManagerTest extends TestCase {
 
 	private final ResponseManager rm = new ResponseManager();
 
-	private final MockWriter writer = new MockWriter(new TestSessionObject());
+	private final MockWriter writer = new MockWriter(new MockSessionObject());
 
 	public void test01() {
 		try {

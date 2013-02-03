@@ -77,7 +77,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 	}
 
 	public GwtSessionObject() {
-		presence = new PresenceStore();
+		presence = new GWTPresenceStore();
 		properties = new HashMap<String, Object>();
 		responseManager = new ResponseManager();
 		roster = new RosterStore();
