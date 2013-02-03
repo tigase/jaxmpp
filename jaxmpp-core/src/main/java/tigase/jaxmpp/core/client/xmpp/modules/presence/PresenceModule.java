@@ -34,8 +34,14 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+/**
+ * Module for handling presence information.
+ */
 public class PresenceModule extends AbstractStanzaModule<Presence> {
 
+	/**
+	 * Presence related event.
+	 */
 	public static class PresenceEvent extends BaseEvent {
 
 		private static final long serialVersionUID = 1L;
@@ -56,26 +62,54 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			super(type, sessionObject);
 		}
 
+		/**
+		 * Cancel processing event.
+		 */
 		public void cancel() {
 			this.cancelled = true;
 		}
 
+		/**
+		 * Returns JID of entity related to presence event.
+		 * 
+		 * @return
+		 */
 		public JID getJid() {
 			return jid;
 		}
 
+		/**
+		 * Returns Presence stanza.
+		 * 
+		 * @return presence stanza.
+		 */
 		public Presence getPresence() {
 			return presence;
 		}
 
+		/**
+		 * Returns priority information received with presence.
+		 * 
+		 * @return priority or <code>null</code> if not present.
+		 */
 		public Integer getPriority() {
 			return priority;
 		}
 
+		/**
+		 * Returns substate of presence.
+		 * 
+		 * @return presence sub-state.
+		 */
 		public Show getShow() {
 			return show;
 		}
 
+		/**
+		 * Returns human readable presence description.
+		 * 
+		 * @return
+		 */
 		public String getStatus() {
 			return status;
 		}
@@ -105,20 +139,43 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		}
 	}
 
+	/**
+	 * Event fired before initial presence is sent.
+	 */
 	public static final EventType BeforeInitialPresence = new EventType();
 
+	/**
+	 * Event fired before each presence sent by client.
+	 */
 	public static final EventType BeforePresenceSend = new EventType();
 
+	/**
+	 * Event fired when contact (understood as bare JID) becomes available.
+	 * Fired when first resource of JID becomes available.
+	 */
 	public static final EventType ContactAvailable = new EventType();
 
+	/**
+	 * Event fired when contact changed his presence.
+	 */
 	public static final EventType ContactChangedPresence = new EventType();
 
+	/**
+	 * Event fired when contact (understood as bare JID) goes offline. Fired
+	 * when no more resources are available.
+	 */
 	public static final EventType ContactUnavailable = new EventType();
 
+	/**
+	 * Event fired when contact is unsubscribed.
+	 */
 	public static final EventType ContactUnsubscribed = new EventType();
 
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
+	/**
+	 * Event fired when subscription request is received.
+	 */
 	public static final EventType SubscribeRequest = new EventType();
 
 	public PresenceModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
@@ -187,32 +244,45 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		final StanzaType type = presence.getType();
 
-		PresenceEvent event;
 		if (type == StanzaType.unsubscribed) {
-			event = new PresenceEvent(ContactUnsubscribed, sessionObject);
+			PresenceEvent event = preparePresenceEvent(ContactUnsubscribed, presence);
+			observable.fireEvent(event);
 		} else if (type == StanzaType.subscribe) {
 			// subscribe
 			log.finer("Subscribe from " + fromJid);
-			event = new PresenceEvent(SubscribeRequest, sessionObject);
+			PresenceEvent event = preparePresenceEvent(SubscribeRequest, presence);
+			observable.fireEvent(event);
 		} else if (!availableOld && availableNow) {
 			// sontact available
 			log.finer("Presence online from " + fromJid);
-			event = new PresenceEvent(ContactAvailable, sessionObject);
+			fireContactChangedPresenceEvent(presence);
+			PresenceEvent event = preparePresenceEvent(ContactAvailable, presence);
+			observable.fireEvent(event);
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
 			log.finer("Presence offline from " + fromJid);
-			event = new PresenceEvent(ContactUnavailable, sessionObject);
+			fireContactChangedPresenceEvent(presence);
+			PresenceEvent event = preparePresenceEvent(ContactUnavailable, presence);
+			observable.fireEvent(event);
 		} else {
 			log.finer("Presence change from " + fromJid);
-			event = new PresenceEvent(ContactChangedPresence, sessionObject);
+			fireContactChangedPresenceEvent(presence);
 		}
+	}
+
+	private void fireContactChangedPresenceEvent(Presence presence) throws JaxmppException {
+		PresenceEvent event = preparePresenceEvent(ContactChangedPresence, presence);
+		observable.fireEvent(event);
+	}
+
+	private PresenceEvent preparePresenceEvent(EventType type, Presence presence) throws XMLException {
+		PresenceEvent event = new PresenceEvent(type, sessionObject);
 		event.setPresence(presence);
-		event.setJid(fromJid);
+		event.setJid(presence.getFrom());
 		event.setShow(presence.getShow());
 		event.setStatus(presence.getStatus());
 		event.setPriority(presence.getPriority());
-
-		observable.fireEvent(event);
+		return event;
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {
@@ -236,6 +306,16 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		writer.write(presence);
 	}
 
+	/**
+	 * Sends own presence.
+	 * 
+	 * @param show
+	 *            presence substate.
+	 * @param status
+	 *            human readable description of status.
+	 * @param priority
+	 *            priority.
+	 */
 	public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
 		Presence presence = Presence.create();
 		presence.setShow(show);
@@ -250,6 +330,12 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		writer.write(presence);
 	}
 
+	/**
+	 * Subscribe for presence.
+	 * 
+	 * @param jid
+	 *            JID
+	 */
 	public void subscribe(JID jid) throws JaxmppException, XMLException {
 		Presence p = Presence.create();
 		p.setType(StanzaType.subscribe);
