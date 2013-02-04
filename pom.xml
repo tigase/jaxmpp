@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tigase</groupId>
@@ -40,7 +41,8 @@
 		<module>jaxmpp-core</module>
 		<module>jaxmpp-j2se</module>
 		<module>jaxmpp-gwt</module>
-	</modules>
+    <module>jaxmpp-android</module>
+  </modules>
 
 <scm>
     <developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
