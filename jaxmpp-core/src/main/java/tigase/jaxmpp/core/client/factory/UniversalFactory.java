@@ -68,7 +68,8 @@ public class UniversalFactory {
 	}
 
 	/**
-	 * Registers object factory with name.
+	 * Registers object factory with name. Previously registered factory will
+	 * not be overwritten.
 	 * 
 	 * @param key
 	 *            name of object factory.
@@ -76,6 +77,23 @@ public class UniversalFactory {
 	 *            implementation of factory.
 	 */
 	public static void setSpi(String key, FactorySpi<?> spi) {
+		setSpi(key, spi, false);
+	}
+
+	/**
+	 * Registers object factory with name.
+	 * 
+	 * @param key
+	 *            name of object factory.
+	 * @param spi
+	 *            implementation of factory.
+	 * @param overwrite
+	 *            <code>true</code> if previously registered factory should be
+	 *            overwritten.
+	 */
+	public static void setSpi(String key, FactorySpi<?> spi, boolean overwrite) {
+		if (!overwrite && instance().factories.containsKey(key))
+			return;
 		instance().factories.put(key, spi);
 	}
 
