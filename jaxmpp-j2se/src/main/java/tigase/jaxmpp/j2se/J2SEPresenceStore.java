@@ -1,6 +1,5 @@
 package tigase.jaxmpp.j2se;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +14,11 @@ public class J2SEPresenceStore extends PresenceStore {
 		presencesMapByBareJid = new ConcurrentHashMap<BareJID, Map<String, Presence>>();
 		presenceByJid = new ConcurrentHashMap<JID, Presence>();
 		bestPresence = new ConcurrentHashMap<BareJID, Presence>();
+	}
+
+	@Override
+	protected Map<String, Presence> createResourcePresenceMap() {
+		return new ConcurrentHashMap<String, Presence>();
 	}
 
 }

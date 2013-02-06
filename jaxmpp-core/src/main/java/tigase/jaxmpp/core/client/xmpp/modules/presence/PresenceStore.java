@@ -17,7 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.presence;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -70,6 +69,8 @@ public abstract class PresenceStore {
 			bestPresence.clear();
 		presencesMapByBareJid.clear();
 	}
+
+	protected abstract Map<String, Presence> createResourcePresenceMap();
 
 	/**
 	 * Returns presence stanza with highest priority of goven bare JID.
@@ -152,7 +153,7 @@ public abstract class PresenceStore {
 		this.presenceByJid.put(from, presence);
 		Map<String, Presence> m = this.presencesMapByBareJid.get(bareFrom);
 		if (m == null) {
-			m = new HashMap<String, Presence>();
+			m = createResourcePresenceMap();
 			this.presencesMapByBareJid.put(bareFrom, m);
 		}
 		m.put(resource, presence);
