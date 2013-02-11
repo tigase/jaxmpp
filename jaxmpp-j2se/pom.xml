@@ -12,7 +12,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>

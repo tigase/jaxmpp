@@ -24,7 +24,7 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>${groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -34,7 +34,7 @@
 			<version>3.4.2</version>
 		</dependency>
 		<dependency>
-			<groupId>${groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-j2se</artifactId>
 			<version>${project.version}</version>
 		</dependency>

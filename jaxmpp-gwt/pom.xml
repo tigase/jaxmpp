@@ -16,7 +16,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>${groupId}</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -62,6 +62,7 @@
 				normal junit-tests -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12</version>
 				<configuration>
 					<additionalClasspathElements>
 						<additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
