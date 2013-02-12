@@ -35,19 +35,18 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public abstract class AbstractIQModule implements XmppModule {
+public abstract class AbstractIQModule implements XmppModule, ObservableAware {
 
 	protected final Logger log;
 
-	protected final Observable observable;
+	protected Observable observable;
 
 	protected final SessionObject sessionObject;
 
 	protected final PacketWriter writer;
 
-	public AbstractIQModule(Observable observable, SessionObject sessionObject, PacketWriter packetWriter) {
+	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
 		log = Logger.getLogger(this.getClass().getName());
-		this.observable = observable;
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
 	}
@@ -133,5 +132,10 @@ public abstract class AbstractIQModule implements XmppModule {
 	 */
 	public void removeListener(Listener<? extends BaseEvent> listener) {
 		observable.removeListener(listener);
+	}
+
+	@Override
+	public void setObservable(Observable observable) {
+		this.observable = observable;
 	}
 }

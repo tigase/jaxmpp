@@ -217,6 +217,11 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		return event.isCancelled();
 	}
 
+	private void fireContactChangedPresenceEvent(Presence presence) throws JaxmppException {
+		PresenceEvent event = preparePresenceEvent(ContactChangedPresence, presence);
+		observable.fireEvent(event);
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
@@ -229,6 +234,16 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public PresenceStore getPresence() {
 		return this.sessionObject.getPresence();
+	}
+
+	private PresenceEvent preparePresenceEvent(EventType type, Presence presence) throws XMLException {
+		PresenceEvent event = new PresenceEvent(type, sessionObject);
+		event.setPresence(presence);
+		event.setJid(presence.getFrom());
+		event.setShow(presence.getShow());
+		event.setStatus(presence.getStatus());
+		event.setPriority(presence.getPriority());
+		return event;
 	}
 
 	@Override
@@ -268,21 +283,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			log.finer("Presence change from " + fromJid);
 			fireContactChangedPresenceEvent(presence);
 		}
-	}
-
-	private void fireContactChangedPresenceEvent(Presence presence) throws JaxmppException {
-		PresenceEvent event = preparePresenceEvent(ContactChangedPresence, presence);
-		observable.fireEvent(event);
-	}
-
-	private PresenceEvent preparePresenceEvent(EventType type, Presence presence) throws XMLException {
-		PresenceEvent event = new PresenceEvent(type, sessionObject);
-		event.setPresence(presence);
-		event.setJid(presence.getFrom());
-		event.setShow(presence.getShow());
-		event.setStatus(presence.getStatus());
-		event.setPriority(presence.getPriority());
-		return event;
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {

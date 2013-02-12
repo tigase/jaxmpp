@@ -27,11 +27,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -88,25 +85,7 @@ public class JingleModule extends AbstractIQModule {
 
 	}
 
-	public static class JingleTransportInfoEvent extends JingleSessionEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private final Element content;
-
-		public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content) {
-			super(JingleTransportInfo, sessionObject, sender, sid);
-
-			this.content = content;
-		}
-
-		public Element getContent() {
-			return content;
-		}
-
-	}
-
-        public static class JingleSessionInfoEvent extends JingleSessionEvent {
+	public static class JingleSessionInfoEvent extends JingleSessionEvent {
 
 		private static final long serialVersionUID = 1L;
 
@@ -159,25 +138,44 @@ public class JingleModule extends AbstractIQModule {
 
 	}
 
-	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
+	public static class JingleTransportInfoEvent extends JingleSessionEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private final Element content;
+
+		public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content) {
+			super(JingleTransportInfo, sessionObject, sender, sid);
+
+			this.content = content;
+		}
+
+		public Element getContent() {
+			return content;
+		}
+
+	}
 
 	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
 
-	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
+	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
 
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
 
+	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
+
 	public static final EventType JingleSessionAccept = new EventType();
 	public static final EventType JingleSessionInfo = new EventType();
-	public static final EventType JingleTransportInfo = new EventType();
 	public static final EventType JingleSessionInitiation = new EventType();
 	public static final EventType JingleSessionTerminate = new EventType();
+	public static final EventType JingleTransportInfo = new EventType();
 
-	public JingleModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public JingleModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
 	}
 
-	public void acceptSession(JID jid, String sid, String name, Element description, List<Element> transports) throws JaxmppException {
+	public void acceptSession(JID jid, String sid, String name, Element description, List<Element> transports)
+			throws JaxmppException {
 		IQ iq = IQ.create();
 
 		iq.setTo(jid);
@@ -202,11 +200,11 @@ public class JingleModule extends AbstractIQModule {
 		jingle.addChild(content);
 
 		content.addChild(description);
-                if (transports != null) {
-                        for (Element transport : transports) {
-                		content.addChild(transport);
-                        }
-                }
+		if (transports != null) {
+			for (Element transport : transports) {
+				content.addChild(transport);
+			}
+		}
 
 		writer.write(iq);
 	}
@@ -262,10 +260,10 @@ public class JingleModule extends AbstractIQModule {
 		Element jingle = iq.getChildrenNS("jingle", JINGLE_XMLNS);
 
 		List<Element> contents = jingle.getChildren("content");
-//		if (contents == null || contents.isEmpty()) {
-//			// no point in parsing this any more
-//			return;
-//		}
+		// if (contents == null || contents.isEmpty()) {
+		// // no point in parsing this any more
+		// return;
+		// }
 
 		JID from = iq.getFrom();
 		String sid = jingle.getAttribute("sid");
@@ -324,8 +322,8 @@ public class JingleModule extends AbstractIQModule {
 
 		writer.write(iq);
 	}
-        
-        public void transportInfo(JID recipient, JID initiator, String sid, Element content) throws JaxmppException {
+
+	public void transportInfo(JID recipient, JID initiator, String sid, Element content) throws JaxmppException {
 		IQ iq = IQ.create();
 
 		iq.setTo(recipient);
@@ -335,12 +333,12 @@ public class JingleModule extends AbstractIQModule {
 		jingle.setXMLNS(JINGLE_XMLNS);
 		jingle.setAttribute("action", "transport-info");
 		jingle.setAttribute("sid", sid);
-                jingle.setAttribute("initiator", initiator.toString());
-                
-                iq.addChild(jingle);
-                
-                jingle.addChild(content);
-                
-                writer.write(iq);
-        }
+		jingle.setAttribute("initiator", initiator.toString());
+
+		iq.addChild(jingle);
+
+		jingle.addChild(content);
+
+		writer.write(iq);
+	}
 }

@@ -257,7 +257,8 @@ public class DefaultElement implements Element {
 
 	@Override
 	public void setAttributes(Map<String, String> attrs) throws XMLException {
-                if (attrs == null) return;
+		if (attrs == null)
+			return;
 		attributes.putAll(attrs);
 	}
 

@@ -28,8 +28,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -105,8 +103,8 @@ public class SoftwareVersionModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "jabber:iq:version" };
 
-	public SoftwareVersionModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public SoftwareVersionModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
 	}
 
 	/**

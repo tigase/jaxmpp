@@ -31,8 +31,6 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -141,8 +139,8 @@ public class DiscoItemsModule extends AbstractIQModule {
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#items" };
 
-	public DiscoItemsModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public DiscoItemsModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
 	}
 
 	@Override

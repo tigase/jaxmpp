@@ -36,8 +36,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -131,8 +129,8 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 	private final RosterCacheProvider versionProvider;
 
-	public RosterModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public RosterModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
 		sessionObject.getRoster().setHandler(new RosterStore.Handler() {
 
 			@Override

@@ -36,7 +36,7 @@ public class ProcessorTest extends TestCase {
 
 		DefaultObservable observable = new DefaultObservable();
 		XmppModulesManager xmppModulesManages = new XmppModulesManager(observable, writer);
-		xmppModulesManages.register(new PingModule(observable, sessionObject, writer));
+		xmppModulesManages.register(new PingModule(sessionObject, writer));
 		this.processor = new Processor(xmppModulesManages, sessionObject, writer);
 	}
 

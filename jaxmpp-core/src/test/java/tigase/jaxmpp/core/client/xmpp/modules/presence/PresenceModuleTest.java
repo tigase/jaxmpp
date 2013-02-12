@@ -9,8 +9,8 @@ import org.junit.Test;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.MockWriter;
 import tigase.jaxmpp.core.client.MockSessionObject;
+import tigase.jaxmpp.core.client.MockWriter;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.DefaultObservable;
 import tigase.jaxmpp.core.client.observer.Listener;
