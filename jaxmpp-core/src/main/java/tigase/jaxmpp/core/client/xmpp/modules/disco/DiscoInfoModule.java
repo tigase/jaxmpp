@@ -182,7 +182,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter, XmppModulesManager modulesManager) {
 		super(sessionObject, packetWriter);
 		this.modulesManager = modulesManager;
-		this.observable.hashCode();
 	}
 
 	@Override
