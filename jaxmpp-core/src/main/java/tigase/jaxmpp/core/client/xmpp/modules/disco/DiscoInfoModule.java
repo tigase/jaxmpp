@@ -34,6 +34,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -181,16 +182,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter, XmppModulesManager modulesManager) {
 		super(sessionObject, packetWriter);
 		this.modulesManager = modulesManager;
-		this.observable.addListener(new Listener<DiscoInfoEvent>() {
-
-			@Override
-			public void handleEvent(DiscoInfoEvent be) {
-				if (be.getNode() != null)
-					return;
-
-				processDefaultDiscoEvent(be);
-			}
-		});
 	}
 
 	@Override
@@ -275,6 +266,21 @@ public class DiscoInfoModule extends AbstractIQModule {
 	@Override
 	protected void processSet(IQ element) throws XMPPException, XMLException, JaxmppException {
 		throw new XMPPException(ErrorCondition.not_allowed);
+	}
+
+	@Override
+	public void setObservable(Observable observable) {
+		super.setObservable(observable);
+		this.observable.addListener(new Listener<DiscoInfoEvent>() {
+
+			@Override
+			public void handleEvent(DiscoInfoEvent be) {
+				if (be.getNode() != null)
+					return;
+
+				processDefaultDiscoEvent(be);
+			}
+		});
 	}
 
 }
