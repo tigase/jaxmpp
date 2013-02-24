@@ -33,8 +33,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -139,9 +137,9 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
-	public AdHocCommansModule(Observable parent, SessionObject sessionObject, PacketWriter packetWriter,
-			DiscoItemsModule discoItemsModule, DiscoInfoModule discoInfoModule) {
-		super(ObservableFactory.instance(parent), sessionObject, packetWriter);
+	public AdHocCommansModule(SessionObject sessionObject, PacketWriter packetWriter, DiscoItemsModule discoItemsModule,
+			DiscoInfoModule discoInfoModule) {
+		super(sessionObject, packetWriter);
 		discoItemsModule.addListener(DiscoItemsModule.ItemsRequested, new Listener<DiscoItemsModule.DiscoItemEvent>() {
 
 			@Override

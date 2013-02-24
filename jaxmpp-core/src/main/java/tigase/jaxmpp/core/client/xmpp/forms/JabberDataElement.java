@@ -332,7 +332,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return natural language instruction.
 	 */
 	public String getInstructions() throws XMLException {
-		return getAttribute("instructions");
+		return getChildElementValue("instructions");
 	}
 
 	/**
@@ -341,7 +341,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return title
 	 */
 	public String getTitle() throws XMLException {
-		return getAttribute("title");
+		return getChildElementValue("title");
 	}
 
 	/**
@@ -361,7 +361,7 @@ public class JabberDataElement extends ElementWrapper {
 	 *            instruction.
 	 */
 	public void setInstructions(String instructions) throws XMLException {
-		setAttribute("instructions", instructions);
+		setChildElementValue("instructions", instructions);
 	}
 
 	/**
@@ -371,7 +371,7 @@ public class JabberDataElement extends ElementWrapper {
 	 *            title
 	 */
 	public void setTitle(String title) throws XMLException {
-		setAttribute("title", title);
+		setChildElementValue("title", title);
 	}
 
 }

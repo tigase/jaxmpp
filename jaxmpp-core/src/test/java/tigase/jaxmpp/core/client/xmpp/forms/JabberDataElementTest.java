@@ -41,6 +41,30 @@ public class JabberDataElementTest {
 	}
 
 	@Test
+	public void testCreate02() throws XMLException {
+		JabberDataElement x = new JabberDataElement(XDataType.form);
+
+		assertEquals("<x xmlns=\"jabber:x:data\" type=\"form\"/>", x.getAsString());
+
+		x.addFORM_TYPE("jabber:bot");
+
+		assertEquals(
+				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field></x>",
+				x.getAsString());
+
+		x.setInstructions("in");
+		assertEquals(
+				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field><instructions>in</instructions></x>",
+				x.getAsString());
+
+		x.setTitle("tt");
+		assertEquals(
+				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field><instructions>in</instructions><title>tt</title></x>",
+				x.getAsString());
+
+	}
+
+	@Test
 	public void testFieldBoolean01() throws XMLException {
 		JabberDataElement x = new JabberDataElement(XDataType.form);
 		BooleanField field = x.addBooleanField("public", true);

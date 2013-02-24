@@ -295,26 +295,26 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
 
-		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(observable, sessionObject,
-				writer, modulesManager));
-		final DiscoItemsModule discoItemsModule = this.modulesManager.register(new DiscoItemsModule(observable, sessionObject,
-				writer));
+		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(sessionObject, writer,
+				modulesManager));
+		final DiscoItemsModule discoItemsModule = this.modulesManager.register(new DiscoItemsModule(sessionObject, writer));
 
-		this.modulesManager.register(new AdHocCommansModule(observable, sessionObject, writer, discoItemsModule,
-				discoInfoModule));
+		this.modulesManager.register(new AdHocCommansModule(sessionObject, writer, discoItemsModule, discoInfoModule));
 
-		this.modulesManager.register(new SoftwareVersionModule(observable, sessionObject, writer));
-		this.modulesManager.register(new PingModule(observable, sessionObject, writer));
+		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
+		this.modulesManager.register(new PingModule(sessionObject, writer));
 		this.modulesManager.register(new ResourceBinderModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new RosterModule(observable, sessionObject, writer));
+		this.modulesManager.register(new RosterModule(sessionObject, writer));
 
 		this.modulesManager.register(new StreamFeaturesModule(observable, sessionObject, writer));
 		this.modulesManager.register(new SaslModule(authModule.getObservable(), sessionObject, writer));
-		this.modulesManager.register(new NonSaslAuthModule(authModule.getObservable(), sessionObject, writer));
+		NonSaslAuthModule nonSasl = new NonSaslAuthModule(sessionObject, writer);
+		this.modulesManager.register(nonSasl);
+		nonSasl.setObservable(authModule.getObservable());
 
 		this.modulesManager.register(new VCardModule(observable, sessionObject, writer));
-		this.modulesManager.register(new InBandRegistrationModule(observable, sessionObject, writer));
+		this.modulesManager.register(new InBandRegistrationModule(sessionObject, writer));
 
 		this.modulesManager.register(new SessionEstablishmentModule(observable, sessionObject, writer));
 

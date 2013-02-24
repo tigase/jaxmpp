@@ -1,10 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>tigase</groupId>
 	<artifactId>tigase-jaxmpp</artifactId>
 	<packaging>pom</packaging>
 	<name>Tigase XMPP Client Library</name>
-	<version>2.0.1-SNAPSHOT</version>
+	<version>2.1.0-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -40,7 +41,8 @@
 		<module>jaxmpp-core</module>
 		<module>jaxmpp-j2se</module>
 		<module>jaxmpp-gwt</module>
-	</modules>
+    <module>jaxmpp-android</module>
+  </modules>
 
 <scm>
     <developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
@@ -98,25 +100,31 @@
 
 	<repositories>
 		<repository>
+			<snapshots />
 			<id>tigase</id>
 			<name>Tigase repository</name>
 			<url>http://maven.tigase.org</url>
+		</repository>
+		<repository>
+			<id>tigase-snapshot</id>
+			<name>Tigase repository</name>
+			<url>http://build.xmpp-test.net/maven/</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
 		</repository>
 	</repositories>
-
+	
 	<distributionManagement>
 		<repository>
 			<id>tigase</id>
-			<name>Tigase Repo</name>
+			<name>Tigase repository</name>
 			<url>scp://maven.tigase.org:/home/webapp/maven-repository</url>
 		</repository>
 		<snapshotRepository>
-			<id>tigase</id>
-			<name>Tigase Repo</name>
-			<url>scp://maven.tigase.org:/home/webapp/maven-repository</url>
+			<id>tigase-snapshot</id>
+			<name>Tigase snapshot repository</name>
+			<url>scp://build.xmpp-test.net:/home/maven/repository</url>
 		</snapshotRepository>
 	</distributionManagement>
 

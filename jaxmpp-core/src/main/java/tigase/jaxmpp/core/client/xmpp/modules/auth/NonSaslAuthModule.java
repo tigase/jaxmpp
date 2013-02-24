@@ -27,8 +27,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -74,8 +72,8 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:auth" }));
 
-	public NonSaslAuthModule(Observable parent, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parent), sessionObject, packetWriter);
+	public NonSaslAuthModule(SessionObject sessionObject, PacketWriter packetWriter) {
+		super(sessionObject, packetWriter);
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {

@@ -15,5 +15,10 @@ public class GWTPresenceStore extends PresenceStore {
 		presenceByJid = new HashMap<JID, Presence>();
 		bestPresence = new HashMap<BareJID, Presence>();
 	}
-	
+
+	@Override
+	protected Map<String, Presence> createResourcePresenceMap() {
+		return new HashMap<String, Presence>();
+	}
+
 }

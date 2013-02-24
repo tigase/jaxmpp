@@ -26,8 +26,8 @@ import org.junit.Test;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.MockWriter;
 import tigase.jaxmpp.core.client.MockSessionObject;
+import tigase.jaxmpp.core.client.MockWriter;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -63,7 +63,7 @@ public class PubSubModuleTest {
 
 		DefaultObservable observable = new DefaultObservable();
 		XmppModulesManager xmppModulesManages = new XmppModulesManager(observable, writer);
-		xmppModulesManages.register(new PingModule(observable, sessionObject, writer));
+		xmppModulesManages.register(new PingModule(sessionObject, writer));
 		this.pubsub = new PubSubModule(null, sessionObject, this.writer);
 	}
 

@@ -2,7 +2,6 @@ package tigase.jaxmpp.core.client;
 
 import java.util.HashMap;
 
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class MockSessionObject extends AbstractSessionObject {
