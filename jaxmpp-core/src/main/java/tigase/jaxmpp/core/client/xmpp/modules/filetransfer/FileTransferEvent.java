@@ -25,10 +25,10 @@ public class FileTransferEvent extends BaseEvent {
 
         private final FileTransfer ft;
         
-	public FileTransferEvent(EventType type, SessionObject sessionObject, FileTransfer ft) {
-		super(type, sessionObject);
-                this.ft = ft;
-	}
+		public FileTransferEvent(EventType type, SessionObject sessionObject, FileTransfer ft) {
+				super(type, sessionObject);
+				this.ft = ft;
+		}
         
         public FileTransfer getFileTransfer() {
                 return ft;

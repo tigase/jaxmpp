@@ -56,8 +56,6 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 
 	private static final String[] FEATURES = new String[] { XMLNS_SI, XMLNS_SI_FILE };
 
-	private static final Logger log = Logger.getLogger(FileTransferModule.class.getCanonicalName());
-
 	public static final EventType RequestEventType = new EventType();
 
 	private Observable observable;

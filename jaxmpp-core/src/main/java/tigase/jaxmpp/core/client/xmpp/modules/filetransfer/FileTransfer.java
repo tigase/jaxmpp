@@ -28,8 +28,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 
 public class FileTransfer extends ConnectionSession {
 
-        private static final Logger log = Logger.getLogger(FileTransfer.class.getCanonicalName());
-                
         private String filename;
         private long fileSize;
         private String fileMimeType;

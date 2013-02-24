@@ -33,7 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
  */
 public abstract class StreamhostUsedCallback implements AsyncCallback {
 
-        private static final Logger log = Logger.getLogger(StreamhostUsedCallback.class.getCanonicalName());
+        private static final Logger log = Logger.getLogger("tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback");
         private List<Streamhost> hosts;
 
         public List<Streamhost> getHosts() {
