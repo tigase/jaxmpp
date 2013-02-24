@@ -1,10 +1,10 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -41,6 +41,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;

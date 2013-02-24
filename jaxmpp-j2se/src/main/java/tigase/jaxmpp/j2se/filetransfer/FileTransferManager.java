@@ -1,10 +1,10 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,12 +15,18 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
+package tigase.jaxmpp.j2se.filetransfer;
 
+import tigase.jaxmpp.j2se.connection.ConnectionEvent;
+import tigase.jaxmpp.j2se.connection.ConnectionManager;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -51,7 +57,10 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
+import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
+import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
+import tigase.jaxmpp.j2se.Jaxmpp;
 
 /**
  *
@@ -59,10 +68,21 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
  */
 public class FileTransferManager implements ObservableAware {
 
+		static {
+                UniversalFactory.setSpi(StreamhostsResolver.class.getCanonicalName(), new UniversalFactory.FactorySpi<J2SEStreamhostsResolver>() {
+
+                        @Override
+                        public J2SEStreamhostsResolver create() {
+                                return new J2SEStreamhostsResolver();
+                        }
+                        
+                });			
+		}
+	
         private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
-        
-        private final Map<BareJID,JaxmppCore> multiJaxmpp = new HashMap<BareJID,JaxmppCore>();
-        
+
+		private Jaxmpp jaxmpp = null;
+		
         private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
 
         protected Observable observable = null;
@@ -82,6 +102,10 @@ public class FileTransferManager implements ObservableAware {
 
         };
         
+		public void setJaxmpp(Jaxmpp jaxmpp) {
+				this.jaxmpp = jaxmpp;
+		}
+		
         @Override
         public void setObservable(Observable observableParent) {
                 observable = ObservableFactory.instance(observableParent);
@@ -97,59 +121,50 @@ public class FileTransferManager implements ObservableAware {
         public void removeListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
                 observable.removeListener(eventType, listener);
         }
-        
-        public void registerJaxmpp(JaxmppCore jaxmpp) {
-                multiJaxmpp.put(jaxmpp.getSessionObject().getUserBareJid(), jaxmpp);
-        }
-        
-        public void unregisterJaxmpp(JaxmppCore jaxmpp) {
-                multiJaxmpp.remove(jaxmpp.getSessionObject().getUserBareJid());
-        }
-        
-        protected JaxmppCore getJaxmpp(SessionObject sessionObject) {
-                return multiJaxmpp.get(sessionObject.getUserBareJid());
-        }
-        
+                
         public void addNegotiator(FileTransferNegotiator negotiator) {
                 negotiator.setObservable(observable);
-                for(JaxmppCore jaxmpp : multiJaxmpp.values()) {
-                        negotiator.registerListeners(jaxmpp);
-                }
+				negotiator.registerListeners(jaxmpp);
                 negotiators.add(negotiator);                
         }
         
         public void removeNegotiator(FileTransferNegotiator negotiator) {
                 negotiators.remove(negotiator);
-                for(JaxmppCore jaxmpp : multiJaxmpp.values()) {
-                        negotiator.unregisterListeners(jaxmpp);
-                }
+                negotiator.unregisterListeners(jaxmpp);
                 negotiator.setObservable(observable);
         }
 
-        public FileTransfer sendFile(SessionObject sessionObject, JID peer, File file) throws JaxmppException {
-                FileTransfer ft = new FileTransfer(sessionObject, peer, generateSid());
+        public FileTransfer sendFile(JID peer, File file) throws JaxmppException {
+                FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
                 ft.setIncoming(false);
                 ft.setFileInfo(file.getName(), file.length(), new Date(file.lastModified()), null);
                 ft.setFile(file);
         
-                JaxmppCore jaxmpp = getJaxmpp(sessionObject);
-
                 negotiators.get(0).sendFile(jaxmpp, ft);
                 
                 return ft;
         }
+        		
+        public FileTransfer sendFile(JID peer, String filename, long fileSize, InputStream is, Date lastModified) throws JaxmppException {
+                FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
+                ft.setIncoming(false);
+                ft.setFileInfo(filename, fileSize, lastModified, null);
+                ft.setInputStream(is);
         
-        public void acceptFile(FileTransfer ft) throws JaxmppException {
+                negotiators.get(0).sendFile(jaxmpp, ft);
+                
+                return ft;
+        }
+
+		public void acceptFile(FileTransfer ft) throws JaxmppException {
                 ft.setIncoming(true);
                 
-                JaxmppCore jaxmpp = getJaxmpp(ft.getSessionObject());
                 negotiators.get(0).acceptFile(jaxmpp, ft);
         }
 
         public void rejectFile(FileTransfer ft) throws JaxmppException {
                 ft.setIncoming(true);
                 
-                JaxmppCore jaxmpp = getJaxmpp(ft.getSessionObject());
                 negotiators.get(0).rejectFile(jaxmpp, ft);
         }
 
@@ -179,9 +194,12 @@ public class FileTransferManager implements ObservableAware {
                         @Override
                         public void run() {
                                 try {
-                                        File f = fileTransfer.getFile();
-                                        FileInputStream fis = new FileInputStream(f);
-                                        transferData(fis.getChannel(), socket.getChannel());
+                                        InputStream fis = fileTransfer.getInputStream();
+										if (fis == null) {
+	                                        File f = fileTransfer.getFile();
+											fis = new BufferedInputStream(new FileInputStream(f));
+										}
+                                        transferData(fileTransfer, fis, socket.getOutputStream());
                                         fis.close();
 
                                         socket.close();
@@ -203,7 +221,8 @@ public class FileTransferManager implements ObservableAware {
                                         } catch (Exception ex) {}
                                         File f = fileTransfer.getFile();
                                         FileOutputStream fos = new FileOutputStream(f);
-                                        transferData(socket.getChannel(), fos.getChannel());
+//                                        transferData(socket.getChannel(), fos.getChannel());
+										transferData(fileTransfer, socket.getInputStream(), new BufferedOutputStream(fos));
                                         fos.close();
                                         try {
                                                 Thread.sleep(1000);
@@ -217,17 +236,18 @@ public class FileTransferManager implements ObservableAware {
                 }.start();
         }
                 
-        private void transferData(ByteChannel in, ByteChannel out) throws IOException {
-                ByteBuffer buf = ByteBuffer.allocate(16 * 1024);
+        private void transferData(FileTransfer ft, InputStream in, OutputStream out) throws IOException {
+				byte[] data = new byte[16 * 1024];
+				
                 int read;
-                int transferred = 0;
-                while((read = in.read(buf)) > -1) {
-                        buf.flip();
-                        transferred += out.write(buf);                                                
-                        buf.clear();
+				
+				while ((read = in.read(data)) > -1) {
+						out.write(data, 0, read);                                                
+						
+                        ft.transferredBytes(read);
                         
                         if (log.isLoggable(Level.FINEST)) {
-                                log.log(Level.FINEST, "transferred bytes = {0}", transferred);
+                                log.log(Level.FINEST, "transferred bytes = {0}", ft.getTransferredBytes());
                         }
                 }
         }

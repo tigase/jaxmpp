@@ -15,8 +15,9 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
+package tigase.jaxmpp.j2se.filetransfer;
 
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.*;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.io.File;
 import java.io.InputStream;
@@ -26,40 +27,50 @@ import tigase.jaxmpp.core.client.DataHolder;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 
-public class FileTransfer extends ConnectionSession {
+public class FileTransfer extends tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer {
 
         private static final Logger log = Logger.getLogger(FileTransfer.class.getCanonicalName());
-                
-        private String filename;
-        private long fileSize;
-        private String fileMimeType;
-        private Date lastModified;
-        
+
+		private File file;
+		private InputStream inputStream;
+		private long transferredBytes = 0;
+		
         protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
-                super(sessionObject, peer, sid, true);
+                super(sessionObject, peer, sid);
         }
         
+		@Override
         protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
-                this.filename = filename;
-                this.fileSize = fileSize;
-                this.fileMimeType = mimeType;
-                this.lastModified = lastModified;
+				super.setFileInfo(filename, fileSize, lastModified, mimeType);
         }
         
-        public String getFilename() {
-                return filename;
-        }
-        
-        public long getFileSize() {
-                return fileSize;
-        }
-        
-        public String getFileMimeType() {
-                return fileMimeType;
-        }
-        
-        public Date getFileModification() {
-                return lastModified;
-        }
-                
+        public void setFile(File file) {
+				this.file = file;
+		}
+		
+		public File getFile() {
+				return file;
+		}
+		
+		public void setInputStream(InputStream inputStream) {
+				this.inputStream = inputStream;
+		}
+		
+		public InputStream getInputStream() {
+				return inputStream;
+		}
+
+		public long getTransferredBytes() {
+				return transferredBytes;
+		}
+		
+		protected void transferredBytes(long count) {
+				transferredBytes += count;
+		}
+		
+		public Double getProgress() {
+				if (getFileSize() == 0) return null;
+				return ((double) transferredBytes) / getFileSize();
+		}
+		
 }

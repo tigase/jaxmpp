@@ -1,10 +1,10 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,17 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
+package tigase.jaxmpp.j2se.filetransfer;
 
+import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5BytestreamsConnectionManager;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferRequestEvent;
+import tigase.jaxmpp.j2se.filetransfer.FileTransferNegotiatorAbstract;
+import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
+import tigase.jaxmpp.j2se.connection.ConnectionEvent;
+import tigase.jaxmpp.j2se.connection.ConnectionManager;
+import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +43,7 @@ import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoAsyncCallback;
@@ -41,6 +51,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.DiscoItemsAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.Item;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
@@ -87,7 +99,8 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
                 Presence p = ft.getSessionObject().getPresence().getPresence(ft.getPeer());
                 CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
                 String capsNode = FileTransferManager.getCapsNode(p);
-                Set<String> features = capsModule.getCache().getFeatures(capsNode);                
+				CapabilitiesCache capsCache = capsModule.getCache();
+                Set<String> features = (capsCache != null) ? capsCache.getFeatures(capsNode) : null;                
                 if (true || (features != null && features.contains(Socks5BytestreamsModule.XMLNS_BS) && features.contains(FileTransferModule.XMLNS_SI_FILE))) {
                         FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
                         if (ftModule != null) {

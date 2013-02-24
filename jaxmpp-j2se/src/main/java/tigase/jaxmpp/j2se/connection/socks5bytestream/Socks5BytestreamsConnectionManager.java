@@ -1,10 +1,10 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,12 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
+package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
+import tigase.jaxmpp.j2se.connection.ConnectionEvent;
+import tigase.jaxmpp.j2se.connection.ConnectionManager;
+import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -52,7 +56,12 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.Socks5BytestreamsModule.ActivateCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule.ActivateCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostsCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostsEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 /**
@@ -67,7 +76,7 @@ public class Socks5BytestreamsConnectionManager implements ConnectionManager {
         private static final String PROXY_JID_KEY = "proxy-jid";
         private static final String PROXY_JID_USED_KEY = "proxy-jid-used";
         private static final String STREAMHOST_KEY = "streamhost";
-        protected static final String PACKET_ID = "packet-id";
+        public static final String PACKET_ID = "packet-id";
         
         private Observable observable = null;
         
@@ -303,7 +312,7 @@ public class Socks5BytestreamsConnectionManager implements ConnectionManager {
                 
         }
         
-        protected void sendStreamhostUsed(FileTransfer ft, String packetId) throws JaxmppException {
+        public void sendStreamhostUsed(FileTransfer ft, String packetId) throws JaxmppException {
                 JaxmppCore jaxmpp = ft.getData(JAXMPP_KEY);
                 Streamhost streamhost = ft.getData(STREAMHOST_KEY);
                 jaxmpp.getModule(Socks5BytestreamsModule.class).sendStreamhostUsed(ft.getPeer(), packetId, ft.getSid(), streamhost);
