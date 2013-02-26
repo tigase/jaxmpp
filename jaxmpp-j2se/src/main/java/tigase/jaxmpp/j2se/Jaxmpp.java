@@ -36,6 +36,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
@@ -43,6 +44,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
+import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 
 /**
  * Main library class for using in standalone, Android and other J2SE compatible
@@ -262,6 +264,9 @@ public class Jaxmpp extends JaxmppCore {
 		this.modulesManager.register(new CapabilitiesModule(sessionObject, writer,
 				this.modulesManager.getModule(DiscoInfoModule.class), this.modulesManager.getModule(PresenceModule.class),
 				this.modulesManager));
+
+		SaslModule saslModule = this.modulesManager.getModule(SaslModule.class);
+		saslModule.addMechanism(new ExternalMechanism(), true);
 	}
 
 	@Override
