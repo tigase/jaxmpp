@@ -17,34 +17,40 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.jingle;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
+import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class JingleModule extends AbstractIQModule {
+public class JingleModule implements XmppModule, PacketWriterAware, ObservableAware {
 
 	public static class JingleSessionAcceptEvent extends JingleSessionEvent {
 
 		private static final long serialVersionUID = 1L;
 
 		private final Element description;
-		private final List<Element> transports;
+		private final List<Transport> transports;
 
 		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Element> transports) {
+				List<Transport> transports) {
 			super(JingleSessionAccept, sessionObject, sender, sid);
 
 			this.description = description;
@@ -55,7 +61,7 @@ public class JingleModule extends AbstractIQModule {
 			return description;
 		}
 
-		public List<Element> getTransport() {
+		public List<Transport> getTransport() {
 			return transports;
 		}
 
@@ -108,10 +114,10 @@ public class JingleModule extends AbstractIQModule {
 		private static final long serialVersionUID = 1L;
 
 		private final Element description;
-		private final List<Element> transports;
+		private final List<Transport> transports;
 
 		public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Element> transports) {
+				List<Transport> transports) {
 			super(JingleSessionInitiation, sessionObject, sender, sid);
 
 			this.description = description;
@@ -122,7 +128,7 @@ public class JingleModule extends AbstractIQModule {
 			return description;
 		}
 
-		public List<Element> getTransports() {
+		public List<Transport> getTransports() {
 			return transports;
 		}
 
@@ -170,11 +176,15 @@ public class JingleModule extends AbstractIQModule {
 	public static final EventType JingleSessionTerminate = new EventType();
 	public static final EventType JingleTransportInfo = new EventType();
 
-	public JingleModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	private final SessionObject sessionObject;
+	private PacketWriter writer;
+	private Observable observable;
+	
+	public JingleModule(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
 	}
 
-	public void acceptSession(JID jid, String sid, String name, Element description, List<Element> transports)
+	public void acceptSession(JID jid, String sid, String name, Element description, List<Transport> transports)
 			throws JaxmppException {
 		IQ iq = IQ.create();
 
@@ -219,7 +229,18 @@ public class JingleModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-	public void initiateSession(JID jid, String sid, String name, Element description, List<Element> transports)
+	@Override
+	public void setPacketWriter(PacketWriter packetWriter) {
+		writer = packetWriter;
+	}
+
+	@Override
+	public void setObservable(Observable observable) {
+		this.observable = observable;
+	}
+
+	
+	public void initiateSession(JID jid, String sid, String name, Element description, List<Transport> transports)
 			throws JaxmppException {
 		IQ iq = IQ.create();
 
@@ -251,12 +272,14 @@ public class JingleModule extends AbstractIQModule {
 	}
 
 	@Override
-	protected void processGet(IQ iq) throws JaxmppException {
-
-	}
-
-	@Override
-	protected void processSet(IQ iq) throws JaxmppException {
+	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+		if ("iq".equals(element.getName())) {
+			IQ iq = new IQ(element);
+			processIq(iq);
+		}
+	}	
+	
+	protected void processIq(IQ iq) throws JaxmppException {
 		Element jingle = iq.getChildrenNS("jingle", JINGLE_XMLNS);
 
 		List<Element> contents = jingle.getChildren("content");
@@ -280,7 +303,13 @@ public class JingleModule extends AbstractIQModule {
 			List<Element> descriptions = content.getChildren("description");
 
 			Element description = descriptions.get(0);
-			List<Element> transports = content.getChildren("transport");
+			List<Element> transportElems = content.getChildren("transport");
+			List<Transport> transports = new ArrayList<Transport>();
+			for (Element transElem : transportElems) {
+				if ("transport".equals(transElem.getName())) {
+					transports.add(new Transport(transElem));
+				}
+			}
 
 			if ("session-initiate".equals(action)) {
 				observable.fireEvent(JingleSessionInitiation, new JingleSessionInitiationEvent(sessionObject, from, sid,

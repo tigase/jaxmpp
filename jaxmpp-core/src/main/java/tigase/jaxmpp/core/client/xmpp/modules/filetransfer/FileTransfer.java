@@ -32,6 +32,8 @@ public class FileTransfer extends ConnectionSession {
         private long fileSize;
         private String fileMimeType;
         private Date lastModified;
+
+		private long transferredBytes = 0;
         
         protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
                 super(sessionObject, peer, sid, true);
@@ -59,5 +61,23 @@ public class FileTransfer extends ConnectionSession {
         public Date getFileModification() {
                 return lastModified;
         }
-                
+        
+		public long getTransferredBytes() {
+				return transferredBytes;
+		}
+		
+		protected void transferredBytes(long count) {
+				transferredBytes += count;
+		}
+		
+		public Double getProgress() {
+				if (getFileSize() == 0) return null;
+				return ((double) transferredBytes * 100) / getFileSize();
+		}
+	
+		@Override
+		public String toString() {
+			return "sid = " + getSid() + ", jid = " + getPeer().toString() + ", file = " + getFilename();
+		}
+
 }

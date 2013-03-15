@@ -28,24 +28,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.FileChannel;
-import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.MultiJaxmpp;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
@@ -56,7 +45,7 @@ import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
-import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferEvent;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -78,7 +67,13 @@ public class FileTransferManager implements ObservableAware {
                         
                 });			
 		}
-	
+
+		public static final EventType FILE_TRANSFER_FAILURE = new EventType();
+		public static final EventType FILE_TRANSFER_PROGRESS = new EventType();
+		public static final EventType FILE_TRANSFER_REJECTED = new EventType();
+		public static final EventType FILE_TRANSFER_REQUEST = new EventType();
+		public static final EventType FILE_TRANSFER_SUCCESS = new EventType();		
+		
         private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
 
 		private Jaxmpp jaxmpp = null;
@@ -102,6 +97,38 @@ public class FileTransferManager implements ObservableAware {
 
         };
         
+		protected Listener<FileTransferEvent> negotiationListener = new Listener<FileTransferEvent>() {
+					@Override
+					public void handleEvent(FileTransferEvent be) throws JaxmppException {
+						if (FileTransferNegotiator.NEGOTIATION_FAILURE == be.getType()) {
+							FileTransfer ft = (FileTransfer) be.getFileTransfer();
+							if (!ft.isIncoming()) {
+								FileTransferNegotiator oldNegotiator = ft.getNegotiator();
+								boolean start = false;
+								for (FileTransferNegotiator negotiator : negotiators) {
+									if (negotiator == oldNegotiator) {
+										start = true;
+										continue;
+									} else if (!start) {
+										continue;
+									} else if (negotiator.isSupported(jaxmpp, ft)) {
+										ft.setNegotiator(negotiator);
+										negotiator.sendFile(jaxmpp, ft);
+										return;
+									}
+								}
+							}							
+							fireOnFailure(ft);
+						}
+						else if (FileTransferNegotiator.NEGOTIATION_REJECTED == be.getType()) {
+							fireEvent(FILE_TRANSFER_REJECTED, new FileTransferEvent(FILE_TRANSFER_REJECTED, be.getSessionObject(), be.getFileTransfer()));
+						}
+						else if (FileTransferNegotiator.NEGOTIATION_REQUEST == be.getType()) {
+							fireEvent(FILE_TRANSFER_REQUEST, new FileTransferEvent(FILE_TRANSFER_REQUEST, be.getSessionObject(), be.getFileTransfer()));
+						}
+					}
+		};
+		
 		public void setJaxmpp(Jaxmpp jaxmpp) {
 				this.jaxmpp = jaxmpp;
 		}
@@ -112,6 +139,10 @@ public class FileTransferManager implements ObservableAware {
                 observable.addListener(ConnectionManager.CONNECTION_ESTABLISHED, connectionEventListener);
                 observable.addListener(ConnectionManager.CONNECTION_CLOSED, connectionEventListener);
                 observable.addListener(ConnectionManager.CONNECTION_FAILED, connectionEventListener);
+				observable.addListener(FileTransferNegotiator.NEGOTIATION_FAILURE, negotiationListener);
+				observable.addListener(FileTransferNegotiator.NEGOTIATION_REJECTED, negotiationListener);
+				observable.addListener(FileTransferNegotiator.NEGOTIATION_REQUEST, negotiationListener);
+				observable.addListener(FileTransferNegotiator.NEGOTIATION_SUCCESS, negotiationListener);
         }
         
         public void addListener(final EventType eventType, Listener<? extends BaseEvent> listener) {
@@ -139,10 +170,8 @@ public class FileTransferManager implements ObservableAware {
                 ft.setIncoming(false);
                 ft.setFileInfo(file.getName(), file.length(), new Date(file.lastModified()), null);
                 ft.setFile(file);
-        
-                negotiators.get(0).sendFile(jaxmpp, ft);
-                
-                return ft;
+				
+                return sendFile(ft);
         }
         		
         public FileTransfer sendFile(JID peer, String filename, long fileSize, InputStream is, Date lastModified) throws JaxmppException {
@@ -150,22 +179,38 @@ public class FileTransferManager implements ObservableAware {
                 ft.setIncoming(false);
                 ft.setFileInfo(filename, fileSize, lastModified, null);
                 ft.setInputStream(is);
-        
-                negotiators.get(0).sendFile(jaxmpp, ft);
-                
-                return ft;
+       
+                return sendFile(ft);
         }
 
+		private FileTransfer sendFile(FileTransfer ft) throws JaxmppException {
+				boolean send = false;
+				for (FileTransferNegotiator negotiator : negotiators) {
+					if (negotiator.isSupported(jaxmpp, ft)) {
+						ft.setNegotiator(negotiator);
+						negotiator.sendFile(jaxmpp, ft);
+						send = true;
+						break;
+					}
+				}
+                
+				if (!send) {
+					throw new JaxmppException("No file transfer methods supported by recipient = " + ft.getPeer().toString());
+				}
+				
+				return ft;
+		}
+		
 		public void acceptFile(FileTransfer ft) throws JaxmppException {
                 ft.setIncoming(true);
-                
-                negotiators.get(0).acceptFile(jaxmpp, ft);
+
+				ft.getNegotiator().acceptFile(jaxmpp, ft);
         }
 
         public void rejectFile(FileTransfer ft) throws JaxmppException {
                 ft.setIncoming(true);
                 
-                negotiators.get(0).rejectFile(jaxmpp, ft);
+				ft.getNegotiator().rejectFile(jaxmpp, ft);
         }
 
         protected static String getCapsNode(Presence presence) throws XMLException {
@@ -203,6 +248,7 @@ public class FileTransferManager implements ObservableAware {
                                         fis.close();
 
                                         socket.close();
+										fireOnSuccess(fileTransfer);
                                 }
                                 catch (IOException ex) {
                                         log.log(Level.SEVERE, "exception transfering data", ex);
@@ -216,18 +262,19 @@ public class FileTransferManager implements ObservableAware {
                         @Override
                         public void run() {
                                 try {
-                                        try {
-                                                Thread.sleep(1000);
-                                        } catch (Exception ex) {}
+//                                        try {
+//                                                Thread.sleep(1000);
+//                                        } catch (Exception ex) {}
                                         File f = fileTransfer.getFile();
                                         FileOutputStream fos = new FileOutputStream(f);
 //                                        transferData(socket.getChannel(), fos.getChannel());
 										transferData(fileTransfer, socket.getInputStream(), new BufferedOutputStream(fos));
                                         fos.close();
-                                        try {
-                                                Thread.sleep(1000);
-                                        } catch (Exception ex) {}
+//                                        try {
+//                                                Thread.sleep(1000);
+//                                        } catch (Exception ex) {}
                                         socket.close();
+										fireOnSuccess(fileTransfer);
                                 }
                                 catch (IOException ex) {
                                         log.log(Level.SEVERE, "exception transfering data", ex);
@@ -240,7 +287,7 @@ public class FileTransferManager implements ObservableAware {
 				byte[] data = new byte[16 * 1024];
 				
                 int read;
-				
+
 				while ((read = in.read(data)) > -1) {
 						out.write(data, 0, read);                                                
 						
@@ -249,6 +296,29 @@ public class FileTransferManager implements ObservableAware {
                         if (log.isLoggable(Level.FINEST)) {
                                 log.log(Level.FINEST, "transferred bytes = {0}", ft.getTransferredBytes());
                         }
+						
+						// maybe we should not send this event every time?
+						fireOnProgress(ft);
                 }
         }
+		
+		private void fireOnFailure(final FileTransfer ft) {
+			fireEvent(FILE_TRANSFER_FAILURE, new FileTransferEvent(FILE_TRANSFER_FAILURE, ft.getSessionObject(), ft));
+		}
+
+		private void fireOnSuccess(final FileTransfer ft) {
+			fireEvent(FILE_TRANSFER_SUCCESS, new FileTransferEvent(FILE_TRANSFER_SUCCESS, ft.getSessionObject(), ft));
+		}
+
+		private void fireOnProgress(final FileTransfer ft) {
+			fireEvent(FILE_TRANSFER_PROGRESS, new FileTransferEvent(FILE_TRANSFER_PROGRESS, ft.getSessionObject(), ft));
+		}
+		
+		private void fireEvent(EventType type, BaseEvent event) {
+			try {
+				observable.fireEvent(type, event);
+			} catch (JaxmppException ex) {
+				log.log(Level.SEVERE, "could not fire event for " + event);
+			}
+		}
 }

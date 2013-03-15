@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
+import java.net.Socket;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferRequestEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
@@ -25,6 +26,7 @@ import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import static tigase.jaxmpp.j2se.filetransfer.FileTransferNegotiator.NEGOTIATION_FAILURE;
 
 /**
  *
@@ -45,15 +47,25 @@ public abstract class FileTransferNegotiatorAbstract implements FileTransferNego
                 observable = ObservableFactory.instance(observableParent);
         }
 
-        protected void fireOnRequest(FileTransferRequestEvent event) {
+        protected void fireOnRequest(FileTransferEvent event) {
                 try {
-                        observable.fireEvent(NEGOTIATION_REQUEST, new FileTransferRequestEvent(NEGOTIATION_REQUEST, event.getSessionObject(), event.getFileTransfer(), event.getId(), event.getStreamMethods()));
+						((tigase.jaxmpp.j2se.filetransfer.FileTransfer) event.getFileTransfer()).setNegotiator(this);
+						observable.fireEvent(NEGOTIATION_REQUEST, new FileTransferEvent(NEGOTIATION_REQUEST, event.getSessionObject(), event.getFileTransfer()));
                 } catch (JaxmppException ex1) {
                         log.log(Level.SEVERE, "Exception sending event", ex1);
                 }
 
         }
 
+		protected void fireOnSuccess(FileTransfer ft) {
+                try {
+                        log.log(Level.WARNING, "firing file transfer negotiation success");
+                        observable.fireEvent(NEGOTIATION_SUCCESS, new FileTransferEvent(NEGOTIATION_SUCCESS, ft.getSessionObject(), ft));
+                } catch (JaxmppException ex1) {
+                        log.log(Level.SEVERE, "Exception sending event", ex1);
+                }			
+		}
+		
         protected void fireOnFailure(FileTransfer ft, Throwable ex) {
                 try {
                         log.log(Level.WARNING, "firing file transfer negotiation error", ex);

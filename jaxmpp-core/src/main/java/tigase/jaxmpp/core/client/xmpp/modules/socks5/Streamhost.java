@@ -17,19 +17,23 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 
-public class Streamhost {
+import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionEndpoint;
+
+public class Streamhost implements ConnectionEndpoint {
 
 	private String address;
-	private String jid;
+	private JID jid;
 	private Integer port;
 
 	public Streamhost(String jid, String address, Integer port) {
-		this.jid = jid;
+		this.jid = JID.jidInstance(jid);
 		this.address = address;
 		this.port = port;
 	}
 
-	public String getAddress() {                
+	@Override
+	public String getHost() {                
                 int idx;
                 if (address != null && (idx = address.indexOf("%")) > 0) {
                         address = address.substring(0, idx);
@@ -37,10 +41,12 @@ public class Streamhost {
 		return address;
 	}
 
-	public String getJid() {
+	@Override
+	public JID getJid() {
 		return jid;
 	}
 
+	@Override
 	public Integer getPort() {
 		return port;
 	}

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -48,7 +49,7 @@ public abstract class StreamhostUsedCallback implements AsyncCallback {
         public void onSuccess(Stanza responseStanza) throws JaxmppException {
                 IQ iq = (IQ) responseStanza;
                 Element query = iq.getChildrenNS("query", Socks5BytestreamsModule.XMLNS_BS);
-                String streamhostUsed = query.getFirstChild().getAttribute("jid");
+                JID streamhostUsed = JID.jidInstance(query.getFirstChild().getAttribute("jid"));
                 boolean connected = false;
                 for (Streamhost host : getHosts()) {
 

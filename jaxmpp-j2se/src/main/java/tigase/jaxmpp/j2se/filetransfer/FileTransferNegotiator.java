@@ -32,7 +32,9 @@ public interface FileTransferNegotiator extends ObservableAware {
         public static final EventType NEGOTIATION_FAILURE = new EventType();
         public static final EventType NEGOTIATION_REJECTED = new EventType();
         public static final EventType NEGOTIATION_REQUEST = new EventType();
+		public static final EventType NEGOTIATION_SUCCESS  =new EventType();
    
+		boolean isSupported(JaxmppCore jaxmpp, FileTransfer ft);
         void sendFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
         void acceptFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
         void rejectFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;

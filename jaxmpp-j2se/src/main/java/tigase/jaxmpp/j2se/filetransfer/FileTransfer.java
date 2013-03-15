@@ -33,8 +33,9 @@ public class FileTransfer extends tigase.jaxmpp.core.client.xmpp.modules.filetra
 
 		private File file;
 		private InputStream inputStream;
-		private long transferredBytes = 0;
 		
+		private FileTransferNegotiator negotiator;
+				
         protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
                 super(sessionObject, peer, sid);
         }
@@ -60,17 +61,16 @@ public class FileTransfer extends tigase.jaxmpp.core.client.xmpp.modules.filetra
 				return inputStream;
 		}
 
-		public long getTransferredBytes() {
-				return transferredBytes;
+		protected void setNegotiator(FileTransferNegotiator negotiator) {
+			this.negotiator = negotiator;
 		}
 		
+		protected FileTransferNegotiator getNegotiator() {
+			return negotiator;
+		}
+
+		@Override
 		protected void transferredBytes(long count) {
-				transferredBytes += count;
+			super.transferredBytes(count);
 		}
-		
-		public Double getProgress() {
-				if (getFileSize() == 0) return null;
-				return ((double) transferredBytes) / getFileSize();
-		}
-		
 }

@@ -169,8 +169,8 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 
 		for (Streamhost host : hosts) {
 			Element streamhost = new DefaultElement("streamhost");
-			streamhost.setAttribute("jid", host.getJid());
-			streamhost.setAttribute("host", host.getAddress());
+			streamhost.setAttribute("jid", host.getJid().toString());
+			streamhost.setAttribute("host", host.getHost());
 			streamhost.setAttribute("port", String.valueOf(host.getPort()));
 			query.addChild(streamhost);
 		}
@@ -189,7 +189,7 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		iq.addChild(query);
 
 		Element streamhostUsed = new DefaultElement("streamhost-used");
-		streamhostUsed.setAttribute("jid", streamhost.getJid());
+		streamhostUsed.setAttribute("jid", streamhost.getJid().toString());
 		query.addChild(streamhostUsed);
 
 		// session.registerResponseHandler(iq, callback);

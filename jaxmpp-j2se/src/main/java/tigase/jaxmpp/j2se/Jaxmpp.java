@@ -39,12 +39,14 @@ import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindE
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
+import tigase.jaxmpp.j2se.filetransfer.JingleFileTransferNegotiator;
 import tigase.jaxmpp.j2se.filetransfer.Socks5FileTransferNegotiator;
 import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
 
@@ -350,6 +352,8 @@ public class Jaxmpp extends JaxmppCore {
 			
 			getModulesManager().register(new FileTransferModule(sessionObject));
 			getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
+			getModulesManager().register(new JingleModule(sessionObject));
+			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
 			fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
 	
