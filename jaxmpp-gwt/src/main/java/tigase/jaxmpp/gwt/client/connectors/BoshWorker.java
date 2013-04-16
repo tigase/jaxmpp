@@ -18,6 +18,8 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
@@ -32,15 +34,16 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.xml.client.XMLParser;
-import java.util.LinkedList;
 
 public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	private final RequestCallback callback;
 
-        private final BoshConnector connector;
-        
+	private final BoshConnector connector;
+
 	private Element element;
+
+	private Logger log;
 
 	private Request request;
 
@@ -50,12 +53,15 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	private boolean terminated = false;
 
-	public BoshWorker(BoshConnector connector, RequestBuilder requestBuilder, SessionObject sessionObject, Element element) throws XMLException {
-                this.connector = connector;
-                // set current worker to this instance
-                this.connector.setCurrentWorker(this);
+	public BoshWorker(BoshConnector connector, RequestBuilder requestBuilder, SessionObject sessionObject, Element element)
+			throws XMLException {
+		this.connector = connector;
+		// set current worker to this instance
+		this.connector.setCurrentWorker(this);
+		this.log = Logger.getLogger(this.getClass().getName());
+
 		this.requestBuilder = requestBuilder;
-                this.element = element;
+		this.element = element;
 		this.rid = element.getAttribute("rid");
 		if (this.rid == null)
 			throw new RuntimeException("rid must be defined");
@@ -72,6 +78,9 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			@Override
 			public void onResponseReceived(Request request, Response $response) {
 				String t = $response == null ? null : $response.getText();
+				if (log.isLoggable(Level.FINEST))
+					log.finest("Received: " + t);
+
 				try {
 					int responseCode = $response.getStatusCode();
 					GwtElement response;
@@ -117,25 +126,25 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 		};
 	}
 
-        public void appendToBody(Element stanza) throws XMLException {
-                this.element.addChild(stanza);
-        }
-        
+	public void appendToBody(Element stanza) throws XMLException {
+		this.element.addChild(stanza);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
 			return true;
 		if (!(obj instanceof BoshWorker))
 			return false;
-                
+
 		return ((BoshWorker) obj).rid.equals(rid);
 	}
 
 	@Override
 	public void execute() {
-                // we are sending data so nothing more can be added to request after now
-                this.connector.setCurrentWorker(null);
-                
+		// we are sending data so nothing more can be added to request after now
+		this.connector.setCurrentWorker(null);
+
 		if (terminated)
 			return;
 		try {
@@ -181,8 +190,8 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 	@Override
 	public String toString() {
-                if (rid != null)
-                        return "rid=" + rid;
-                return super.toString();
+		if (rid != null)
+			return "rid=" + rid;
+		return super.toString();
 	}
 }

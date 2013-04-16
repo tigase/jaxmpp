@@ -24,6 +24,8 @@ import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
 import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
@@ -42,6 +44,8 @@ public abstract class BoshWorker implements BoshRequest {
 
 	private final DomBuilderHandler domHandler;
 
+	private Logger log;
+
 	private final SimpleParser parser;
 
 	private final String rid;
@@ -55,6 +59,7 @@ public abstract class BoshWorker implements BoshRequest {
 		this.domHandler = domHandler;
 		this.parser = parser;
 		this.sessionObject = sessionObject;
+		this.log = Logger.getLogger(this.getClass().getName());
 
 		this.body = body;
 		this.rid = body.getAttribute("rid");
@@ -116,6 +121,9 @@ public abstract class BoshWorker implements BoshRequest {
 				}
 
 				final String responseData = sb.toString();
+
+				if (log.isLoggable(Level.FINEST))
+					log.finest("Received: " + responseData);
 
 				if (responseCode != 200) {
 					onError(responseCode, responseData, null, null);
