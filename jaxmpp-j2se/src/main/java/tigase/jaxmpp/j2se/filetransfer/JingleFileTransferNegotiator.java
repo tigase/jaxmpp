@@ -203,7 +203,6 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 	
 	@Override
 	public boolean isSupported(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) {
-		if (1==1) return true;
 		Presence p = ft.getSessionObject().getPresence().getPresence(ft.getPeer());
 		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
 		CapabilitiesCache capsCache = capsModule.getCache();

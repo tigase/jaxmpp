@@ -69,6 +69,12 @@ public abstract class FileTransferNegotiatorAbstract implements FileTransferNego
         protected void fireOnFailure(FileTransfer ft, Throwable ex) {
                 try {
                         log.log(Level.WARNING, "firing file transfer negotiation error", ex);
+						try {
+							throw new RuntimeException("STACKTRACE");
+						}
+						catch (Exception ex1) {
+							log.log(Level.WARNING, "EXCEPTION", ex1);
+						}
                         observable.fireEvent(NEGOTIATION_FAILURE, new FileTransferEvent(NEGOTIATION_FAILURE, ft.getSessionObject(), ft));
                 } catch (JaxmppException ex1) {
                         log.log(Level.SEVERE, "Exception sending event", ex1);

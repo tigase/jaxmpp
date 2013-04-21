@@ -340,7 +340,7 @@ public class Jaxmpp extends JaxmppCore {
 			this.executor = executor;
 	}
 
-	public void initFileTransferManager() throws JaxmppException {
+	public void initFileTransferManager(boolean experimental) throws JaxmppException {
 			CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
 			if (capsModule != null && capsModule.getCache() == null) {
 					capsModule.setCache(new J2SECapabiliesCache());
@@ -352,8 +352,10 @@ public class Jaxmpp extends JaxmppCore {
 			
 			getModulesManager().register(new FileTransferModule(sessionObject));
 			getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
-			getModulesManager().register(new JingleModule(sessionObject));
-			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+			if (experimental) {
+				getModulesManager().register(new JingleModule(sessionObject));
+				fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+			}
 			fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
 	

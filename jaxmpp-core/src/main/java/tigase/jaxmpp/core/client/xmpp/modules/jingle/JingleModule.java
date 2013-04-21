@@ -204,6 +204,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		iq.addChild(jingle);
 
 		Element content = new DefaultElement("content");
+		content.setXMLNS(JINGLE_XMLNS);
 		content.setAttribute("creator", "initiator");
 		content.setAttribute("name", name);
 
@@ -258,6 +259,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		iq.addChild(jingle);
 
 		Element content = new DefaultElement("content");
+		content.setXMLNS(JINGLE_XMLNS);
 		content.setAttribute("creator", "initiator");
 		content.setAttribute("name", name);
 
