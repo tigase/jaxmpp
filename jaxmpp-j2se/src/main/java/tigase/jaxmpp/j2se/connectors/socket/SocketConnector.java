@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -36,6 +37,7 @@ import java.util.logging.Logger;
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -207,6 +209,10 @@ public class SocketConnector implements Connector {
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
 
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
+
+	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
+
+	public static final String SASL_EXTERNAL_ENABLED_KEY = "SASL_EXTERNAL_ENABLED_KEY";
 
 	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
 		final Element sf = sessionObject.getStreamFeatures();
@@ -410,6 +416,11 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
+		KeyManager[] result = sessionObject.getProperty(KEY_MANAGERS_KEY);
+		return result == null ? new KeyManager[0] : result;
+	}
+
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
@@ -424,7 +435,7 @@ public class SocketConnector implements Connector {
 				}
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
-				ctx.init(new KeyManager[0], trustManagers, new SecureRandom());
+				ctx.init(getKeyManagers(), trustManagers, new SecureRandom());
 				factory = ctx.getSocketFactory();
 			}
 

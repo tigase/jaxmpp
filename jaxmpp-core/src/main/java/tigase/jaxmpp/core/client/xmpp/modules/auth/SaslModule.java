@@ -184,7 +184,16 @@ public class SaslModule implements XmppModule {
 	}
 
 	public void addMechanism(SaslMechanism mechanism) {
+		addMechanism(mechanism, false);
+	}
+
+	public void addMechanism(SaslMechanism mechanism, boolean atFirstPlace) {
 		this.mechanisms.put(mechanism.name(), mechanism);
+		if (atFirstPlace) {
+			this.mechanismsOrder.add(0, mechanism.name());
+		} else {
+			this.mechanismsOrder.add(mechanism.name());
+		}
 	}
 
 	@Override
