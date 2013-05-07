@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.core.client;
 
+import java.util.Arrays;
+
 /**
  * Describe class Base64 here.
  * 
@@ -27,14 +29,15 @@ package tigase.jaxmpp.core.client;
  * @version $Rev: 619 $
  */
 public class Base64 {
-	private final static char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
+	private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
 
-	private static int[] toInt = new int[128];
+	private static final int[] ALPHABET_1 = new int[256];
 
 	static {
-		for (int i = 0; i < ALPHABET.length; i++) {
-			toInt[ALPHABET[i]] = i;
-		}
+		Arrays.fill(ALPHABET_1, -1);
+		for (int i = 0; i < ALPHABET.length; i++)
+			ALPHABET_1[ALPHABET[i]] = i;
+		ALPHABET_1['='] = 0;
 	}
 
 	/**
@@ -45,26 +48,82 @@ public class Base64 {
 	 * @return the byte array (not null)
 	 */
 	public static byte[] decode(String s) {
-		int delta = s.endsWith("==") ? 2 : s.endsWith("=") ? 1 : 0;
-		byte[] buffer = new byte[s.length() * 3 / 4 - delta];
+		int separatorsCounter = 0;
+		final int inputLen = s.length();
+		for (int i = 0; i < inputLen; i++) {
+			int c = ALPHABET_1[s.charAt(i)];
+			if (c < 0 && c != '=')
+				separatorsCounter++;
+		}
+
+		int deltas = 0;
+		for (int i = inputLen - 1; i > 1 && ALPHABET_1[s.charAt(i)] <= 0; --i) {
+			if (s.charAt(i) == '=') {
+				++deltas;
+			}
+		}
+
+		final int outputLen = (inputLen - separatorsCounter) * 3 / 4 - deltas;
+
+		byte[] buffer = new byte[outputLen];
 		int mask = 0xFF;
 		int index = 0;
-		for (int i = 0; i < s.length(); i += 4) {
-			int c0 = toInt[s.charAt(i)];
-			int c1 = toInt[s.charAt(i + 1)];
+		int o;
+		for (o = 0; o < s.length();) {
+
+			int c0 = ALPHABET_1[s.charAt(o++)];
+			if (c0 == -1) {
+				o = findNexIt(s, --o);
+				c0 = ALPHABET_1[s.charAt(o++)];
+				if (c0 == -1)
+					break;
+			}
+			int c1 = ALPHABET_1[s.charAt(o++)];
+			if (c1 == -1) {
+				o = findNexIt(s, --o);
+				c1 = ALPHABET_1[s.charAt(o++)];
+				if (c1 == -1)
+					break;
+			}
+
 			buffer[index++] = (byte) (((c0 << 2) | (c1 >> 4)) & mask);
 			if (index >= buffer.length) {
-				return buffer;
+				break;
 			}
-			int c2 = toInt[s.charAt(i + 2)];
+			int c2 = ALPHABET_1[s.charAt(o++)];
+			if (c2 == -1) {
+				o = findNexIt(s, --o);
+				c2 = ALPHABET_1[s.charAt(o++)];
+				if (c2 == -1)
+					break;
+			}
 			buffer[index++] = (byte) (((c1 << 4) | (c2 >> 2)) & mask);
 			if (index >= buffer.length) {
-				return buffer;
+				break;
 			}
-			int c3 = toInt[s.charAt(i + 3)];
+			int c3 = ALPHABET_1[s.charAt(o++)];
+			if (c3 == -1) {
+				o = findNexIt(s, --o);
+				c3 = ALPHABET_1[s.charAt(o++)];
+				if (c3 == -1)
+					break;
+			}
 			buffer[index++] = (byte) (((c2 << 6) | c3) & mask);
 		}
+
 		return buffer;
+	}
+
+	private static int findNexIt(String s, int i) {
+		final int sl = s.length() - 1;
+		int c2;
+		if (i >= sl)
+			return i;
+		do {
+			c2 = ALPHABET_1[s.charAt(++i)];
+		} while (c2 == -1 && i < sl);
+
+		return i;
 	}
 
 	/**
@@ -75,8 +134,9 @@ public class Base64 {
 	 * @return the translated Base64 string (not null)
 	 */
 	public static String encode(byte[] buf) {
-		int size = buf.length;
-		char[] ar = new char[((size + 2) / 3) * 4];
+		final int size = buf.length;
+		int outputSize = ((size + 2) / 3) * 4;
+		final char[] output = new char[outputSize];
 		int a = 0;
 		int i = 0;
 		while (i < size) {
@@ -85,17 +145,17 @@ public class Base64 {
 			byte b2 = (i < size) ? buf[i++] : 0;
 
 			int mask = 0x3F;
-			ar[a++] = ALPHABET[(b0 >> 2) & mask];
-			ar[a++] = ALPHABET[((b0 << 4) | ((b1 & 0xFF) >> 4)) & mask];
-			ar[a++] = ALPHABET[((b1 << 2) | ((b2 & 0xFF) >> 6)) & mask];
-			ar[a++] = ALPHABET[b2 & mask];
+			output[a++] = ALPHABET[(b0 >> 2) & mask];
+			output[a++] = ALPHABET[((b0 << 4) | ((b1 & 0xFF) >> 4)) & mask];
+			output[a++] = ALPHABET[((b1 << 2) | ((b2 & 0xFF) >> 6)) & mask];
+			output[a++] = ALPHABET[b2 & mask];
 		}
 		switch (size % 3) {
 		case 1:
-			ar[--a] = '=';
+			output[--a] = '=';
 		case 2:
-			ar[--a] = '=';
+			output[--a] = '=';
 		}
-		return new String(ar);
+		return new String(output);
 	}
 }
