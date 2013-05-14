@@ -74,6 +74,8 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		private final JID sender;
 		private final String sid;
 
+		private boolean handled = false;
+		
 		public JingleSessionEvent(EventType type, SessionObject sessionObject, JID sender, String sid) {
 			super(type, sessionObject);
 
@@ -89,6 +91,14 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			return sid;
 		}
 
+		public boolean isJingleHandled() {
+			return handled;
+		}
+		
+		public void setJingleHandled(boolean value) {
+			this.handled = value;
+		}
+		
 	}
 
 	public static class JingleSessionInfoEvent extends JingleSessionEvent {
@@ -294,12 +304,18 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		String sid = jingle.getAttribute("sid");
 
 		String action = jingle.getAttribute("action");
+		
+		JingleSessionEvent event = null;
+		
 		if ("session-terminate".equals(action)) {
-			observable.fireEvent(JingleSessionTerminate, new JingleSessionTerminateEvent(sessionObject, from, sid));
+			event = new JingleSessionTerminateEvent(sessionObject, from, sid);
+			observable.fireEvent(JingleSessionTerminate, event);
 		} else if ("session-info".equals(action)) {
-			observable.fireEvent(JingleSessionInfo, new JingleSessionInfoEvent(sessionObject, from, sid, jingle.getChildren()));
+			event = new JingleSessionInfoEvent(sessionObject, from, sid, jingle.getChildren());
+			observable.fireEvent(JingleSessionInfo, event);
 		} else if ("transport-info".equals(action)) {
-			observable.fireEvent(JingleTransportInfo, new JingleTransportInfoEvent(sessionObject, from, sid, contents.get(0)));
+			event = new JingleTransportInfoEvent(sessionObject, from, sid, contents.get(0));
+			observable.fireEvent(JingleTransportInfo, event);
 		} else {
 			Element content = contents.get(0);
 			List<Element> descriptions = content.getChildren("description");
@@ -314,20 +330,25 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			}
 
 			if ("session-initiate".equals(action)) {
-				observable.fireEvent(JingleSessionInitiation, new JingleSessionInitiationEvent(sessionObject, from, sid,
-						description, transports));
+				event = new JingleSessionInitiationEvent(sessionObject, from, sid, description, transports);
+				observable.fireEvent(JingleSessionInitiation, event);
 			} else if ("session-accept".equals(action)) {
-				observable.fireEvent(JingleSessionAccept, new JingleSessionAcceptEvent(sessionObject, from, sid, description,
-						transports));
+				event = new JingleSessionAcceptEvent(sessionObject, from, sid, description, transports);
+				observable.fireEvent(JingleSessionAccept, event);
 			}
 		}
 
-		// sending result - here should be always ok
-		IQ response = IQ.create();
-		response.setType(StanzaType.result);
-		response.setTo(iq.getFrom());
-
-		writer.write(response);
+		if (event != null && event.isHandled() && event.isJingleHandled()) {
+			// sending result - here should be always ok
+			IQ response = IQ.create();
+			response.setTo(iq.getFrom());
+			response.setId(iq.getId());
+			response.setType(StanzaType.result);			
+			writer.write(response);
+		}
+		else {
+			throw new XMPPException(XMPPException.ErrorCondition.feature_not_implemented);
+		}
 	}
 
 	public void terminateSession(JID jid, String sid, JID initiator) throws JaxmppException {

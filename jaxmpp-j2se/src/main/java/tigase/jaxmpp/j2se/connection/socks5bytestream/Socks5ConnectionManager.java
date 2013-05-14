@@ -194,6 +194,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	}
 
 	protected void connectToProxy(JaxmppCore jaxmpp, ConnectionSession session, ConnectionEndpoint host) throws IOException, JaxmppException {
+		session.setData(JAXMPP_KEY, jaxmpp);
 		InetSocketAddress address = new InetSocketAddress(host.getHost(), host.getPort());
 		SocketChannel channel = SocketChannel.open(address);
 		if (!session.isIncoming() && !session.getPeer().equals(host.getJid())) {
@@ -278,12 +279,13 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					}
 				}
 
-				try {
-					requestActivate(session, socket);
-				} catch (JaxmppException ex) {
-					socket.close();
-					fireOnFailure(session);
-				}
+				// why do we need this? activation is done only for outgoing connections
+//				try {
+//					requestActivate(session, socket);
+//				} catch (JaxmppException ex) {
+//					socket.close();
+//					fireOnFailure(session);
+//				}
 
 				break;
 			case Closed:
@@ -296,7 +298,13 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void requestActivate(final ConnectionSession session, final Socket socket) throws JaxmppException {
 		JaxmppCore jaxmpp = session.getData(JAXMPP_KEY);
 		JID usedProxyJid = session.getData(PROXY_JID_USED_KEY);
-		jaxmpp.getModule(Socks5BytestreamsModule.class).requestActivate(usedProxyJid, session.getSid(), session.getPeer().toString(), new ActivateCallback() {
+		if (jaxmpp == null) {
+			log.severe("no jaxmpp instance!!");
+		}
+		else if (session.getPeer() == null) {
+			log.severe("no peer");
+		}
+		jaxmpp.getModule(Socks5BytestreamsModule.class).requestActivate(usedProxyJid, session.getSid(), session.getPeer(), new ActivateCallback() {
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 				fireOnFailure(session);
@@ -515,6 +523,9 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				ch = Character.forDigit(b & 0xF, 16);
 				enc.append(ch);
 			} // end of for (b : digest)
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("for " + session.getSessionObject().getBindedJid().toString() + " generated " + data + " hash = " + enc.toString());
+			}
 			return enc.toString();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -526,7 +537,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		try {
 			observable.fireEvent(CONNECTION_ESTABLISHED, new ConnectionEvent(CONNECTION_ESTABLISHED, session.getSessionObject(), session, socket));
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, "failure firing ConnectionEstablished event");
+			log.log(Level.SEVERE, "failure firing ConnectionEstablished event", ex);
 		}
 	}
 
@@ -534,7 +545,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		try {
 			observable.fireEvent(CONNECTION_FAILED, new ConnectionEvent(CONNECTION_FAILED, session.getSessionObject(), session));
 		} catch (Exception ex) {
-			log.log(Level.SEVERE, "failure firing ConnectionEstablished event");
+			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}
 	}
 	// ---------------------------------------------------------------------------------------

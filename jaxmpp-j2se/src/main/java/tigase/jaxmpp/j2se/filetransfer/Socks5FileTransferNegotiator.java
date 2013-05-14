@@ -61,13 +61,13 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract {
 
         private static final Logger log = Logger.getLogger(Socks5FileTransferNegotiator.class.getCanonicalName());
-        
+		
         private final String BASE = "session-";
         private final String STREAM_METHOD = BASE + "stream-method";
         private final String PACKET_ID = BASE + "initiation-packet-id";
 
         private final Socks5BytestreamsConnectionManager connectionManager = new Socks5BytestreamsConnectionManager();
-        
+		
         private final Listener<ConnectionEvent> connectionEstablishedListener = new Listener<ConnectionEvent>() {
 
                 @Override
@@ -106,7 +106,12 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
                 connectionManager.setObservable(observable);
                 observable.addListener(ConnectionManager.CONNECTION_ESTABLISHED, connectionEstablishedListener);                
         }
-        
+
+		@Override
+		public String[] getFeatures() {
+			return null;
+		}
+		
 		@Override
 		public boolean isSupported(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) {
                 Presence p = ft.getSessionObject().getPresence().getPresence(ft.getPeer());

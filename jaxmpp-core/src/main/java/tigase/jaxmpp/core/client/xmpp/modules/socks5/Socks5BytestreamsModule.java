@@ -130,8 +130,10 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		observable.removeListener(listener);
 	}
         
-	public void requestActivate(JID host, String sid, String jid, ActivateCallback callback) throws XMLException,
+	public void requestActivate(JID host, String sid, JID jid, ActivateCallback callback) throws XMLException,
 			JaxmppException {
+		if (host == null) host = jid;
+		
 		IQ iq = IQ.create();
 		iq.setTo(host);
 		iq.setType(StanzaType.set);
@@ -140,7 +142,7 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		query.setAttribute("sid", sid);
 		iq.addChild(query);
 
-		Element activate = new DefaultElement("activate", jid, null);
+		Element activate = new DefaultElement("activate", jid.toString(), null);
 		query.addChild(activate);
 
 		writer.write(iq, callback);

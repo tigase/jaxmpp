@@ -29,7 +29,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -45,6 +47,8 @@ import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferEvent;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
@@ -131,6 +135,35 @@ public class FileTransferManager implements ObservableAware {
 		
 		public void setJaxmpp(Jaxmpp jaxmpp) {
 				this.jaxmpp = jaxmpp;
+				
+				DiscoInfoModule discoInfoModule = jaxmpp.getModule(DiscoInfoModule.class);
+				if (discoInfoModule != null) {
+					discoInfoModule.addListener(new Listener<DiscoInfoEvent>() {
+						@Override
+						public void handleEvent(DiscoInfoEvent be) throws JaxmppException {
+							if (be.getType() != DiscoInfoModule.InfoRequested) 
+								return;
+							
+							HashSet<String> features = new HashSet<String>();
+							
+							if (be.getFeatures() != null) {
+								features.addAll(Arrays.asList(be.getFeatures()));
+							}
+							
+							for (FileTransferNegotiator negotiator : negotiators) {
+								String[] negFeatures = negotiator.getFeatures();
+								if (negFeatures != null) {
+									for (String negFeature : negFeatures) {
+										features.add(negFeature);
+									}
+								}
+							}
+							//
+							
+							be.setFeatures(features.toArray(new String[features.size()]));
+						}						
+					});
+				}
 		}
 		
         @Override
@@ -218,7 +251,13 @@ public class FileTransferManager implements ObservableAware {
 		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
 		if (c == null)
 			return null;
-                return c.getValue();
+        
+		String node = c.getAttribute("node");
+		String ver = c.getAttribute("ver");
+		if (node == null || ver == null)
+			return null;
+		
+		return node + "#" + ver;
         }
         
         private String generateSid() {
