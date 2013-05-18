@@ -137,7 +137,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 					try {
 						session.setData(TRANSPORT_USED_KEY, transport);
 						session.setData(CANDIDATE_USED_KEY, candidate);
-						connectToProxy(jaxmpp, session, candidate);
+						connectToProxy(jaxmpp, session, transport.getSid(), candidate);
 						established = true;
 						break;
 					} catch (IOException ex) {
@@ -161,9 +161,10 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	public Transport getTransport(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
 
-		Transport transport = new Transport(XMLNS, session.getSid(), Transport.Mode.tcp);
+		String sid = UUID.randomUUID().toString();
+		Transport transport = new Transport(XMLNS, sid, Transport.Mode.tcp);
 
-		List<Streamhost> streamhosts = getLocalStreamHosts(session);
+		List<Streamhost> streamhosts = getLocalStreamHosts(session, sid);
 		if (streamhosts == null) 
 			return null;
 		
@@ -225,7 +226,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 			if (candidate.getType() == Candidate.Type.proxy) {
 				// need to activate proxy
 				JaxmppCore jaxmpp = (JaxmppCore) session.getData(JAXMPP_KEY);
-				connectToProxy(jaxmpp, session, candidate);
+				connectToProxy(jaxmpp, session, transport.getSid(), candidate);
 			}
 			else {
 				Socket socket = session.getData("socket");

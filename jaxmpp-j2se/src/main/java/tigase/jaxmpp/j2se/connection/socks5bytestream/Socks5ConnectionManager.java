@@ -35,7 +35,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,6 +79,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected static final String PROXY_JID_KEY = "proxy-jid";
 	protected static final String PROXY_JID_USED_KEY = "proxy-jid-used";
 	protected static final String STREAMHOST_KEY = "streamhost";
+	protected static final String SID_KEY = "socks5-sid";
 	public static final String PACKET_ID = "packet-id";
 	private Observable observable = null;
 
@@ -193,24 +197,35 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		callback.initialized(jaxmpp, ft);
 	}
 
-	protected void connectToProxy(JaxmppCore jaxmpp, ConnectionSession session, ConnectionEndpoint host) throws IOException, JaxmppException {
+	protected void connectToProxy(JaxmppCore jaxmpp, ConnectionSession session, String sid, ConnectionEndpoint host) throws IOException, JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
 		InetSocketAddress address = new InetSocketAddress(host.getHost(), host.getPort());
 		SocketChannel channel = SocketChannel.open(address);
 		if (!session.isIncoming() && !session.getPeer().equals(host.getJid())) {
 			session.setData(PROXY_JID_USED_KEY, host.getJid());
 		}
+		session.setData(SID_KEY, sid);
 		session.setData(STREAMHOST_KEY, host);
 		handleConnection(session, channel.socket(), false);
 	}
-	private static final long TIMEOUT = 3 * 60 * 1000;
-
-	protected List<Streamhost> getLocalStreamHosts(ConnectionSession session) throws JaxmppException {
+	
+	private static final long TIMEOUT = 15 * 60 * 1000;
+	private static TcpServerThread server = null;
+	
+	protected List<Streamhost> getLocalStreamHosts(ConnectionSession session, String sid) throws JaxmppException {
 		try {
 			StreamhostsResolver streamhostsResolver = UniversalFactory.createInstance(StreamhostsResolver.class.getCanonicalName());
-			TcpServerThread server = new TcpServerThread(0, TIMEOUT);
-			server.setConnectionSession(session);
-			server.start();
+//			TcpServerThread server = new TcpServerThread(0, TIMEOUT);
+//			server.setConnectionSession(session);
+//			server.start();
+			synchronized(TcpServerThread.class) {
+			//synchronized(Socks5ConnectionManager.class) {
+				if (server == null || !server.isAlive())  {
+					server = new TcpServerThread(0);
+					server.start();
+				}
+				registerSession(session, sid, this);
+			}
 			return streamhostsResolver.getLocalStreamHosts(session.getSessionObject().getBindedJid(), server.getPort());
 		} catch (Exception ex) {
 			throw new JaxmppException("problem in getting local streamhosts", ex);
@@ -270,14 +285,14 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 				break;
 			case ActiveServ:
-				synchronized (session) {
-					if (((Boolean) session.getData("streamhost-received") == null)
-							|| ((Boolean) session.getData("streamhost-received") == false)) {
-						session.setData("socket", socket);
-					} else {
-						session.setData("socket", socket);
-					}
-				}
+//				synchronized (session) {
+//					if (((Boolean) session.getData("streamhost-received") == null)
+//							|| ((Boolean) session.getData("streamhost-received") == false)) {
+//					session.setData("socket", socket);
+//					} else {
+//						session.setData("socket", socket);
+//					}
+//				}
 
 				// why do we need this? activation is done only for outgoing connections
 //				try {
@@ -289,7 +304,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 				break;
 			case Closed:
-				fireOnFailure(session);
+				if (!incoming) {
+					//fireOnFailure(session);					
+					throw new IOException("Could not establish Socks5 connection");
+				}
 				break;
 		}
 		buf.clear();
@@ -392,13 +410,17 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 						tmp.put((byte) 0x00);
 						tmp.flip();
 
-						if (!checkHash(new String(data), ft)) {
+						ft = getSession(new String(data));
+						if (ft == null) {					
+						//if (!checkHash(new String(data), ft)) {
 							if (log.isLoggable(Level.FINEST)) {
 								log.log(Level.FINEST, "stopping service {0} without file transfer", socket.toString());
 							}
 							socket.close();
 							return State.Closed;
 						}
+						
+						ft.setData("socket", socket.socket());
 
 						state = State.ActiveServ;
 
@@ -510,9 +532,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 	protected static String generateHash(ConnectionSession session) {
 		try {
+			String sid = session.getData(SID_KEY);
 			String data = session.isIncoming()
-					? session.getSid() + session.getPeer().toString() + session.getSessionObject().getBindedJid().toString()
-					: session.getSid() + session.getSessionObject().getBindedJid().toString() + session.getPeer();
+					? sid + session.getPeer().toString() + session.getSessionObject().getBindedJid().toString()
+					: sid + session.getSessionObject().getBindedJid().toString() + session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 			md.update(data.getBytes());
 			byte[] buff = md.digest();
@@ -543,64 +566,154 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 	protected void fireOnFailure(ConnectionSession session) {
 		try {
+			unregisterSession(session);
 			observable.fireEvent(CONNECTION_FAILED, new ConnectionEvent(CONNECTION_FAILED, session.getSessionObject(), session));
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}
 	}
+	
+	private static final Map<String,ConnectionSession> sessions = new HashMap<String, ConnectionSession>();
+	
+	protected static void registerSession(ConnectionSession session, String sid, Socks5ConnectionManager instance) {
+		synchronized(sessions) {
+			session.setData(SID_KEY, sid);
+			String hash = generateHash(session);
+			session.setData(Socks5ConnectionManager.class.getCanonicalName(), instance);
+			sessions.put(hash, session);
+		}
+	}
+
+	protected static void unregisterSession(ConnectionSession session) {
+		synchronized(sessions) {
+			String hash = generateHash(session);
+			sessions.remove(hash);
+			
+			if (sessions.isEmpty()) {
+				server.shutdown();
+			}
+		}
+	}
+
+	protected static ConnectionSession getSession(String hash) {
+		synchronized(sessions) {
+			return sessions.get(hash);
+		}
+	}
+			
+	protected static void clearSessions() {
+		synchronized(sessions) {
+			for (ConnectionSession session : new HashSet<ConnectionSession>(sessions.values())) {
+				Socks5ConnectionManager connectionManager = session.getData(Socks5ConnectionManager.class.getCanonicalName());
+				connectionManager.fireOnFailure(session);
+			}
+			sessions.clear();
+		}
+	}
+	
 	// ---------------------------------------------------------------------------------------
-	private Timer timer = new Timer();
+	private static Timer timer = new Timer();
 
 	/**
 	 * Internal TCP connection manager
 	 */
 	private class TcpServerThread extends Thread {
 
-		private ConnectionSession session = null;
+//		private ConnectionSession session = null;
 		private ServerSocketChannel serverSocket = null;
-		private long timeout = 0;
+		private long timeout = TIMEOUT;
+		
+		private TimerTask shutdownTask = null;
+		private boolean shutdown = false;
 
-		public TcpServerThread(int port, long timeout) throws IOException {
+		public TcpServerThread(int port /*, long timeout*/) throws IOException {
 			serverSocket = ServerSocketChannel.open();
 			serverSocket.socket().bind(null);
+			setDaemon(true);
 //                        serverSocket = new ServerSocket(port);
-			if (timeout != 0) {
-				this.timeout = timeout;
+//			if (timeout != 0) {
+//				this.timeout = timeout;
+//			}
+		}
+
+		public void shutdown() {
+			synchronized (TcpServerThread.class) {
+				if (shutdownTask != null) {
+					shutdownTask.cancel();
+					shutdownTask = null;
+				}
+
+				shutdown = true;
+				try {
+					serverSocket.close();
+				} catch (IOException ex) {
+					log.log(Level.WARNING, "problem with closing server socket", ex);
+				}
 			}
 		}
-
-		public int getPort() {
-			return serverSocket.socket().getLocalPort();
-		}
-
-		public void setConnectionSession(ConnectionSession session) {
-			this.session = session;
-		}
-
-		@Override
-		public void run() {
-			timer.schedule(new TimerTask() {
+		
+		public int getPort() {			
+			if (shutdownTask != null) {
+				shutdownTask.cancel();
+				shutdownTask = null;
+			}
+			
+			shutdownTask = new TimerTask() {
 				@Override
 				public void run() {
 					try {
-						serverSocket.close();
+						synchronized(TcpServerThread.class) {
+							if (shutdownTask == null) {
+								return;
+							}
+							
+							clearSessions();
+						}
 					} catch (Exception ex) {
 						log.log(Level.WARNING, "problem with closing server socket", ex);
 					}
 				}
-			}, timeout);
+			};
+			timer.schedule(shutdownTask, timeout);
 
-			while (serverSocket.socket().isBound()) {
+			return serverSocket.socket().getLocalPort();
+		}
+
+//		public void setConnectionSession(ConnectionSession session) {
+//			this.session = session;
+//		}
+
+		@Override
+		public void run() {
+			while (serverSocket.socket().isBound() && !shutdown) {
 				try {
 					SocketChannel socketChannel = serverSocket.accept();
-					handleConnection(session, socketChannel.socket(), true);
+					new IncomingConnectionHandlerThread(socketChannel).start();
 				} catch (ClosedChannelException ex) {
 					log.log(Level.SEVERE, null, ex);
-					break;
+				//	break;
 				} catch (IOException ex) {
 					log.log(Level.SEVERE, null, ex);
 				}
 			}
 		}
 	};
+	
+	private class IncomingConnectionHandlerThread extends Thread {
+		
+		private final SocketChannel socketChannel;
+		
+		private IncomingConnectionHandlerThread(SocketChannel channel) {
+			this.socketChannel = channel;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				handleConnection(null, socketChannel.socket(), true);			
+			} catch (IOException ex) {
+				log.log(Level.SEVERE, null, ex);
+			}
+		}		
+	}
 }

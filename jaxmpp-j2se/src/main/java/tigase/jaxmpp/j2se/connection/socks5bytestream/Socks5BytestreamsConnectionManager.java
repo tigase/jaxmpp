@@ -107,7 +107,7 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
                                         socks5Module.removeListener(this);
                                         for (Streamhost host : be.getHosts()) {
                                                 try {
-                                                        connectToProxy(jaxmpp, session, host);
+                                                        connectToProxy(jaxmpp, session, session.getSid(), host);
                                                         break;
                                                 } catch (IOException ex) {
                                                 }
@@ -142,7 +142,7 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
         
         protected void sendStreamHosts(final JaxmppCore jaxmpp, final ConnectionSession ft, List<Streamhost> proxyStreamhosts) throws JaxmppException {
                 Socks5BytestreamsModule socks5Module = jaxmpp.getModule(Socks5BytestreamsModule.class);
-                List<Streamhost> streamhosts = getLocalStreamHosts(ft);
+                List<Streamhost> streamhosts = getLocalStreamHosts(ft, ft.getSid());
                 if (proxyStreamhosts != null) {
                         streamhosts.addAll(proxyStreamhosts);
                 }
@@ -165,7 +165,7 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
                                         }
                                 } else {
                                         try {
-                                                connectToProxy(jaxmpp, ft, host);
+                                                connectToProxy(jaxmpp, ft, ft.getSid(), host);
                                         }
                                         catch (Exception ex) {
                                                 log.log(Level.WARNING, "exception while connecting to proxy", ex);
