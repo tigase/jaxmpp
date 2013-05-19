@@ -198,12 +198,17 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
 			final boolean authAvailable = AuthModule.isAuthAvailable(sessionObject);
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
+			final Boolean compressionDisabled = sessionObject.getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
+			final boolean zlibAvailable = SocketConnector.isZLibAvailable(sessionObject);
 
 			final boolean isAuthorized = sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
 			final boolean isConnectionSecure = connector.isSecure();
+			final boolean isConnectionCompressed = connector.isCompressed();
 
 			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
 				connector.startTLS();
+			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
+				connector.startZLib();
 			} else if (!isAuthorized && authAvailable) {
 				authModule.login();
 			} else if (isAuthorized) {

@@ -42,7 +42,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
 		super(parentObservable, sessionObject);
 	}
-
+	
 	@Override
 	protected void processSendData(final Element element) throws XMLException, JaxmppException {
 		BoshRequest worker = new BoshWorker(domHandler, parser, sessionObject, element) {

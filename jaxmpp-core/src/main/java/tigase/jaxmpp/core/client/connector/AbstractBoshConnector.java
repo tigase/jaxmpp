@@ -219,6 +219,15 @@ public abstract class AbstractBoshConnector implements Connector {
 		return false;
 	}
 
+	/**
+	 * Returns true when stream is compressed
+	 * @return 
+	 */	
+	@Override
+	public boolean isCompressed() {
+		return false;
+	}
+	
 	@Override
 	public void keepalive() throws JaxmppException {
 		if (getState() == State.connected) {

@@ -181,6 +181,11 @@ public interface Connector {
 	 */
 	public final static EventType Connected = new EventType();
 
+	/**
+	 * Key set to true to determine if connection is already compressed
+	 */
+	public final static String COMPRESSED_KEY = "CONNECTOR#COMPRESSED_KEY";
+	
 	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
 
 	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
@@ -271,6 +276,8 @@ public interface Connector {
 
 	public State getState();
 
+	boolean isCompressed();
+	
 	boolean isSecure();
 
 	/**

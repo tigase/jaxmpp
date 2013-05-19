@@ -18,11 +18,15 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -33,6 +37,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -46,6 +54,10 @@ import javax.net.ssl.X509TrustManager;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
+import static tigase.jaxmpp.core.client.Connector.DISABLE_KEEPALIVE_KEY;
+import static tigase.jaxmpp.core.client.Connector.ENCRYPTED_KEY;
+import static tigase.jaxmpp.core.client.Connector.EncryptionEstablished;
+import static tigase.jaxmpp.core.client.Connector.TRUST_MANAGERS_KEY;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -116,7 +128,7 @@ public class SocketConnector implements Connector {
 
 	private class Worker extends Thread {
 
-		private final char[] buffer = new char[10240];
+		private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
 
 		private SocketConnector connector;
 
@@ -195,6 +207,18 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
+	
+	/**
+	 * Default size of buffer used to decode data before parsing
+	 */
+	private final static int DEFAULT_SOCKET_BUFFER_SIZE = 2048;
+	
+	/**
+	 * Instance of empty byte array used to force flush of compressed stream
+	 */
+	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
+	
 	/**
 	 * see-other-host
 	 */
@@ -222,6 +246,29 @@ public class SocketConnector implements Connector {
 		return m != null;
 	}
 
+	/**
+	 * Returns true if server send stream features in which it advertises support for
+	 * stream compression using ZLIB
+	 * @param sessionObject
+	 * @return
+	 * @throws XMLException 
+	 */
+	public static boolean isZLibAvailable(SessionObject sessionObject) throws XMLException {
+		final Element sf = sessionObject.getStreamFeatures();
+		if (sf == null)
+			return false;
+		Element m = sf.getChildrenNS("compression", "http://jabber.org/features/compress");
+		if (m == null) 
+			return false;
+		
+		for (Element method : m.getChildren("method")) {
+			if ("zlib".equals(method.getValue()))
+				return true;
+		}
+		
+		return false;		
+	}
+	
 	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
 		@Override
@@ -246,7 +293,7 @@ public class SocketConnector implements Connector {
 
 	private boolean preventAgainstFireErrors = false;
 
-	private Reader reader;
+	private volatile Reader reader;
 
 	private SessionObject sessionObject;
 
@@ -347,6 +394,15 @@ public class SocketConnector implements Connector {
 		return st == null ? State.disconnected : st;
 	}
 
+	/**
+	 * Returns true when stream is compressed
+	 * @return 
+	 */
+	@Override
+	public boolean isCompressed() {
+		return ((Boolean) sessionObject.getProperty(COMPRESSED_KEY)) == Boolean.TRUE;
+	}
+	
 	@Override
 	public boolean isSecure() {
 		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
@@ -415,6 +471,19 @@ public class SocketConnector implements Connector {
 			log.info("TLS Failure");
 		}
 	}
+	
+	/**
+	 * Handles result of requesting stream compression
+	 * @param elem
+	 * @throws JaxmppException 
+	 */
+	public void onZLibStanza(tigase.xml.Element elem) throws JaxmppException {
+		if (elem.getName().equals("compressed") && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
+			proceedZLib();
+		} else if (elem.getName().equals("failure")) {
+			log.info("ZLIB Failure");
+		}
+	}
 
 	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
 		KeyManager[] result = sessionObject.getProperty(KEY_MANAGERS_KEY);
@@ -472,7 +541,7 @@ public class SocketConnector implements Connector {
 			s1.startHandshake();
 			socket = s1;
 			writer = socket.getOutputStream();
-			reader = new InputStreamReader(socket.getInputStream());
+			reader = new Reader(socket.getInputStream());
 			restartStream();
 		} catch (javax.net.ssl.SSLHandshakeException e) {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
@@ -485,11 +554,67 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	/**
+	 * Method activates stream compression by replacing reader and writer fields
+	 * values and restarting XMPP stream
+	 * @throws JaxmppException 
+	 */
+	protected void proceedZLib() throws JaxmppException {
+		log.fine("Proceeding ZLIB");
+		try {
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			
+			writer = null;
+			reader = null;
+			log.fine("Start ZLIB compression");
+			
+			Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION, false);
+			try {
+				// on Android platform Deflater has field named flushParm which
+				// can force flushing data to socket for us
+				Field f = compressor.getClass().getDeclaredField("flushParm");
+				if (f != null) {
+					f.setAccessible(true);
+					f.setInt(compressor, 2); // Z_SYNC_FLUSH			
+					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
+				}
+			} catch (NoSuchFieldException ex) {
+				writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
+					@Override
+					public void write(byte[] data) throws IOException {
+						super.write(data);
+						super.write(EMPTY_BYTEARRAY);						
+						super.def.setLevel(Deflater.NO_COMPRESSION);
+						super.deflate();
+						super.def.setLevel(Deflater.BEST_COMPRESSION);
+						super.deflate();
+					}
+				};				
+			}
+			
+			Inflater decompressor = new Inflater(false);			
+			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
+			reader = new Reader(is);
+			
+			sessionObject.setProperty(SocketConnector.COMPRESSED_KEY, true);
+			log.info("ZLIB compression started");
+			
+			restartStream();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Can't establish compressed connection", e);
+			onError(null, e);
+		} finally {
+			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+		}
+	}
+
 	public void processElement(tigase.xml.Element elem) throws JaxmppException {
 		if (log.isLoggable(Level.FINEST))
 			log.finest("RECV: " + elem.toString());
 		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
-			onTLSStanza(elem);
+				onTLSStanza(elem);
+		} else if (elem != null && elem.getXMLNS() != null && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
+				onZLibStanza(elem);
 		} else
 			try {
 				onResponse(new J2seElement(elem));
@@ -662,7 +787,7 @@ public class SocketConnector implements Connector {
 			socket.setTcpNoDelay(true);
 			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
-			reader = new InputStreamReader(socket.getInputStream());
+			reader = new Reader(socket.getInputStream());
 			worker = new Worker(this);
 			log.finest("Starting worker...");
 			worker.start();
@@ -716,6 +841,22 @@ public class SocketConnector implements Connector {
 			}
 	}
 
+	/**
+	 * Sends <compress/> stanza to start stream compression using ZLIB
+	 * @throws JaxmppException 
+	 */
+	public void startZLib() throws JaxmppException {
+		if (writer != null)
+			try {
+				log.fine("Start ZLIB");
+				DefaultElement e = new DefaultElement("compress", null, "http://jabber.org/protocol/compress");
+				e.addChild(new DefaultElement("method", "zlib", null));
+				send(e.getAsString().getBytes());
+			} catch (Exception e) {
+				throw new JaxmppException(e);
+			}		
+	}
+	
 	@Override
 	public void stop() throws JaxmppException {
 		stop(false);
@@ -781,4 +922,63 @@ public class SocketConnector implements Connector {
 		}
 	}
 
+	/**
+	 * New Reader class replaces standard InputStreamReader as it cannot read from
+	 * InflaterInputStream.
+	 */
+	private class Reader {
+		
+		private final InputStream inputStream;
+
+		private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
+		
+		private final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
+		
+		public Reader(InputStream inputStream) {
+			this.inputStream = inputStream;
+		}
+
+		public int read(char[] cbuf) throws IOException {
+			byte[] arr = buf.array();
+			int read = inputStream.read(arr, 0, arr.length);			
+			buf.position(read);
+			buf.flip();			
+			
+			CharBuffer cb = CharBuffer.wrap(cbuf);
+			decoder.decode(buf, cb, false);
+			buf.clear();						
+			cb.flip();
+			
+			return cb.remaining();
+		}
+
+		// Below are alternative read methods which can be used if above method 
+		// will be causing performance issues
+//		public int read3(char[] cbuf) throws IOException {
+//			byte[] arr = new byte[2048];
+//			int read = inputStream.read(arr, 0, arr.length);			
+//			
+//			CharBuffer cb = CharBuffer.wrap(cbuf);
+//			decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);			
+//			cb.flip();
+//			
+//			return cb.remaining();
+//		}
+//		
+//		public int read2(char[] cbuf) throws IOException {
+//			byte[] arr = new byte[2048];
+//			int read = inputStream.read(arr, 0, arr.length);			
+//			
+//			CharBuffer cb = CharBuffer.allocate(2048);
+//			decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
+//			cb.flip();
+//			
+//			int got = cb.remaining();
+//			cb.get(cbuf, 0, got);
+//			
+//			return got;
+//		}
+		
+	}
+	
 }
