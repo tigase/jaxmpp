@@ -147,6 +147,11 @@ public class WebSocketConnector implements Connector {
                 return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
         }
 
+		@Override
+		public boolean isCompressed() {
+				return false;
+		}
+		
         @Override
         public boolean isSecure() {
                 return false;
