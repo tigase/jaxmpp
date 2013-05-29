@@ -97,6 +97,10 @@ public class Room {
 		return observable;
 	}
 
+	public String getPassword() {
+		return password;
+	}
+
 	public Map<String, Occupant> getPresences() {
 		return presences;
 	}

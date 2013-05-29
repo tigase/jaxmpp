@@ -31,6 +31,15 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  */
 public class BooleanField extends AbstractField<Boolean> {
 
+	public static boolean parse(String value) {
+		if (value == null)
+			return Boolean.FALSE;
+		else if (value.equals("1") || value.equals("true"))
+			return Boolean.TRUE;
+		else
+			return Boolean.FALSE;
+	}
+
 	BooleanField(Element element) throws XMLException {
 		super("boolean", element);
 	}
@@ -41,12 +50,7 @@ public class BooleanField extends AbstractField<Boolean> {
 	@Override
 	public Boolean getFieldValue() throws XMLException {
 		final String t = getChildElementValue("value");
-		if (t == null)
-			return Boolean.FALSE;
-		else if (t.equals("1") || t.equals("true"))
-			return Boolean.TRUE;
-		else
-			return Boolean.FALSE;
+		return parse(t);
 	}
 
 	/**

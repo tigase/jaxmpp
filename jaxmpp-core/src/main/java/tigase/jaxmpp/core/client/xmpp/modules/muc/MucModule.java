@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
@@ -30,16 +31,20 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationEvent.Type;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -48,6 +53,143 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class MucModule extends AbstractStanzaModule<Stanza> {
+
+	public static class InvitationDeclinedEvent extends AbstractMessageEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private JID inviteeJID;
+
+		private String reason;
+
+		private Room room;
+
+		private JID roomJID;
+
+		public InvitationDeclinedEvent(SessionObject sessionObject) {
+			super(InvitationDeclined, sessionObject);
+		}
+
+		public JID getInviteeJID() {
+			return inviteeJID;
+		}
+
+		public String getReason() {
+			return reason;
+		}
+
+		public Room getRoom() {
+			return room;
+		}
+
+		public JID getRoomJID() {
+			return roomJID;
+		}
+
+		public void setInviteeJID(JID inviteeJID) {
+			this.inviteeJID = inviteeJID;
+		}
+
+		public void setReason(String reason) {
+			this.reason = reason;
+		}
+
+		public void setRoom(Room room) {
+			this.room = room;
+		}
+
+		public void setRoomJID(JID roomJID) {
+			this.roomJID = roomJID;
+		}
+	}
+
+	public static class InvitationEvent extends AbstractMessageEvent {
+
+		public static enum Type {
+			direct,
+			mediated;
+		}
+
+		private static final long serialVersionUID = 1L;
+
+		private boolean continueFlag;
+
+		private Type invitationType;
+
+		private JID inviterJID;
+
+		private String password;
+
+		private String reaseon;
+
+		private BareJID roomJID;
+
+		private String threadID;
+
+		InvitationEvent(EventType type, SessionObject sessionObject) {
+			super(type, sessionObject);
+		}
+
+		public Type getInvitationType() {
+			return invitationType;
+		}
+
+		public JID getInviterJID() {
+			return inviterJID;
+		}
+
+		public String getPassword() {
+			return password;
+		}
+
+		public String getReaseon() {
+			return reaseon;
+		}
+
+		public BareJID getRoomJID() {
+			return roomJID;
+		}
+
+		public String getThreadID() {
+			return threadID;
+		}
+
+		public boolean isContinueFlag() {
+			return continueFlag;
+		}
+
+		public void setContinueFlag(boolean b) {
+			this.continueFlag = b;
+		}
+
+		public void setInvitationType(Type invitationType) {
+			this.invitationType = invitationType;
+		}
+
+		public void setInviterJID(JID jidInstance) {
+			this.inviterJID = jidInstance;
+		}
+
+		public void setPassword(String value) {
+			this.password = value;
+		}
+
+		public void setReaseon(String reaseon) {
+			this.reaseon = reaseon;
+		}
+
+		public void setReason(String value) {
+			this.reaseon = value;
+		}
+
+		public void setRoomJID(BareJID from) {
+			this.roomJID = from;
+		}
+
+		public void setThreadID(String attribute) {
+			this.threadID = attribute;
+		}
+	}
 
 	public static class MucEvent extends AbstractMessageEvent {
 
@@ -133,7 +275,20 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
+	private final static Criteria DIRECT_INVITATION_CRIT = ElementCriteria.name("message").add(
+			ElementCriteria.name("x", "jabber:x:conference"));
+
+	public static final EventType InvitationDeclined = new EventType();
+
+	public static final EventType InvitationReceived = new EventType();
+
 	public static final EventType JoinRequested = new EventType();
+
+	private final static Criteria MEDIATED_INVITATION_CRIT = ElementCriteria.name("message").add(
+			ElementCriteria.name("x", "http://jabber.org/protocol/muc#user")).add(ElementCriteria.name("invite"));
+
+	private final static Criteria MEDIATED_INVITATION_DECLINED_CRIT = ElementCriteria.name("message").add(
+			ElementCriteria.name("x", "http://jabber.org/protocol/muc#user")).add(ElementCriteria.name("decline"));
 
 	public static final EventType MessageError = new EventType();
 
@@ -162,6 +317,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
 	public static final EventType YouJoined = new EventType();
+
+	private static Element getFirstChild(Element e, String name) throws XMLException {
+		List<Element> l = e.getChildren(name);
+		return l != null && !l.isEmpty() ? l.get(0) : null;
+	}
 
 	private final Criteria crit;
 
@@ -212,14 +372,39 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		final String type = element.getAttribute("type");
 
-		if (element.getName().equals("message") && type != null && type.equals("groupchat"))
+		if (element.getName().equals("message") && type != null && type.equals("groupchat")) {
 			return true;
-		if (element.getName().equals("presence")) {
+		} else if (element.getName().equals("presence")) {
 			final BareJID roomJid = BareJID.bareJIDInstance(from);
 			boolean result = this.roomsManager.contains(roomJid);
 			return result;
+		} else if (MEDIATED_INVITATION_CRIT.match(element)) {
+			return true;
+		} else if (DIRECT_INVITATION_CRIT.match(element)) {
+			return true;
+		} else if (MEDIATED_INVITATION_DECLINED_CRIT.match(element)) {
+			return true;
 		} else
 			return false;
+	}
+
+	public void declineInvitation(InvitationEvent invitation, String reasonMsg) throws JaxmppException {
+		if (invitation.getInvitationType() == Type.mediated) {
+			Message message = Message.create();
+			message.setTo(JID.jidInstance(invitation.getRoomJID()));
+
+			Element x = new DefaultElement("x", null, "http://jabber.org/protocol/muc#user");
+			message.addChild(x);
+
+			Element decline = new DefaultElement("decline");
+			x.addChild(decline);
+			if (reasonMsg != null) {
+				Element reason = new DefaultElement("reason", reasonMsg, null);
+				decline.addChild(reason);
+			}
+			writer.write(message);
+		}
+
 	}
 
 	public void enable(Room room) throws JaxmppException {
@@ -266,6 +451,56 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public Collection<Room> getRooms() {
 		return this.roomsManager.getRooms();
+	}
+
+	/**
+	 * Sends mediated invitation.
+	 * 
+	 * @param room
+	 *            MUC room
+	 * @param inviteeJID
+	 *            invitee JabberID
+	 * @param reason
+	 *            reason description
+	 */
+	public void invite(Room room, JID inviteeJID, String reason) throws JaxmppException {
+		Message message = Message.create();
+		message.setTo(JID.jidInstance(room.getRoomJid()));
+
+		Element x = message.addChild(new DefaultElement("x", null, "http://jabber.org/protocol/muc#user"));
+		Element invite = x.addChild(new DefaultElement("invite"));
+		invite.setAttribute("to", inviteeJID.toString());
+		if (reason != null) {
+			invite.addChild(new DefaultElement("reason", reason, null));
+		}
+
+		writer.write(message);
+	}
+
+	public void inviteDirectly(Room room, JID inviteeJID, String reason, String threadId) throws JaxmppException {
+		Message message = Message.create();
+		message.setTo(inviteeJID);
+
+		Element x = message.addChild(new DefaultElement("x", null, "jabber:x:conference"));
+		x.setAttribute("jid", room.getRoomJid().toString());
+
+		if (room.getPassword() != null)
+			x.setAttribute("password", room.getPassword());
+
+		if (reason != null)
+			x.setAttribute("reason", reason);
+
+		if (threadId != null) {
+			x.setAttribute("thread", threadId);
+			x.setAttribute("continue", "true");
+		}
+
+		writer.write(message);
+	}
+
+	public Room join(final InvitationEvent invitation, final String nickname) throws XMLException, JaxmppException {
+		return join(invitation.getRoomJID().getLocalpart(), invitation.getRoomJID().getDomain(), nickname,
+				invitation.getPassword());
 	}
 
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
@@ -320,7 +555,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	@Override
 	public void process(Stanza element) throws JaxmppException {
-		if (element instanceof Message)
+		if (element instanceof Message && MEDIATED_INVITATION_DECLINED_CRIT.match(element)) {
+			processInvitationDeclinedMessage((Message) element);
+		} else if (element instanceof Message && MEDIATED_INVITATION_CRIT.match(element)) {
+			processMediatedInvitationMessage((Message) element);
+		} else if (element instanceof Message && DIRECT_INVITATION_CRIT.match(element)) {
+			processDirectInvitationMessage((Message) element);
+		} else if (element instanceof Message)
 			processMessage((Message) element);
 		else if (element instanceof Presence)
 			processPresence((Presence) element);
@@ -328,10 +569,79 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			throw new RuntimeException("Stanza not handled");
 	}
 
+	protected void processDirectInvitationMessage(Message message) throws JaxmppException {
+		Element x = message.getChildrenNS("x", "jabber:x:conference");
+
+		InvitationEvent event = new InvitationEvent(InvitationReceived, sessionObject);
+		event.setInvitationType(Type.direct);
+		event.setMessage(message);
+
+		event.setInviterJID(message.getFrom());
+		event.setRoomJID(BareJID.bareJIDInstance(x.getAttribute("jid")));
+		event.setPassword(x.getAttribute("password"));
+		event.setReason(x.getAttribute("reason"));
+		event.setThreadID(x.getAttribute("thread"));
+
+		String cont = x.getAttribute("continue");
+		event.setContinueFlag(BooleanField.parse(cont));
+
+		observable.fireEvent(event);
+	}
+
+	protected void processInvitationDeclinedMessage(Message message) throws JaxmppException {
+		final BareJID roomJid = message.getFrom().getBareJid();
+		Room room = this.roomsManager.get(roomJid);
+		if (room == null)
+			return;
+
+		final Element x = message.getChildrenNS("x", "http://jabber.org/protocol/muc#user");
+		final Element decline = getFirstChild(x, "decline");
+		final Element reason = getFirstChild(decline, "reason");
+
+		InvitationDeclinedEvent event = new InvitationDeclinedEvent(sessionObject);
+		event.setMessage(message);
+		event.setRoomJID(message.getFrom());
+		event.setRoom(room);
+		if (decline.getAttribute("from") != null)
+			event.setInviteeJID(JID.jidInstance(decline.getAttribute("from")));
+		if (reason != null)
+			event.setReason(reason.getValue());
+
+		observable.fireEvent(event);
+	}
+
+	protected void processMediatedInvitationMessage(Message message) throws JaxmppException {
+		Element x = message.getChildrenNS("x", "http://jabber.org/protocol/muc#user");
+		Element invite = getFirstChild(x, "invite");
+		Element reason = getFirstChild(invite, "reason");
+		Element password = getFirstChild(x, "password");
+		String inviter = invite.getAttribute("from");
+
+		InvitationEvent event = new InvitationEvent(InvitationReceived, sessionObject);
+		event.setInvitationType(Type.mediated);
+		event.setMessage(message);
+		event.setRoomJID(message.getFrom().getBareJid());
+
+		if (inviter != null) {
+			event.setInviterJID(JID.jidInstance(inviter));
+		}
+
+		if (reason != null) {
+			event.setReason(reason.getValue());
+		}
+
+		if (password != null) {
+			event.setPassword(password.getValue());
+		}
+
+		observable.fireEvent(event);
+	}
+
 	protected void processMessage(Message element) throws JaxmppException {
 		final JID from = element.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
+
 		Room room = this.roomsManager.get(roomJid);
 		if (room == null)
 			return;
