@@ -57,6 +57,10 @@ public class FileTransfer extends ConnectionSession {
         public String getFileMimeType() {
                 return fileMimeType;
         }
+
+        public void setFileMimeType(String mimeType) {
+        		this.fileMimeType = mimeType;
+        }
         
         public Date getFileModification() {
                 return lastModified;
