@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.disco;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
@@ -40,6 +41,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -51,6 +53,8 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 		private String requestedNode;
 
+		protected Stanza responseStanza;
+
 		public DiscoInfoAsyncCallback(final String requestedNode) {
 			this.requestedNode = requestedNode;
 		}
@@ -60,6 +64,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws XMLException {
+			this.responseStanza = responseStanza;
 			Element query = responseStanza.getChildrenNS("query", "http://jabber.org/protocol/disco#info");
 			List<Element> identities = query.getChildren("identity");
 			ArrayList<Identity> idres = new ArrayList<DiscoInfoModule.Identity>();
@@ -175,6 +180,10 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	public final static EventType InfoRequested = new EventType();
 
+	public static final String SERVER_FEATURES_KEY = "SERVER_FEATURES_KEY";
+
+	public final static EventType ServerFeaturesReceived = new EventType();
+
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#info" };
 
 	private final XmppModulesManager modulesManager;
@@ -182,6 +191,46 @@ public class DiscoInfoModule extends AbstractIQModule {
 	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter, XmppModulesManager modulesManager) {
 		super(sessionObject, packetWriter);
 		this.modulesManager = modulesManager;
+	}
+
+	public void discoverServerFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {
+		final DiscoInfoAsyncCallback diac = new DiscoInfoAsyncCallback(null) {
+
+			@Override
+			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+				if (callback != null)
+					callback.onError(responseStanza, error);
+			}
+
+			@Override
+			protected void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
+					throws XMLException {
+				HashSet<String> ff = new HashSet<String>();
+				ff.addAll(features);
+				sessionObject.setProperty(SERVER_FEATURES_KEY, ff);
+
+				final DiscoInfoEvent event = new DiscoInfoEvent(ServerFeaturesReceived, sessionObject);
+				event.setFeatures(ff.toArray(new String[] {}));
+				event.setRequestStanza((IQ) this.responseStanza);
+				try {
+					observable.fireEvent(event);
+				} catch (JaxmppException e) {
+					e.printStackTrace();
+				}
+				if (callback != null)
+					callback.onInfoReceived(node, identities, features);
+			}
+
+			@Override
+			public void onTimeout() throws JaxmppException {
+				if (callback != null)
+					callback.onTimeout();
+			}
+		};
+
+		JID jid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		if (jid != null)
+			getInfo(JID.jidInstance(jid.getDomain()), null, (AsyncCallback) diac);
 	}
 
 	@Override
@@ -200,7 +249,8 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	public void getInfo(JID jid, String node, AsyncCallback callback) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
-		iq.setTo(jid);
+		if (jid != null)
+			iq.setTo(jid);
 		iq.setType(StanzaType.get);
 		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/disco#info");
 		if (node != null)
@@ -224,7 +274,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 		be.getIdentity().setType(type == null ? "pc" : type);
 
 		be.setFeatures(DiscoInfoModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
-
 	}
 
 	@Override
@@ -271,7 +320,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 	@Override
 	public void setObservable(Observable observable) {
 		super.setObservable(observable);
-		this.observable.addListener(new Listener<DiscoInfoEvent>() {
+		this.observable.addListener(InfoRequested, new Listener<DiscoInfoEvent>() {
 
 			@Override
 			public void handleEvent(DiscoInfoEvent be) {

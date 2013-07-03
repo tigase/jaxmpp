@@ -41,6 +41,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageCarbonsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
@@ -293,7 +294,10 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
 
-		this.modulesManager.register(new MessageModule(observable, sessionObject, writer));
+		MessageModule messageModule = new MessageModule(observable, sessionObject, writer);
+
+		this.modulesManager.register(new MessageCarbonsModule(sessionObject, messageModule, writer));
+		this.modulesManager.register(messageModule);
 
 		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(sessionObject, writer,
 				modulesManager));

@@ -37,14 +37,32 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule.NonSaslAuthEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 
 public class SocketXmppSessionLogic implements XmppSessionLogic {
 
+	static Throwable extractCauseException(Throwable ex) {
+		Throwable th = ex.getCause();
+		if (th == null)
+			return ex;
+
+		for (int i = 0; i < 4; i++) {
+			if (!(th instanceof JaxmppException))
+				return th;
+			if (th.getCause() == null)
+				return th;
+			th = th.getCause();
+		}
+		return ex;
+	}
+
 	private AuthModule authModule;
 
 	private final SocketConnector connector;
+
+	private final Listener<ConnectorEvent> connectorListener;
 
 	private StreamFeaturesModule featuresModule;
 
@@ -61,8 +79,6 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 	private SessionEstablishmentModule sessionEstablishmentModule;
 
 	private SessionListener sessionListener;
-
-	private final Listener<ConnectorEvent> connectorListener;
 
 	private final SessionObject sessionObject;
 
@@ -130,29 +146,6 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		};
 	}
 
-	protected void processConnectorEvents(ConnectorEvent be) throws JaxmppException {
-		if (be.getType() == Connector.Error && be.getCaught() != null) {
-			Throwable e1 = extractCauseException(be.getCaught());
-			JaxmppException e = (JaxmppException) (e1 instanceof JaxmppException ? e1 : new JaxmppException(e1));
-			processException(e);
-		}
-	}
-
-	static Throwable extractCauseException(Throwable ex) {
-		Throwable th = ex.getCause();
-		if (th == null)
-			return ex;
-
-		for (int i = 0; i < 4; i++) {
-			if (!(th instanceof JaxmppException))
-				return th;
-			if (th.getCause() == null)
-				return th;
-			th = th.getCause();
-		}
-		return ex;
-	}
-
 	@Override
 	public void beforeStart() throws JaxmppException {
 		if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) == null
@@ -163,6 +156,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			sessionObject.setProperty(SessionObject.DOMAIN_NAME,
 					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
+	}
+
+	protected void processConnectorEvents(ConnectorEvent be) throws JaxmppException {
+		if (be.getType() == Connector.Error && be.getCaught() != null) {
+			Throwable e1 = extractCauseException(be.getCaught());
+			JaxmppException e = (JaxmppException) (e1 instanceof JaxmppException ? e1 : new JaxmppException(e1));
+			processException(e);
+		}
 	}
 
 	protected void processException(JaxmppException e) throws JaxmppException {
@@ -221,6 +222,11 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private void sessionBindedAndEstablished() throws JaxmppException {
 		try {
+			DiscoInfoModule discoInfo = this.modulesManager.getModule(DiscoInfoModule.class);
+			if (discoInfo != null) {
+				discoInfo.discoverServerFeatures(null);
+			}
+
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
 			if (roster != null) {
 				roster.rosterRequest();

@@ -33,6 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule.NonSaslAuthEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 
@@ -131,6 +132,11 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
 		try {
+			DiscoInfoModule discoInfo = this.modulesManager.getModule(DiscoInfoModule.class);
+			if (discoInfo != null) {
+				discoInfo.discoverServerFeatures(null);
+			}
+
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
 			if (roster != null) {
 				roster.rosterRequest();

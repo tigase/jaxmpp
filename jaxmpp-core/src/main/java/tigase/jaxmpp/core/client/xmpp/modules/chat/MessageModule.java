@@ -141,8 +141,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		@Override
 		public boolean match(Element element) throws XMLException {
 			final String type = element.getAttribute("type");
-			if ("message".equals(element.getName()) && (type == null || !type.equals("groupchat")))
-				return true;
+			if ("message".equals(element.getName()) && (type == null || !type.equals("groupchat"))) {
+				List<Element> l = element.getChildrenNS(MessageCarbonsModule.XMLNS_MC);
+				return l == null || l.isEmpty();
+			}
 			return false;
 		}
 	};
@@ -211,6 +213,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		return null;
 	}
 
+	Observable getObservable() {
+		return observable;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -226,7 +232,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	}
 
 	/**
-	 * Sends message. It don't creates chat object.
+	 * Sends message. It does not create chat object.
 	 * 
 	 * @param toJID
 	 *            recipient's JID

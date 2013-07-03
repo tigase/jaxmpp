@@ -106,22 +106,21 @@ public abstract class AbstractChatManager {
 		return false;
 	}
 
-	public Chat process(Message message, Observable observable) throws JaxmppException {
+	public Chat process(Message message, JID interlocutorJid, Observable observable) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
 			return null;
-		final JID fromJid = message.getFrom();
 		final String threadId = message.getThread();
 
-		Chat chat = getChat(fromJid, threadId);
+		Chat chat = getChat(interlocutorJid, threadId);
 
 		if (chat == null && message.getBody() == null) {
 			return null;
 		}
 
 		if (chat == null) {
-			chat = createChatInstance(fromJid, threadId);
-			chat.setJid(fromJid);
+			chat = createChatInstance(interlocutorJid, threadId);
+			chat.setJid(interlocutorJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);
 			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated, sessionObject);
@@ -130,10 +129,15 @@ public abstract class AbstractChatManager {
 
 			observable.fireEvent(event.getType(), event);
 		} else {
-			update(chat, fromJid, threadId);
+			update(chat, interlocutorJid, threadId);
 		}
 
 		return chat;
+	}
+
+	public Chat process(Message message, Observable observable) throws JaxmppException {
+		final JID interlocutorJid = message.getFrom();
+		return process(message, interlocutorJid, observable);
 	}
 
 	void setObservable(Observable observable) {
