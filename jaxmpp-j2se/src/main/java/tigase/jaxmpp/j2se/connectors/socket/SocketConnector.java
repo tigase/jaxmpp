@@ -251,7 +251,7 @@ public class SocketConnector implements Connector {
 	 */
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 
-	private final Timer timer = new Timer(true);
+	private Timer timer;
 
 	private Worker worker;
 
@@ -607,6 +607,13 @@ public class SocketConnector implements Connector {
 	public void start() throws XMLException, JaxmppException {
 		preventAgainstFireErrors = false;
 		log.fine("Start connector.");
+		if (timer != null) {
+			try {
+				timer.cancel();
+			} catch (Exception e) {
+			}
+		}
+		timer = new Timer(true);
 
 		if (sessionObject.getProperty(TRUST_MANAGERS_KEY) == null)
 			sessionObject.setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
@@ -738,6 +745,14 @@ public class SocketConnector implements Connector {
 				worker.interrupt();
 		} catch (Exception e) {
 			log.log(Level.FINEST, "Problem with interrupting w2", e);
+		}
+		try {
+			if (timer != null)
+				timer.cancel();
+		} catch (Exception e) {
+			log.log(Level.FINEST, "Problem with canceling timer", e);
+		} finally {
+			timer = null;
 		}
 	}
 
