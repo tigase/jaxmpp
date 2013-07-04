@@ -208,17 +208,17 @@ public class SocketConnector implements Connector {
 	}
 
 	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
-	
+
 	/**
 	 * Default size of buffer used to decode data before parsing
 	 */
 	private final static int DEFAULT_SOCKET_BUFFER_SIZE = 2048;
-	
+
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
-	
+
 	/**
 	 * see-other-host
 	 */
@@ -247,28 +247,29 @@ public class SocketConnector implements Connector {
 	}
 
 	/**
-	 * Returns true if server send stream features in which it advertises support for
-	 * stream compression using ZLIB
+	 * Returns true if server send stream features in which it advertises
+	 * support for stream compression using ZLIB
+	 * 
 	 * @param sessionObject
 	 * @return
-	 * @throws XMLException 
+	 * @throws XMLException
 	 */
 	public static boolean isZLibAvailable(SessionObject sessionObject) throws XMLException {
 		final Element sf = sessionObject.getStreamFeatures();
 		if (sf == null)
 			return false;
 		Element m = sf.getChildrenNS("compression", "http://jabber.org/features/compress");
-		if (m == null) 
+		if (m == null)
 			return false;
-		
+
 		for (Element method : m.getChildren("method")) {
 			if ("zlib".equals(method.getValue()))
 				return true;
 		}
-		
-		return false;		
+
+		return false;
 	}
-	
+
 	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
 		@Override
@@ -304,7 +305,7 @@ public class SocketConnector implements Connector {
 	 */
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 
-	private final Timer timer = new Timer(true);
+	private Timer timer;
 
 	private Worker worker;
 
@@ -396,13 +397,14 @@ public class SocketConnector implements Connector {
 
 	/**
 	 * Returns true when stream is compressed
-	 * @return 
+	 * 
+	 * @return
 	 */
 	@Override
 	public boolean isCompressed() {
 		return ((Boolean) sessionObject.getProperty(COMPRESSED_KEY)) == Boolean.TRUE;
 	}
-	
+
 	@Override
 	public boolean isSecure() {
 		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
@@ -471,11 +473,12 @@ public class SocketConnector implements Connector {
 			log.info("TLS Failure");
 		}
 	}
-	
+
 	/**
 	 * Handles result of requesting stream compression
+	 * 
 	 * @param elem
-	 * @throws JaxmppException 
+	 * @throws JaxmppException
 	 */
 	public void onZLibStanza(tigase.xml.Element elem) throws JaxmppException {
 		if (elem.getName().equals("compressed") && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
@@ -557,17 +560,18 @@ public class SocketConnector implements Connector {
 	/**
 	 * Method activates stream compression by replacing reader and writer fields
 	 * values and restarting XMPP stream
-	 * @throws JaxmppException 
+	 * 
+	 * @throws JaxmppException
 	 */
 	protected void proceedZLib() throws JaxmppException {
 		log.fine("Proceeding ZLIB");
 		try {
 			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
-			
+
 			writer = null;
 			reader = null;
 			log.fine("Start ZLIB compression");
-			
+
 			Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION, false);
 			try {
 				// on Android platform Deflater has field named flushParm which
@@ -575,7 +579,7 @@ public class SocketConnector implements Connector {
 				Field f = compressor.getClass().getDeclaredField("flushParm");
 				if (f != null) {
 					f.setAccessible(true);
-					f.setInt(compressor, 2); // Z_SYNC_FLUSH			
+					f.setInt(compressor, 2); // Z_SYNC_FLUSH
 					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
 				}
 			} catch (NoSuchFieldException ex) {
@@ -583,22 +587,22 @@ public class SocketConnector implements Connector {
 					@Override
 					public void write(byte[] data) throws IOException {
 						super.write(data);
-						super.write(EMPTY_BYTEARRAY);						
+						super.write(EMPTY_BYTEARRAY);
 						super.def.setLevel(Deflater.NO_COMPRESSION);
 						super.deflate();
 						super.def.setLevel(Deflater.BEST_COMPRESSION);
 						super.deflate();
 					}
-				};				
+				};
 			}
-			
-			Inflater decompressor = new Inflater(false);			
+
+			Inflater decompressor = new Inflater(false);
 			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
 			reader = new Reader(is);
-			
+
 			sessionObject.setProperty(SocketConnector.COMPRESSED_KEY, true);
 			log.info("ZLIB compression started");
-			
+
 			restartStream();
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Can't establish compressed connection", e);
@@ -612,9 +616,9 @@ public class SocketConnector implements Connector {
 		if (log.isLoggable(Level.FINEST))
 			log.finest("RECV: " + elem.toString());
 		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
-				onTLSStanza(elem);
+			onTLSStanza(elem);
 		} else if (elem != null && elem.getXMLNS() != null && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
-				onZLibStanza(elem);
+			onZLibStanza(elem);
 		} else
 			try {
 				onResponse(new J2seElement(elem));
@@ -743,6 +747,13 @@ public class SocketConnector implements Connector {
 	public void start() throws XMLException, JaxmppException {
 		preventAgainstFireErrors = false;
 		log.fine("Start connector.");
+		if (timer != null) {
+			try {
+				timer.cancel();
+			} catch (Exception e) {
+			}
+		}
+		timer = new Timer(true);
 
 		if (sessionObject.getProperty(TRUST_MANAGERS_KEY) == null)
 			sessionObject.setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
@@ -843,7 +854,8 @@ public class SocketConnector implements Connector {
 
 	/**
 	 * Sends <compress/> stanza to start stream compression using ZLIB
-	 * @throws JaxmppException 
+	 * 
+	 * @throws JaxmppException
 	 */
 	public void startZLib() throws JaxmppException {
 		if (writer != null)
@@ -854,9 +866,9 @@ public class SocketConnector implements Connector {
 				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);
-			}		
+			}
 	}
-	
+
 	@Override
 	public void stop() throws JaxmppException {
 		stop(false);
@@ -891,6 +903,14 @@ public class SocketConnector implements Connector {
 		} catch (Exception e) {
 			log.log(Level.FINEST, "Problem with interrupting w2", e);
 		}
+		try {
+			if (timer != null)
+				timer.cancel();
+		} catch (Exception e) {
+			log.log(Level.FINEST, "Problem with canceling timer", e);
+		} finally {
+			timer = null;
+		}
 	}
 
 	private void terminateStream() throws JaxmppException {
@@ -923,62 +943,62 @@ public class SocketConnector implements Connector {
 	}
 
 	/**
-	 * New Reader class replaces standard InputStreamReader as it cannot read from
-	 * InflaterInputStream.
+	 * New Reader class replaces standard InputStreamReader as it cannot read
+	 * from InflaterInputStream.
 	 */
 	private class Reader {
-		
+
 		private final InputStream inputStream;
 
 		private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-		
+
 		private final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
-		
+
 		public Reader(InputStream inputStream) {
 			this.inputStream = inputStream;
 		}
 
 		public int read(char[] cbuf) throws IOException {
 			byte[] arr = buf.array();
-			int read = inputStream.read(arr, 0, arr.length);			
+			int read = inputStream.read(arr, 0, arr.length);
 			buf.position(read);
-			buf.flip();			
-			
+			buf.flip();
+
 			CharBuffer cb = CharBuffer.wrap(cbuf);
 			decoder.decode(buf, cb, false);
-			buf.clear();						
+			buf.clear();
 			cb.flip();
-			
+
 			return cb.remaining();
 		}
 
-		// Below are alternative read methods which can be used if above method 
+		// Below are alternative read methods which can be used if above method
 		// will be causing performance issues
-//		public int read3(char[] cbuf) throws IOException {
-//			byte[] arr = new byte[2048];
-//			int read = inputStream.read(arr, 0, arr.length);			
-//			
-//			CharBuffer cb = CharBuffer.wrap(cbuf);
-//			decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);			
-//			cb.flip();
-//			
-//			return cb.remaining();
-//		}
-//		
-//		public int read2(char[] cbuf) throws IOException {
-//			byte[] arr = new byte[2048];
-//			int read = inputStream.read(arr, 0, arr.length);			
-//			
-//			CharBuffer cb = CharBuffer.allocate(2048);
-//			decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
-//			cb.flip();
-//			
-//			int got = cb.remaining();
-//			cb.get(cbuf, 0, got);
-//			
-//			return got;
-//		}
-		
+		// public int read3(char[] cbuf) throws IOException {
+		// byte[] arr = new byte[2048];
+		// int read = inputStream.read(arr, 0, arr.length);
+		//
+		// CharBuffer cb = CharBuffer.wrap(cbuf);
+		// decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
+		// cb.flip();
+		//
+		// return cb.remaining();
+		// }
+		//
+		// public int read2(char[] cbuf) throws IOException {
+		// byte[] arr = new byte[2048];
+		// int read = inputStream.read(arr, 0, arr.length);
+		//
+		// CharBuffer cb = CharBuffer.allocate(2048);
+		// decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
+		// cb.flip();
+		//
+		// int got = cb.remaining();
+		// cb.get(cbuf, 0, got);
+		//
+		// return got;
+		// }
+
 	}
-	
+
 }
