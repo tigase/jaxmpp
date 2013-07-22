@@ -34,7 +34,6 @@ import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -45,6 +44,8 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
 import tigase.jaxmpp.gwt.client.GwtSessionObject.RestoringSessionException;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
+import tigase.jaxmpp.gwt.client.connectors.WebSocket;
+import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -53,8 +54,6 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Cookies;
-import tigase.jaxmpp.gwt.client.connectors.WebSocket;
-import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
 
 public class Jaxmpp extends JaxmppCore {
 
@@ -199,18 +198,18 @@ public class Jaxmpp extends JaxmppCore {
 		return writer;
 	}
 
-        protected Connector createConnector() {
-                String url = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
-                if (url.startsWith("ws:")) {                        
-                        if (!WebSocket.isSupported()) {
-                                throw new RuntimeException("WebSocket protocol is not supported by browser");
-                        }
-                        return new WebSocketConnector(this.observable, this.sessionObject);
-                }
+	protected Connector createConnector() {
+		String url = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
+		if (url.startsWith("ws:")) {
+			if (!WebSocket.isSupported()) {
+				throw new RuntimeException("WebSocket protocol is not supported by browser");
+			}
+			return new WebSocketConnector(this.observable, this.sessionObject);
+		}
 
-                return new BoshConnector(observable, this.sessionObject);
-        }
-        
+		return new BoshConnector(observable, this.sessionObject);
+	}
+
 	private void intLogin() throws JaxmppException {
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
@@ -266,8 +265,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onStanzaReceived(Element stanza) {
-		final Runnable r = this.processor.process(stanza);
+	public void execute(final Runnable r) {
 		if (r != null)
 			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 

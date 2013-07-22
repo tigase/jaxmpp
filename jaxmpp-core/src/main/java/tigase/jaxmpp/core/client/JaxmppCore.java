@@ -28,6 +28,7 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
@@ -52,6 +53,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.vcard.VCardModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
@@ -103,6 +106,8 @@ public abstract class JaxmppCore {
 
 	public static final EventType Disconnected = new EventType();
 
+	private StreamManagementModule ackModule;
+
 	protected Connector connector;
 
 	protected final Logger log;
@@ -124,6 +129,8 @@ public abstract class JaxmppCore {
 	protected final Listener<ConnectorEvent> streamErrorListener;
 
 	protected final Listener<ConnectorEvent> streamTerminateListener;
+
+	protected final Listener<UnacknowledgedEvent> unacknowledgedListener;
 
 	protected final PacketWriter writer = new PacketWriter() {
 
@@ -198,7 +205,32 @@ public abstract class JaxmppCore {
 					onStanzaReceived(be.getStanza());
 			}
 		};
+		this.unacknowledgedListener = new Listener<UnacknowledgedEvent>() {
 
+			@Override
+			public void handleEvent(UnacknowledgedEvent be) throws JaxmppException {
+				for (Element e : be.getElements()) {
+					if (e == null)
+						continue;
+					String to = e.getAttribute("to");
+					String from = e.getAttribute("from");
+
+					e.setAttribute("type", "error");
+					e.setAttribute("to", from);
+					e.setAttribute("from", to);
+
+					Element error = new DefaultElement("error");
+					error.setAttribute("type", "wait");
+					error.addChild(new DefaultElement("recipient-unavailable", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
+
+					e.addChild(error);
+
+					final Runnable r = processor.process(e);
+					if (r != null)
+						execute(r);
+				}
+			}
+		};
 	}
 
 	public void addListener(EventType eventType, Listener<?> listener) {
@@ -214,6 +246,8 @@ public abstract class JaxmppCore {
 	}
 
 	public abstract void disconnect() throws JaxmppException;
+
+	public abstract void execute(Runnable runnable);
 
 	/**
 	 * Returns configurator.
@@ -285,6 +319,9 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
+		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, observable, sessionObject, writer));
+		ackModule.addListener(StreamManagementModule.Unacknowledged, this.unacknowledgedListener);
+
 		final AuthModule authModule = this.modulesManager.register(new AuthModule(observable, this.sessionObject,
 				this.modulesManager));
 
@@ -329,7 +366,16 @@ public abstract class JaxmppCore {
 
 	protected abstract void onResourceBinded(ResourceBindEvent be) throws JaxmppException;
 
-	protected abstract void onStanzaReceived(Element stanza) throws JaxmppException;
+	protected void onStanzaReceived(Element stanza) {
+		final Runnable r = this.processor.process(stanza);
+		try {
+			if (ackModule.processIncomingStanza(stanza))
+				return;
+		} catch (XMLException e) {
+			log.log(Level.WARNING, "Problem on counting", e);
+		}
+		execute(r);
+	}
 
 	protected abstract void onStreamError(ConnectorEvent be) throws JaxmppException;
 

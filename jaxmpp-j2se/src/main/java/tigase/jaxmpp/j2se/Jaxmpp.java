@@ -32,7 +32,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.observer.ObservableFactory.FactorySpi;
-import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
@@ -73,7 +72,7 @@ public class Jaxmpp extends JaxmppCore {
 	private static final Executor DEFAULT_EXECUTOR = new Executor() {
 
 		@Override
-		public void execute(Runnable command) {
+		public synchronized void execute(Runnable command) {
 			(new Thread(command)).start();
 		}
 	};
@@ -103,7 +102,7 @@ public class Jaxmpp extends JaxmppCore {
 	private Executor executor;
 
 	private FileTransferManager fileTransferManager;
-	
+
 	private TimerTask loginTimeoutTask;
 
 	private final Timer timer = new Timer(true);
@@ -174,6 +173,12 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	}
 
+	@Override
+	public void execute(Runnable runnable) {
+		if (runnable != null)
+			executor.execute(runnable);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -185,6 +190,29 @@ public class Jaxmpp extends JaxmppCore {
 
 	public Executor getExecutor() {
 		return executor;
+	}
+
+	public FileTransferManager getFileTransferManager() {
+		return fileTransferManager;
+	}
+
+	public void initFileTransferManager(boolean experimental) throws JaxmppException {
+		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+		if (capsModule != null && capsModule.getCache() == null) {
+			capsModule.setCache(new J2SECapabiliesCache());
+		}
+
+		fileTransferManager = new FileTransferManager();
+		fileTransferManager.setObservable(observable);
+		fileTransferManager.setJaxmpp(this);
+
+		getModulesManager().register(new FileTransferModule(sessionObject));
+		getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
+		if (experimental) {
+			getModulesManager().register(new JingleModule(sessionObject));
+			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+		}
+		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
 
 	@Override
@@ -305,16 +333,8 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	protected void onStanzaReceived(Element stanza) {
-		Runnable r = this.processor.process(stanza);
-		if (r != null)
-			executor.execute(r);
-	}
-
-	@Override
 	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
@@ -345,27 +365,4 @@ public class Jaxmpp extends JaxmppCore {
 			this.executor = executor;
 	}
 
-	public void initFileTransferManager(boolean experimental) throws JaxmppException {
-			CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-			if (capsModule != null && capsModule.getCache() == null) {
-					capsModule.setCache(new J2SECapabiliesCache());
-			}
-		
-			fileTransferManager = new FileTransferManager();
-			fileTransferManager.setObservable(observable);
-			fileTransferManager.setJaxmpp(this);
-			
-			getModulesManager().register(new FileTransferModule(sessionObject));
-			getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
-			if (experimental) {
-				getModulesManager().register(new JingleModule(sessionObject));
-				fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-			}
-			fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-	}
-	
-	public FileTransferManager getFileTransferManager() {
-			return fileTransferManager;
-	}
-	
 }

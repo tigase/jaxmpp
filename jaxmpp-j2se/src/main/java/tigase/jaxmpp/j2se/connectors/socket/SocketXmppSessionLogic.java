@@ -40,6 +40,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 
 public class SocketXmppSessionLogic implements XmppSessionLogic {
 
@@ -235,6 +236,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
 			if (presence != null) {
 				presence.sendInitialPresence();
+			}
+
+			if (StreamManagementModule.isStreamManagementAvailable(sessionObject)) {
+				if (sessionObject.getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
+						|| !((Boolean) sessionObject.getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
+					StreamManagementModule streamManagement = this.modulesManager.getModule(StreamManagementModule.class);
+					streamManagement.enable();
+				}
 			}
 		} catch (XMLException e) {
 			e.printStackTrace();

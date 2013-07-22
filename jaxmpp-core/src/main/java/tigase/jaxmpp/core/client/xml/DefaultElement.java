@@ -76,8 +76,9 @@ public class DefaultElement implements Element {
 	@Override
 	public Element addChild(Element child) throws XMLException {
 		child.setParent(this);
-		children.add(child);
-
+		synchronized (children) {
+			children.add(child);
+		}
 		return child;
 	}
 
@@ -101,29 +102,31 @@ public class DefaultElement implements Element {
 			builder.append('"');
 		}
 
-		for (Map.Entry<String, String> attr : attributes.entrySet()) {
-			builder.append(' ');
-			builder.append(attr.getKey());
-			builder.append("=\"");
-			builder.append(EscapeUtils.escape(attr.getValue()));
-			builder.append('"');
+		synchronized (attributes) {
+			for (Map.Entry<String, String> attr : attributes.entrySet()) {
+				builder.append(' ');
+				builder.append(attr.getKey());
+				builder.append("=\"");
+				builder.append(EscapeUtils.escape(attr.getValue()));
+				builder.append('"');
+			}
 		}
-
-		if (children.isEmpty() && value == null) {
-			builder.append('/');
-		}
-		builder.append('>');
-		for (Element element : children) {
-			builder.append(element.getAsString());
-		}
-		if (value != null)
-			builder.append(EscapeUtils.escape(value));
-		if (!(children.isEmpty() && value == null)) {
-			builder.append("</");
-			builder.append(name);
+		synchronized (children) {
+			if (children.isEmpty() && value == null) {
+				builder.append('/');
+			}
 			builder.append('>');
+			for (Element element : children) {
+				builder.append(element.getAsString());
+			}
+			if (value != null)
+				builder.append(EscapeUtils.escape(value));
+			if (!(children.isEmpty() && value == null)) {
+				builder.append("</");
+				builder.append(name);
+				builder.append('>');
+			}
 		}
-
 		return builder.toString();
 	}
 
@@ -132,7 +135,9 @@ public class DefaultElement implements Element {
 		if (attName.equals("xmlns"))
 			return getXMLNS();
 		else
-			return attributes.get(attName);
+			synchronized (attributes) {
+				return attributes.get(attName);
+			}
 	}
 
 	@Override
@@ -142,13 +147,15 @@ public class DefaultElement implements Element {
 
 	@Override
 	public Element getChildAfter(Element child) throws XMLException {
-		int index = children.indexOf(child);
+		synchronized (children) {
+			int index = children.indexOf(child);
 
-		if (index == -1) {
-			throw new XMLException("Element not part of tree");
+			if (index == -1) {
+				throw new XMLException("Element not part of tree");
+			}
+
+			return children.get(index + 1);
 		}
-
-		return children.get(index + 1);
 	}
 
 	@Override
@@ -160,9 +167,11 @@ public class DefaultElement implements Element {
 	public List<Element> getChildren(String name) throws XMLException {
 		List<Element> retval = new LinkedList<Element>();
 
-		for (Element element : children) {
-			if (element.getName().equals(name)) {
-				retval.add(element);
+		synchronized (children) {
+			for (Element element : children) {
+				if (element.getName().equals(name)) {
+					retval.add(element);
+				}
 			}
 		}
 
@@ -173,10 +182,12 @@ public class DefaultElement implements Element {
 	public List<Element> getChildrenNS(String xmlns) throws XMLException {
 		List<Element> retval = new LinkedList<Element>();
 
-		for (Element element : children) {
-			String x = element.getXMLNS();
-			if (x != null && x.equals(xmlns)) {
-				retval.add(element);
+		synchronized (children) {
+			for (Element element : children) {
+				String x = element.getXMLNS();
+				if (x != null && x.equals(xmlns)) {
+					retval.add(element);
+				}
 			}
 		}
 
@@ -185,9 +196,11 @@ public class DefaultElement implements Element {
 
 	@Override
 	public Element getChildrenNS(String name, String xmlns) throws XMLException {
-		for (Element element : children) {
-			if (element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
-				return element;
+		synchronized (children) {
+			for (Element element : children) {
+				if (element.getName().equals(name) && element.getXMLNS().equals(xmlns)) {
+					return element;
+				}
 			}
 		}
 		return null;
@@ -195,10 +208,12 @@ public class DefaultElement implements Element {
 
 	@Override
 	public Element getFirstChild() throws XMLException {
-		if (!children.isEmpty())
-			return children.getFirst();
-		else
-			return null;
+		synchronized (children) {
+			if (!children.isEmpty())
+				return children.getFirst();
+			else
+				return null;
+		}
 	}
 
 	@Override
@@ -240,26 +255,34 @@ public class DefaultElement implements Element {
 
 	@Override
 	public void removeAttribute(String key) throws XMLException {
-		attributes.remove(key);
+		synchronized (attributes) {
+			attributes.remove(key);
+		}
 	}
 
 	@Override
 	public void removeChild(Element child) throws XMLException {
-		children.remove(child);
+		synchronized (children) {
+			children.remove(child);
+		}
 	}
 
 	@Override
 	public void setAttribute(String key, String value) throws XMLException {
 		if (key == null || value == null)
 			return;
-		attributes.put(key, value);
+		synchronized (attributes) {
+			attributes.put(key, value);
+		}
 	}
 
 	@Override
 	public void setAttributes(Map<String, String> attrs) throws XMLException {
 		if (attrs == null)
 			return;
-		attributes.putAll(attrs);
+		synchronized (attributes) {
+			attributes.putAll(attrs);
+		}
 	}
 
 	@Override
@@ -274,8 +297,10 @@ public class DefaultElement implements Element {
 
 	@Override
 	public void setValue(String value) throws XMLException {
-		if (!children.isEmpty()) {
-			throw new XMLException("Unsupported mixed Element with children and value");
+		synchronized (children) {
+			if (!children.isEmpty()) {
+				throw new XMLException("Unsupported mixed Element with children and value");
+			}
 		}
 		this.value = value;
 	}
