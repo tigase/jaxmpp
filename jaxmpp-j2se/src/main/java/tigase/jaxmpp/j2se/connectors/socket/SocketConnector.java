@@ -17,9 +17,11 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -27,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -37,6 +40,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
@@ -583,17 +587,36 @@ public class SocketConnector implements Connector {
 					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
 				}
 			} catch (NoSuchFieldException ex) {
-				writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
-					@Override
-					public void write(byte[] data) throws IOException {
-						super.write(data);
-						super.write(EMPTY_BYTEARRAY);
-						super.def.setLevel(Deflater.NO_COMPRESSION);
-						super.deflate();
-						super.def.setLevel(Deflater.BEST_COMPRESSION);
-						super.deflate();
-					}
-				};
+				
+				// if we do not have field we are on standard Java VM
+				try {
+					// try to create flushable DeflaterOutputStream but it exists 
+					// only on Java 7 so we access it using reflection for compatibility
+					Constructor<DeflaterOutputStream> flushable = 
+							DeflaterOutputStream.class.getConstructor(OutputStream.class, 
+							Deflater.class, boolean.class);
+					
+					// we need wrap DeflaterOutputStream to flush it every time we are
+					// writing to it
+					writer = new OutputStreamFlushWrap(
+							flushable.newInstance(socket.getOutputStream(), compressor, true));
+					
+				}
+				catch (NoSuchMethodException ex1) {
+					// if we do not find constructor from Java 7 we use flushing
+					// algorithm which was working fine on Java 6
+					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
+						@Override
+						public void write(byte[] data) throws IOException {
+							super.write(data);
+							super.write(EMPTY_BYTEARRAY);
+							super.def.setLevel(Deflater.NO_COMPRESSION);
+							super.deflate();
+							super.def.setLevel(Deflater.BEST_COMPRESSION);
+							super.deflate();
+						}
+					};					
+				}
 			}
 
 			Inflater decompressor = new Inflater(false);
@@ -948,28 +971,54 @@ public class SocketConnector implements Connector {
 	 */
 	private class Reader {
 
-		private final InputStream inputStream;
+		protected final InputStream inputStream;
 
 		private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
 
-		private final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
+		protected final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
 
 		public Reader(InputStream inputStream) {
 			this.inputStream = inputStream;
+			buf.flip();
 		}
 
-		public int read(char[] cbuf) throws IOException {
+		/**
+		 * Method used to fill buffer with data read from InputStream
+		 * 
+		 * @throws IOException 
+		 */
+		protected void fill() throws IOException {
 			byte[] arr = buf.array();
-			int read = inputStream.read(arr, 0, arr.length);
-			buf.position(read);
-			buf.flip();
 
-			CharBuffer cb = CharBuffer.wrap(cbuf);
-			decoder.decode(buf, cb, false);
-			buf.clear();
-			cb.flip();
-
+			int read = inputStream.read(arr, buf.position(), arr.length - buf.position());
+			buf.position(buf.position() + read);
+			buf.flip();			
+		}
+		
+		/**
+		 * Method used to read data from InputStream to passed char array
+		 * 
+		 * @param cbuf
+		 * @return
+		 * @throws IOException 
+		 */
+		public int read(char[] cbuf) throws IOException {
+			if (!buf.hasRemaining()) {
+				buf.compact();
+				fill();				
+			}
+			
+			CharBuffer cb = decode(buf, cbuf);
+						
 			return cb.remaining();
+		}
+		
+		protected CharBuffer decode(ByteBuffer buf, char[] cbuf) {
+			CharBuffer cb = CharBuffer.wrap(cbuf);
+			CoderResult result = decoder.decode(buf, cb, false);
+			
+			cb.flip();
+			return cb;
 		}
 
 		// Below are alternative read methods which can be used if above method
@@ -1001,4 +1050,112 @@ public class SocketConnector implements Connector {
 
 	}
 
+	// below is alternative way to decompress data using custom reader instead
+	// of InflaterInputStream
+	/* 
+	private class InflaterReader extends Reader {
+		
+		private final Inflater inflater;
+		private final byte[] decompress_output = new byte[DEFAULT_SOCKET_BUFFER_SIZE];
+		
+		private final byte[] tmp = new byte[2048];
+		
+		public InflaterReader(InputStream is, Inflater inflater) {
+			super(new BufferedInputStream(is));
+			this.inflater = inflater;
+		}
+		
+		@Override
+		public int read(char[] cbuf) throws IOException {			
+			int decompressed_size = 0;
+
+			System.out.println("needsInput1 = " + inflater.needsInput() + " remaining = " + inflater.getRemaining());
+			if (inflater.needsInput()) {				
+				buf.compact();
+				fill();
+
+				System.out.println("decompressing offset = " + buf.arrayOffset() + ", len = " + buf.remaining());
+				int size = Math.min(buf.remaining(), tmp.length);
+				buf.get(tmp, 0, size);
+				//buf.remaining()
+				inflater.setInput(tmp, 0, size);
+			}
+
+			int tmp_decompressed_size = 1;
+			System.out.println("needsInput2 = " + inflater.needsInput());
+			while (!inflater.needsInput() && (tmp_decompressed_size > 0)) {
+				try {
+					tmp_decompressed_size = inflater.inflate(decompress_output, decompressed_size, decompress_output.length - decompressed_size);
+					
+					System.out.println("decompressed = " + tmp_decompressed_size);
+					decompressed_size += tmp_decompressed_size;
+				} catch (DataFormatException ex) {
+					log.log(Level.INFO, "Stream decompression error: ", ex);
+					inflater.reset();
+				}
+			}			
+			System.out.println("need dict = " + inflater.needsDictionary() + ", " + inflater.finished());
+			System.out.println("decompressed size = " + decompressed_size);
+			System.out.println("remaining to decompress " + inflater.getRemaining());
+			if (decompressed_size == 0) {
+				return 0;
+			}
+			
+			ByteBuffer decodedBuf = ByteBuffer.wrap(decompress_output);
+			decodedBuf.position(decompressed_size);
+			decodedBuf.flip();
+			
+			CharBuffer cb = decode(decodedBuf, cbuf);
+			
+			System.out.println("remaining = " + decodedBuf.remaining());
+			
+			System.out.println("read " + cb.remaining() + " = " + cb.toString());
+			
+			return cb.remaining();
+		}
+		
+	}
+	*/
+	
+	/**
+	 * OutputStreamFlushWrap class is wrapper class used to wrap DeflaterOutputStream
+	 * to force flushing every time data is written to output stream
+	 */
+	private class OutputStreamFlushWrap extends OutputStream {
+
+		private final OutputStream outputStream;
+		
+		public OutputStreamFlushWrap(OutputStream outputStream) {
+			this.outputStream = outputStream;
+		}
+		
+		@Override
+		public void write(byte[] b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();			
+		}
+		
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			outputStream.write(b, off, len);
+			outputStream.flush();
+		}
+		
+		@Override
+		public void write(int b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();
+		}
+
+		@Override
+		public void flush() throws IOException {
+			outputStream.flush();
+		}
+
+		@Override
+		public void close() throws IOException {
+			outputStream.close();
+		}
+		
+	}
 }
