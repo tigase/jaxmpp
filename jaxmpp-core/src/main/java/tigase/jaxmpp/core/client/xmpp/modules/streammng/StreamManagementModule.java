@@ -296,8 +296,12 @@ public class StreamManagementModule implements XmppModule {
 			if (oldH > newH) {
 				ArrayList<Element> notSentElements = new ArrayList<Element>();
 				synchronized (this.outgoingQueue) {
-					for (int i = 0; i < oldH - newH; i++)
-						notSentElements.add(0, this.outgoingQueue.pollLast());
+					for (int i = 0; i < oldH - newH; i++) {
+						if (!outgoingQueue.isEmpty()) {
+							Element ee = this.outgoingQueue.removeLast();
+							notSentElements.add(0, ee);
+						}
+					}
 					this.outgoingQueue.clear();
 				}
 				UnacknowledgedEvent event = new UnacknowledgedEvent(sessionObject);
