@@ -27,6 +27,7 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -115,7 +116,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.observable = ObservableFactory.instance(parentObservable);
 		this.log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
-		sessionObject.setProperty(DEFAULT_TIMEOUT_KEY, "30");
+		sessionObject.setProperty(Scope.stream, DEFAULT_TIMEOUT_KEY, "30");
 	}
 
 	@Override
@@ -214,20 +215,21 @@ public abstract class AbstractBoshConnector implements Connector {
 		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 	}
 
+	/**
+	 * Returns true when stream is compressed
+	 * 
+	 * @return
+	 */
+	@Override
+	public boolean isCompressed() {
+		return false;
+	}
+
 	@Override
 	public boolean isSecure() {
 		return false;
 	}
 
-	/**
-	 * Returns true when stream is compressed
-	 * @return 
-	 */	
-	@Override
-	public boolean isCompressed() {
-		return false;
-	}
-	
 	@Override
 	public void keepalive() throws JaxmppException {
 		if (getState() == State.connected) {
@@ -422,7 +424,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void setStage(State state) throws JaxmppException {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
-		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
+		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			ConnectorEvent e = new ConnectorEvent(StateChanged, sessionObject);
 			observable.fireEvent(e);

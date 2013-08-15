@@ -21,6 +21,7 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -131,7 +132,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	}
 
 	protected void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure with condition: " + error);
 		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
 		event.setError(error);
@@ -139,13 +140,13 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	}
 
 	protected void onSuccess(Stanza responseStanza) throws JaxmppException {
-		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.TRUE);
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
 		observable.fireEvent(AuthModule.AuthSuccess, new NonSaslAuthEvent(AuthModule.AuthSuccess, sessionObject));
 	}
 
 	protected void onTimeout() throws JaxmppException {
-		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure because of timeout");
 		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
 		observable.fireEvent(AuthModule.AuthFailed, event);

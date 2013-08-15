@@ -41,6 +41,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementFailedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
 
 public class SocketXmppSessionLogic implements XmppSessionLogic {
 
@@ -83,7 +85,13 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private final SessionObject sessionObject;
 
+	private final Listener<StreamManagementModule.StreamManagementFailedEvent> smFailedListener;
+
+	private final Listener<StreamManagementModule.StreamResumedEvent> smResumedListener;
+
 	private final Listener<StreamFeaturesReceivedEvent> streamFeaturesEventListener;
+
+	private StreamManagementModule streamManaegmentModule;
 
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
 			PacketWriter writer) {
@@ -143,6 +151,21 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			@Override
 			public void handleEvent(SessionEstablishmentEvent be) throws JaxmppException {
 				sessionBindedAndEstablished();
+			}
+		};
+		this.smFailedListener = new Listener<StreamManagementModule.StreamManagementFailedEvent>() {
+
+			@Override
+			public void handleEvent(StreamManagementFailedEvent be) throws JaxmppException {
+				resourceBinder.bind();
+			}
+		};
+		this.smResumedListener = new Listener<StreamManagementModule.StreamResumedEvent>() {
+
+			@Override
+			public void handleEvent(StreamResumedEvent be) throws JaxmppException {
+				// TODO Auto-generated method stub
+
 			}
 		};
 	}
@@ -207,12 +230,17 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			final boolean isConnectionSecure = connector.isSecure();
 			final boolean isConnectionCompressed = connector.isCompressed();
 
+			final boolean resumption = StreamManagementModule.isStreamManagementAvailable(sessionObject)
+					&& StreamManagementModule.isResumptionEnabled(sessionObject);
+
 			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
 				connector.startTLS();
 			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
 				connector.startZLib();
 			} else if (!isAuthorized && authAvailable) {
 				authModule.login();
+			} else if (isAuthorized && resumption) {
+				streamManaegmentModule.resume();
 			} else if (isAuthorized) {
 				resourceBinder.bind();
 			}
@@ -257,6 +285,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		authModule = this.modulesManager.getModule(AuthModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
+		this.streamManaegmentModule = this.modulesManager.getModule(StreamManagementModule.class);
 
 		connector.addListener(Connector.Error, connectorListener);
 		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
@@ -267,7 +296,8 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 				this.sessionEstablishmentListener);
 		this.sessionEstablishmentModule.addListener(SessionEstablishmentModule.SessionEstablishmentError,
 				this.sessionEstablishmentListener);
-
+		this.streamManaegmentModule.addListener(StreamManagementModule.StreamManagementFailed, smFailedListener);
+		this.streamManaegmentModule.addListener(StreamManagementModule.StreamResumed, smResumedListener);
 	}
 
 	@Override
@@ -282,6 +312,9 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 				this.sessionEstablishmentListener);
 		this.sessionEstablishmentModule.removeListener(SessionEstablishmentModule.SessionEstablishmentError,
 				this.sessionEstablishmentListener);
+
+		this.streamManaegmentModule.removeListener(StreamManagementModule.StreamManagementFailed, smFailedListener);
+		this.streamManaegmentModule.removeListener(StreamManagementModule.StreamResumed, smResumedListener);
 
 	}
 

@@ -55,6 +55,7 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.StreamError;
@@ -554,7 +555,7 @@ public class SocketConnector implements Connector {
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 			TrustManager[] trustManagers = sessionObject.getProperty(TRUST_MANAGERS_KEY);
 			final SSLSocketFactory factory;
 			if (trustManagers == null) {
@@ -587,7 +588,7 @@ public class SocketConnector implements Connector {
 				@Override
 				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 					log.info("TLS completed " + arg0);
-					sessionObject.setProperty(ENCRYPTED_KEY, Boolean.TRUE);
+					sessionObject.setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
 					ConnectorEvent event = new SocketConnectorEvent(EncryptionEstablished, sessionObject);
 					try {
 						observable.fireEvent(EncryptionEstablished, event);
@@ -611,7 +612,7 @@ public class SocketConnector implements Connector {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
 			onError(null, e);
 		} finally {
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
 	}
 
@@ -624,7 +625,7 @@ public class SocketConnector implements Connector {
 	protected void proceedZLib() throws JaxmppException {
 		log.fine("Proceeding ZLIB");
 		try {
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 
 			writer = null;
 			reader = null;
@@ -658,7 +659,7 @@ public class SocketConnector implements Connector {
 			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
 			reader = new Reader(is);
 
-			sessionObject.setProperty(Connector.COMPRESSED_KEY, true);
+			sessionObject.setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
 			log.info("ZLIB compression started");
 
 			restartStream();
@@ -666,7 +667,7 @@ public class SocketConnector implements Connector {
 			log.log(Level.SEVERE, "Can't establish compressed connection", e);
 			onError(null, e);
 		} finally {
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
 	}
 
@@ -799,7 +800,7 @@ public class SocketConnector implements Connector {
 
 	protected void setStage(State state) throws JaxmppException {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
-		this.sessionObject.setProperty(CONNECTOR_STAGE_KEY, state);
+		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
 			ConnectorEvent e = new SocketConnectorEvent(StateChanged, sessionObject);
@@ -845,7 +846,7 @@ public class SocketConnector implements Connector {
 				}
 			}
 
-			sessionObject.setProperty(DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
 			if (log.isLoggable(Level.FINER))
 				log.finer("Preparing connection to " + serverHost);

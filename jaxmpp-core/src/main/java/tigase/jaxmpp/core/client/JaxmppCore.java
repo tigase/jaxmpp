@@ -54,6 +54,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationMod
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.vcard.VCardModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -128,6 +129,8 @@ public abstract class JaxmppCore {
 
 	protected final Listener<ConnectorEvent> streamErrorListener;
 
+	protected Listener<StreamResumedEvent> streamResumedListener;
+
 	protected final Listener<ConnectorEvent> streamTerminateListener;
 
 	protected final Listener<UnacknowledgedEvent> unacknowledgedListener;
@@ -176,6 +179,13 @@ public abstract class JaxmppCore {
 
 		modulesManager = new XmppModulesManager(observable, writer);
 
+		this.streamResumedListener = new Listener<StreamResumedEvent>() {
+
+			@Override
+			public void handleEvent(StreamResumedEvent be) throws JaxmppException {
+				onStreamResumed(be);
+			}
+		};
 		this.resourceBindListener = new Listener<ResourceBindEvent>() {
 
 			@Override
@@ -378,6 +388,8 @@ public abstract class JaxmppCore {
 	}
 
 	protected abstract void onStreamError(ConnectorEvent be) throws JaxmppException;
+
+	protected abstract void onStreamResumed(StreamResumedEvent be) throws JaxmppException;
 
 	protected abstract void onStreamTerminated(ConnectorEvent be) throws JaxmppException;
 

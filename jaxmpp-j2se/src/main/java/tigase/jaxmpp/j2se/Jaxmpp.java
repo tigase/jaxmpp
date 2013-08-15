@@ -27,6 +27,7 @@ import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -42,6 +43,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
@@ -134,6 +137,10 @@ public class Jaxmpp extends JaxmppCore {
 
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+
+		StreamManagementModule sm = this.modulesManager.getModule(StreamManagementModule.class);
+		if (sm != null)
+			sm.addListener(StreamManagementModule.StreamResumed, this.streamResumedListener);
 
 	}
 
@@ -231,7 +238,7 @@ public class Jaxmpp extends JaxmppCore {
 	 *            whole connecting process will be done in this method.
 	 */
 	public void login(boolean sync) throws JaxmppException {
-		this.sessionObject.clear();
+		this.sessionObject.clear(Scope.stream);
 
 		if (this.sessionLogic != null) {
 			this.sessionLogic.unbind();
@@ -338,6 +345,16 @@ public class Jaxmpp extends JaxmppCore {
 			Jaxmpp.this.notify();
 		}
 		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
+		observable.fireEvent(event);
+	}
+
+	@Override
+	protected void onStreamResumed(StreamResumedEvent be) throws JaxmppException {
+		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
+			Jaxmpp.this.notify();
+		}
+		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
 		observable.fireEvent(event);
 	}
 

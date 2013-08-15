@@ -18,14 +18,10 @@
 package tigase.jaxmpp.gwt.client;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.ResponseManager;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 import com.google.gwt.json.client.JSONObject;
@@ -78,16 +74,15 @@ public class GwtSessionObject extends AbstractSessionObject {
 
 	public GwtSessionObject() {
 		presence = new GWTPresenceStore();
-		properties = new HashMap<String, Object>();
+		properties = new HashMap<String, Entry>();
 		responseManager = new ResponseManager();
 		roster = new RosterStore();
-		userProperties = new HashMap<String, Object>();
 	}
 
-	private CharSequence makeEntry(String jsonKey, String propsKey, Map<String, Object> map) {
+	private CharSequence makeEntry(String jsonKey, String propsKey) {
 		StringBuilder sb = new StringBuilder();
 
-		Object v = map.get(propsKey);
+		Object v = properties.get(propsKey);
 
 		sb.append("\"").append(jsonKey).append("\"").append(":").append("\"").append(v == null ? "" : v).append("\"");
 
@@ -95,53 +90,12 @@ public class GwtSessionObject extends AbstractSessionObject {
 	}
 
 	public void restore(final JSONValue value) throws RestoringSessionException {
-		try {
-			JSONObject object = value.isObject();
-
-			String sid = getString(object, "sid");
-			String authId = getString(object, "authid");
-			Long rid = getLong(object, "rid");
-			JID jid = getJID(object, "jid");
-			String nick = getString(object, "nick");
-			JID userJid = getJID(object, "userJid");
-			String serverName = getString(object, "serverName");
-
-			if (sid == null)
-				throw new RestoringSessionException("sid is null");
-
-			properties.put(AbstractBoshConnector.SID_KEY, sid);
-			properties.put(AbstractBoshConnector.AUTHID_KEY, authId);
-			properties.put(AbstractBoshConnector.RID_KEY, rid);
-			properties.put(ResourceBinderModule.BINDED_RESOURCE_JID, jid);
-			userProperties.put(NICKNAME, nick);
-			userProperties.put(USER_BARE_JID, userJid.getBareJid());
-			userProperties.put(DOMAIN_NAME, serverName);
-		} catch (RestoringSessionException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RestoringSessionException(e.getMessage());
-		}
 	}
 
 	public String serialize() {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("{");
-
-		// String
-		sb.append(makeEntry("sid", AbstractBoshConnector.SID_KEY, properties)).append(",");
-		// String
-		sb.append(makeEntry("authid", AbstractBoshConnector.AUTHID_KEY, properties)).append(",");
-		// Long
-		sb.append(makeEntry("rid", AbstractBoshConnector.RID_KEY, properties)).append(",");
-		// JID
-		sb.append(makeEntry("jid", ResourceBinderModule.BINDED_RESOURCE_JID, properties)).append(",");
-		// String
-		sb.append(makeEntry("nick", NICKNAME, userProperties)).append(",");
-		// JID
-		sb.append(makeEntry("userBareJid", USER_BARE_JID, userProperties)).append(",");
-		// Stri ng
-		sb.append(makeEntry("serverName", DOMAIN_NAME, userProperties));
 
 		sb.append("}");
 

@@ -39,6 +39,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
@@ -128,6 +130,10 @@ public class Jaxmpp extends JaxmppCore {
 
 		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
 		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+
+		StreamManagementModule sm = this.modulesManager.getModule(StreamManagementModule.class);
+		if (sm != null)
+			sm.addListener(StreamManagementModule.StreamResumed, this.streamResumedListener);
 	}
 
 	protected void checkTimeouts() throws JaxmppException {
@@ -176,6 +182,18 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	}
 
+	protected Connector createConnector() {
+		String url = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+		if (url.startsWith("ws:")) {
+			if (!WebSocket.isSupported()) {
+				throw new RuntimeException("WebSocket protocol is not supported by browser");
+			}
+			return new WebSocketConnector(this.observable, this.sessionObject);
+		}
+
+		return new BoshConnector(observable, this.sessionObject);
+	}
+
 	@Override
 	public void disconnect() throws JaxmppException {
 		try {
@@ -183,6 +201,18 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (XMLException e) {
 			throw new JaxmppException(e);
 		}
+	}
+
+	@Override
+	public void execute(final Runnable r) {
+		if (r != null)
+			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+				@Override
+				public void execute() {
+					r.run();
+				}
+			});
 	}
 
 	/**
@@ -196,18 +226,6 @@ public class Jaxmpp extends JaxmppCore {
 
 	public PacketWriter getWriter() {
 		return writer;
-	}
-
-	protected Connector createConnector() {
-		String url = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
-		if (url.startsWith("ws:")) {
-			if (!WebSocket.isSupported()) {
-				throw new RuntimeException("WebSocket protocol is not supported by browser");
-			}
-			return new WebSocketConnector(this.observable, this.sessionObject);
-		}
-
-		return new BoshConnector(observable, this.sessionObject);
 	}
 
 	private void intLogin() throws JaxmppException {
@@ -265,21 +283,15 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
-	public void execute(final Runnable r) {
-		if (r != null)
-			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-				@Override
-				public void execute() {
-					r.run();
-				}
-			});
-	}
-
-	@Override
 	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
 		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
 		event.setCaught(be.getCaught());
+		observable.fireEvent(event);
+	}
+
+	@Override
+	protected void onStreamResumed(StreamResumedEvent be) throws JaxmppException {
+		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
 		observable.fireEvent(event);
 	}
 

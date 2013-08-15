@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -261,7 +262,7 @@ public class SaslModule implements XmppModule {
 			log.fine("Not found supported SASL mechanisms.");
 			throw new UnsupportedSaslMechanisms();
 		}
-		sessionObject.setProperty(SASL_MECHANISM, saslM);
+		sessionObject.setProperty(Scope.stream, SASL_MECHANISM, saslM);
 
 		SaslMechanism mechanism = sessionObject.getProperty(SASL_MECHANISM);
 		Element auth = new DefaultElement("auth");
@@ -269,7 +270,7 @@ public class SaslModule implements XmppModule {
 		auth.setAttribute("mechanism", mechanism.name());
 		auth.setValue(mechanism.evaluateChallenge(null, sessionObject));
 
-		sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+		sessionObject.setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 
 		writer.write(auth);
 	}
@@ -277,10 +278,10 @@ public class SaslModule implements XmppModule {
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		if ("success".equals(element.getName())) {
-			sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			sessionObject.setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 			processSuccess(element);
 		} else if ("failure".equals(element.getName())) {
-			sessionObject.setProperty(Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			sessionObject.setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 			processFailure(element);
 		} else if ("challenge".equals(element.getName())) {
 			processChallenge(element);
@@ -296,7 +297,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	protected void processFailure(Element element) throws JaxmppException {
-		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.FALSE);
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
 		Element c = element.getFirstChild();
 		SaslError error = null;
 		if (c != null) {
@@ -310,7 +311,7 @@ public class SaslModule implements XmppModule {
 	}
 
 	protected void processSuccess(Element element) throws JaxmppException {
-		sessionObject.setProperty(AuthModule.AUTHORIZED, Boolean.TRUE);
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
 		observable.fireEvent(AuthModule.AuthSuccess, new SaslEvent(AuthModule.AuthSuccess, sessionObject));
 	}

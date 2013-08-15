@@ -39,46 +39,6 @@ public class StreamManagementModule implements XmppModule {
 		}
 	}
 
-	public static class AckEnabledEvent extends AckEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private Boolean resume;
-
-		private String resumeId;
-
-		AckEnabledEvent(SessionObject sessionObject, Boolean resume, String id) {
-			super(AckEnabled, sessionObject);
-			this.resume = resume;
-			this.resumeId = id;
-		}
-
-		public Boolean getResume() {
-			return resume;
-		}
-
-		public String getResumeId() {
-			return resumeId;
-		}
-
-		public void setResume(Boolean resume) {
-			this.resume = resume;
-		}
-
-		public void setResumeId(String resumeId) {
-			this.resumeId = resumeId;
-		}
-	}
-
-	public static abstract class AckEvent extends AbstractStreamManagementEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		protected AckEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-	}
-
 	private static class MutableLong extends Number {
 
 		private static final long serialVersionUID = 1L;
@@ -111,7 +71,79 @@ public class StreamManagementModule implements XmppModule {
 		}
 	}
 
-	public static class UnacknowledgedEvent extends AckEvent {
+	public static class StreamManagementEnabledEvent extends AbstractStreamManagementEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Boolean resume;
+
+		private String resumeId;
+
+		StreamManagementEnabledEvent(SessionObject sessionObject, Boolean resume, String id) {
+			super(StreamManagementEnabled, sessionObject);
+			this.resume = resume;
+			this.resumeId = id;
+		}
+
+		public Boolean getResume() {
+			return resume;
+		}
+
+		public String getResumeId() {
+			return resumeId;
+		}
+
+		public void setResume(Boolean resume) {
+			this.resume = resume;
+		}
+
+		public void setResumeId(String resumeId) {
+			this.resumeId = resumeId;
+		}
+	}
+
+	public static class StreamManagementFailedEvent extends AbstractStreamManagementEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private ErrorCondition condition;
+
+		public StreamManagementFailedEvent(SessionObject sessionObject, ErrorCondition condition) {
+			super(StreamManagementFailed, sessionObject);
+			this.condition = condition;
+		}
+
+		public ErrorCondition getCondition() {
+			return condition;
+		}
+
+		public void setCondition(ErrorCondition condition) {
+			this.condition = condition;
+		}
+	}
+
+	public static class StreamResumedEvent extends AbstractStreamManagementEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Long h;
+
+		private String previd;
+
+		public StreamResumedEvent(EventType type, SessionObject sessionObject, Long h, String previd) {
+			super(type, sessionObject);
+			this.h = h;
+			this.previd = previd;
+		}
+
+		protected StreamResumedEvent(SessionObject sessionObject, Long h, String previd) {
+			super(StreamResumed, sessionObject);
+			this.h = h;
+			this.previd = previd;
+		}
+	}
+
+	public static class UnacknowledgedEvent extends AbstractStreamManagementEvent {
 
 		private static final long serialVersionUID = 1L;
 
@@ -129,8 +161,6 @@ public class StreamManagementModule implements XmppModule {
 			this.elements = elements;
 		}
 	}
-
-	public static final EventType AckEnabled = new EventType();
 
 	public static final String INCOMING_STREAM_H_KEY = "INCOMING_STREAM_H";
 
@@ -151,6 +181,12 @@ public class StreamManagementModule implements XmppModule {
 	 * Property to keep Boolean if stream management is turned on.
 	 */
 	public final static String STREAM_MANAGEMENT_TURNED_ON_KEY = "STREAM_MANAGEMENT_TURNED_ON";
+
+	public static final EventType StreamManagementEnabled = new EventType();
+
+	public static final EventType StreamManagementFailed = new EventType();
+
+	public static final EventType StreamResumed = new EventType();
 
 	public static final EventType Unacknowledged = new EventType();
 
@@ -238,6 +274,9 @@ public class StreamManagementModule implements XmppModule {
 			log.info("Enabling stream management");
 		}
 		Element request = new DefaultElement("enable", null, XMLNS);
+
+		request.setAttribute("resume", "true");
+
 		writer.write(request);
 	}
 
@@ -257,7 +296,6 @@ public class StreamManagementModule implements XmppModule {
 
 	@Override
 	public String[] getFeatures() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -268,13 +306,19 @@ public class StreamManagementModule implements XmppModule {
 			sessionObject.setProperty(key, v);
 		}
 		++v.value;
+		if (v.value < 0)
+			v.value = 0;
 		return v.value;
 	}
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		final boolean enabled = isStreamManagementTurnedOn(sessionObject);
-		if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+		if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+			processResumed(element);
+		} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+			processFailed(element);
+		} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 			processStreamManagementEnabled(element);
 		} else if (enabled && "r".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 			processAckRequest(element);
@@ -325,6 +369,28 @@ public class StreamManagementModule implements XmppModule {
 		writer.write(response);
 	}
 
+	private void processFailed(Element element) throws JaxmppException {
+		System.out.println("F: " + element.getAsString());
+
+		List<Element> errors = element.getChildrenNS(XMPPException.XMLNS);
+
+		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
+		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
+		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
+
+		XMPPException.ErrorCondition condition = ErrorCondition.unexpected_request;
+		for (Element element2 : errors) {
+			ErrorCondition tmp = XMPPException.ErrorCondition.getByElementName(element2.getName());
+			if (tmp != null) {
+				condition = tmp;
+				break;
+			}
+		}
+
+		StreamManagementFailedEvent event = new StreamManagementFailedEvent(sessionObject, condition);
+		observable.fireEvent(event);
+	}
+
 	public boolean processIncomingStanza(Element element) throws XMLException {
 		if (!isStreamManagementTurnedOn(sessionObject))
 			return false;
@@ -370,10 +436,22 @@ public class StreamManagementModule implements XmppModule {
 		}
 	}
 
+	private void processResumed(Element element) throws JaxmppException {
+		System.out.println("R: " + element.getAsString());
+
+		String hs = element.getAttribute("h");
+		final Long newH = hs == null ? null : Long.parseLong(hs);
+
+		StreamResumedEvent event = new StreamResumedEvent(sessionObject, newH, element.getAttribute("previd"));
+		observable.fireEvent(event);
+	}
+
 	private void processStreamManagementEnabled(Element element) throws JaxmppException {
 		String id = element.getAttribute("id");
 		String r = element.getAttribute("resume");
 		Boolean resume = r == null ? false : BooleanField.parse(r);
+
+		System.out.println(element.getAsString());
 
 		if (log.isLoggable(Level.INFO)) {
 			log.info("Stream management is enabled. id=" + id + "; resume=" + r);
@@ -383,7 +461,7 @@ public class StreamManagementModule implements XmppModule {
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, resume);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, id);
 
-		AckEnabledEvent event = new AckEnabledEvent(sessionObject, resume, id);
+		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(sessionObject, resume, id);
 		observable.fireEvent(event);
 	}
 
@@ -433,6 +511,20 @@ public class StreamManagementModule implements XmppModule {
 		sessionObject.setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
 	}
 
+	public void resume() throws JaxmppException {
+		Element resume = new DefaultElement("resume", null, XMLNS);
+
+		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
+		resume.setAttribute("previd", (String) sessionObject.getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Stream resumption");
+
+		System.out.println("Resumption");
+
+		writer.write(resume);
+	}
+
 	private void setAckHValue(String key, Long value) {
 		MutableLong v = sessionObject.getProperty(key);
 		if (v == null) {
@@ -440,6 +532,8 @@ public class StreamManagementModule implements XmppModule {
 			sessionObject.setProperty(key, v);
 		}
 		v.value = value == null ? 0 : value;
+		if (v.value < 0)
+			v.value = 0;
 	}
 
 }

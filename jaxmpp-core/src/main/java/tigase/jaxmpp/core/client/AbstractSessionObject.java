@@ -17,7 +17,10 @@
  */
 package tigase.jaxmpp.core.client;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -33,19 +36,22 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
  */
 public abstract class AbstractSessionObject implements SessionObject {
 
+	protected class Entry {
+		private Scope scope;
+		private Object value;
+	}
+
+	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
+
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected PresenceStore presence;
 
-	protected Map<String, Object> properties;
+	protected Map<String, Entry> properties;
 
 	protected ResponseManager responseManager;
 
 	protected RosterStore roster;
-
-	protected Element streamFeatures;
-
-	protected Map<String, Object> userProperties;
 
 	protected AbstractSessionObject() {
 	}
@@ -63,10 +69,43 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	@Override
 	public void clear() throws JaxmppException {
+		clear((Set<Scope>) null);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void clear(final Scope... scopes) throws JaxmppException {
+		final Set<Scope> scopesSet = new HashSet<Scope>();
+		if (scopes != null)
+			for (Scope scope : scopes) {
+				scopesSet.add(scope);
+			}
+		clear(scopesSet);
+	}
+
+	public synchronized void clear(Set<Scope> scopes) throws JaxmppException {
 		log.fine("Clearing properties!");
-		this.properties.clear();
-		roster.clear();
-		presence.clear();
+
+		if (scopes == null || scopes.isEmpty()) {
+			scopes = new HashSet<SessionObject.Scope>();
+			scopes.add(Scope.session);
+			scopes.add(Scope.stream);
+		}
+
+		if (scopes.contains(Scope.session)) {
+			roster.clear();
+			presence.clear();
+		}
+
+		Iterator<java.util.Map.Entry<String, Entry>> iterator = this.properties.entrySet().iterator();
+		while (iterator.hasNext()) {
+			java.util.Map.Entry<String, Entry> entry = iterator.next();
+			if (scopes.contains(entry.getValue().scope))
+				iterator.remove();
+		}
+
 	}
 
 	/**
@@ -85,16 +124,23 @@ public abstract class AbstractSessionObject implements SessionObject {
 		return presence;
 	}
 
+	public <T> T getProperty(Scope scope, String key) {
+		Entry entry = this.properties.get(key);
+		if (entry == null)
+			return null;
+		else if (scope == null || scope == entry.scope)
+			return (T) entry.value;
+		else
+			return null;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
-		T t = (T) this.properties.get(key);
-		if (t == null)
-			t = (T) this.userProperties.get(key);
-		return t;
+		return getProperty(null, key);
 	}
 
 	/**
@@ -117,7 +163,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	@Override
 	public Element getStreamFeatures() {
-		return this.streamFeatures;
+		return getProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY);
 	}
 
 	/**
@@ -134,22 +180,25 @@ public abstract class AbstractSessionObject implements SessionObject {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getUserProperty(String key) {
-		return (T) this.userProperties.get(key);
+		return getProperty(Scope.user, key);
 	}
 
 	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException {
 		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public SessionObject setProperty(String key, Object value) {
+	public SessionObject setProperty(Scope scope, String key, Object value) {
 		if (value == null) {
 			this.properties.remove(key);
 		} else {
-			this.properties.put(key, value);
+			Entry e = this.properties.get(key);
+			if (e == null) {
+				e = new Entry();
+				this.properties.put(key, e);
+			}
+			e.scope = scope;
+			e.value = value;
 		}
 		return this;
 	}
@@ -158,8 +207,16 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 * {@inheritDoc}
 	 */
 	@Override
+	public SessionObject setProperty(String key, Object value) {
+		return setProperty(Scope.session, key, value);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public void setStreamFeatures(Element element) {
-		this.streamFeatures = element;
+		setProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY, element);
 	}
 
 	/**
@@ -167,11 +224,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	@Override
 	public UserProperties setUserProperty(String key, Object value) {
-		if (value == null)
-			this.userProperties.remove(key);
-		else
-			this.userProperties.put(key, value);
-		return this;
+		return setProperty(Scope.user, key, value);
 	}
 
 }

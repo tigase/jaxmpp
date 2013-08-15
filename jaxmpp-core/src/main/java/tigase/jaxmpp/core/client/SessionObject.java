@@ -33,6 +33,12 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
  */
 public interface SessionObject extends UserProperties {
 
+	public static enum Scope {
+		session,
+		stream,
+		user;
+	}
+
 	/**
 	 * Name of property used to keep logical name of XMPP server. Usually it is
 	 * equals to hostname of users JID.
@@ -74,12 +80,21 @@ public interface SessionObject extends UserProperties {
 	public void checkHandlersTimeout() throws JaxmppException;
 
 	/**
-	 * Reset state. Clears all properties stored by modules. Users properties
-	 * are keeped.
+	 * Reset state. Clears all properties stored by modules, roster and presence
+	 * store. Users properties are keeped.
 	 * 
 	 * @throws JaxmppException
 	 */
 	public void clear() throws JaxmppException;
+
+	/**
+	 * Reset state. Clears given properties stored by modules. Roster and
+	 * presence store will be cleared if {@linkplain Scope#session} is in
+	 * parameters.
+	 * 
+	 * @throws JaxmppException
+	 */
+	void clear(Scope[] scopes) throws JaxmppException;
 
 	/**
 	 * Returns users JID binded on server.
@@ -126,7 +141,20 @@ public interface SessionObject extends UserProperties {
 	public BareJID getUserBareJid();
 
 	/**
-	 * Set property.
+	 * Set property in given scope.
+	 * 
+	 * @param scope
+	 *            scope of property
+	 * @param key
+	 *            property name
+	 * @param value
+	 *            property value. <code>null</code> to unset property.
+	 * @return instance of <code>this</code> {@linkplain SessionObject}
+	 */
+	public SessionObject setProperty(Scope scope, String key, Object value);
+
+	/**
+	 * Set property in {@linkplain Scope#session session} scope.
 	 * 
 	 * @param key
 	 *            property name

@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client.connector;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -125,7 +126,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		if (be.getType() == AuthModule.AuthFailed) {
 			throw new JaxmppException("Unauthorized with condition=" + be.getError());
 		} else if (be.getType() == AuthModule.AuthSuccess) {
-			sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
+			sessionObject.setProperty(Scope.stream, AUTHORIZED, Boolean.TRUE);
 			connector.restartStream();
 		}
 	}
@@ -155,7 +156,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		if (be.getType() == AuthModule.AuthFailed) {
 			throw new JaxmppException("Unauthorized with condition=" + be.getError());
 		} else if (be.getType() == AuthModule.AuthSuccess) {
-			sessionObject.setProperty(AUTHORIZED, Boolean.TRUE);
+			sessionObject.setProperty(Scope.stream, AUTHORIZED, Boolean.TRUE);
 			connector.restartStream();
 		}
 	}
