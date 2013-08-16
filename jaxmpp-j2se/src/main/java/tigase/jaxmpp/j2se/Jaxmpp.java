@@ -165,18 +165,22 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public void disconnect(boolean snc) throws JaxmppException {
-		if (this.connector != null) {
-			try {
-				this.connector.stop();
-			} catch (XMLException e) {
-				throw new JaxmppException(e);
-			}
-			Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
-			if (sync != null && sync) {
-				synchronized (Jaxmpp.this) {
-					// Jaxmpp.this.wait();
+		try {
+			if (this.connector != null) {
+				try {
+					this.connector.stop();
+				} catch (XMLException e) {
+					throw new JaxmppException(e);
+				}
+				Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
+				if (sync != null && sync) {
+					synchronized (Jaxmpp.this) {
+						// Jaxmpp.this.wait();
+					}
 				}
 			}
+		} finally {
+			StreamManagementModule.reset(sessionObject);
 		}
 	}
 

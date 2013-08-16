@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JaxmppCore;
@@ -220,6 +221,17 @@ public class StreamManagementModule implements XmppModule {
 		return x != null && x;
 	}
 
+	public static void reset(AbstractSessionObject sessionObject) {
+		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
+		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
+		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
+		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
+		sessionObject.setProperty(LAST_REQUEST_TIMESTAMP_KEY, null);
+
+		sessionObject.setProperty(OUTGOING_STREAM_H_KEY, null);
+		sessionObject.setProperty(INCOMING_STREAM_H_KEY, null);
+	}
+
 	private final Criteria crit = ElementCriteria.xmlns(XMLNS);
 
 	private final JaxmppCore jaxmpp;
@@ -378,8 +390,6 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	private void processFailed(Element element) throws JaxmppException {
-		System.out.println("F: " + element.getAsString());
-
 		List<Element> errors = element.getChildrenNS(XMPPException.XMLNS);
 
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
@@ -446,8 +456,6 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	private void processResumed(Element element) throws JaxmppException {
-		System.out.println("R: " + element.getAsString());
-
 		String hs = element.getAttribute("h");
 		final Long newH = hs == null ? null : Long.parseLong(hs);
 
@@ -461,8 +469,6 @@ public class StreamManagementModule implements XmppModule {
 		String id = element.getAttribute("id");
 		String r = element.getAttribute("resume");
 		Boolean resume = r == null ? false : BooleanField.parse(r);
-
-		System.out.println(element.getAsString());
 
 		if (log.isLoggable(Level.INFO)) {
 			log.info("Stream management is enabled. id=" + id + "; resume=" + r);
@@ -531,8 +537,6 @@ public class StreamManagementModule implements XmppModule {
 
 		if (log.isLoggable(Level.INFO))
 			log.info("Stream resumption");
-
-		System.out.println("Resumption");
 
 		writer.write(resume);
 	}

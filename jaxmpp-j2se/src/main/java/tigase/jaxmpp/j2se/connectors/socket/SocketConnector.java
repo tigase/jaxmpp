@@ -946,9 +946,10 @@ public class SocketConnector implements Connector {
 	public void stop(boolean terminate) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
-		setStage(State.disconnecting);
-		if (!terminate)
+		if (!terminate) {
 			terminateStream();
+		}
+		setStage(State.disconnecting);
 		terminateAllWorkers();
 	}
 
@@ -983,7 +984,7 @@ public class SocketConnector implements Connector {
 
 	private void terminateStream() throws JaxmppException {
 		final State state = getState();
-		if (state == State.connected || state == State.connecting) {
+		if (state == State.connected || state == State.connecting || state == State.disconnecting) {
 			String x = "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
 			send(x.getBytes());

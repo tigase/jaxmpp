@@ -143,7 +143,7 @@ public abstract class JaxmppCore {
 				throw new JaxmppException("Not connected!");
 			try {
 				if (stanza != null && log.isLoggable(Level.FINEST)) {
-					log.finest("SENT: " + stanza.toString());
+					log.finest("SENT: " + stanza.getAsString());
 				}
 
 				final Boolean autoId = sessionObject.getProperty(AUTOADD_STANZA_ID_KEY);
