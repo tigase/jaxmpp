@@ -12,6 +12,7 @@ import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
@@ -162,25 +163,27 @@ public class StreamManagementModule implements XmppModule {
 		}
 	}
 
-	public static final String INCOMING_STREAM_H_KEY = "INCOMING_STREAM_H";
+	public static final String INCOMING_STREAM_H_KEY = "urn:xmpp:sm:3#INCOMING_STREAM_H";
 
-	private final static String LAST_REQUEST_TIMESTAMP_KEY = "urn:xmpp:sm:3-lastRequestTimestamp";
+	private final static String LAST_REQUEST_TIMESTAMP_KEY = "urn:xmpp:sm:3#lastRequestTimestamp";
 
-	public static final String OUTGOING_STREAM_H_KEY = "OUTGOING_STREAM_H";
+	public static final String OUTGOING_STREAM_H_KEY = "urn:xmpp:sm:3#OUTGOING_STREAM_H";
+
+	private static final String SM_ACK_ENABLED_KEY = "urn:xmpp:sm:3#SM_ACK_ENABLED";
 
 	/**
 	 * Property to disable stream management module.
 	 */
-	public final static String STREAM_MANAGEMENT_DISABLED_KEY = "STREAM_MANAGEMENT_DISABLED";
+	public final static String STREAM_MANAGEMENT_DISABLED_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_DISABLED";
 
-	public final static String STREAM_MANAGEMENT_RESUME_KEY = "STREAM_MANAGEMENT_RESUME";
+	public final static String STREAM_MANAGEMENT_RESUME_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_RESUME";
 
-	public final static String STREAM_MANAGEMENT_RESUMPTION_ID_KEY = "STREAM_MANAGEMENT_RESUMPTION_ID";
+	public final static String STREAM_MANAGEMENT_RESUMPTION_ID_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_RESUMPTION_ID";
 
 	/**
 	 * Property to keep Boolean if stream management is turned on.
 	 */
-	public final static String STREAM_MANAGEMENT_TURNED_ON_KEY = "STREAM_MANAGEMENT_TURNED_ON";
+	public final static String STREAM_MANAGEMENT_TURNED_ON_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_TURNED_ON";
 
 	public static final EventType StreamManagementEnabled = new EventType();
 
@@ -191,6 +194,11 @@ public class StreamManagementModule implements XmppModule {
 	public static final EventType Unacknowledged = new EventType();
 
 	public static final String XMLNS = "urn:xmpp:sm:3";
+
+	public static boolean isAckEnabled(final SessionObject sessionObject) {
+		Boolean x = sessionObject.getProperty(SM_ACK_ENABLED_KEY);
+		return x != null && x;
+	}
 
 	public static boolean isResumptionEnabled(final SessionObject sessionObject) {
 		Boolean en = sessionObject.getProperty(STREAM_MANAGEMENT_TURNED_ON_KEY);
@@ -375,6 +383,7 @@ public class StreamManagementModule implements XmppModule {
 		List<Element> errors = element.getChildrenNS(XMPPException.XMLNS);
 
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
+		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
 
@@ -392,7 +401,7 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	public boolean processIncomingStanza(Element element) throws XMLException {
-		if (!isStreamManagementTurnedOn(sessionObject))
+		if (!isAckEnabled(sessionObject))
 			return false;
 
 		if (element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
@@ -410,7 +419,7 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	public void processOutgoingElement(final Element element) throws JaxmppException {
-		if (!isStreamManagementTurnedOn(sessionObject))
+		if (!isAckEnabled(sessionObject))
 			return;
 		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null
 				&& XMLNS.endsWith(element.getXMLNS()))
@@ -442,6 +451,8 @@ public class StreamManagementModule implements XmppModule {
 		String hs = element.getAttribute("h");
 		final Long newH = hs == null ? null : Long.parseLong(hs);
 
+		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+
 		StreamResumedEvent event = new StreamResumedEvent(sessionObject, newH, element.getAttribute("previd"));
 		observable.fireEvent(event);
 	}
@@ -460,6 +471,7 @@ public class StreamManagementModule implements XmppModule {
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.TRUE);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, resume);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, id);
+		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
 
 		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(sessionObject, resume, id);
 		observable.fireEvent(event);

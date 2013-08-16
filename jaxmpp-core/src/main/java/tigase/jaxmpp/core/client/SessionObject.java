@@ -94,7 +94,7 @@ public interface SessionObject extends UserProperties {
 	 * 
 	 * @throws JaxmppException
 	 */
-	void clear(Scope[] scopes) throws JaxmppException;
+	void clear(Scope... scopes) throws JaxmppException;
 
 	/**
 	 * Returns users JID binded on server.

@@ -22,6 +22,7 @@ import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -93,11 +94,11 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private StreamManagementModule streamManaegmentModule;
 
-	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
+	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, SessionObject so,
 			PacketWriter writer) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
-		this.sessionObject = sessionObject;
+		this.sessionObject = so;
 
 		this.connectorListener = new Listener<Connector.ConnectorEvent>() {
 
@@ -157,6 +158,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			@Override
 			public void handleEvent(StreamManagementFailedEvent be) throws JaxmppException {
+				sessionObject.clear(Scope.session);
 				resourceBinder.bind();
 			}
 		};
