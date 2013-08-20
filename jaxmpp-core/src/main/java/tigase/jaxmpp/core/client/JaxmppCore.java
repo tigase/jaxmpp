@@ -329,7 +329,7 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
-		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, observable, sessionObject, writer));
+		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, sessionObject, writer));
 		ackModule.addListener(StreamManagementModule.Unacknowledged, this.unacknowledgedListener);
 
 		final AuthModule authModule = this.modulesManager.register(new AuthModule(observable, this.sessionObject,

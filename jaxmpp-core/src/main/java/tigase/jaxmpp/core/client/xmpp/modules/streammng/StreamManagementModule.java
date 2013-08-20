@@ -24,13 +24,13 @@ import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
+import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 
-public class StreamManagementModule implements XmppModule {
+public class StreamManagementModule implements XmppModule, ObservableAware {
 
 	public static abstract class AbstractStreamManagementEvent extends BaseEvent {
 
@@ -238,7 +238,7 @@ public class StreamManagementModule implements XmppModule {
 
 	protected final Logger log;
 
-	private final Observable observable;
+	private Observable observable;
 
 	private final LinkedList<Element> outgoingQueue = new LinkedList<Element>();
 
@@ -246,11 +246,9 @@ public class StreamManagementModule implements XmppModule {
 
 	private final PacketWriter writer;
 
-	public StreamManagementModule(JaxmppCore jaxmpp, Observable parentObservable, SessionObject sessionObject,
-			PacketWriter writer) {
+	public StreamManagementModule(JaxmppCore jaxmpp, SessionObject sessionObject, PacketWriter writer) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.jaxmpp = jaxmpp;
-		this.observable = ObservableFactory.instance(parentObservable);
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 
@@ -550,6 +548,11 @@ public class StreamManagementModule implements XmppModule {
 		v.value = value == null ? 0 : value;
 		if (v.value < 0)
 			v.value = 0;
+	}
+
+	@Override
+	public void setObservable(Observable observable) {
+		this.observable = observable;
 	}
 
 }
