@@ -181,6 +181,8 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 
 	public final static String STREAM_MANAGEMENT_RESUMPTION_ID_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_RESUMPTION_ID";
 
+	public static final String STREAM_MANAGEMENT_RESUMPTION_TIME_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_RESUMPTION_TIMEOUT_KEY";
+
 	/**
 	 * Property to keep Boolean if stream management is turned on.
 	 */
@@ -195,6 +197,15 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	public static final EventType Unacknowledged = new EventType();
 
 	public static final String XMLNS = "urn:xmpp:sm:3";
+
+	public static long getResumptionTime(final SessionObject sessionObject, long defaultValue) {
+		try {
+			Long x = sessionObject.getProperty(STREAM_MANAGEMENT_RESUMPTION_TIME_KEY);
+			return x == null ? defaultValue : x.longValue();
+		} catch (Exception e) {
+			return defaultValue;
+		}
+	}
 
 	public static boolean isAckEnabled(final SessionObject sessionObject) {
 		Boolean x = sessionObject.getProperty(SM_ACK_ENABLED_KEY);
@@ -466,6 +477,7 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	private void processStreamManagementEnabled(Element element) throws JaxmppException {
 		String id = element.getAttribute("id");
 		String r = element.getAttribute("resume");
+		String mx = element.getAttribute("max");
 		Boolean resume = r == null ? false : BooleanField.parse(r);
 
 		if (log.isLoggable(Level.INFO)) {
@@ -476,6 +488,10 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, resume);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, id);
 		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+
+		if (mx != null) {
+			sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_TIME_KEY, Long.valueOf(mx));
+		}
 
 		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(sessionObject, resume, id);
 		observable.fireEvent(event);

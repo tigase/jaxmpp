@@ -21,13 +21,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedEvent;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -349,6 +353,16 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		this.roomsManager.setSessionObject(sessionObject);
 		this.roomsManager.initialize();
 
+		if (this.sessionObject instanceof AbstractSessionObject) {
+			((AbstractSessionObject) this.sessionObject).addListener(AbstractSessionObject.Cleared,
+					new Listener<ClearedEvent>() {
+
+						@Override
+						public void handleEvent(ClearedEvent be) throws JaxmppException {
+							onSessionObjectCleared(be.getSessionObject(), be.getScopes());
+						}
+					});
+		}
 		this.crit = new Criteria() {
 
 			@Override
@@ -539,17 +553,21 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	protected void onNetworkDisconnected() throws XMLException, JaxmppException {
-		for (Room r : roomsManager.getRooms()) {
-			r.setState(State.not_joined);
+	}
 
-			ArrayList<Occupant> ocs = new ArrayList<Occupant>();
-			ocs.addAll(r.getPresences().values());
-			for (Occupant occupant : ocs) {
-				MucEvent event = new MucEvent(OccupantLeaved, sessionObject);
-				r.remove(occupant);
-				fireMucEvent(event, null, occupant.getNickname(), r, occupant, null);
+	protected void onSessionObjectCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+		if (scopes != null && scopes.contains(Scope.session)) {
+			for (Room r : roomsManager.getRooms()) {
+				r.setState(State.not_joined);
+
+				ArrayList<Occupant> ocs = new ArrayList<Occupant>();
+				ocs.addAll(r.getPresences().values());
+				for (Occupant occupant : ocs) {
+					MucEvent event = new MucEvent(OccupantLeaved, sessionObject);
+					r.remove(occupant);
+					fireMucEvent(event, null, occupant.getNickname(), r, occupant, null);
+				}
 			}
-
 		}
 	}
 

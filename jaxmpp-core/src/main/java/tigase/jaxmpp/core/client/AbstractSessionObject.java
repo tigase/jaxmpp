@@ -24,6 +24,11 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.observer.BaseEvent;
+import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -36,14 +41,39 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
  */
 public abstract class AbstractSessionObject implements SessionObject {
 
+	public static class ClearedEvent extends BaseEvent {
+
+		private static final long serialVersionUID = 1L;
+
+		private Set<Scope> scopes;
+
+		public ClearedEvent(SessionObject sessionObject, Set<Scope> scopes) {
+			super(Cleared, sessionObject);
+			this.scopes = scopes;
+		}
+
+		public Set<Scope> getScopes() {
+			return scopes;
+		}
+
+		public void setScopes(Set<Scope> scopes) {
+			this.scopes = scopes;
+		}
+
+	}
+
 	protected class Entry {
 		private Scope scope;
 		private Object value;
 	}
 
+	public final static EventType Cleared = new EventType();
+
 	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
+
+	private final Observable observable = ObservableFactory.instance();
 
 	protected PresenceStore presence;
 
@@ -54,6 +84,14 @@ public abstract class AbstractSessionObject implements SessionObject {
 	protected RosterStore roster;
 
 	protected AbstractSessionObject() {
+	}
+
+	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.addListener(eventType, listener);
+	}
+
+	public void addListener(Listener<? extends BaseEvent> listener) {
+		observable.addListener(listener);
 	}
 
 	/**
@@ -106,6 +144,20 @@ public abstract class AbstractSessionObject implements SessionObject {
 				iterator.remove();
 		}
 
+		ClearedEvent event = new ClearedEvent(this, scopes);
+		observable.fireEvent(event);
+	}
+
+	public void fireEvent(BaseEvent event) throws JaxmppException {
+		observable.fireEvent(event);
+	}
+
+	public void fireEvent(EventType eventType, BaseEvent event) throws JaxmppException {
+		observable.fireEvent(eventType, event);
+	}
+
+	public void fireEvent(EventType eventType, SessionObject sessionObject) throws JaxmppException {
+		observable.fireEvent(eventType, sessionObject);
 	}
 
 	/**
@@ -185,6 +237,18 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException {
 		return responseManager.registerResponseHandler(stanza, timeout, callback);
+	}
+
+	public void removeAllListeners() {
+		observable.removeAllListeners();
+	}
+
+	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
+		observable.removeListener(eventType, listener);
+	}
+
+	public void removeListener(Listener<? extends BaseEvent> listener) {
+		observable.removeListener(listener);
 	}
 
 	@Override
