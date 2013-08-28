@@ -43,6 +43,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PubSubEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PublishAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.RetrieveItemsAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.SubscriptionAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.SubscriptionElement;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -340,18 +341,23 @@ public class PubSubModuleTest {
 					}
 
 					@Override
-					protected void onSubscribe(IQ response, String node, JID jid, String subID, Subscription subscription) {
-						check[0] = true;
-						assertEquals("princely_musings", node);
-						assertEquals(JID.jidInstance("francisco@denmark.lit"), jid);
-						assertEquals("ba49252aaa4f5d320c24d3766f0bdcade78c78d3", subID);
-						assertEquals(Subscription.subscribed, subscription);
+					protected void onSubscribe(IQ response, SubscriptionElement subscriptionElement) {
+						try {
+							check[0] = true;
+							assertEquals("princely_musings", subscriptionElement.getNode());
+							assertEquals(JID.jidInstance("francisco@denmark.lit"), subscriptionElement.getJID());
+							assertEquals("ba49252aaa4f5d320c24d3766f0bdcade78c78d3", subscriptionElement.getSubID());
+							assertEquals(Subscription.subscribed, subscriptionElement.getSubscription());
+						} catch (Exception e) {
+							fail(e.getMessage());
+						}
 					}
 
 					@Override
 					public void onTimeout() throws XMLException {
 						fail();
 					}
+
 				});
 
 		final Element iq = this.writer.poll();

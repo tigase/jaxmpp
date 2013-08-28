@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -28,12 +29,19 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule {
 
+	protected static Element getFirstChild(Element element, String elementName) throws XMLException {
+		List<Element> elements = element.getChildren(elementName);
+		return elements == null || elements.size() == 0 ? null : elements.get(0);
+	}
+
 	protected final Logger log;
 	protected final Observable observable;
+
 	protected final SessionObject sessionObject;
 
 	protected final PacketWriter writer;
@@ -74,7 +82,13 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 		process(stanza);
 	}
 
-	public abstract void process(T element) throws JaxmppException;
+	/**
+	 * Method for processing incoming stanza.
+	 * 
+	 * @param element
+	 *            incoming stanza
+	 */
+	public abstract void process(T stanza) throws JaxmppException;
 
 	/**
 	 * Removes all listeners.

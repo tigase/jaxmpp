@@ -20,7 +20,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
@@ -321,11 +320,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public static final Integer STATUS_NEW_NICKNAME = 303;
 
 	public static final EventType YouJoined = new EventType();
-
-	private static Element getFirstChild(Element e, String name) throws XMLException {
-		List<Element> l = e.getChildren(name);
-		return l != null && !l.isEmpty() ? l.get(0) : null;
-	}
 
 	private final Criteria crit;
 
