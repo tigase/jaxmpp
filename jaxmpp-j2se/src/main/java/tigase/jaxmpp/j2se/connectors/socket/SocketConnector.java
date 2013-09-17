@@ -852,8 +852,7 @@ public class SocketConnector implements Connector {
 				log.finer("Preparing connection to " + serverHost);
 
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
-			if (log.isLoggable(Level.FINEST))
-				log.finest("Starting socket " + x + ":" + serverHost.getPort());
+			log.info("Opening connection to " + x + ":" + serverHost.getPort());
 			socket = new Socket(x, serverHost.getPort());
 			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
 			// || ((Boolean)
