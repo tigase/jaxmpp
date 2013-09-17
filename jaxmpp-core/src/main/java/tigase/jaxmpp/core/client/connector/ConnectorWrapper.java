@@ -72,11 +72,12 @@ public class ConnectorWrapper implements Connector {
 	public boolean isSecure() {
 		return connector.isSecure();
 	}
-	
+
 	/**
 	 * Returns true when stream is compressed
-	 * @return 
-	 */	
+	 * 
+	 * @return
+	 */
 	@Override
 	public boolean isCompressed() {
 		return connector.isCompressed();

@@ -29,6 +29,7 @@ import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
+import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
@@ -80,6 +81,8 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
+	private final ConnectorWrapper connectorWrapper;
+
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
 
 	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
@@ -130,6 +133,12 @@ public class Jaxmpp extends JaxmppCore {
 			}
 		};
 		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
+
+		this.connectorWrapper = new ConnectorWrapper(observable);
+		this.connector = this.connectorWrapper;
+		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
+		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
+		this.connector.addListener(Connector.Error, this.streamErrorListener);
 
 		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
 
@@ -248,16 +257,8 @@ public class Jaxmpp extends JaxmppCore {
 			this.sessionLogic.unbind();
 			this.sessionLogic = null;
 		}
-		if (this.connector != null) {
-			this.connector.removeAllListeners();
-			this.connector = null;
-		}
 
-		this.connector = createConnector();
-
-		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
-		connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
-		connector.addListener(Connector.Error, this.streamErrorListener);
+		this.connectorWrapper.setConnector(createConnector());
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
 		this.sessionLogic.setSessionListener(new SessionListener() {
