@@ -25,6 +25,7 @@ import java.io.Serializable;
  * @author bmalkow
  * 
  */
+@Deprecated
 public class EventType implements Serializable {
 
 	private static int counter = 0;

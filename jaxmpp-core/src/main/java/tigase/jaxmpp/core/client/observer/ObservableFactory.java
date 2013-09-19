@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client.observer;
 
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 
+@Deprecated
 public class ObservableFactory {
 
 	public static interface FactorySpi extends UniversalFactory.FactorySpi<Observable> {

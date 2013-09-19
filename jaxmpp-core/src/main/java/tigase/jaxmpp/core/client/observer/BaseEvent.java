@@ -27,6 +27,7 @@ import tigase.jaxmpp.core.client.SessionObject;
  * @author bmalkow
  * 
  */
+@Deprecated
 public class BaseEvent implements Serializable {
 
 	private static final long serialVersionUID = 1L;

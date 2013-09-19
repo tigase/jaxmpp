@@ -36,6 +36,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * @author bmalkow
  * 
  */
+@Deprecated
 public interface Observable {
 
 	/**

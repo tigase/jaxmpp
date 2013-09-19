@@ -43,6 +43,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * @author bmalkow
  * 
  */
+@Deprecated
 public class DefaultObservable implements Observable {
 
 	private final List<Listener<? extends BaseEvent>> everythingListener = new ArrayList<Listener<? extends BaseEvent>>();

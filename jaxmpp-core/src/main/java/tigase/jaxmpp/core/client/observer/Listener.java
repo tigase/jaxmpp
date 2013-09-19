@@ -35,6 +35,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * 
  * @author bmalkow
  */
+@Deprecated
 public interface Listener<E extends BaseEvent> extends EventListener {
 
 	/**
