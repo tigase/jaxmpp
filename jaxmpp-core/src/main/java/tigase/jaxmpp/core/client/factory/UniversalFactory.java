@@ -55,6 +55,7 @@ public class UniversalFactory {
 	 *         registered for that name.
 	 */
 	public static <T> T createInstance(String key) {
+		@SuppressWarnings("unchecked")
 		FactorySpi<T> spi = (FactorySpi<T>) instance().factories.get(key);
 		if (spi == null)
 			return null;

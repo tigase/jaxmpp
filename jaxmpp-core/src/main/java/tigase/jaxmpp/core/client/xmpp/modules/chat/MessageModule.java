@@ -19,20 +19,21 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
 
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageReceivedHandler.MessageReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 /**
@@ -76,60 +77,65 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
  */
 public class MessageModule extends AbstractStanzaModule<Message> {
 
-	public static abstract class AbstractMessageEvent extends BaseEvent {
+	public interface ChatClosedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class ChatClosedEvent extends JaxmppEvent<ChatClosedHandler> {
 
-		private Message message;
+			public static final EventType<ChatClosedHandler> TYPE = new EventType<ChatClosedHandler>();
 
-		public AbstractMessageEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			public ChatClosedEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(ChatClosedHandler handler) {
+				handler.onChatClosed(sessionObject);
+			}
+
 		}
 
-		/**
-		 * Return received message.
-		 * 
-		 * @return message
-		 */
-		public Message getMessage() {
-			return message;
-		}
-
-		public void setMessage(Message message) {
-			this.message = message;
-		}
+		void onChatClosed(SessionObject sessionObject);
 	}
 
-	public static class MessageEvent extends AbstractMessageEvent {
+	public interface ChatCreatedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class ChatCreatedEvent extends JaxmppEvent<ChatCreatedHandler> {
 
-		private Chat chat;
+			public static final EventType<ChatCreatedHandler> TYPE = new EventType<ChatCreatedHandler>();
 
-		public MessageEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			public ChatCreatedEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(ChatCreatedHandler handler) {
+				handler.onChatCreated(sessionObject);
+			}
+
 		}
 
-		/**
-		 * Return chat related to message.
-		 * 
-		 * @return chat. May be <code>null</code>.
-		 */
-		public Chat getChat() {
-			return chat;
-		}
-
-		public void setChat(Chat chat) {
-			this.chat = chat;
-		}
-
+		void onChatCreated(SessionObject sessionObject);
 	}
 
-	public static final EventType ChatClosed = new EventType();
+	public interface ChatUpdatedHandler extends EventHandler {
 
-	public static final EventType ChatCreated = new EventType();
+		public static class ChatUpdatedEvent extends JaxmppEvent<ChatUpdatedHandler> {
 
-	public static final EventType ChatUpdated = new EventType();
+			public static final EventType<ChatUpdatedHandler> TYPE = new EventType<ChatUpdatedHandler>();
+
+			public ChatUpdatedEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(ChatUpdatedHandler handler) {
+				handler.onChatUpdated(sessionObject);
+			}
+
+		}
+
+		void onChatUpdated(SessionObject sessionObject);
+	}
 
 	private static final Criteria CRIT = new Criteria() {
 
@@ -149,17 +155,39 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		}
 	};
 
-	public static final EventType MessageReceived = new EventType();
+	public interface MessageReceivedHandler extends EventHandler {
+
+		public static class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
+
+			public static final EventType<MessageReceivedHandler> TYPE = new EventType<MessageReceivedHandler>();
+
+			private final Message stanza;
+
+			private final Chat chat;
+
+			public MessageReceivedEvent(SessionObject sessionObject, Message stanza, Chat chat) {
+				super(TYPE, sessionObject);
+				this.stanza = stanza;
+				this.chat = chat;
+			}
+
+			@Override
+			protected void dispatch(MessageReceivedHandler handler) {
+				handler.onMessageReceived(sessionObject);
+			}
+
+		}
+
+		void onMessageReceived(SessionObject sessionObject);
+	}
 
 	private final AbstractChatManager chatManager;
 
-	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public MessageModule(Context context) {
+		super(context);
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
-		this.chatManager.setObservable(this.observable);
-		this.chatManager.setPacketWriter(packetWriter);
-		this.chatManager.setSessionObject(sessionObject);
+		this.chatManager.setContext(context);
 		this.chatManager.initialize();
 	}
 
@@ -213,22 +241,17 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		return null;
 	}
 
-	Observable getObservable() {
-		return observable;
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public void process(Message element) throws JaxmppException {
-		MessageEvent event = new MessageEvent(MessageReceived, sessionObject);
-		event.setMessage(element);
-		Chat chat = chatManager.process(element, observable);
-		if (chat != null) {
-			event.setChat(chat);
-		}
-		observable.fireEvent(event.getType(), event);
+
+		Chat chat = chatManager.process(element, );
+
+		MessageReceivedEvent event = new MessageReceivedEvent(context.getSessionObject(), element,chat);
+
+		fireEvent(event);
 	}
 
 	/**
@@ -248,7 +271,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		msg.setTo(toJID);
 		msg.setId(UIDGenerator.next());
 
-		writer.write(msg);
+		write(msg);
 	}
 
 }

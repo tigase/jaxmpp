@@ -6,6 +6,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
  * Interface should be implemented by module if {@linkplain Observable} should
  * be injected to module.
  */
+@Deprecated
 public interface ObservableAware {
 
 	/**

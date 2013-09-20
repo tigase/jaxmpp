@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -41,41 +42,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class DiscoItemsModule extends AbstractIQModule {
-
-	public static class DiscoItemEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private final ArrayList<Item> items = new ArrayList<DiscoItemsModule.Item>();
-
-		private String node;
-
-		private IQ requestStanza;
-
-		public DiscoItemEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public ArrayList<Item> getItems() {
-			return items;
-		}
-
-		public String getNode() {
-			return node;
-		}
-
-		public IQ getRequestStanza() {
-			return requestStanza;
-		}
-
-		public void setNode(String node) {
-			this.node = node;
-		}
-
-		public void setRequestStanza(IQ requestStanza) {
-			this.requestStanza = requestStanza;
-		}
-	}
 
 	public static abstract class DiscoItemsAsyncCallback implements AsyncCallback {
 
@@ -135,12 +101,11 @@ public class DiscoItemsModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/disco#items" }));
 
-	public final static EventType ItemsRequested = new EventType();
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#items" };
 
-	public DiscoItemsModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	public DiscoItemsModule(Context context) {
+		super(context);
 	}
 
 	@Override

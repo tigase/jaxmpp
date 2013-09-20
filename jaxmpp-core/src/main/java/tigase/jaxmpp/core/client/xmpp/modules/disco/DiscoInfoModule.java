@@ -23,19 +23,18 @@ import java.util.HashSet;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -43,6 +42,7 @@ import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -89,56 +89,6 @@ public class DiscoInfoModule extends AbstractIQModule {
 		}
 	}
 
-	public static class DiscoInfoEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private String[] features;
-
-		private Identity identity;
-
-		private String node;
-
-		private IQ requestStanza;
-
-		public DiscoInfoEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public String[] getFeatures() {
-			return features;
-		}
-
-		public Identity getIdentity() {
-			return identity;
-		}
-
-		public String getNode() {
-			return node;
-		}
-
-		public IQ getRequestStanza() {
-			return requestStanza;
-		}
-
-		public void setFeatures(String[] features) {
-			this.features = features;
-		}
-
-		public void setIdentity(Identity identity) {
-			this.identity = identity;
-		}
-
-		public void setNode(String node) {
-			this.node = node;
-		}
-
-		public void setRequestStanza(IQ requestStanza) {
-			this.requestStanza = requestStanza;
-		}
-
-	}
-
 	public static class Identity {
 		private String category;
 
@@ -178,19 +128,42 @@ public class DiscoInfoModule extends AbstractIQModule {
 
 	public final static String IDENTITY_TYPE_KEY = "IDENTITY_TYPE_KEY";
 
-	public final static EventType InfoRequested = new EventType();
-
 	public static final String SERVER_FEATURES_KEY = "SERVER_FEATURES_KEY";
 
-	public final static EventType ServerFeaturesReceived = new EventType();
+	public interface ServerFeaturesReceivedHandler extends EventHandler {
+
+		public static class ServerFeaturesReceivedEvent extends JaxmppEvent<ServerFeaturesReceivedHandler> {
+
+			public static final EventType<ServerFeaturesReceivedHandler> TYPE = new EventType<ServerFeaturesReceivedHandler>();
+
+			private final IQ stanza;
+
+			private final String[] features;
+
+			public ServerFeaturesReceivedEvent(SessionObject sessionObject, IQ responseStanza, String[] features) {
+				super(TYPE, sessionObject);
+				this.stanza = responseStanza;
+				this.features = features;
+			}
+
+			@Override
+			protected void dispatch(ServerFeaturesReceivedHandler handler) {
+				handler.onServerFeaturesReceived(sessionObject, stanza, features);
+			}
+
+		}
+
+		void onServerFeaturesReceived(SessionObject sessionObject, IQ stanza, String[] features);
+	}
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/disco#info" };
 
 	private final XmppModulesManager modulesManager;
 
-	public DiscoInfoModule(SessionObject sessionObject, PacketWriter packetWriter, XmppModulesManager modulesManager) {
-		super(sessionObject, packetWriter);
+	public DiscoInfoModule(Context context, XmppModulesManager modulesManager) {
+		super(context);
 		this.modulesManager = modulesManager;
+		infoRequestCallback = DEFAULT_REQUERST_CALLBACK;
 	}
 
 	public void discoverServerFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {
@@ -207,16 +180,11 @@ public class DiscoInfoModule extends AbstractIQModule {
 					throws XMLException {
 				HashSet<String> ff = new HashSet<String>();
 				ff.addAll(features);
-				sessionObject.setProperty(SERVER_FEATURES_KEY, ff);
+				context.getSessionObject().setProperty(SERVER_FEATURES_KEY, ff);
 
-				final DiscoInfoEvent event = new DiscoInfoEvent(ServerFeaturesReceived, sessionObject);
-				event.setFeatures(ff.toArray(new String[] {}));
-				event.setRequestStanza((IQ) this.responseStanza);
-				try {
-					observable.fireEvent(event);
-				} catch (JaxmppException e) {
-					e.printStackTrace();
-				}
+				final ServerFeaturesReceivedEvent event = new ServerFeaturesReceivedEvent(context.getSessionObject(),
+						(IQ) this.responseStanza, ff.toArray(new String[] {}));
+				fireEvent(event);
 				if (callback != null)
 					callback.onInfoReceived(node, identities, features);
 			}
@@ -228,7 +196,7 @@ public class DiscoInfoModule extends AbstractIQModule {
 			}
 		};
 
-		JID jid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		JID jid = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 		if (jid != null)
 			getInfo(JID.jidInstance(jid.getDomain()), null, (AsyncCallback) diac);
 	}
@@ -257,59 +225,77 @@ public class DiscoInfoModule extends AbstractIQModule {
 			query.setAttribute("node", node);
 		iq.addChild(query);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	public void getInfo(JID jid, String node, DiscoInfoAsyncCallback callback) throws JaxmppException {
 		getInfo(jid, node, (AsyncCallback) callback);
 	}
 
-	public void processDefaultDiscoEvent(final DiscoInfoEvent be) {
-		be.setIdentity(new Identity());
-		String category = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
-		String type = DiscoInfoModule.this.sessionObject.getProperty(IDENTITY_TYPE_KEY);
-		String nme = DiscoInfoModule.this.sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
-		be.getIdentity().setCategory(category == null ? "client" : category);
-		be.getIdentity().setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
-		be.getIdentity().setType(type == null ? "pc" : type);
+	public static interface InfoRequestCallback {
 
-		be.setFeatures(DiscoInfoModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
+		Identity getIdentity(SessionObject sessionObject, IQ request, String requestedNode);
+
+		String[] getFeatures(SessionObject sessionObject, IQ request, String requestedNode);
+
 	}
+
+	private InfoRequestCallback infoRequestCallback;
+
+	private class DefaultInfoRequestCallback implements InfoRequestCallback {
+
+		@Override
+		public Identity getIdentity(SessionObject sessionObject, IQ request, String requestedNode) {
+			Identity identity = new Identity();
+
+			String category = sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
+			String type = sessionObject.getProperty(IDENTITY_TYPE_KEY);
+			String nme = sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
+			identity.setCategory(category == null ? "client" : category);
+			identity.setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
+			identity.setType(type == null ? "pc" : type);
+
+			return identity;
+		}
+
+		@Override
+		public String[] getFeatures(SessionObject sessionObject, IQ request, String requestedNode) {
+			return DiscoInfoModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {});
+		}
+	}
+
+	private final InfoRequestCallback DEFAULT_REQUERST_CALLBACK = new DefaultInfoRequestCallback();
 
 	@Override
 	protected void processGet(IQ element) throws XMPPException, XMLException, JaxmppException {
 		Element query = element.getChildrenNS("query", "http://jabber.org/protocol/disco#info");
 		final String requestedNode = query.getAttribute("node");
 
-		final DiscoInfoEvent event = new DiscoInfoEvent(InfoRequested, sessionObject);
-		event.setIdentity(new Identity());
-		event.setRequestStanza(element);
-		event.setNode(requestedNode);
-
-		this.observable.fireEvent(event);
+		final Identity identity = infoRequestCallback.getIdentity(context.getSessionObject(), element, requestedNode);
+		final String[] features = infoRequestCallback.getFeatures(context.getSessionObject(), element, requestedNode);
 
 		Element result = XmlTools.makeResult(element);
 
 		Element queryResult = new DefaultElement("query", null, "http://jabber.org/protocol/disco#info");
-		queryResult.setAttribute("node", event.getNode());
+		queryResult.setAttribute("node", requestedNode);
 		result.addChild(queryResult);
 
-		if (event.getIdentity() != null) {
-			Element identity = new DefaultElement("identity");
-			identity.setAttribute("category", event.getIdentity().getCategory());
-			identity.setAttribute("type", event.getIdentity().getType());
-			identity.setAttribute("name", event.getIdentity().getName());
-			queryResult.addChild(identity);
+		if (identity != null) {
+			Element identityElement = new DefaultElement("identity");
+			identityElement.setAttribute("category", identity.getCategory());
+			identityElement.setAttribute("type", identity.getType());
+			identityElement.setAttribute("name", identity.getName());
+			queryResult.addChild(identityElement);
 		}
 
-		if (event.getFeatures() != null)
-			for (String feature : event.getFeatures()) {
+		if (features != null)
+			for (String feature : features) {
 				DefaultElement f = new DefaultElement("feature");
 				f.setAttribute("var", feature);
 				queryResult.addChild(f);
 			}
 
-		writer.write(result);
+		write(result);
 	}
 
 	@Override
@@ -317,19 +303,12 @@ public class DiscoInfoModule extends AbstractIQModule {
 		throw new XMPPException(ErrorCondition.not_allowed);
 	}
 
-	@Override
-	public void setObservable(Observable observable) {
-		super.setObservable(observable);
-		this.observable.addListener(InfoRequested, new Listener<DiscoInfoEvent>() {
+	public InfoRequestCallback getInfoRequestCallback() {
+		return infoRequestCallback;
+	}
 
-			@Override
-			public void handleEvent(DiscoInfoEvent be) {
-				if (be.getNode() != null)
-					return;
-
-				processDefaultDiscoEvent(be);
-			}
-		});
+	public void setInfoRequestCallback(InfoRequestCallback infoRequestCallback) {
+		this.infoRequestCallback = infoRequestCallback == null ? DEFAULT_REQUERST_CALLBACK : infoRequestCallback;
 	}
 
 }

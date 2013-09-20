@@ -27,6 +27,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
@@ -45,13 +46,10 @@ public class XmppModulesManager {
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
 
-	private PacketWriter packetWriter;
+	private JaxmppCore jaxmpp;
 
-	private Observable parentObservable;
-
-	public XmppModulesManager(Observable parent, PacketWriter packetWriter) {
-		this.parentObservable = parent;
-		this.packetWriter = packetWriter;
+	public XmppModulesManager(JaxmppCore jaxmpp) {
+		this.jaxmpp = jaxmpp;
 	}
 
 	/**
@@ -123,13 +121,12 @@ public class XmppModulesManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T register(T plugin) {
-		if (plugin instanceof ObservableAware) {
-			Observable observable = ObservableFactory.instance(parentObservable);
-			((ObservableAware) plugin).setObservable(observable);
+		if (plugin instanceof ContextAware) {
+			((ContextAware) plugin).setContext(jaxmpp.getContext());
 		}
 
 		if (plugin instanceof PacketWriterAware) {
-			((PacketWriterAware) plugin).setPacketWriter(packetWriter);
+			((PacketWriterAware) plugin).setPacketWriter(jaxmpp.writer);
 		}
 
 		if (plugin instanceof InitializingModule) {

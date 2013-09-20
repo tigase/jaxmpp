@@ -25,11 +25,19 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.BodyReceivedHandler.BodyReceivedvent;
+import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
+import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
+import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
+import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler.StreamTerminatedEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
@@ -41,51 +49,6 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.ErrorElement;
 
 public abstract class AbstractBoshConnector implements Connector {
-
-	public static class BoshConnectorEvent extends ConnectorEvent {
-
-		private static final long serialVersionUID = 1L;
-		private Element body;
-		private ErrorElement errorElement;
-		private int responseCode;
-		private String responseData;
-
-		public BoshConnectorEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public Element getBody() {
-			return body;
-		}
-
-		public ErrorElement getErrorElement() {
-			return errorElement;
-		}
-
-		public int getResponseCode() {
-			return responseCode;
-		}
-
-		public String getResponseData() {
-			return responseData;
-		}
-
-		public void setBody(Element response) {
-			this.body = response;
-		}
-
-		public void setErrorElement(ErrorElement errorElement) {
-			this.errorElement = errorElement;
-		}
-
-		public void setResponseCode(int responseCode) {
-			this.responseCode = responseCode;
-		}
-
-		public void setResponseData(String responseData) {
-			this.responseData = responseData;
-		}
-	}
 
 	public static final String AUTHID_KEY = "BOSH#AUTHID_KEY";
 
@@ -106,22 +69,17 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected final Logger log;
 
-	protected Observable observable;
+	protected EventBus eventBus;
 
 	protected final Set<BoshRequest> requests = new HashSet<BoshRequest>();
 
 	protected final SessionObject sessionObject;
 
-	public AbstractBoshConnector(Observable parentObservable, SessionObject sessionObject) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	public AbstractBoshConnector(EventBus eventBus, SessionObject sessionObject) {
+		this.eventBus = eventBus;
 		this.log = Logger.getLogger(this.getClass().getName());
 		this.sessionObject = sessionObject;
 		sessionObject.setProperty(Scope.stream, DEFAULT_TIMEOUT_KEY, "30");
-	}
-
-	@Override
-	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
-		observable.addListener(eventType, listener);
 	}
 
 	protected void addToRequests(final BoshRequest worker) {
@@ -138,53 +96,38 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(Connected, sessionObject);
-		this.observable.fireEvent(event.getType(), event);
+		ConnectedEvent event = new ConnectedEvent(sessionObject);
+		eventBus.fire(event, this);
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
 			SessionObject sessionObject) throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(Error, sessionObject);
-		event.setResponseCode(responseCode);
-		event.setResponseData(responseData);
+		// XXX XXX FIXME
+		ErrorCondition condition = ErrorCondition.undefined_condition;
 		if (response != null) {
-			try {
-				event.setErrorElement(ErrorElement.extract(response));
-			} catch (XMLException e) {
-				event.setErrorElement(null);
-			}
-			List<Element> streamError = response.getChildren("stream:error");
-			if (streamError != null && !streamError.isEmpty()) {
-				event.setStreamErrorElement(streamError.get(0));
+			List<Element> streamErrors = response.getChildren("stream:error");
+			if (streamErrors != null && !streamErrors.isEmpty()) {
+				// errorElement = streamErrors.get(0);
 			}
 		}
-		event.setBody(response);
-		event.setCaught(caught);
-		this.observable.fireEvent(event.getType(), event);
+
+		ErrorEvent e = new ErrorEvent(sessionObject, condition, caught);
+		eventBus.fire(e, this);
 	}
 
 	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject)
 			throws JaxmppException {
 		try {
 			{
-				BoshConnectorEvent event = new BoshConnectorEvent(BodyReceived, sessionObject);
-				event.setResponseData(responseData);
-				event.setBody(response);
-				event.setResponseCode(responseCode);
-				this.observable.fireEvent(event.getType(), event);
+				BodyReceivedvent event = new BodyReceivedvent(sessionObject, responseCode, response, responseData);
+				eventBus.fire(event, this);
 
 			}
 			if (response != null) {
 				List<Element> c = response.getChildren();
 				for (Element ch : c) {
-					BoshConnectorEvent event = new BoshConnectorEvent(StanzaReceived, sessionObject);
-					event.setResponseData(responseData);
-					event.setBody(response);
-					event.setResponseCode(responseCode);
-					if (response != null) {
-						event.setStanza(ch);
-					}
-					this.observable.fireEvent(event.getType(), event);
+					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, ch);
+					eventBus.fire(event, this);
 				}
 			}
 		} catch (XMLException e) {
@@ -194,16 +137,11 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnTerminate(int responseCode, String responseData, Element response, SessionObject sessionObject)
 			throws JaxmppException {
-		BoshConnectorEvent event = new BoshConnectorEvent(StreamTerminated, sessionObject);
-		event.setResponseCode(responseCode);
-		event.setResponseData(responseData);
-		event.setBody(response);
-		this.observable.fireEvent(event.getType(), event);
-	}
 
-	@Override
-	public Observable getObservable() {
-		return observable;
+		// XXX check
+
+		StreamTerminatedEvent event = new StreamTerminatedEvent(sessionObject);
+		eventBus.fire(event, this);
 	}
 
 	protected String getSid() {
@@ -368,18 +306,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected abstract void processSendData(final Element element) throws XMLException, JaxmppException;
 
-	@Override
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
 	protected void removeFromRequests(final BoshRequest ack) {
 		this.requests.remove(ack);
-	}
-
-	@Override
-	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 	@Override
@@ -410,14 +338,6 @@ public abstract class AbstractBoshConnector implements Connector {
 			throw new JaxmppException("Not connected");
 	}
 
-	@Override
-	public void setObservable(Observable observable) {
-		if (observable == null)
-			this.observable = ObservableFactory.instance(null);
-		else
-			this.observable = observable;
-	}
-
 	protected void setSid(String sid) {
 		this.sessionObject.setProperty(SID_KEY, sid);
 	}
@@ -426,8 +346,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
 		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
-			ConnectorEvent e = new ConnectorEvent(StateChanged, sessionObject);
-			observable.fireEvent(e);
+			StateChangedEvent e = new StateChangedEvent(sessionObject, s, state);
+			eventBus.fire(e, this);
 		}
 	}
 

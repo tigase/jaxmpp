@@ -20,57 +20,47 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
+import tigase.jaxmpp.core.client.eventbus.Event;
+import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public abstract class AbstractIQModule implements XmppModule, ObservableAware {
+public abstract class AbstractIQModule implements XmppModule {
 
 	protected final Logger log;
 
-	protected Observable observable;
+	protected final Context context;
 
-	protected final SessionObject sessionObject;
+	protected void fireEvent(Event<?> event) {
+		context.getEventBus().fire(event, this);
+	}
 
-	protected final PacketWriter writer;
+	protected void write(Element stanza) throws JaxmppException {
+		context.getWriter().write(stanza);
+	}
 
-	public AbstractIQModule(SessionObject sessionObject, PacketWriter packetWriter) {
+	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, asyncCallback);
+	}
+
+	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, timeout, asyncCallback);
+	}
+
+	public AbstractIQModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
-		this.writer = packetWriter;
-	}
-
-	/**
-	 * Adds a listener bound by the given event type.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	/**
-	 * Add a listener bound by the all event types.
-	 * 
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+		this.context = context;
 	}
 
 	@Override
@@ -105,37 +95,4 @@ public abstract class AbstractIQModule implements XmppModule, ObservableAware {
 	 */
 	protected abstract void processSet(IQ element) throws JaxmppException;
 
-	/**
-	 * Removes all listeners.
-	 */
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(Listener<? extends BaseEvent> listener) {
-		observable.removeListener(listener);
-	}
-
-	@Override
-	public void setObservable(Observable observable) {
-		this.observable = observable;
-	}
 }

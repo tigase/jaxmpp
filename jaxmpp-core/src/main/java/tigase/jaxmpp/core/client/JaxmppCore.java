@@ -22,6 +22,8 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.Connector.State;
+import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
+import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -117,6 +119,8 @@ public abstract class JaxmppCore {
 
 	protected final Observable observable;
 
+	protected final EventBus eventBus;
+
 	protected Processor processor;
 
 	protected final Listener<ResourceBindEvent> resourceBindListener;
@@ -172,10 +176,35 @@ public abstract class JaxmppCore {
 
 	};
 
+	private Context jaxmppContext;
+
+	protected EventBus createEventBus() {
+		return new DefaultEventBus();
+	}
+
 	public JaxmppCore(SessionObject sessionObject) {
+		this.eventBus = createEventBus();
 		this.sessionObject = (AbstractSessionObject) sessionObject;
 		this.log = Logger.getLogger(this.getClass().getName());
 		observable = ObservableFactory.instance(null);
+
+		this.jaxmppContext = new Context() {
+
+			@Override
+			public PacketWriter getWriter() {
+				return JaxmppCore.this.writer;
+			}
+
+			@Override
+			public SessionObject getSessionObject() {
+				return JaxmppCore.this.sessionObject;
+			}
+
+			@Override
+			public EventBus getEventBus() {
+				return JaxmppCore.this.eventBus;
+			}
+		};
 
 		modulesManager = new XmppModulesManager(observable, writer);
 
@@ -419,6 +448,10 @@ public abstract class JaxmppCore {
 
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		(this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID, subject, message);
+	}
+
+	public Context getContext() {
+		return jaxmppContext;
 	}
 
 }

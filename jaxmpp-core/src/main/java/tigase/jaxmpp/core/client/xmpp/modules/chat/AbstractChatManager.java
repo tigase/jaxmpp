@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -28,7 +29,6 @@ import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -38,11 +38,6 @@ public abstract class AbstractChatManager {
 
 	protected ChatSelector chatSelector;
 
-	protected Observable observable;
-
-	protected PacketWriter packetWriter;
-
-	protected SessionObject sessionObject;
 
 	protected AbstractChatManager() {
 		ChatSelector x = UniversalFactory.createInstance(ChatSelector.class.getName());
@@ -140,17 +135,7 @@ public abstract class AbstractChatManager {
 		return process(message, interlocutorJid, observable);
 	}
 
-	void setObservable(Observable observable) {
-		this.observable = observable;
-	}
-
-	void setPacketWriter(PacketWriter packetWriter) {
-		this.packetWriter = packetWriter;
-	}
-
-	void setSessionObject(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
-	}
+	private Context context;
 
 	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
 		boolean changed = false;
@@ -172,6 +157,14 @@ public abstract class AbstractChatManager {
 		}
 
 		return changed;
+	}
+
+	public Context getContext() {
+		return context;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }
