@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2013 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2013 "Bartosz Ma��kowski" <bartosz.malkowski@tigase.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -106,6 +106,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
+			if (pubsub == null) pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
 			Element affiliations = getFirstChild(pubsub, "affiliations");
 			String node = affiliations.getAttribute("node");
 
