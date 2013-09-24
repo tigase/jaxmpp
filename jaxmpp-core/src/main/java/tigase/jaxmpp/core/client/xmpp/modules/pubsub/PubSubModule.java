@@ -105,7 +105,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
-			if (pubsub == null) pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
+			if (pubsub == null)
+				pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
 			Element affiliations = getFirstChild(pubsub, "affiliations");
 			String node = affiliations.getAttribute("node");
 
@@ -366,6 +367,25 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		public void setSubscription(Subscription subscription) throws XMLException {
 			setAttribute("subscription", subscription == null ? null : subscription.name());
+		}
+
+	}
+
+	/**
+	 * Class with definitions of filters for retrieving subscriptions. It is for
+	 * extension <code>tigase:pubsub:1</code>. It allows to filter returned
+	 * subscription list for example by domain.
+	 */
+	public static class SubscriptionFilterExtension {
+
+		private String jidContains;
+
+		public String getJidContains() {
+			return jidContains;
+		}
+
+		public void setJidContains(String jidContains) {
+			this.jidContains = jidContains;
 		}
 
 	}
@@ -1247,7 +1267,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            request callback
 	 */
 	public void retrieveOwnSubscription(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
-		retrieveSubscription(pubSubJID, nodeName, PUBSUB_XMLNS, callback);
+		retrieveSubscription(pubSubJID, nodeName, PUBSUB_XMLNS, null, callback);
 	}
 
 	/**
@@ -1277,11 +1297,11 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            request callback
 	 */
 	public void retrieveSubscription(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
-		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, callback);
+		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, null, callback);
 	}
 
-	protected void retrieveSubscription(BareJID pubSubJID, String nodeName, String xmlns, AsyncCallback callback)
-			throws JaxmppException {
+	protected void retrieveSubscription(BareJID pubSubJID, String nodeName, String xmlns,
+			SubscriptionFilterExtension filterExt, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
@@ -1292,7 +1312,36 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		subscriptions.setAttribute("node", nodeName);
 		pubsub.addChild(subscriptions);
 
+		if (filterExt != null) {
+			Element filter = new DefaultElement("filter", null, "tigase:pubsub:1");
+
+			if (filterExt.getJidContains() != null) {
+				Element f = new DefaultElement("jid", null, null);
+				f.setAttribute("contains", filterExt.getJidContains());
+				filter.addChild(f);
+			}
+
+			subscriptions.addChild(filter);
+		}
+
 		write(iq, callback);
+	}
+
+	/**
+	 * Retrieve all subscriptions of given node. Owner affiliation is required.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param nodeName
+	 *            name of node.
+	 * @param filterExt
+	 *            subscription filter.
+	 * @param callback
+	 *            request callback
+	 */
+	public void retrieveSubscription(BareJID pubSubJID, String nodeName, SubscriptionFilterExtension filterExt,
+			AsyncCallback callback) throws JaxmppException {
+		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, filterExt, callback);
 	}
 
 	/**
