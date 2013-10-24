@@ -415,6 +415,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
+			if (pubsub == null)
+				pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
 			Element subscriptions = getFirstChild(pubsub, "subscriptions");
 			String node = subscriptions.getAttribute("node");
 
