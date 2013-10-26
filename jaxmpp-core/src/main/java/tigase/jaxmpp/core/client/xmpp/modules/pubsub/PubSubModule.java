@@ -286,6 +286,11 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
 
+		protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items, Integer count,
+				Integer firstIndex, String first, String last) {
+			onRetrieve(responseStanza, nodeName, items);
+		}
+
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			final Element event = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
@@ -305,7 +310,27 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 					result.add(it);
 				}
 
-			onRetrieve((IQ) responseStanza, nodeName, result);
+			Integer count = null;
+			Integer firstIndex = null;
+			String first = null;
+			String last = null;
+
+			Element rsm = event != null ? event.getChildrenNS("set", "http://jabber.org/protocol/rsm") : null;
+			if (rsm != null) {
+				for (Element el : rsm.getChildren()) {
+					if ("first".equals(el.getName())) {
+						first = el.getValue();
+						if (el.getAttribute("index") != null)
+							firstIndex = Integer.parseInt(el.getAttribute("index"));
+					} else if ("last".equals(el.getName())) {
+						last = el.getValue();
+					} else if ("count".equals(el.getName())) {
+						count = Integer.parseInt(el.getValue());
+					}
+				}
+			}
+
+			onRetrieve((IQ) responseStanza, nodeName, result, count, firstIndex, first, last);
 		}
 
 	}
@@ -1204,6 +1229,46 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			Element item = new DefaultElement("item");
 			item.setAttribute("id", itemId);
 			items.addChild(item);
+		}
+
+		write(iq, callback);
+	}
+
+	/**
+	 * Gets published item(s) from node.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param nodeName
+	 *            name of node
+	 * @param max
+	 *            maximum amount of items to be retrieve.
+	 * @param index
+	 *            offset from which to start retrieval
+	 * @param callback
+	 *            request callback
+	 */
+	public void retrieveItems(BareJID pubSubJID, String nodeName, Integer max, Integer index, AsyncCallback callback)
+			throws JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.get);
+		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		iq.addChild(pubsub);
+
+		final Element items = new DefaultElement("items");
+		items.setAttribute("node", nodeName);
+		pubsub.addChild(items);
+
+		if (max != null || index != null) {
+			final Element rsm = new DefaultElement("set", null, "http://jabber.org/protocol/rsm");
+			if (max != null) {
+				rsm.addChild(new DefaultElement("max", Integer.toString(max), null));
+			}
+			if (index != null) {
+				rsm.addChild(new DefaultElement("index", Integer.toString(index), null));
+			}
+			pubsub.addChild(rsm);
 		}
 
 		write(iq, callback);
