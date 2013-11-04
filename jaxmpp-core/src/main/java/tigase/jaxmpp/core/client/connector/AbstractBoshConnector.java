@@ -31,22 +31,17 @@ import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler.StreamTerminatedEvent;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
-import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.stanzas.ErrorElement;
 
 public abstract class AbstractBoshConnector implements Connector {
 
@@ -67,19 +62,16 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
-	protected final Logger log;
+	private final Context context;
 
-	protected EventBus eventBus;
+	protected final Logger log;
 
 	protected final Set<BoshRequest> requests = new HashSet<BoshRequest>();
 
-	protected final SessionObject sessionObject;
-
-	public AbstractBoshConnector(EventBus eventBus, SessionObject sessionObject) {
-		this.eventBus = eventBus;
+	public AbstractBoshConnector(Context context) {
+		this.context = context;
 		this.log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
-		sessionObject.setProperty(Scope.stream, DEFAULT_TIMEOUT_KEY, "30");
+		context.getSessionObject().setProperty(Scope.stream, DEFAULT_TIMEOUT_KEY, "30");
 	}
 
 	protected void addToRequests(final BoshRequest worker) {
@@ -92,12 +84,12 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
-		return new BoshXmppSessionLogic(this, modulesManager, sessionObject, writer);
+		return new BoshXmppSessionLogic(context, this, modulesManager);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		ConnectedEvent event = new ConnectedEvent(sessionObject);
-		eventBus.fire(event, this);
+		context.getEventBus().fire(event, this);
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
@@ -112,7 +104,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 
 		ErrorEvent e = new ErrorEvent(sessionObject, condition, caught);
-		eventBus.fire(e, this);
+		context.getEventBus().fire(e, this);
 	}
 
 	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject)
@@ -120,14 +112,14 @@ public abstract class AbstractBoshConnector implements Connector {
 		try {
 			{
 				BodyReceivedvent event = new BodyReceivedvent(sessionObject, responseCode, response, responseData);
-				eventBus.fire(event, this);
+				context.getEventBus().fire(event, this);
 
 			}
 			if (response != null) {
 				List<Element> c = response.getChildren();
 				for (Element ch : c) {
 					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, ch);
-					eventBus.fire(event, this);
+					context.getEventBus().fire(event, this);
 				}
 			}
 		} catch (XMLException e) {
@@ -141,16 +133,16 @@ public abstract class AbstractBoshConnector implements Connector {
 		// XXX check
 
 		StreamTerminatedEvent event = new StreamTerminatedEvent(sessionObject);
-		eventBus.fire(event, this);
+		context.getEventBus().fire(event, this);
 	}
 
 	protected String getSid() {
-		return this.sessionObject.getProperty(SID_KEY);
+		return this.context.getSessionObject().getProperty(SID_KEY);
 	}
 
 	@Override
 	public State getState() {
-		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 	}
 
 	/**
@@ -177,12 +169,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Long nextRid() {
-		Long i = sessionObject.getProperty(RID_KEY);
+		Long i = context.getSessionObject().getProperty(RID_KEY);
 		if (i == null) {
 			i = (long) (Math.random() * 10000000);
 		}
 		i++;
-		sessionObject.setProperty(RID_KEY, i);
+		context.getSessionObject().setProperty(RID_KEY, i);
 		return i;
 	}
 
@@ -192,7 +184,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		if (log.isLoggable(Level.FINER))
 			log.log(Level.FINER, "responseCode=" + responseCode, caught);
 		setStage(State.disconnected);
-		fireOnError(responseCode, responseData, response, caught, sessionObject);
+		fireOnError(responseCode, responseData, response, caught, context.getSessionObject());
 	}
 
 	protected void onResponse(BoshRequest request, final int responseCode, String responseData, final Element response)
@@ -202,10 +194,10 @@ public abstract class AbstractBoshConnector implements Connector {
 			if (response != null && getState() == State.connecting) {
 				setSid(response.getAttribute("sid"));
 				setStage(State.connected);
-				fireOnConnected(sessionObject);
+				fireOnConnected(context.getSessionObject());
 			}
 			if (response != null)
-				fireOnStanzaReceived(responseCode, responseData, response, sessionObject);
+				fireOnStanzaReceived(responseCode, responseData, response, context.getSessionObject());
 
 			if (getState() == State.connected && countActiveRequests() == 0) {
 				final Element body = prepareBody((Element) null);
@@ -225,7 +217,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			log.fine("Stream terminated. responseCode=" + responseCode);
 		setStage(State.disconnected);
 		terminateAllWorkers();
-		fireOnTerminate(responseCode, responseData, response, sessionObject);
+		fireOnTerminate(responseCode, responseData, response, context.getSessionObject());
 	}
 
 	protected Element prepareBody(byte[] payload) throws XMLException {
@@ -253,13 +245,13 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected Element prepareRetartBody() throws XMLException {
 		Element e = new DefaultElement("body");
-		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 		if (from != null) {
 			e.setAttribute("from", from.toString());
 		}
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
-		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.DOMAIN_NAME));
+		e.setAttribute("to", (String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME));
 		e.setAttribute("xml:lang", "en");
 		e.setAttribute("xmpp:restart", "true");
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
@@ -272,16 +264,16 @@ public abstract class AbstractBoshConnector implements Connector {
 		Element e = new DefaultElement("body");
 		e.setAttribute("content", "text/xml; charset=utf-8");
 		// e.setAttribute("from", data.fromUser);
-		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-		Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);
+		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
+		Boolean seeOtherHost = context.getSessionObject().getProperty(SEE_OTHER_HOST_KEY);
 		if (from != null && seeOtherHost != null && seeOtherHost) {
 			e.setAttribute("from", from.toString());
 		}
 		e.setAttribute("hold", "1");
 		e.setAttribute("rid", nextRid().toString());
-		e.setAttribute("to", (String) sessionObject.getProperty(SessionObject.DOMAIN_NAME));
+		e.setAttribute("to", (String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME));
 		e.setAttribute("secure", "true");
-		e.setAttribute("wait", (String) sessionObject.getProperty(DEFAULT_TIMEOUT_KEY));
+		e.setAttribute("wait", (String) context.getSessionObject().getProperty(DEFAULT_TIMEOUT_KEY));
 		e.setAttribute("xml:lang", "en");
 		e.setAttribute("xmpp:version", "1.0");
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
@@ -339,28 +331,30 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void setSid(String sid) {
-		this.sessionObject.setProperty(SID_KEY, sid);
+		this.context.getSessionObject().setProperty(SID_KEY, sid);
 	}
 
 	protected void setStage(State state) throws JaxmppException {
-		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
-		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
+		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
-			StateChangedEvent e = new StateChangedEvent(sessionObject, s, state);
-			eventBus.fire(e, this);
+			StateChangedEvent e = new StateChangedEvent(context.getSessionObject(), s, state);
+			context.getEventBus().fire(e, this);
 		}
 	}
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		// if (sessionObject.getProperty(SessionObject.USER_BARE_JID) == null)
+		// if
+		// (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)
+		// == null)
 		// throw new JaxmppException("No user JID specified");
 
-		if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) == null)
-			sessionObject.setProperty(SessionObject.DOMAIN_NAME,
-					((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain());
+		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null)
+			context.getSessionObject().setProperty(SessionObject.DOMAIN_NAME,
+					((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain());
 
-		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+		String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		if (u == null)
 			throw new JaxmppException("BOSH service URL not defined!");
 

@@ -20,8 +20,8 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -103,8 +103,8 @@ public class SoftwareVersionModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "jabber:iq:version" };
 
-	public SoftwareVersionModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	public SoftwareVersionModule(Context context) {
+		super(context);
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		pingIq.setType(StanzaType.get);
 		pingIq.addChild(new DefaultElement("ping", null, "jabber:iq:version"));
 
-		writer.write(pingIq, callback);
+		write(pingIq, callback);
 	}
 
 	/**
@@ -152,16 +152,16 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		Element query = new DefaultElement("query", null, "jabber:iq:version");
 		result.addChild(query);
 
-		String name = sessionObject.getProperty(NAME_KEY);
-		String version = sessionObject.getProperty(VERSION_KEY);
-		String os = sessionObject.getProperty(OS_KEY);
+		String name = context.getSessionObject().getProperty(NAME_KEY);
+		String version = context.getSessionObject().getProperty(VERSION_KEY);
+		String os = context.getSessionObject().getProperty(OS_KEY);
 
 		query.addChild(new DefaultElement("name", name == null ? DEFAULT_NAME_VAL : name, null));
 		query.addChild(new DefaultElement("version", version == null ? "0.0.0" : version, null));
 		if (os != null)
 			query.addChild(new DefaultElement("os", os, null));
 
-		writer.write(result);
+		write(result);
 	}
 
 	@Override

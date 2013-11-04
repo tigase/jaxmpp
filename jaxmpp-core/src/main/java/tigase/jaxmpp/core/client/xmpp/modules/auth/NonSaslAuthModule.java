@@ -19,15 +19,17 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -41,46 +43,98 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  */
 public class NonSaslAuthModule extends AbstractIQModule {
 
-	public static class NonSaslAuthEvent extends AuthModule.AuthEvent {
+	public interface NonSaslAuthFailedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class NonSaslAuthFailedEvent extends JaxmppEvent<NonSaslAuthFailedHandler> {
 
-		private ErrorCondition error;
+			public static final EventType<NonSaslAuthFailedHandler> TYPE = new EventType<NonSaslAuthFailedHandler>();
 
-		private IQ request;
+			private ErrorCondition errorCondition;
 
-		public NonSaslAuthEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			public NonSaslAuthFailedEvent(SessionObject sessionObject, ErrorCondition error) {
+				super(TYPE, sessionObject);
+				this.errorCondition = error;
+			}
+
+			@Override
+			protected void dispatch(NonSaslAuthFailedHandler handler) {
+				handler.onAuthFailed(sessionObject, errorCondition);
+			}
+
+			public ErrorCondition getErrorCondition() {
+				return errorCondition;
+			}
+
+			public void setErrorCondition(ErrorCondition errorCondition) {
+				this.errorCondition = errorCondition;
+			}
+
 		}
 
-		public ErrorCondition getError() {
-			return error;
+		void onAuthFailed(SessionObject sessionObject, ErrorCondition errorCondition);
+	}
+
+	public interface NonSaslAuthStartHandler extends EventHandler {
+
+		public static class NonSaslAuthStartEvent extends JaxmppEvent<NonSaslAuthStartHandler> {
+
+			public static final EventType<NonSaslAuthStartHandler> TYPE = new EventType<NonSaslAuthStartHandler>();
+			private IQ iq;
+
+			public NonSaslAuthStartEvent(SessionObject sessionObject, IQ iq) {
+				super(TYPE, sessionObject);
+				this.iq = iq;
+			}
+
+			@Override
+			protected void dispatch(NonSaslAuthStartHandler handler) {
+				handler.onAuthStart(sessionObject, iq);
+			}
+
+			public IQ getIq() {
+				return iq;
+			}
+
+			public void setIq(IQ iq) {
+				this.iq = iq;
+			}
+
 		}
 
-		public IQ getRequest() {
-			return request;
+		void onAuthStart(SessionObject sessionObject, IQ iq);
+	}
+
+	public interface NonSaslAuthSuccessHandler extends EventHandler {
+
+		public static class NonSaslAuthSuccessEvent extends JaxmppEvent<NonSaslAuthSuccessHandler> {
+
+			public static final EventType<NonSaslAuthSuccessHandler> TYPE = new EventType<NonSaslAuthSuccessHandler>();
+
+			public NonSaslAuthSuccessEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(NonSaslAuthSuccessHandler handler) {
+				handler.onAuthSuccess(sessionObject);
+			}
+
 		}
 
-		public void setError(ErrorCondition error) {
-			this.error = error;
-		}
-
-		public void setRequest(IQ iq) {
-			this.request = iq;
-		}
+		void onAuthSuccess(SessionObject sessionObject);
 	}
 
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:auth" }));
 
-	public NonSaslAuthModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	public NonSaslAuthModule(Context context) {
+		super(context);
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthStart, sessionObject);
-		event.setRequest(iq);
-		this.observable.fireEvent(event);
+		NonSaslAuthStartHandler.NonSaslAuthStartEvent event = new NonSaslAuthStartHandler.NonSaslAuthStartEvent(
+				context.getSessionObject(), iq);
+		fireEvent(event);
 	}
 
 	@Override
@@ -100,10 +154,10 @@ public class NonSaslAuthModule extends AbstractIQModule {
 		DefaultElement query = new DefaultElement("query", null, "jabber:iq:auth");
 		iq.addChild(query);
 
-		CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
+		CredentialsCallback callback = context.getSessionObject().getProperty(AuthModule.CREDENTIALS_CALLBACK);
 		if (callback == null)
-			callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
-		BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+			callback = new AuthModule.DefaultCredentialsCallback(context.getSessionObject());
+		BareJID userJID = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 
 		query.addChild(new DefaultElement("username", userJID.getLocalpart(), null));
 		query.addChild(new DefaultElement("password", callback.getCredential(), null));
@@ -111,7 +165,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		fireAuthStart(iq);
 
-		writer.write(iq, new AsyncCallback() {
+		write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
@@ -132,24 +186,25 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	}
 
 	protected void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
+		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure with condition: " + error);
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
-		event.setError(error);
-		observable.fireEvent(AuthModule.AuthFailed, event);
+		NonSaslAuthFailedHandler.NonSaslAuthFailedEvent event = new NonSaslAuthFailedHandler.NonSaslAuthFailedEvent(
+				context.getSessionObject(), error);
+		fireEvent(event);
 	}
 
 	protected void onSuccess(Stanza responseStanza) throws JaxmppException {
-		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
+		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
-		observable.fireEvent(AuthModule.AuthSuccess, new NonSaslAuthEvent(AuthModule.AuthSuccess, sessionObject));
+		fireEvent(new NonSaslAuthSuccessHandler.NonSaslAuthSuccessEvent(context.getSessionObject()));
 	}
 
 	protected void onTimeout() throws JaxmppException {
-		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
+		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.FALSE);
 		log.fine("Failure because of timeout");
-		NonSaslAuthEvent event = new NonSaslAuthEvent(AuthModule.AuthFailed, sessionObject);
-		observable.fireEvent(AuthModule.AuthFailed, event);
+		NonSaslAuthFailedHandler.NonSaslAuthFailedEvent event = new NonSaslAuthFailedHandler.NonSaslAuthFailedEvent(
+				context.getSessionObject(), null);
+		fireEvent(event);
 	}
 
 	@Override

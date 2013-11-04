@@ -18,13 +18,10 @@
 package tigase.jaxmpp.core.client.xmpp.modules.vcard;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -51,8 +48,8 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
-	public VCardModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public VCardModule(Context context) {
+		super(context);
 	}
 
 	@Override
@@ -79,7 +76,7 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 		iq.setTo(jid);
 		iq.addChild(new DefaultElement("vCard", null, "vcard-temp"));
 
-		writer.write(iq, timeout, asyncCallback);
+		write(iq, timeout, asyncCallback);
 	}
 
 	public void retrieveVCard(JID jid, VCardAsyncCallback asyncCallback) throws JaxmppException {

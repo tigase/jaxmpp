@@ -17,18 +17,23 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.presence;
 
+import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactAvailableHandler.ContactAvailableEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactChangedPresenceHandler.ContactChangedPresenceEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactUnsubscribedHandler.ContactUnsubscribedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.SubscribeRequestHandler.SubscribeRequestEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore.Handler;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
@@ -40,151 +45,345 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	/**
-	 * Presence related event.
-	 */
-	public static class PresenceEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private boolean cancelled;
-
-		private JID jid;
-
-		private Presence presence;
-
-		private Integer priority;
-
-		private Show show;
-
-		private String status;
-
-		public PresenceEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		/**
-		 * Cancel processing event.
-		 */
-		public void cancel() {
-			this.cancelled = true;
-		}
-
-		/**
-		 * Returns JID of entity related to presence event.
-		 * 
-		 * @return
-		 */
-		public JID getJid() {
-			return jid;
-		}
-
-		/**
-		 * Returns Presence stanza.
-		 * 
-		 * @return presence stanza.
-		 */
-		public Presence getPresence() {
-			return presence;
-		}
-
-		/**
-		 * Returns priority information received with presence.
-		 * 
-		 * @return priority or <code>null</code> if not present.
-		 */
-		public Integer getPriority() {
-			return priority;
-		}
-
-		/**
-		 * Returns substate of presence.
-		 * 
-		 * @return presence sub-state.
-		 */
-		public Show getShow() {
-			return show;
-		}
-
-		/**
-		 * Returns human readable presence description.
-		 * 
-		 * @return
-		 */
-		public String getStatus() {
-			return status;
-		}
-
-		public boolean isCancelled() {
-			return cancelled;
-		}
-
-		public void setJid(JID jid) {
-			this.jid = jid;
-		}
-
-		public void setPresence(Presence presence) {
-			this.presence = presence;
-		}
-
-		public void setPriority(Integer priority) {
-			this.priority = priority;
-		}
-
-		public void setShow(Show show) {
-			this.show = show;
-		}
-
-		public void setStatus(String status) {
-			this.status = status;
-		}
-	}
-
-	/**
-	 * Event fired before initial presence is sent.
-	 */
-	public static final EventType BeforeInitialPresence = new EventType();
-
-	/**
 	 * Event fired before each presence sent by client.
 	 */
-	public static final EventType BeforePresenceSend = new EventType();
+	public interface BeforePresenceSendHandler extends EventHandler {
+
+		public static class BeforePresenceSendEvent extends JaxmppEvent<BeforePresenceSendHandler> {
+
+			public static final EventType<BeforePresenceSendHandler> TYPE = new EventType<BeforePresenceSendHandler>();
+
+			public BeforePresenceSendEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(BeforePresenceSendHandler handler) {
+				handler.onBeforePresenceSend(sessionObject);
+			}
+
+		}
+
+		void onBeforePresenceSend(SessionObject sessionObject);
+	}
 
 	/**
 	 * Event fired when contact (understood as bare JID) becomes available.
 	 * Fired when first resource of JID becomes available.
 	 */
-	public static final EventType ContactAvailable = new EventType();
+	public interface ContactAvailableHandler extends EventHandler {
+
+		public static class ContactAvailableEvent extends JaxmppEvent<ContactAvailableHandler> {
+
+			public static final EventType<ContactAvailableHandler> TYPE = new EventType<ContactAvailableHandler>();
+
+			private JID jid;
+
+			private Integer priority;
+
+			private Show show;
+
+			private Presence stanza;
+
+			private String status;
+
+			public ContactAvailableEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
+					String statusMessage, Integer priority) {
+				super(TYPE, sessionObject);
+				this.stanza = presence;
+				this.jid = jid;
+				this.show = show;
+				this.status = statusMessage;
+				this.priority = priority;
+			}
+
+			@Override
+			protected void dispatch(ContactAvailableHandler handler) {
+				handler.onContactAvailable(sessionObject, stanza, jid, show, status, priority);
+			}
+
+			public JID getJid() {
+				return jid;
+			}
+
+			public Integer getPriority() {
+				return priority;
+			}
+
+			public Show getShow() {
+				return show;
+			}
+
+			public Presence getStanza() {
+				return stanza;
+			}
+
+			public String getStatus() {
+				return status;
+			}
+
+			public void setJid(JID jid) {
+				this.jid = jid;
+			}
+
+			public void setPriority(Integer priority) {
+				this.priority = priority;
+			}
+
+			public void setShow(Show show) {
+				this.show = show;
+			}
+
+			public void setStanza(Presence stanza) {
+				this.stanza = stanza;
+			}
+
+			public void setStatus(String status) {
+				this.status = status;
+			}
+
+		}
+
+		void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
+				Integer priority);
+	}
 
 	/**
 	 * Event fired when contact changed his presence.
 	 */
-	public static final EventType ContactChangedPresence = new EventType();
+	public interface ContactChangedPresenceHandler extends EventHandler {
+
+		public static class ContactChangedPresenceEvent extends JaxmppEvent<ContactChangedPresenceHandler> {
+
+			public static final EventType<ContactChangedPresenceHandler> TYPE = new EventType<ContactChangedPresenceHandler>();
+
+			private JID jid;
+
+			private Integer priority;
+
+			private Show show;
+
+			private Presence stanza;
+
+			private String status;
+
+			public ContactChangedPresenceEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
+					String statusMessage, Integer priority) {
+				super(TYPE, sessionObject);
+				this.stanza = presence;
+				this.jid = jid;
+				this.show = show;
+				this.status = statusMessage;
+				this.priority = priority;
+			}
+
+			@Override
+			protected void dispatch(ContactChangedPresenceHandler handler) {
+				handler.onContactChangedPresence(sessionObject, stanza, jid, show, status, priority);
+			}
+
+			public JID getJid() {
+				return jid;
+			}
+
+			public Integer getPriority() {
+				return priority;
+			}
+
+			public Show getShow() {
+				return show;
+			}
+
+			public Presence getStanza() {
+				return stanza;
+			}
+
+			public String getStatus() {
+				return status;
+			}
+
+			public void setJid(JID jid) {
+				this.jid = jid;
+			}
+
+			public void setPriority(Integer priority) {
+				this.priority = priority;
+			}
+
+			public void setShow(Show show) {
+				this.show = show;
+			}
+
+			public void setStanza(Presence stanza) {
+				this.stanza = stanza;
+			}
+
+			public void setStatus(String status) {
+				this.status = status;
+			}
+
+		}
+
+		void onContactChangedPresence(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
+				Integer priority);
+	}
 
 	/**
 	 * Event fired when contact (understood as bare JID) goes offline. Fired
 	 * when no more resources are available.
 	 */
-	public static final EventType ContactUnavailable = new EventType();
+	public interface ContactUnavailableHandler extends EventHandler {
+
+		public static class ContactUnavailableEvent extends JaxmppEvent<ContactUnavailableHandler> {
+
+			public static final EventType<ContactUnavailableHandler> TYPE = new EventType<ContactUnavailableHandler>();
+
+			private JID jid;
+
+			private Presence stanza;
+
+			private String status;
+
+			public ContactUnavailableEvent(SessionObject sessionObject, Presence presence, JID jid, String statusMessage) {
+				super(TYPE, sessionObject);
+				this.stanza = presence;
+				this.jid = jid;
+				this.status = statusMessage;
+			}
+
+			@Override
+			protected void dispatch(ContactUnavailableHandler handler) {
+				handler.onContactUnavailable(sessionObject, stanza, jid, status);
+			}
+
+			public JID getJid() {
+				return jid;
+			}
+
+			public Presence getStanza() {
+				return stanza;
+			}
+
+			public String getStatus() {
+				return status;
+			}
+
+			public void setJid(JID jid) {
+				this.jid = jid;
+			}
+
+			public void setStanza(Presence stanza) {
+				this.stanza = stanza;
+			}
+
+			public void setStatus(String status) {
+				this.status = status;
+			}
+
+		}
+
+		void onContactUnavailable(SessionObject sessionObject, Presence stanza, JID jid, String status);
+	}
 
 	/**
 	 * Event fired when contact is unsubscribed.
 	 */
-	public static final EventType ContactUnsubscribed = new EventType();
+	public interface ContactUnsubscribedHandler extends EventHandler {
 
-	public static final Criteria CRIT = ElementCriteria.name("presence");
+		public static class ContactUnsubscribedEvent extends JaxmppEvent<ContactUnsubscribedHandler> {
+
+			public static final EventType<ContactUnsubscribedHandler> TYPE = new EventType<ContactUnsubscribedHandler>();
+
+			private BareJID jid;
+
+			private Presence stanza;
+
+			public ContactUnsubscribedEvent(SessionObject sessionObject, Presence presence, BareJID bareJID) {
+				super(TYPE, sessionObject);
+				this.stanza = presence;
+				this.jid = bareJID;
+			}
+
+			@Override
+			protected void dispatch(ContactUnsubscribedHandler handler) {
+				handler.onContactUnsubscribed(sessionObject, stanza, jid);
+			}
+
+			public BareJID getJid() {
+				return jid;
+			}
+
+			public Presence getStanza() {
+				return stanza;
+			}
+
+			public void setJid(BareJID jid) {
+				this.jid = jid;
+			}
+
+			public void setStanza(Presence stanza) {
+				this.stanza = stanza;
+			}
+
+		}
+
+		void onContactUnsubscribed(SessionObject sessionObject, Presence stanza, BareJID jid);
+	}
 
 	/**
 	 * Event fired when subscription request is received.
 	 */
-	public static final EventType SubscribeRequest = new EventType();
+	public interface SubscribeRequestHandler extends EventHandler {
 
-	public PresenceModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
-		this.sessionObject.getPresence().setHandler(new Handler() {
+		public static class SubscribeRequestEvent extends JaxmppEvent<SubscribeRequestHandler> {
+
+			public static final EventType<SubscribeRequestHandler> TYPE = new EventType<SubscribeRequestHandler>();
+
+			private BareJID jid;
+
+			private Presence stanza;
+
+			public SubscribeRequestEvent(SessionObject sessionObject, Presence presence, BareJID bareJID) {
+				super(TYPE, sessionObject);
+				this.stanza = presence;
+				this.jid = bareJID;
+			}
+
+			@Override
+			protected void dispatch(SubscribeRequestHandler handler) {
+				handler.onSubscribeRequest(sessionObject, stanza, jid);
+			}
+
+			public BareJID getJid() {
+				return jid;
+			}
+
+			public Presence getStanza() {
+				return stanza;
+			}
+
+			public void setJid(BareJID jid) {
+				this.jid = jid;
+			}
+
+			public void setStanza(Presence stanza) {
+				this.stanza = stanza;
+			}
+
+		}
+
+		void onSubscribeRequest(SessionObject sessionObject, Presence stanza, BareJID jid);
+	}
+
+	public static final Criteria CRIT = ElementCriteria.name("presence");
+
+	public PresenceModule(Context context) {
+		super(context);
+		this.context.getSessionObject().getPresence().setHandler(new Handler() {
 
 			@Override
 			public void onOffline(Presence i) throws JaxmppException {
-				contactOffline(i.getFrom());
+				contactOffline(i, i.getFrom());
 			}
 
 			@Override
@@ -194,32 +393,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		});
 	}
 
-	protected void contactOffline(final JID jid) throws JaxmppException {
-		PresenceEvent event = new PresenceEvent(ContactUnavailable, sessionObject);
-		event.setJid(jid);
-
-		observable.fireEvent(event);
-
-	}
-
-	/**
-	 * 
-	 * @param presence
-	 * @return <code>true</code> if event is cancelled
-	 * @throws JaxmppException
-	 */
-	protected boolean fireBeforePresenceSend(final Presence presence) throws JaxmppException {
-		PresenceEvent event = new PresenceEvent(BeforePresenceSend, sessionObject);
-		event.setPresence(presence);
-
-		observable.fireEvent(BeforePresenceSend, event);
-
-		return event.isCancelled();
-	}
-
-	private void fireContactChangedPresenceEvent(Presence presence) throws JaxmppException {
-		PresenceEvent event = preparePresenceEvent(ContactChangedPresence, presence);
-		observable.fireEvent(event);
+	protected void contactOffline(Presence i, final JID jid) throws JaxmppException {
+		fireEvent(new ContactUnavailableEvent(context.getSessionObject(), i, jid, null));
 	}
 
 	@Override
@@ -233,17 +408,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 	}
 
 	public PresenceStore getPresence() {
-		return this.sessionObject.getPresence();
-	}
-
-	private PresenceEvent preparePresenceEvent(EventType type, Presence presence) throws XMLException {
-		PresenceEvent event = new PresenceEvent(type, sessionObject);
-		event.setPresence(presence);
-		event.setJid(presence.getFrom());
-		event.setShow(presence.getShow());
-		event.setStatus(presence.getStatus());
-		event.setPriority(presence.getPriority());
-		return event;
+		return this.context.getSessionObject().getPresence();
 	}
 
 	@Override
@@ -253,57 +418,47 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		if (fromJid == null)
 			return;
 
-		boolean availableOld = sessionObject.getPresence().isAvailable(fromJid.getBareJid());
-		sessionObject.getPresence().update(presence);
-		boolean availableNow = sessionObject.getPresence().isAvailable(fromJid.getBareJid());
+		boolean availableOld = context.getSessionObject().getPresence().isAvailable(fromJid.getBareJid());
+		context.getSessionObject().getPresence().update(presence);
+		boolean availableNow = context.getSessionObject().getPresence().isAvailable(fromJid.getBareJid());
 
 		final StanzaType type = presence.getType();
 
 		if (type == StanzaType.unsubscribed) {
-			PresenceEvent event = preparePresenceEvent(ContactUnsubscribed, presence);
-			observable.fireEvent(event);
+			fireEvent(new ContactUnsubscribedEvent(context.getSessionObject(), presence, presence.getFrom().getBareJid()));
 		} else if (type == StanzaType.subscribe) {
 			// subscribe
 			log.finer("Subscribe from " + fromJid);
-			PresenceEvent event = preparePresenceEvent(SubscribeRequest, presence);
-			observable.fireEvent(event);
+			fireEvent(new SubscribeRequestEvent(context.getSessionObject(), presence, presence.getFrom().getBareJid()));
 		} else if (!availableOld && availableNow) {
 			// sontact available
 			log.finer("Presence online from " + fromJid);
-			fireContactChangedPresenceEvent(presence);
-			PresenceEvent event = preparePresenceEvent(ContactAvailable, presence);
-			observable.fireEvent(event);
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+					presence.getShow(), presence.getStatus(), presence.getPriority()));
+			fireEvent(new ContactAvailableEvent(context.getSessionObject(), presence, presence.getFrom(), presence.getShow(),
+					presence.getStatus(), presence.getPriority()));
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
 			log.finer("Presence offline from " + fromJid);
-			fireContactChangedPresenceEvent(presence);
-			PresenceEvent event = preparePresenceEvent(ContactUnavailable, presence);
-			observable.fireEvent(event);
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+					presence.getShow(), presence.getStatus(), presence.getPriority()));
+			fireEvent(new ContactUnavailableEvent(context.getSessionObject(), presence, presence.getFrom(),
+					presence.getStatus()));
 		} else {
 			log.finer("Presence change from " + fromJid);
-			fireContactChangedPresenceEvent(presence);
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+					presence.getShow(), presence.getStatus(), presence.getPriority()));
 		}
 	}
 
 	public void sendInitialPresence() throws XMLException, JaxmppException {
-		PresenceEvent event = new PresenceEvent(BeforeInitialPresence, sessionObject);
-		observable.fireEvent(event);
-
-		if (event.isCancelled())
-			return;
-
 		Presence presence = Presence.create();
-		presence.setPriority(event.getPriority());
-		presence.setStatus(event.getStatus());
-		presence.setShow(event.getShow());
-		if (sessionObject.getProperty(SessionObject.NICKNAME) != null) {
-			presence.setNickname((String) sessionObject.getProperty(SessionObject.NICKNAME));
+
+		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
+			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
 
-		if (fireBeforePresenceSend(presence))
-			return;
-
-		writer.write(presence);
+		write(presence);
 	}
 
 	/**
@@ -321,13 +476,11 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		presence.setShow(show);
 		presence.setStatus(status);
 		presence.setPriority(priority);
-		if (sessionObject.getProperty(SessionObject.NICKNAME) != null) {
-			presence.setNickname((String) sessionObject.getProperty(SessionObject.NICKNAME));
+		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
+			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
-		if (fireBeforePresenceSend(presence))
-			return;
 
-		writer.write(presence);
+		write(presence);
 	}
 
 	/**
@@ -341,10 +494,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		p.setType(StanzaType.subscribe);
 		p.setTo(jid);
 
-		if (fireBeforePresenceSend(p))
-			return;
-
-		writer.write(p);
+		write(p);
 	}
 
 	public void subscribed(JID jid) throws JaxmppException, XMLException {
@@ -352,10 +502,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		p.setType(StanzaType.subscribed);
 		p.setTo(jid);
 
-		if (fireBeforePresenceSend(p))
-			return;
-
-		writer.write(p);
+		write(p);
 	}
 
 	public void unsubscribe(JID jid) throws JaxmppException, XMLException {
@@ -363,10 +510,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		p.setType(StanzaType.unsubscribe);
 		p.setTo(jid);
 
-		if (fireBeforePresenceSend(p))
-			return;
-
-		writer.write(p);
+		write(p);
 	}
 
 	public void unsubscribed(JID jid) throws JaxmppException, XMLException {
@@ -374,10 +518,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		p.setType(StanzaType.unsubscribed);
 		p.setTo(jid);
 
-		if (fireBeforePresenceSend(p))
-			return;
-
-		writer.write(p);
+		write(p);
 	}
 
 }

@@ -93,11 +93,11 @@ public interface Connector {
 
 			public static final EventType<BodyReceivedHandler> TYPE = new EventType<BodyReceivedHandler>();
 
-			private int responseCode;
+			private String receivedData;
 
 			private Element response;
 
-			private String receivedData;
+			private int responseCode;
 
 			public BodyReceivedvent(SessionObject sessionObject, int responseCode, Element response, String responseData) {
 				super(TYPE, sessionObject);
@@ -111,16 +111,16 @@ public interface Connector {
 				handler.onBodyReceived(sessionObject, responseCode, response);
 			}
 
-			public int getResponseCode() {
-				return responseCode;
+			public String getReceivedData() {
+				return receivedData;
 			}
 
 			public Element getResponse() {
 				return response;
 			}
 
-			public String getReceivedData() {
-				return receivedData;
+			public int getResponseCode() {
+				return responseCode;
 			}
 
 		}
@@ -189,9 +189,9 @@ public interface Connector {
 
 			public static final EventType<ErrorHandler> TYPE = new EventType<ErrorHandler>();
 
-			private ErrorCondition condition;
-
 			private Throwable caught;
+
+			private ErrorCondition condition;
 
 			public ErrorEvent(SessionObject sessionObject, ErrorCondition condition, Throwable caught) {
 				super(TYPE, sessionObject);
@@ -204,12 +204,12 @@ public interface Connector {
 				handler.onError(sessionObject, condition, caught);
 			}
 
-			public ErrorCondition getCondition() {
-				return condition;
-			}
-
 			public Throwable getCaught() {
 				return caught;
+			}
+
+			public ErrorCondition getCondition() {
+				return condition;
 			}
 
 		}
@@ -259,18 +259,29 @@ public interface Connector {
 
 			public static final EventType<StanzaSendingHandler> TYPE = new EventType<StanzaSendingHandler>();
 
-			public StanzaSendingEvent(SessionObject sessionObject) {
+			private Element stanza;
+
+			public StanzaSendingEvent(SessionObject sessionObject, Element stanza) {
 				super(TYPE, sessionObject);
+				this.stanza = stanza;
 			}
 
 			@Override
-			protected void dispatch(StanzaSendingHandler handler) {
-				handler.onStanzaSending(sessionObject);
+			protected void dispatch(StanzaSendingHandler handler) throws JaxmppException {
+				handler.onStanzaSending(sessionObject, stanza);
+			}
+
+			public Element getStanza() {
+				return stanza;
+			}
+
+			public void setStanza(Element stanza) {
+				this.stanza = stanza;
 			}
 
 		}
 
-		void onStanzaSending(SessionObject sessionObject);
+		void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException;
 	}
 
 	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
@@ -292,9 +303,9 @@ public interface Connector {
 
 			public static final EventType<StateChangedHandler> TYPE = new EventType<StateChangedHandler>();
 
-			private State oldState;
-
 			private State newState;
+
+			private State oldState;
 
 			public StateChangedEvent(SessionObject sessionObject, State oldState, State newState) {
 				super(TYPE, sessionObject);
@@ -307,12 +318,12 @@ public interface Connector {
 				handler.onStateChanged(sessionObject, oldState, newState);
 			}
 
-			public State getOldState() {
-				return oldState;
-			}
-
 			public State getNewState() {
 				return newState;
+			}
+
+			public State getOldState() {
+				return oldState;
 			}
 
 		}

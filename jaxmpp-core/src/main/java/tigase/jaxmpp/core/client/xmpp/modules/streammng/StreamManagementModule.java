@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -263,13 +262,14 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 		this.sessionObject = sessionObject;
 		this.writer = writer;
 
-		jaxmpp.addListener(Connector.StanzaSending, new Listener<ConnectorEvent>() {
+		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.TYPE,
+				new Connector.StanzaSendingHandler() {
 
-			@Override
-			public void handleEvent(ConnectorEvent be) throws JaxmppException {
-				processOutgoingElement(be.getStanza());
-			}
-		});
+					@Override
+					public void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException {
+						processOutgoingElement(stanza);
+					}
+				});
 
 	}
 

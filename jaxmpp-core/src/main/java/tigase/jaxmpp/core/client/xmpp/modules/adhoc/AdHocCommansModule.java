@@ -17,14 +17,15 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -32,7 +33,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -40,12 +40,10 @@ import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.DiscoItemEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule.Item;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Item;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.NodeDetailsCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -127,45 +125,58 @@ public class AdHocCommansModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("command", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/commands" }));
 
+	private final static String XMLNS = "http://jabber.org/protocol/commands";
+
 	static String generateSessionId() {
 		return UIDGenerator.next() + UIDGenerator.next();
 	}
 
+	private final NodeDetailsCallback commandDiscoveryCallback;
+
 	private final Map<String, AdHocCommand> commands = new HashMap<String, AdHocCommand>();
+
+	private final DiscoveryModule discoveryModule;
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/commands" };
 
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
-	public AdHocCommansModule(SessionObject sessionObject, PacketWriter packetWriter, DiscoItemsModule discoItemsModule,
-			DiscoInfoModule discoInfoModule) {
-		super(sessionObject, packetWriter);
-		discoItemsModule.addListener(DiscoItemsModule.ItemsRequested, new Listener<DiscoItemsModule.DiscoItemEvent>() {
+	public AdHocCommansModule(Context context, DiscoveryModule discoveryModule) {
+		super(context);
+		this.discoveryModule = discoveryModule;
+		this.commandDiscoveryCallback = new NodeDetailsCallback() {
 
 			@Override
-			public void handleEvent(DiscoItemEvent be) {
-				try {
-					if (be.getNode() != null && be.getNode().equals("http://jabber.org/protocol/commands"))
-						processDiscoItemEvent(be);
-				} catch (XMLException e) {
-				}
+			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return AdHocCommansModule.this.getCommandFeatures(sessionObject, requestStanza, node);
 			}
-		});
-		discoInfoModule.addListener(DiscoInfoModule.InfoRequested, new Listener<DiscoInfoModule.DiscoInfoEvent>() {
 
 			@Override
-			public void handleEvent(DiscoInfoEvent be) throws JaxmppException {
-				try {
-					if (be.getNode() != null && be.getNode().equals("http://jabber.org/protocol/commands")) {
-						be.setIdentity(new Identity());
-						be.getIdentity().setCategory("automation");
-						be.getIdentity().setName("Ad-Hoc Commands");
-						be.getIdentity().setType("command-list");
-					} else if (be.getNode() != null && commands.containsKey(be.getNode())) {
-						processDiscoInfoEvent(be);
-					}
-				} catch (XMLException e) {
-				}
+			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return AdHocCommansModule.this.getCommandIdentity(sessionObject, requestStanza, node);
+			}
+
+			@Override
+			public Item[] getItems(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return null;
+			}
+		};
+
+		discoveryModule.setNodeCallback(XMLNS, new NodeDetailsCallback() {
+
+			@Override
+			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return null;
+			}
+
+			@Override
+			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return AdHocCommansModule.this.getModuleIdentity(sessionObject, requestStanza, node);
+			}
+
+			@Override
+			public Item[] getItems(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+				return AdHocCommansModule.this.getModuleItems(sessionObject, requestStanza, node);
 			}
 		});
 	}
@@ -201,7 +212,36 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 		iq.addChild(command);
 
-		writer.write(iq, asyncCallback);
+		write(iq, asyncCallback);
+	}
+
+	protected String[] getCommandFeatures(SessionObject sessionObject, IQ requestStanza, String commandNodeName)
+			throws JaxmppException {
+		final AdHocCommand command = this.commands.get(commandNodeName);
+
+		if (command == null)
+			throw new XMPPException(ErrorCondition.item_not_found);
+		else if (!command.isAllowed(requestStanza.getFrom()))
+			throw new XMPPException(ErrorCondition.forbidden);
+
+		return command.getFeatures();
+	}
+
+	protected Identity getCommandIdentity(SessionObject sessionObject, IQ requestStanza, String commandNodeName)
+			throws JaxmppException {
+		final AdHocCommand command = this.commands.get(commandNodeName);
+
+		if (command == null)
+			throw new XMPPException(ErrorCondition.item_not_found);
+		else if (!command.isAllowed(requestStanza.getFrom()))
+			throw new XMPPException(ErrorCondition.forbidden);
+
+		Identity identity = new Identity();
+		identity.setCategory("automation");
+		identity.setName(command.getName());
+		identity.setType("command-node");
+
+		return identity;
 	}
 
 	@Override
@@ -214,31 +254,28 @@ public class AdHocCommansModule extends AbstractIQModule {
 		return FEATURES;
 	}
 
-	protected void processDiscoInfoEvent(final DiscoInfoEvent be) throws XMLException, XMPPException {
-		final AdHocCommand command = this.commands.get(be.getNode());
-
-		if (!command.isAllowed(be.getRequestStanza().getFrom()))
-			throw new XMPPException(ErrorCondition.forbidden);
-
-		be.setIdentity(new Identity());
-		be.getIdentity().setCategory("automation");
-		be.getIdentity().setName(command.getName());
-		be.getIdentity().setType("command-node");
-
-		be.setFeatures(command.getFeatures());
+	protected Identity getModuleIdentity(SessionObject sessionObject, IQ requestStanza, String node) {
+		Identity identity = new Identity();
+		identity.setCategory("automation");
+		identity.setName("Ad-Hoc Commands");
+		identity.setType("command-list");
+		return identity;
 	}
 
-	protected void processDiscoItemEvent(final DiscoItemEvent be) throws XMLException {
-		JID jid = be.getRequestStanza().getTo();
+	protected Item[] getModuleItems(SessionObject sessionObject, IQ requestStanza, String node) throws XMLException {
+		final JID jid = requestStanza.getTo();
+		ArrayList<Item> result = new ArrayList<DiscoveryModule.Item>();
 		for (AdHocCommand command : this.commands.values()) {
-			if (!command.isAllowed(be.getRequestStanza().getFrom()))
+			if (!command.isAllowed(requestStanza.getFrom()))
 				continue;
 			Item it = new Item();
 			it.setJid(jid);
 			it.setName(command.getName());
 			it.setNode(command.getNode());
-			be.getItems().add(it);
+			result.add(it);
 		}
+
+		return result.toArray(new Item[] {});
 	}
 
 	@Override
@@ -276,7 +313,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 		}
 
 		final AdHocRequest request = new AdHocRequest(action, requestedNode, sessionid, element, this.sessions);
-		final AdHocResponse response = new AdHocResponse(writer);
+		final AdHocResponse response = new AdHocResponse(context.getWriter());
 
 		Element xData = command.getChildrenNS("x", "jabber:x:data");
 		if (xData != null) {
@@ -326,7 +363,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 			commandResult.addChild(response.getForm());
 		}
 
-		writer.write(result);
+		write(result);
 	}
 
 	/**
@@ -338,5 +375,6 @@ public class AdHocCommansModule extends AbstractIQModule {
 	public void register(final AdHocCommand command) {
 		final String node = command.getNode();
 		this.commands.put(node, command);
+		discoveryModule.setNodeCallback(node, commandDiscoveryCallback);
 	}
 }

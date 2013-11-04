@@ -18,32 +18,36 @@
 package tigase.jaxmpp.core.client.connector;
 
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindErrorHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule.NonSaslAuthEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthFailedHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 
 public class BoshXmppSessionLogic implements XmppSessionLogic {
 
-	@Deprecated
-	public static final String AUTHORIZED = "jaxmpp#authorized";
+	private final AuthModule.AuthFailedHandler authFailedHandler;
 
 	private AuthModule authModule;
+
+	private final AuthModule.AuthSuccessHandler authSuccessHandler;
 
 	private final Connector connector;
 
@@ -53,62 +57,69 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	private ResourceBinderModule resourceBinder;
 
-	private Listener<ResourceBindEvent> resourceBindListener;
+	private final ResourceBindErrorHandler resourceBindErrorHandler;
 
-	private final Listener<AuthModule.AuthEvent> saslEventListener;
+	private final ResourceBindSuccessHandler resourceBindSuccessHandler;
 
 	private SessionListener sessionListener;
 
-	private final SessionObject sessionObject;
+	private final StreamFeaturesReceivedHandler streamFeaturesReceivedHandler;
 
-	private final Listener<StreamFeaturesReceivedEvent> streamFeaturesEventListener;
-
-	private final PacketWriter writer;
-
-	public BoshXmppSessionLogic(Connector connector, XmppModulesManager modulesManager, SessionObject sessionObject,
-			PacketWriter writer) {
+	public BoshXmppSessionLogic(Context context, Connector connector, XmppModulesManager modulesManager) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
-		this.sessionObject = sessionObject;
-		this.writer = writer;
 
-		this.streamFeaturesEventListener = new Listener<StreamFeaturesModule.StreamFeaturesReceivedEvent>() {
+		this.streamFeaturesReceivedHandler = new StreamFeaturesReceivedHandler() {
 
 			@Override
-			public void handleEvent(StreamFeaturesReceivedEvent be) throws JaxmppException {
+			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) {
 				try {
-					processStreamFeatures(be);
+					BoshXmppSessionLogic.this.onStreamFeaturesReceived(sessionObject, featuresElement);
 				} catch (JaxmppException e) {
 					processException(e);
 				}
 			}
 		};
-		this.saslEventListener = new Listener<AuthModule.AuthEvent>() {
+
+		this.authSuccessHandler = new AuthSuccessHandler() {
 
 			@Override
-			public void handleEvent(AuthModule.AuthEvent be) throws JaxmppException {
+			public void onAuthSuccess(SessionObject sessionObject) {
 				try {
-					if (be instanceof SaslEvent) {
-						processSaslEvent((SaslEvent) be);
-					} else if (be instanceof NonSaslAuthEvent) {
-						processNonSaslEvent((NonSaslAuthEvent) be);
-					}
+					processAuthSucess(sessionObject);
 				} catch (JaxmppException e) {
 					processException(e);
 				}
 			}
-
 		};
-		this.resourceBindListener = new Listener<ResourceBindEvent>() {
+		this.authFailedHandler = new AuthFailedHandler() {
 
 			@Override
-			public void handleEvent(ResourceBindEvent be) throws JaxmppException {
+			public void onAuthFailed(SessionObject sessionObject, SaslError error) {
 				try {
-					processResourceBindEvent(be);
+					processAuthFail(sessionObject, error);
 				} catch (JaxmppException e) {
 					processException(e);
 				}
+			}
+		};
 
+		this.resourceBindErrorHandler = new ResourceBindErrorHandler() {
+
+			@Override
+			public void onResourceBindError(SessionObject sessionObject, ErrorCondition errorCondition) {
+				BoshXmppSessionLogic.this.onResourceBindError(sessionObject, sessionObject);
+			}
+		};
+		this.resourceBindSuccessHandler = new ResourceBindSuccessHandler() {
+
+			@Override
+			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) {
+				try {
+					BoshXmppSessionLogic.this.onResourceBindSuccess(sessionObject, bindedJid);
+				} catch (JaxmppException e) {
+					processException(e);
+				}
 			}
 		};
 	}
@@ -117,25 +128,14 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	public void beforeStart() throws JaxmppException {
 	}
 
-	protected void processException(JaxmppException e) throws JaxmppException {
-		if (sessionListener != null)
-			sessionListener.onException(e);
+	protected void onResourceBindError(SessionObject sessionObject2, SessionObject sessionObject3) {
 	}
 
-	protected void processNonSaslEvent(final NonSaslAuthModule.NonSaslAuthEvent be) throws JaxmppException {
-		if (be.getType() == AuthModule.AuthFailed) {
-			throw new JaxmppException("Unauthorized with condition=" + be.getError());
-		} else if (be.getType() == AuthModule.AuthSuccess) {
-			sessionObject.setProperty(Scope.stream, AUTHORIZED, Boolean.TRUE);
-			connector.restartStream();
-		}
-	}
-
-	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
+	protected void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
 		try {
-			DiscoInfoModule discoInfo = this.modulesManager.getModule(DiscoInfoModule.class);
-			if (discoInfo != null) {
-				discoInfo.discoverServerFeatures(null);
+			DiscoveryModule discovery = this.modulesManager.getModule(DiscoveryModule.class);
+			if (discovery != null) {
+				discovery.discoverServerFeatures(null);
 			}
 
 			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
@@ -152,24 +152,33 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
-	protected void processSaslEvent(final SaslEvent be) throws JaxmppException {
-		if (be.getType() == AuthModule.AuthFailed) {
-			throw new JaxmppException("Unauthorized with condition=" + be.getError());
-		} else if (be.getType() == AuthModule.AuthSuccess) {
-			sessionObject.setProperty(Scope.stream, AUTHORIZED, Boolean.TRUE);
-			connector.restartStream();
-		}
-	}
-
-	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
+	protected void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
 		try {
-			if (sessionObject.getProperty(AUTHORIZED) != Boolean.TRUE) {
+			if (sessionObject.getProperty(AuthModule.AUTHORIZED) != Boolean.TRUE) {
 				authModule.login();
-			} else if (sessionObject.getProperty(AUTHORIZED) == Boolean.TRUE) {
+			} else if (sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE) {
 				resourceBinder.bind();
 			}
 		} catch (XMLException e) {
 			e.printStackTrace();
+		}
+	}
+
+	protected void processAuthFail(SessionObject sessionObject, SaslError error) throws JaxmppException {
+		throw new JaxmppException("Unauthorized with condition=" + error);
+	}
+
+	protected void processAuthSucess(SessionObject sessionObject) throws JaxmppException {
+		sessionObject.setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
+		connector.restartStream();
+	}
+
+	protected void processException(JaxmppException e) {
+		try {
+			if (sessionListener != null)
+				sessionListener.onException(e);
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
 		}
 	}
 
@@ -180,19 +189,21 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		authModule = this.modulesManager.getModule(AuthModule.class);
 		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
 
-		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		authModule.addListener(AuthModule.AuthSuccess, this.saslEventListener);
-		authModule.addListener(AuthModule.AuthFailed, this.saslEventListener);
-		resourceBinder.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
+		featuresModule.addStreamFeaturesReceivedHandler(streamFeaturesReceivedHandler);
+		authModule.addAuthSuccessHandler(authSuccessHandler);
+		authModule.addAuthFailedHandler(authFailedHandler);
+
+		resourceBinder.addResourceBindSuccessHandler(resourceBindSuccessHandler);
+		resourceBinder.addResourceBindErrorHandler(resourceBindErrorHandler);
 	}
 
 	@Override
 	public void unbind() throws JaxmppException {
-		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		authModule.removeListener(AuthModule.AuthSuccess, this.saslEventListener);
-		authModule.removeListener(AuthModule.AuthFailed, this.saslEventListener);
-		resourceBinder.removeListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-
+		featuresModule.removeStreamFeaturesReceivedHandler(streamFeaturesReceivedHandler);
+		authModule.removeAuthSuccessHandler(authSuccessHandler);
+		authModule.removeAuthFailedHandler(authFailedHandler);
+		resourceBinder.removeResourceBindSuccessHandler(resourceBindSuccessHandler);
+		resourceBinder.removeResourceBindErrorHandler(resourceBindErrorHandler);
 	}
 
 }

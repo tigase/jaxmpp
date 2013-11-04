@@ -20,8 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -63,8 +62,8 @@ public class BookmarksModule extends AbstractIQModule {
 
 	private static final String[] FEATURES = { BOOKMARKS_XMLNS };
 
-	public BookmarksModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	public BookmarksModule(Context context) {
+		super(context);
 	}
 
 	@Override
@@ -113,7 +112,7 @@ public class BookmarksModule extends AbstractIQModule {
 			}
 		}
 
-		this.writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -134,6 +133,6 @@ public class BookmarksModule extends AbstractIQModule {
 		storage.setXMLNS(BOOKMARKS_XMLNS);
 		query.addChild(storage);
 
-		this.writer.write(iq, callback);
+		write(iq, callback);
 	}
 }

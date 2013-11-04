@@ -25,16 +25,15 @@ import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
@@ -42,6 +41,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -148,6 +148,91 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	}
 
+	public interface NotificationReceivedHandler extends EventHandler {
+
+		public static class NotificationReceivedEvent extends JaxmppEvent<NotificationReceivedHandler> {
+
+			public static final EventType<NotificationReceivedHandler> TYPE = new EventType<NotificationReceivedHandler>();
+			private Date delayTime;
+			private String itemId;
+			private String itemType;
+			private Message message;
+			private String nodeName;
+			private Element payload;
+			private JID pubSubJID;
+
+			public NotificationReceivedEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(NotificationReceivedHandler handler) {
+				handler.onNotificationReceived(sessionObject, message, pubSubJID, nodeName, itemId, payload, delayTime,
+						itemType);
+			}
+
+			public Date getDelayTime() {
+				return delayTime;
+			}
+
+			public String getItemId() {
+				return itemId;
+			}
+
+			public String getItemType() {
+				return itemType;
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNodeName() {
+				return nodeName;
+			}
+
+			public Element getPayload() {
+				return payload;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+			public void setDelayTime(Date delayTime) {
+				this.delayTime = delayTime;
+			}
+
+			public void setItemId(String itemId) {
+				this.itemId = itemId;
+			}
+
+			public void setItemType(String itemType) {
+				this.itemType = itemType;
+			}
+
+			public void setMessage(Message message) {
+				this.message = message;
+			}
+
+			public void setNodeName(String nodeName) {
+				this.nodeName = nodeName;
+			}
+
+			public void setPayload(Element payload) {
+				this.payload = payload;
+			}
+
+			public void setPubSubJID(JID pubSubJID) {
+				this.pubSubJID = pubSubJID;
+			}
+
+		}
+
+		void onNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName,
+				String itemId, Element payload, Date delayTime, String itemType);
+	}
+
 	public abstract static class PublishAsyncCallback extends PubSubAsyncCallback {
 
 		public abstract void onPublish(String itemId);
@@ -167,85 +252,6 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		}
 
-	}
-
-	public static class PubSubEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private Date delay;
-
-		private String itemId;
-
-		private String itemType;
-
-		private Message message;
-
-		private String nodeName;
-
-		private Element payload;
-
-		private JID pubSubJID;
-
-		public PubSubEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public Date getDelay() {
-			return delay;
-		}
-
-		public String getItemId() {
-			return itemId;
-		}
-
-		public String getItemType() {
-			return itemType;
-		}
-
-		public Message getMessage() {
-			return message;
-		}
-
-		public String getNodeName() {
-			return nodeName;
-		}
-
-		public Element getPayload() {
-			return payload;
-		}
-
-		public JID getPubSubJID() {
-			return pubSubJID;
-		}
-
-		public void setDelay(Date delayTime) {
-			this.delay = delayTime;
-		}
-
-		public void setItemId(String itemId) {
-			this.itemId = itemId;
-		}
-
-		public void setItemType(String itemType) {
-			this.itemType = itemType;
-		}
-
-		public void setMessage(Message message) {
-			this.message = message;
-		}
-
-		public void setNodeName(String nodeName) {
-			this.nodeName = nodeName;
-		}
-
-		public void setPayload(Element payload) {
-			this.payload = payload;
-		}
-
-		public void setPubSubJID(JID pubSubJID) {
-			this.pubSubJID = pubSubJID;
-		}
 	}
 
 	public static abstract class RetrieveItemsAsyncCallback extends PubSubAsyncCallback {
@@ -412,8 +418,6 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	public static final Criteria CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("event", "http://jabber.org/protocol/pubsub#event"));
 
-	public static final EventType NotificationReceived = new EventType();
-
 	private static final String PUBSUB_EVENT_XMLNS = "http://jabber.org/protocol/pubsub#event";
 
 	private static final String PUBSUB_OWNER_XMLNS = "http://jabber.org/protocol/pubsub#owner";
@@ -435,9 +439,13 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	private final DateTimeFormat dtf;
 
-	public PubSubModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
+	public PubSubModule(Context context) {
+		super(context);
 		dtf = new DateTimeFormat();
+	}
+
+	public void addNotificationReceivedHandler(NotificationReceivedHandler handler) {
+		context.getEventBus().addHandler(NotificationReceivedHandler.NotificationReceivedEvent.TYPE, this, handler);
 	}
 
 	/**
@@ -466,7 +474,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		configure.addChild(configuration.createSubmitableElement(XDataType.submit));
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -516,7 +524,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		options.addChild(form.createSubmitableElement(XDataType.submit));
 
-		writer.write(iq, callback);
+		write(iq, callback);
 
 	}
 
@@ -583,7 +591,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			pubsub.addChild(configure);
 		}
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -661,7 +669,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		item.setAttribute("id", itemId);
 		retract.addChild(item);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -702,7 +710,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		delete.setAttribute("node", nodeName);
 		pubsub.addChild(delete);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -739,16 +747,15 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
 			Date delayTime) throws JaxmppException {
-		PubSubEvent event = new PubSubEvent(NotificationReceived, sessionObject);
+		final NotificationReceivedEvent event = new NotificationReceivedEvent(context.getSessionObject());
 		event.setMessage(message);
 		event.setPubSubJID(message.getFrom());
 		event.setNodeName(nodeName);
 		event.setItemId(itemId);
 		event.setPayload(payload);
-		event.setDelay(delayTime);
+		event.setDelayTime(delayTime);
 		event.setItemType(itemType);
-
-		observable.fireEvent(event);
+		fireEvent(event);
 	}
 
 	@Override
@@ -779,7 +786,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		def.setAttribute("node", nodeName);
 		pubsub.addChild(def);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -830,7 +837,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		}
 		pubsub.addChild(configure);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -899,7 +906,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		options.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(options);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -981,7 +988,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		item.addChild(payload);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1025,7 +1032,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		purge.setAttribute("node", nodeName);
 		pubsub.addChild(purge);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1040,6 +1047,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 */
 	public void purge(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
 		purge(pubSubJID, nodeName, (AsyncCallback) callback);
+	}
+
+	public void removeNotificationReceivedHandler(NotificationReceivedHandler handler) {
+		context.getEventBus().remove(NotificationReceivedHandler.NotificationReceivedEvent.TYPE, handler);
 	}
 
 	/**
@@ -1085,7 +1096,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		affiliations.setAttribute("node", nodeName);
 		pubsub.addChild(affiliations);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1168,7 +1179,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			items.addChild(item);
 		}
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1276,7 +1287,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		subscriptions.setAttribute("node", nodeName);
 		pubsub.addChild(subscriptions);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1323,7 +1334,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			affiliations.addChild(affiliationElement);
 		}
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1401,7 +1412,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			subscriptions.addChild(subscriptionElement);
 		}
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1439,7 +1450,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			pubsub.addChild(optionsElement);
 		}
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1507,7 +1518,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		item.setAttribute("id", itemId);
 		unlock.addChild(item);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**
@@ -1554,7 +1565,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		unsubscribe.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(unsubscribe);
 
-		writer.write(iq, callback);
+		write(iq, callback);
 	}
 
 	/**

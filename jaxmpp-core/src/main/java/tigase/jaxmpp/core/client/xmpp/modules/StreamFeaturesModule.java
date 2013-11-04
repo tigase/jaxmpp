@@ -19,19 +19,18 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent;
 
 /**
  * Module for <a href=
@@ -40,52 +39,54 @@ import tigase.jaxmpp.core.client.xml.Element;
  */
 public class StreamFeaturesModule implements XmppModule {
 
-	public static class StreamFeaturesReceivedEvent extends BaseEvent {
+	/**
+	 * Event fires when stream features are received.
+	 */
+	public interface StreamFeaturesReceivedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class StreamFeaturesReceivedEvent extends JaxmppEvent<StreamFeaturesReceivedHandler> {
 
-		private Element features;
+			public static final EventType<StreamFeaturesReceivedHandler> TYPE = new EventType<StreamFeaturesReceivedHandler>();
 
-		public StreamFeaturesReceivedEvent(Element features, SessionObject sessionObject) {
-			super(StreamFeaturesReceived, sessionObject);
-			this.features = features;
+			private Element featuresElement;
+
+			public StreamFeaturesReceivedEvent(SessionObject sessionObject, Element element) {
+				super(TYPE, sessionObject);
+				this.featuresElement = element;
+			}
+
+			@Override
+			protected void dispatch(StreamFeaturesReceivedHandler handler) {
+				handler.onStreamFeaturesReceived(sessionObject, featuresElement);
+			}
+
+			public Element getFeaturesElement() {
+				return featuresElement;
+			}
+
+			public void setFeaturesElement(Element featuresElement) {
+				this.featuresElement = featuresElement;
+			}
+
 		}
 
-		public Element getFeatures() {
-			return features;
-		}
-
-		public void setFeatures(Element features) {
-			this.features = features;
-		}
-
+		void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement);
 	}
 
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
 
-	/**
-	 * Event fires when stream features are received.
-	 */
-	public static final EventType StreamFeaturesReceived = new EventType();
+	private final Context context;
 
 	protected final Logger log;
 
-	private final Observable observable;
-
-	protected final PacketWriter packetWriter;
-
-	protected final SessionObject sessionObject;
-
-	public StreamFeaturesModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	public StreamFeaturesModule(Context context) {
+		this.context = context;
 		log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
-		this.packetWriter = packetWriter;
 	}
 
-	public void addListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {
-		observable.addListener(eventType, listener);
+	public void addStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
+		context.getEventBus().addHandler(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.TYPE, handler);
 	}
 
 	@Override
@@ -100,12 +101,12 @@ public class StreamFeaturesModule implements XmppModule {
 
 	@Override
 	public void process(Element element) throws JaxmppException {
-		sessionObject.setStreamFeatures(element);
-		observable.fireEvent(StreamFeaturesReceived, new StreamFeaturesReceivedEvent(element, sessionObject));
+		context.getSessionObject().setStreamFeatures(element);
+		context.getEventBus().fire(new StreamFeaturesReceivedEvent(context.getSessionObject(), element), this);
 	}
 
-	public void removeListener(EventType eventType, Listener<? extends StreamFeaturesReceivedEvent> listener) {
-		observable.removeListener(eventType, listener);
+	public void removeStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
+		context.getEventBus().remove(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.TYPE, handler);
 	}
 
 }

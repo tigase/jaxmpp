@@ -272,14 +272,6 @@ public abstract class JaxmppCore {
 		};
 	}
 
-	public void addListener(EventType eventType, Listener<?> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<?> listener) {
-		observable.addListener(listener);
-	}
-
 	public Chat createChat(JID jid) throws JaxmppException {
 		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
 	}
@@ -422,18 +414,6 @@ public abstract class JaxmppCore {
 
 	protected abstract void onStreamTerminated(ConnectorEvent be) throws JaxmppException;
 
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> connectorListener) {
-		observable.removeListener(eventType, connectorListener);
-	}
-
-	public void removeListener(Listener<?> listener) {
-		observable.removeListener(listener);
-	}
-
 	public void send(Stanza stanza) throws XMLException, JaxmppException {
 		this.writer.write(stanza);
 	}
@@ -452,6 +432,10 @@ public abstract class JaxmppCore {
 
 	public Context getContext() {
 		return jaxmppContext;
+	}
+
+	public EventBus getEventBus() {
+		return eventBus;
 	}
 
 }

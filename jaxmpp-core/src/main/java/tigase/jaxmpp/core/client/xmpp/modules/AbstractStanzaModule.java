@@ -24,6 +24,9 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.eventbus.Event;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventListener;
+import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -36,30 +39,27 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 		return elements == null || elements.size() == 0 ? null : elements.get(0);
 	}
 
-	protected final Logger log;
-
 	protected final Context context;
+
+	protected final Logger log;
 
 	public AbstractStanzaModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.context = context;
 	}
 
+	public <H extends EventHandler> void addListener(EventListener listener) {
+		context.getEventBus().addListener(listener);
+	}
+
+	public <H extends EventHandler> void addListener(EventType<H> type, EventListener listener) {
+		context.getEventBus().addListener(type, listener);
+	}
+
 	protected void fireEvent(Event<?> event) {
 		context.getEventBus().fire(event, this);
 	}
 
-	protected void write(Element stanza) throws JaxmppException {
-		context.getWriter().write(stanza);
-	}
-
-	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, asyncCallback);
-	}
-
-	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, timeout, asyncCallback);
-	}
 	@Override
 	@SuppressWarnings("unchecked")
 	public void process(Element element) throws JaxmppException {
@@ -74,5 +74,25 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	 *            incoming stanza
 	 */
 	public abstract void process(T stanza) throws JaxmppException;
+
+	public void remove(EventHandler handler) {
+		context.getEventBus().remove(handler);
+	}
+
+	public void remove(EventType<?> type, EventHandler handler) {
+		context.getEventBus().remove(type, handler);
+	}
+
+	protected void write(Element stanza) throws JaxmppException {
+		context.getWriter().write(stanza);
+	}
+
+	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, asyncCallback);
+	}
+
+	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, timeout, asyncCallback);
+	}
 
 }

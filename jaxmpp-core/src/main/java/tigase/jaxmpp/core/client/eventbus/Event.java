@@ -11,7 +11,7 @@ public abstract class Event<H extends EventHandler> {
 		this.type = type;
 	}
 
-	protected abstract void dispatch(H handler);
+	protected abstract void dispatch(H handler) throws Exception;
 
 	public Object getSource() {
 		return source;

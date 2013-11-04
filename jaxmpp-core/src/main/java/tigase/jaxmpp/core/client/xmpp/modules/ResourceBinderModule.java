@@ -20,19 +20,17 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -46,68 +44,97 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  */
 public class ResourceBinderModule implements XmppModule {
 
-	public static final class ResourceBindEvent extends BaseEvent {
+	/**
+	 * Event fires on binding error.
+	 */
+	public interface ResourceBindErrorHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class ResourceBindErrorEvent extends JaxmppEvent<ResourceBindErrorHandler> {
 
-		private ErrorCondition error;
+			public static final EventType<ResourceBindErrorHandler> TYPE = new EventType<ResourceBindErrorHandler>();
+			private ErrorCondition error;
 
-		private JID jid;
+			public ResourceBindErrorEvent(SessionObject sessionObject, ErrorCondition error) {
+				super(TYPE, sessionObject);
+				this.error = error;
+			}
 
-		public ResourceBindEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			@Override
+			protected void dispatch(ResourceBindErrorHandler handler) {
+				handler.onResourceBindError(sessionObject, error);
+			}
+
+			public ErrorCondition getError() {
+				return error;
+			}
+
+			public void setError(ErrorCondition error) {
+				this.error = error;
+			}
+
 		}
 
-		public ErrorCondition getError() {
-			return error;
+		void onResourceBindError(SessionObject sessionObject, ErrorCondition errorCondition);
+	}
+
+	/**
+	 * Event fires on binding success.
+	 */
+	public interface ResourceBindSuccessHandler extends EventHandler {
+
+		public static class ResourceBindSuccessEvent extends JaxmppEvent<ResourceBindSuccessHandler> {
+
+			public static final EventType<ResourceBindSuccessHandler> TYPE = new EventType<ResourceBindSuccessHandler>();
+			private JID bindedJid;
+
+			public ResourceBindSuccessEvent(SessionObject sessionObject, JID jid) {
+				super(TYPE, sessionObject);
+				this.bindedJid = jid;
+			}
+
+			@Override
+			protected void dispatch(ResourceBindSuccessHandler handler) {
+				handler.onResourceBindSuccess(sessionObject, bindedJid);
+			}
+
+			public JID getBindedJid() {
+				return bindedJid;
+			}
+
+			public void setBindedJid(JID bindedJid) {
+				this.bindedJid = bindedJid;
+			}
+
 		}
 
-		public JID getJid() {
-			return jid;
-		}
-
-		public void setError(ErrorCondition error) {
-			this.error = error;
-		}
-
-		public void setJid(JID jid) {
-			this.jid = jid;
-		}
+		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid);
 	}
 
 	/**
 	 * Property name for retrieve binded resource from
 	 * {@linkplain SessionObject}.
 	 */
-	public static final String BINDED_RESOURCE_JID = "jaxmpp#bindedResource";
+	public static final String BINDED_RESOURCE_JID = "BINDED_RESOURCE_JID";
 
-	/**
-	 * Event fires on binding error.
-	 */
-	public static final EventType ResourceBindError = new EventType();
+	public static JID getBindedJID(SessionObject sessionObject) {
+		return sessionObject.getProperty(BINDED_RESOURCE_JID);
+	}
 
-	/**
-	 * Event fires on binding success.
-	 */
-	public static final EventType ResourceBindSuccess = new EventType();
+	private final Context context;
 
 	protected final Logger log;
 
-	private final Observable observable;
-
-	protected final SessionObject sessionObject;
-
-	protected final PacketWriter writer;
-
-	public ResourceBinderModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	public ResourceBinderModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
-		this.writer = packetWriter;
+		this.context = context;
 	}
 
-	public void addListener(EventType eventType, Listener<ResourceBindEvent> listener) {
-		observable.addListener(eventType, listener);
+	public void addResourceBindErrorHandler(ResourceBindErrorHandler handler) {
+		context.getEventBus().addHandler(ResourceBindErrorHandler.ResourceBindErrorEvent.TYPE, handler);
+	}
+
+	public void addResourceBindSuccessHandler(ResourceBindSuccessHandler handler) {
+		context.getEventBus().addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.TYPE, handler);
 	}
 
 	public void bind() throws XMLException, JaxmppException {
@@ -117,15 +144,16 @@ public class ResourceBinderModule implements XmppModule {
 
 		Element bind = new DefaultElement("bind", null, "urn:ietf:params:xml:ns:xmpp-bind");
 		iq.addChild(bind);
-		bind.addChild(new DefaultElement("resource", (String) sessionObject.getProperty(SessionObject.RESOURCE), null));
+		bind.addChild(new DefaultElement("resource", (String) context.getSessionObject().getProperty(SessionObject.RESOURCE),
+				null));
 
-		writer.write(iq, new AsyncCallback() {
+		context.getWriter().write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
-				event.setError(error);
-				observable.fireEvent(ResourceBindError, event);
+				ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
+						context.getSessionObject(), error);
+				context.getEventBus().fire(event, ResourceBinderModule.this);
 			}
 
 			@Override
@@ -138,20 +166,22 @@ public class ResourceBinderModule implements XmppModule {
 				}
 				if (name != null) {
 					JID jid = JID.jidInstance(name);
-					sessionObject.setProperty(BINDED_RESOURCE_JID, jid);
-					ResourceBindEvent event = new ResourceBindEvent(ResourceBindSuccess, sessionObject);
-					event.setJid(jid);
-					observable.fireEvent(ResourceBindSuccess, event);
+					context.getSessionObject().setProperty(BINDED_RESOURCE_JID, jid);
+					ResourceBindSuccessHandler.ResourceBindSuccessEvent event = new ResourceBindSuccessHandler.ResourceBindSuccessEvent(
+							context.getSessionObject(), jid);
+					context.getEventBus().fire(event, ResourceBinderModule.this);
 				} else {
-					ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
-					observable.fireEvent(ResourceBindError, event);
+					ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
+							context.getSessionObject(), null);
+					context.getEventBus().fire(event, ResourceBinderModule.this);
 				}
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				ResourceBindEvent event = new ResourceBindEvent(ResourceBindError, sessionObject);
-				observable.fireEvent(ResourceBindError, event);
+				ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
+						context.getSessionObject(), null);
+				context.getEventBus().fire(event, ResourceBinderModule.this);
 			}
 		});
 	}
@@ -170,8 +200,12 @@ public class ResourceBinderModule implements XmppModule {
 	public void process(Element element) throws XMPPException, XMLException {
 	}
 
-	public void removeListener(EventType eventType, Listener<ResourceBindEvent> listener) {
-		observable.removeListener(eventType, listener);
+	public void removeResourceBindErrorHandler(ResourceBindErrorHandler handler) {
+		context.getEventBus().remove(ResourceBindErrorHandler.ResourceBindErrorEvent.TYPE, handler);
+	}
+
+	public void removeResourceBindSuccessHandler(ResourceBindSuccessHandler handler) {
+		context.getEventBus().remove(ResourceBindSuccessHandler.ResourceBindSuccessEvent.TYPE, handler);
 	}
 
 }

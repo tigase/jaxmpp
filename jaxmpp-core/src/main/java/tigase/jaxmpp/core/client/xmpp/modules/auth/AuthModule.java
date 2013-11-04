@@ -20,20 +20,23 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventListener;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
+import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
 /**
  * Module used for authentication. This module automatically selects better
@@ -42,14 +45,75 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMec
  */
 public class AuthModule implements XmppModule {
 
-	public static class AuthEvent extends BaseEvent {
+	public interface AuthFailedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class AuthFailedEvent extends JaxmppEvent<AuthFailedHandler> {
 
-		public AuthEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			public static final EventType<AuthFailedHandler> TYPE = new EventType<AuthFailedHandler>();
+
+			private SaslError error;
+
+			public AuthFailedEvent(SessionObject sessionObject, SaslError error) {
+				super(TYPE, sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			protected void dispatch(AuthFailedHandler handler) {
+				handler.onAuthFailed(sessionObject, error);
+			}
+
+			public SaslError getError() {
+				return error;
+			}
+
+			public void setError(SaslError error) {
+				this.error = error;
+			}
+
 		}
 
+		void onAuthFailed(SessionObject sessionObject, SaslError error);
+	}
+
+	public interface AuthStartHandler extends EventHandler {
+
+		public static class AuthStartEvent extends JaxmppEvent<AuthStartHandler> {
+
+			public static final EventType<AuthStartHandler> TYPE = new EventType<AuthStartHandler>();
+
+			public AuthStartEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(AuthStartHandler handler) {
+				handler.onAuthStart(sessionObject);
+			}
+
+		}
+
+		void onAuthStart(SessionObject sessionObject);
+	}
+
+	public interface AuthSuccessHandler extends EventHandler {
+
+		public static class AuthSuccessEvent extends JaxmppEvent<AuthSuccessHandler> {
+
+			public static final EventType<AuthSuccessHandler> TYPE = new EventType<AuthSuccessHandler>();
+
+			public AuthSuccessEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(AuthSuccessHandler handler) {
+				handler.onAuthSuccess(sessionObject);
+			}
+
+		}
+
+		void onAuthSuccess(SessionObject sessionObject);
 	}
 
 	public static class DefaultCredentialsCallback implements CredentialsCallback {
@@ -67,13 +131,7 @@ public class AuthModule implements XmppModule {
 
 	}
 
-	public final static EventType AuthFailed = new EventType();
-
 	public static final String AUTHORIZED = "jaxmpp#authorized";
-
-	public final static EventType AuthStart = new EventType();
-
-	public final static EventType AuthSuccess = new EventType();
 
 	public static final String CREDENTIALS_CALLBACK = "jaxmpp#credentialsCallback";
 
@@ -96,27 +154,100 @@ public class AuthModule implements XmppModule {
 		return saslSupported || nonSaslSupported;
 	}
 
+	private final Context context;
+
 	private final Logger log;
 
-	private XmppModulesManager modulesManager;
+	private final XmppModulesManager moduleManager;
 
-	private final Observable observable;
-
-	private final SessionObject sessionObject;
-
-	public AuthModule(Observable parentObservable, SessionObject sessionObject, XmppModulesManager modulesManager) {
-		this.observable = ObservableFactory.instance(parentObservable);
-		this.modulesManager = modulesManager;
-		this.sessionObject = sessionObject;
+	public AuthModule(Context context, XmppModulesManager modulesManager) {
+		this.context = context;
+		this.moduleManager = modulesManager;
 		this.log = Logger.getLogger(this.getClass().getName());
+
+		context.getEventBus().addHandler(SaslModule.SaslAuthFailedHandler.SaslAuthFailedEvent.TYPE,
+				new SaslModule.SaslAuthFailedHandler() {
+
+					@Override
+					public void onAuthFailed(SessionObject sessionObject, SaslError error) {
+						AuthModule.this.context.getEventBus().fire(
+								new AuthFailedHandler.AuthFailedEvent(AuthModule.this.context.getSessionObject(), error));
+					}
+				});
+		context.getEventBus().addHandler(SaslModule.SaslAuthStartHandler.SaslAuthStartEvent.TYPE,
+				new SaslModule.SaslAuthStartHandler() {
+
+					@Override
+					public void onAuthStart(SessionObject sessionObject, String mechanismName) {
+						AuthModule.this.context.getEventBus().fire(
+								new AuthStartHandler.AuthStartEvent(AuthModule.this.context.getSessionObject()));
+					}
+				});
+		context.getEventBus().addHandler(SaslModule.SaslAuthSuccessHandler.SaslAuthSuccessEvent.TYPE,
+				new SaslModule.SaslAuthSuccessHandler() {
+
+					@Override
+					public void onAuthSuccess(SessionObject sessionObject) {
+						AuthModule.this.context.getEventBus().fire(
+								new AuthSuccessHandler.AuthSuccessEvent(AuthModule.this.context.getSessionObject()));
+					}
+				});
+
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthFailedHandler.NonSaslAuthFailedEvent.TYPE,
+				new NonSaslAuthModule.NonSaslAuthFailedHandler() {
+
+					@Override
+					public void onAuthFailed(SessionObject sessionObject, ErrorCondition errorCondition) {
+						SaslError error;
+
+						if (errorCondition == ErrorCondition.not_authorized) {
+							error = SaslError.not_authorized;
+						} else {
+							error = SaslError.temporary_auth_failure;
+						}
+
+						AuthModule.this.context.getEventBus().fire(
+								new AuthFailedHandler.AuthFailedEvent(AuthModule.this.context.getSessionObject(), error));
+					}
+				});
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthStartHandler.NonSaslAuthStartEvent.TYPE,
+				new NonSaslAuthModule.NonSaslAuthStartHandler() {
+
+					@Override
+					public void onAuthStart(SessionObject sessionObject, IQ iq) {
+						AuthModule.this.context.getEventBus().fire(
+								new AuthStartHandler.AuthStartEvent(AuthModule.this.context.getSessionObject()));
+					}
+				});
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthSuccessHandler.NonSaslAuthSuccessEvent.TYPE,
+				new NonSaslAuthModule.NonSaslAuthSuccessHandler() {
+
+					@Override
+					public void onAuthSuccess(SessionObject sessionObject) {
+						AuthModule.this.context.getEventBus().fire(
+								new AuthSuccessHandler.AuthSuccessEvent(AuthModule.this.context.getSessionObject()));
+					}
+				});
 	}
 
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
+	public void addAuthFailedHandler(AuthFailedHandler handler) {
+		context.getEventBus().addHandler(AuthFailedHandler.AuthFailedEvent.TYPE, handler);
 	}
 
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+	public void addAuthStartHandler(AuthStartHandler handler) {
+		context.getEventBus().addHandler(AuthStartHandler.AuthStartEvent.TYPE, handler);
+	}
+
+	public void addAuthSuccessHandler(AuthSuccessHandler handler) {
+		context.getEventBus().addHandler(AuthSuccessHandler.AuthSuccessEvent.TYPE, handler);
+	}
+
+	public <H extends EventHandler> void addListener(EventListener listener) {
+		context.getEventBus().addListener(listener);
+	}
+
+	public <H extends EventHandler> void addListener(EventType<H> type, EventListener listener) {
+		context.getEventBus().addListener(type, listener);
 	}
 
 	@Override
@@ -129,17 +260,13 @@ public class AuthModule implements XmppModule {
 		return null;
 	}
 
-	public Observable getObservable() {
-		return observable;
-	}
-
 	public void login() throws JaxmppException {
-		final SaslModule saslModule = modulesManager.getModule(SaslModule.class);
-		final NonSaslAuthModule nonSaslModule = modulesManager.getModule(NonSaslAuthModule.class);
+		final SaslModule saslModule = moduleManager.getModule(SaslModule.class);
+		final NonSaslAuthModule nonSaslModule = moduleManager.getModule(NonSaslAuthModule.class);
 
-		final Boolean forceNonSasl = sessionObject.getProperty(FORCE_NON_SASL);
+		final Boolean forceNonSasl = context.getSessionObject().getProperty(FORCE_NON_SASL);
 
-		final Element features = sessionObject.getStreamFeatures();
+		final Element features = context.getSessionObject().getStreamFeatures();
 		boolean saslSupported = saslModule != null && (forceNonSasl == null || !forceNonSasl.booleanValue())
 				&& features != null && features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
 		boolean nonSaslSupported = nonSaslModule != null
@@ -149,11 +276,11 @@ public class AuthModule implements XmppModule {
 			log.finer("Authenticating with " + (saslSupported ? "SASL" : "-") + " " + (nonSaslSupported ? "Non-SASL" : "-"));
 
 		try {
-			if (saslSupported)
+			if (saslSupported) {
 				saslModule.login();
-			else if (nonSaslSupported)
+			} else if (nonSaslSupported) {
 				nonSaslModule.login();
-			else
+			} else
 				throw new JaxmppException("Both authentication methods are forbidden");
 		} catch (UnsupportedSaslMechanisms e) {
 			if (nonSaslModule == null || !nonSaslSupported)
@@ -167,11 +294,24 @@ public class AuthModule implements XmppModule {
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 	}
 
-	public void removeAllListeners() {
-		observable.removeAllListeners();
+	public void remove(EventHandler handler) {
+		context.getEventBus().remove(handler);
 	}
 
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
+	public void remove(EventType<?> type, EventHandler handler) {
+		context.getEventBus().remove(type, handler);
 	}
+
+	public void removeAuthFailedHandler(AuthFailedHandler handler) {
+		context.getEventBus().remove(AuthFailedHandler.AuthFailedEvent.TYPE, handler);
+	}
+
+	public void removeAuthStartHandler(AuthStartHandler handler) {
+		context.getEventBus().remove(AuthStartHandler.AuthStartEvent.TYPE, handler);
+	}
+
+	public void removeAuthSuccessHandler(AuthSuccessHandler handler) {
+		context.getEventBus().remove(AuthSuccessHandler.AuthSuccessEvent.TYPE, handler);
+	}
+
 }

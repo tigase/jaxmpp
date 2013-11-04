@@ -20,18 +20,16 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -45,31 +43,58 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  */
 public class SessionEstablishmentModule implements XmppModule {
 
-	public static final class SessionEstablishmentEvent extends BaseEvent {
+	public interface SessionEstablishmentErrorHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class SessionEstablishmentErrorEvent extends JaxmppEvent<SessionEstablishmentErrorHandler> {
 
-		private ErrorCondition error;
+			public static final EventType<SessionEstablishmentErrorHandler> TYPE = new EventType<SessionEstablishmentErrorHandler>();
 
-		public SessionEstablishmentEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			private ErrorCondition error;
+
+			public SessionEstablishmentErrorEvent(SessionObject sessionObject, ErrorCondition error) {
+				super(TYPE, sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			protected void dispatch(SessionEstablishmentErrorHandler handler) {
+				handler.onSessionEstablishmentError(sessionObject, error);
+			}
+
+			public ErrorCondition getError() {
+				return error;
+			}
+
+			public void setError(ErrorCondition error) {
+				this.error = error;
+			}
+
 		}
 
-		public ErrorCondition getError() {
-			return error;
+		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error);
+	}
+
+	public interface SessionEstablishmentSuccessHandler extends EventHandler {
+
+		public static class SessionEstablishmentSuccessEvent extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
+
+			public static final EventType<SessionEstablishmentSuccessHandler> TYPE = new EventType<SessionEstablishmentSuccessHandler>();
+
+			public SessionEstablishmentSuccessEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(SessionEstablishmentSuccessHandler handler) {
+				handler.onSessionEstablishmentSuccess(sessionObject);
+			}
+
 		}
 
-		public void setError(ErrorCondition error) {
-			this.error = error;
-		}
-
+		void onSessionEstablishmentSuccess(SessionObject sessionObject);
 	}
 
 	public static final String SESSION_ESTABLISHED = "jaxmpp#sessionEstablished";
-
-	public static final EventType SessionEstablishmentError = new EventType();
-
-	public static final EventType SessionEstablishmentSuccess = new EventType();
 
 	public static boolean isSessionEstablishingAvailable(final SessionObject sessionObject) throws XMLException {
 		final Element features = sessionObject.getStreamFeatures();
@@ -77,23 +102,21 @@ public class SessionEstablishmentModule implements XmppModule {
 		return features != null && features.getChildrenNS("session", "urn:ietf:params:xml:ns:xmpp-session") != null;
 	}
 
+	private final Context context;
+
 	protected final Logger log;
 
-	private final Observable observable;
-
-	protected final SessionObject sessionObject;
-
-	protected final PacketWriter writer;
-
-	public SessionEstablishmentModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	public SessionEstablishmentModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
-		this.writer = packetWriter;
+		this.context = context;
 	}
 
-	public void addListener(EventType eventType, Listener<SessionEstablishmentEvent> listener) {
-		observable.addListener(eventType, listener);
+	public void addSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
+		context.getEventBus().addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.TYPE, handler);
+	}
+
+	public void addSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
+		context.getEventBus().addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.TYPE, handler);
 	}
 
 	public void establish() throws XMLException, JaxmppException {
@@ -104,27 +127,29 @@ public class SessionEstablishmentModule implements XmppModule {
 		Element bind = new DefaultElement("session", null, "urn:ietf:params:xml:ns:xmpp-session");
 		iq.addChild(bind);
 
-		writer.write(iq, new AsyncCallback() {
+		context.getWriter().write(iq, new AsyncCallback() {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				sessionObject.setProperty(SESSION_ESTABLISHED, Boolean.FALSE);
-				SessionEstablishmentEvent event = new SessionEstablishmentEvent(SessionEstablishmentError, sessionObject);
-				event.setError(error);
-				observable.fireEvent(SessionEstablishmentError, event);
+				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.FALSE);
+				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
+						context.getSessionObject(), error);
+				context.getEventBus().fire(event, SessionEstablishmentModule.this);
 			}
 
 			@Override
 			public void onSuccess(Stanza responseStanza) throws JaxmppException {
-				sessionObject.setProperty(SESSION_ESTABLISHED, Boolean.TRUE);
-				SessionEstablishmentEvent event = new SessionEstablishmentEvent(SessionEstablishmentSuccess, sessionObject);
-				observable.fireEvent(SessionEstablishmentSuccess, event);
+				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.TRUE);
+				SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent event = new SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent(
+						context.getSessionObject());
+				context.getEventBus().fire(event, SessionEstablishmentModule.this);
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				SessionEstablishmentEvent event = new SessionEstablishmentEvent(SessionEstablishmentError, sessionObject);
-				observable.fireEvent(SessionEstablishmentError, event);
+				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
+						context.getSessionObject(), null);
+				context.getEventBus().fire(event, SessionEstablishmentModule.this);
 			}
 		});
 	}
@@ -143,8 +168,12 @@ public class SessionEstablishmentModule implements XmppModule {
 	public void process(Element element) throws XMPPException, XMLException {
 	}
 
-	public void removeListener(EventType eventType, Listener<SessionEstablishmentEvent> listener) {
-		observable.removeListener(eventType, listener);
+	public void removeSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
+		context.getEventBus().remove(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.TYPE, handler);
+	}
+
+	public void removeSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
+		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.TYPE, handler);
 	}
 
 }

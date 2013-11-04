@@ -20,15 +20,13 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.Date;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -68,8 +66,8 @@ public class PingModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "urn:xmpp:ping" };
 
-	public PingModule(SessionObject sessionObject, PacketWriter packetWriter) {
-		super(sessionObject, packetWriter);
+	public PingModule(Context context) {
+		super(context);
 	}
 
 	@Override
@@ -96,7 +94,7 @@ public class PingModule extends AbstractIQModule {
 		iq.setTo(jid);
 		iq.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
 
-		writer.write(iq, asyncCallback);
+		write(iq, asyncCallback);
 	}
 
 	/**
@@ -116,7 +114,7 @@ public class PingModule extends AbstractIQModule {
 	protected void processGet(IQ stanza) throws JaxmppException {
 		Element response = XmlTools.makeResult(stanza);
 
-		writer.write(response);
+		write(response);
 	}
 
 	@Override
