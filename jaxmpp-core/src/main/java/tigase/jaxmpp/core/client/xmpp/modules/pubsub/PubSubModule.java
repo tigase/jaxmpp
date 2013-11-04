@@ -996,13 +996,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			delayTime = null;
 		}
 
-		List<Element> itemElements = items == null ? null : items.getChildren();
-		for (Element item : itemElements) {
-			final String type = item.getName();
-			final String itemId = item.getAttribute("id");
-			final Element payload = item.getFirstChild();
+		if (items != null && items.getChildren() != null) {
+			for (Element item : items.getChildren()) {
+				final String type = item.getName();
+				final String itemId = item.getAttribute("id");
+				final Element payload = item.getFirstChild();
 
-			fireNotificationReceived(message, nodeName, type, itemId, payload, delayTime);
+				fireNotificationReceived(message, nodeName, type, itemId, payload, delayTime);
+			}
 		}
 
 	}
