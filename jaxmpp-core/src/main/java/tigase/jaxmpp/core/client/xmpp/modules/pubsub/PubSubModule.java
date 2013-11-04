@@ -106,7 +106,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
-			if (pubsub == null) pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
+			if (pubsub == null)
+				pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
 			Element affiliations = getFirstChild(pubsub, "affiliations");
 			String node = affiliations.getAttribute("node");
 
@@ -274,7 +275,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		}
 
 		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
-		
+
 		protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items, Integer count,
 				Integer firstIndex, String first, String last) {
 			onRetrieve(responseStanza, nodeName, items);
@@ -303,7 +304,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			Integer firstIndex = null;
 			String first = null;
 			String last = null;
-			
+
 			Element rsm = event != null ? event.getChildrenNS("set", "http://jabber.org/protocol/rsm") : null;
 			if (rsm != null) {
 				for (Element el : rsm.getChildren()) {
@@ -311,16 +312,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 						first = el.getValue();
 						if (el.getAttribute("index") != null)
 							firstIndex = Integer.parseInt(el.getAttribute("index"));
-					}
-					else if ("last".equals(el.getName())) {
+					} else if ("last".equals(el.getName())) {
 						last = el.getValue();
-					}
-					else if ("count".equals(el.getName())) {
+					} else if ("count".equals(el.getName())) {
 						count = Integer.parseInt(el.getValue());
 					}
 				}
 			}
-			
+
 			onRetrieve((IQ) responseStanza, nodeName, result, count, firstIndex, first, last);
 		}
 
@@ -986,13 +985,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			delayTime = null;
 		}
 
-		List<Element> itemElements = items == null ? null : items.getChildren();
-		for (Element item : itemElements) {
-			final String type = item.getName();
-			final String itemId = item.getAttribute("id");
-			final Element payload = item.getFirstChild();
+		if (items != null && items.getChildren() != null) {
+			for (Element item : items.getChildren()) {
+				final String type = item.getName();
+				final String itemId = item.getAttribute("id");
+				final Element payload = item.getFirstChild();
 
-			fireNotificationReceived(message, nodeName, type, itemId, payload, delayTime);
+				fireNotificationReceived(message, nodeName, type, itemId, payload, delayTime);
+			}
 		}
 
 	}
@@ -1217,9 +1217,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			items.addChild(item);
 		}
 
-		writer.write(iq, callback);		
+		writer.write(iq, callback);
 	}
-	
+
 	/**
 	 * Gets published item(s) from node.
 	 * 
@@ -1256,7 +1256,6 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			}
 			pubsub.addChild(rsm);
 		}
-		
 
 		writer.write(iq, callback);
 	}
