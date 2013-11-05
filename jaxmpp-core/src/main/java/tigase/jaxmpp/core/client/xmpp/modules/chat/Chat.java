@@ -17,11 +17,10 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -31,17 +30,13 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  */
 public class Chat {
 
-	public static final EventType MessageReceived = new EventType();
+	private final Context context;
 
 	private final long id;
 
 	private JID jid;
 
-	private final SessionObject sessionObject;
-
 	private String threadId;
-
-	private final PacketWriter writer;
 
 	/**
 	 * Creates new chat representation object.
@@ -53,10 +48,9 @@ public class Chat {
 	 * @param sessionObject
 	 *            session object related to chat.
 	 */
-	public Chat(long id, PacketWriter packetWriter, SessionObject sessionObject) {
+	public Chat(long id, Context context) {
 		this.id = id;
-		this.sessionObject = sessionObject;
-		this.writer = packetWriter;
+		this.context = context;
 	}
 
 	/**
@@ -81,7 +75,7 @@ public class Chat {
 	 * @return {@linkplain SessionObject} related to this chat.
 	 */
 	public SessionObject getSessionObject() {
-		return sessionObject;
+		return context.getSessionObject();
 	}
 
 	/**
@@ -107,7 +101,7 @@ public class Chat {
 		msg.setThread(threadId);
 		msg.setBody(body);
 
-		this.writer.write(msg);
+		this.context.getWriter().write(msg);
 	}
 
 	/**

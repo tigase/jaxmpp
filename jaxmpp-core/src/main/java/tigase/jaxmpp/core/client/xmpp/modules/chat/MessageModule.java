@@ -21,7 +21,6 @@ import java.util.List;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -83,18 +82,29 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 			public static final EventType<ChatClosedHandler> TYPE = new EventType<ChatClosedHandler>();
 
-			public ChatClosedEvent(SessionObject sessionObject) {
+			private Chat chat;
+
+			public ChatClosedEvent(SessionObject sessionObject, Chat chat) {
 				super(TYPE, sessionObject);
+				this.chat = chat;
 			}
 
 			@Override
 			protected void dispatch(ChatClosedHandler handler) {
-				handler.onChatClosed(sessionObject);
+				handler.onChatClosed(sessionObject, chat);
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public void setChat(Chat chat) {
+				this.chat = chat;
 			}
 
 		}
 
-		void onChatClosed(SessionObject sessionObject);
+		void onChatClosed(SessionObject sessionObject, Chat chat);
 	}
 
 	public interface ChatCreatedHandler extends EventHandler {
@@ -103,18 +113,40 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 			public static final EventType<ChatCreatedHandler> TYPE = new EventType<ChatCreatedHandler>();
 
-			public ChatCreatedEvent(SessionObject sessionObject) {
+			private Chat chat;
+
+			private Message message;
+
+			public ChatCreatedEvent(SessionObject sessionObject, Chat chat, Message message) {
 				super(TYPE, sessionObject);
+				this.chat = chat;
+				this.message = message;
 			}
 
 			@Override
 			protected void dispatch(ChatCreatedHandler handler) {
-				handler.onChatCreated(sessionObject);
+				handler.onChatCreated(sessionObject, chat, message);
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public void setChat(Chat chat) {
+				this.chat = chat;
+			}
+
+			public void setMessage(Message message) {
+				this.message = message;
 			}
 
 		}
 
-		void onChatCreated(SessionObject sessionObject);
+		void onChatCreated(SessionObject sessionObject, Chat chat, Message message);
 	}
 
 	public interface ChatUpdatedHandler extends EventHandler {
@@ -122,19 +154,63 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		public static class ChatUpdatedEvent extends JaxmppEvent<ChatUpdatedHandler> {
 
 			public static final EventType<ChatUpdatedHandler> TYPE = new EventType<ChatUpdatedHandler>();
+			private Chat chat;
 
-			public ChatUpdatedEvent(SessionObject sessionObject) {
+			public ChatUpdatedEvent(SessionObject sessionObject, Chat chat) {
 				super(TYPE, sessionObject);
+				this.chat = chat;
 			}
 
 			@Override
 			protected void dispatch(ChatUpdatedHandler handler) {
-				handler.onChatUpdated(sessionObject);
+				handler.onChatUpdated(sessionObject, chat);
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public void setChat(Chat chat) {
+				this.chat = chat;
 			}
 
 		}
 
-		void onChatUpdated(SessionObject sessionObject);
+		void onChatUpdated(SessionObject sessionObject, Chat chat);
+	}
+
+	public interface MessageReceivedHandler extends EventHandler {
+
+		public static class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
+
+			public static final EventType<MessageReceivedHandler> TYPE = new EventType<MessageReceivedHandler>();
+
+			private final Chat chat;
+
+			private final Message stanza;
+
+			public MessageReceivedEvent(SessionObject sessionObject, Message stanza, Chat chat) {
+				super(TYPE, sessionObject);
+				this.stanza = stanza;
+				this.chat = chat;
+			}
+
+			@Override
+			protected void dispatch(MessageReceivedHandler handler) {
+				handler.onMessageReceived(sessionObject, chat, stanza);
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public Message getStanza() {
+				return stanza;
+			}
+
+		}
+
+		void onMessageReceived(SessionObject sessionObject, Chat chat, Message stanza);
 	}
 
 	private static final Criteria CRIT = new Criteria() {
@@ -154,32 +230,6 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			return false;
 		}
 	};
-
-	public interface MessageReceivedHandler extends EventHandler {
-
-		public static class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
-
-			public static final EventType<MessageReceivedHandler> TYPE = new EventType<MessageReceivedHandler>();
-
-			private final Message stanza;
-
-			private final Chat chat;
-
-			public MessageReceivedEvent(SessionObject sessionObject, Message stanza, Chat chat) {
-				super(TYPE, sessionObject);
-				this.stanza = stanza;
-				this.chat = chat;
-			}
-
-			@Override
-			protected void dispatch(MessageReceivedHandler handler) {
-				handler.onMessageReceived(sessionObject);
-			}
-
-		}
-
-		void onMessageReceived(SessionObject sessionObject);
-	}
 
 	private final AbstractChatManager chatManager;
 
@@ -247,9 +297,9 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	@Override
 	public void process(Message element) throws JaxmppException {
 
-		Chat chat = chatManager.process(element, );
+		Chat chat = chatManager.process(element);
 
-		MessageReceivedEvent event = new MessageReceivedEvent(context.getSessionObject(), element,chat);
+		MessageReceivedEvent event = new MessageReceivedEvent(context.getSessionObject(), element, chat);
 
 		fireEvent(event);
 	}

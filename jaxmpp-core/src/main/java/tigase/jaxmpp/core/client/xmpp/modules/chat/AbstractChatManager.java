@@ -23,12 +23,9 @@ import java.util.List;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -38,6 +35,7 @@ public abstract class AbstractChatManager {
 
 	protected ChatSelector chatSelector;
 
+	protected Context context;
 
 	protected AbstractChatManager() {
 		ChatSelector x = UniversalFactory.createInstance(ChatSelector.class.getName());
@@ -47,9 +45,9 @@ public abstract class AbstractChatManager {
 	public boolean close(Chat chat) throws JaxmppException {
 		boolean x = this.chats.remove(chat);
 		if (x) {
-			MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatClosed, sessionObject);
-			event.setChat(chat);
-			observable.fireEvent(event);
+			MessageModule.ChatClosedHandler.ChatClosedEvent event = new MessageModule.ChatClosedHandler.ChatClosedEvent(
+					context.getSessionObject(), chat);
+			context.getEventBus().fire(event);
 		}
 		return x;
 	}
@@ -60,10 +58,10 @@ public abstract class AbstractChatManager {
 
 		this.chats.add(chat);
 
-		MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated, sessionObject);
-		event.setChat(chat);
+		MessageModule.ChatCreatedHandler.ChatCreatedEvent event = new MessageModule.ChatCreatedHandler.ChatCreatedEvent(
+				context.getSessionObject(), chat, null);
 
-		observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(event);
 
 		return chat;
 	}
@@ -78,16 +76,8 @@ public abstract class AbstractChatManager {
 		return this.chats;
 	}
 
-	Observable getObservable() {
-		return observable;
-	}
-
-	PacketWriter getPacketWriter() {
-		return packetWriter;
-	}
-
-	SessionObject getSessionObject() {
-		return sessionObject;
+	public Context getContext() {
+		return context;
 	}
 
 	protected void initialize() {
@@ -101,7 +91,12 @@ public abstract class AbstractChatManager {
 		return false;
 	}
 
-	public Chat process(Message message, JID interlocutorJid, Observable observable) throws JaxmppException {
+	public Chat process(Message message) throws JaxmppException {
+		final JID interlocutorJid = message.getFrom();
+		return process(message, interlocutorJid);
+	}
+
+	public Chat process(Message message, JID interlocutorJid) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
 			return null;
@@ -118,11 +113,9 @@ public abstract class AbstractChatManager {
 			chat.setJid(interlocutorJid);
 			chat.setThreadId(threadId);
 			this.chats.add(chat);
-			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatCreated, sessionObject);
-			event.setChat(chat);
-			event.setMessage(message);
-
-			observable.fireEvent(event.getType(), event);
+			MessageModule.ChatCreatedHandler.ChatCreatedEvent event = new MessageModule.ChatCreatedHandler.ChatCreatedEvent(
+					context.getSessionObject(), chat, message);
+			context.getEventBus().fire(event);
 		} else {
 			update(chat, interlocutorJid, threadId);
 		}
@@ -130,12 +123,9 @@ public abstract class AbstractChatManager {
 		return chat;
 	}
 
-	public Chat process(Message message, Observable observable) throws JaxmppException {
-		final JID interlocutorJid = message.getFrom();
-		return process(message, interlocutorJid, observable);
+	public void setContext(Context context) {
+		this.context = context;
 	}
-
-	private Context context;
 
 	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
 		boolean changed = false;
@@ -151,20 +141,12 @@ public abstract class AbstractChatManager {
 		}
 
 		if (changed) {
-			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatUpdated, sessionObject);
-			event.setChat(chat);
-			observable.fireEvent(event.getType(), event);
+			MessageModule.ChatUpdatedHandler.ChatUpdatedEvent event = new MessageModule.ChatUpdatedHandler.ChatUpdatedEvent(
+					context.getSessionObject(), chat);
+			context.getEventBus().fire(event);
 		}
 
 		return changed;
-	}
-
-	public Context getContext() {
-		return context;
-	}
-
-	public void setContext(Context context) {
-		this.context = context;
 	}
 
 }
