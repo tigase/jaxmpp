@@ -693,7 +693,7 @@ public class SocketConnector implements Connector {
 
 			Object x1 = this.sessionObject.getProperty(Jaxmpp.SYNCHRONIZED_MODE);
 
-			this.sessionObject.clear();
+			this.sessionObject.clear(SessionObject.Scope.stream);
 			this.sessionObject.setProperty(SERVER_HOST, newHost);
 			worker = null;
 			reader = null;
