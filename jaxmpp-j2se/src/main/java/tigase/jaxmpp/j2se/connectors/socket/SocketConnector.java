@@ -678,7 +678,7 @@ public class SocketConnector implements Connector {
 
 			Object x1 = this.context.getSessionObject().getProperty(Jaxmpp.SYNCHRONIZED_MODE);
 
-			this.context.getSessionObject().clear();
+			this.context.getSessionObject().clear(SessionObject.Scope.stream);
 			this.context.getSessionObject().setProperty(SERVER_HOST, newHost);
 			worker = null;
 			reader = null;

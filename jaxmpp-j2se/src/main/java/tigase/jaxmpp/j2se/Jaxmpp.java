@@ -131,6 +131,10 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public void disconnect(boolean snc) throws JaxmppException {
+		disconnect(snc, true);
+	}
+	
+	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
 				try {
@@ -146,7 +150,9 @@ public class Jaxmpp extends JaxmppCore {
 				}
 			}
 		} finally {
-			StreamManagementModule.reset(sessionObject);
+			if (resetStreamManagement) {
+				StreamManagementModule.reset(sessionObject);
+			}
 		}
 	}
 
