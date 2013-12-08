@@ -20,6 +20,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -137,6 +138,49 @@ public class SocketConnector implements Connector {
 		}
 
 		void onHostChanged(SessionObject sessionObject);
+	}
+
+	/**
+	 * OutputStreamFlushWrap class is wrapper class used to wrap
+	 * DeflaterOutputStream to force flushing every time data is written to
+	 * output stream
+	 */
+	private class OutputStreamFlushWrap extends OutputStream {
+
+		private final OutputStream outputStream;
+
+		public OutputStreamFlushWrap(OutputStream outputStream) {
+			this.outputStream = outputStream;
+		}
+
+		@Override
+		public void write(byte[] b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();
+		}
+
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			outputStream.write(b, off, len);
+			outputStream.flush();
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();
+		}
+
+		@Override
+		public void flush() throws IOException {
+			outputStream.flush();
+		}
+
+		@Override
+		public void close() throws IOException {
+			outputStream.close();
+		}
+
 	}
 
 	/**
@@ -627,17 +671,36 @@ public class SocketConnector implements Connector {
 					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
 				}
 			} catch (NoSuchFieldException ex) {
-				writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
-					@Override
-					public void write(byte[] data) throws IOException {
-						super.write(data);
-						super.write(EMPTY_BYTEARRAY);
-						super.def.setLevel(Deflater.NO_COMPRESSION);
-						super.deflate();
-						super.def.setLevel(Deflater.BEST_COMPRESSION);
-						super.deflate();
-					}
-				};
+
+				// if we do not have field we are on standard Java VM
+				try {
+					// try to create flushable DeflaterOutputStream but it
+					// exists
+					// only on Java 7 so we access it using reflection for
+					// compatibility
+					Constructor<DeflaterOutputStream> flushable = DeflaterOutputStream.class.getConstructor(OutputStream.class,
+							Deflater.class, boolean.class);
+
+					// we need wrap DeflaterOutputStream to flush it every time
+					// we are
+					// writing to it
+					writer = new OutputStreamFlushWrap(flushable.newInstance(socket.getOutputStream(), compressor, true));
+
+				} catch (NoSuchMethodException ex1) {
+					// if we do not find constructor from Java 7 we use flushing
+					// algorithm which was working fine on Java 6
+					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
+						@Override
+						public void write(byte[] data) throws IOException {
+							super.write(data);
+							super.write(EMPTY_BYTEARRAY);
+							super.def.setLevel(Deflater.NO_COMPRESSION);
+							super.deflate();
+							super.def.setLevel(Deflater.BEST_COMPRESSION);
+							super.deflate();
+						}
+					};
+				}
 			}
 
 			Inflater decompressor = new Inflater(false);
