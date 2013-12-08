@@ -48,6 +48,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageCarbonsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoItemsModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
@@ -84,25 +85,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
  */
 public abstract class JaxmppCore {
 
-	public static class JaxmppEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private Throwable caught;
-
-		public JaxmppEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public Throwable getCaught() {
-			return caught;
-		}
-
-		public void setCaught(Throwable throwable) {
-			this.caught = throwable;
-		}
-	}
-
 	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
 
 	public static final EventType Connected = new EventType();
@@ -116,8 +98,6 @@ public abstract class JaxmppCore {
 	protected final Logger log;
 
 	protected final XmppModulesManager modulesManager;
-
-	protected final Observable observable;
 
 	protected final EventBus eventBus;
 
@@ -176,7 +156,7 @@ public abstract class JaxmppCore {
 
 	};
 
-	private Context jaxmppContext;
+	private Context context;
 
 	protected EventBus createEventBus() {
 		return new DefaultEventBus();
@@ -188,7 +168,7 @@ public abstract class JaxmppCore {
 		this.log = Logger.getLogger(this.getClass().getName());
 		observable = ObservableFactory.instance(null);
 
-		this.jaxmppContext = new Context() {
+		this.context = new Context() {
 
 			@Override
 			public PacketWriter getWriter() {
@@ -350,45 +330,41 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
-		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, sessionObject, writer));
+		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, context));
 		ackModule.addListener(StreamManagementModule.Unacknowledged, this.unacknowledgedListener);
 
-		final AuthModule authModule = this.modulesManager.register(new AuthModule(observable, this.sessionObject,
-				this.modulesManager));
+		final AuthModule authModule = this.modulesManager.register(new AuthModule(context, this.modulesManager));
 
-		this.modulesManager.register(new PubSubModule(observable, sessionObject, writer));
+		this.modulesManager.register(new PubSubModule(context));
 
-		this.modulesManager.register(new MucModule(observable, sessionObject, writer));
+		this.modulesManager.register(new MucModule(context));
 
-		this.modulesManager.register(new PresenceModule(observable, sessionObject, writer));
+		this.modulesManager.register(new PresenceModule(context));
 
-		MessageModule messageModule = new MessageModule(observable, sessionObject, writer);
+		MessageModule messageModule = new MessageModule(context);
 
-		this.modulesManager.register(new MessageCarbonsModule(sessionObject, messageModule, writer));
+		this.modulesManager.register(new MessageCarbonsModule(context, messageModule));
 		this.modulesManager.register(messageModule);
 
-		final DiscoInfoModule discoInfoModule = this.modulesManager.register(new DiscoInfoModule(sessionObject, writer,
-				modulesManager));
-		final DiscoItemsModule discoItemsModule = this.modulesManager.register(new DiscoItemsModule(sessionObject, writer));
+		final DiscoveryModule discoveryModule = this.modulesManager.register(new DiscoveryModule(context, modulesManager));
 
-		this.modulesManager.register(new AdHocCommansModule(sessionObject, writer, discoItemsModule, discoInfoModule));
+		this.modulesManager.register(new AdHocCommansModule(context, discoveryModule));
 
-		this.modulesManager.register(new SoftwareVersionModule(sessionObject, writer));
-		this.modulesManager.register(new PingModule(sessionObject, writer));
-		this.modulesManager.register(new ResourceBinderModule(observable, sessionObject, writer));
+		this.modulesManager.register(new SoftwareVersionModule(context));
+		this.modulesManager.register(new PingModule(context));
+		this.modulesManager.register(new ResourceBinderModule(context));
 
-		this.modulesManager.register(new RosterModule(sessionObject, writer));
+		this.modulesManager.register(new RosterModule(context));
 
-		this.modulesManager.register(new StreamFeaturesModule(observable, sessionObject, writer));
-		this.modulesManager.register(new SaslModule(authModule.getObservable(), sessionObject, writer));
-		NonSaslAuthModule nonSasl = new NonSaslAuthModule(sessionObject, writer);
+		this.modulesManager.register(new StreamFeaturesModule(context));
+		this.modulesManager.register(new SaslModule(context));
+		NonSaslAuthModule nonSasl = new NonSaslAuthModule(context);
 		this.modulesManager.register(nonSasl);
-		nonSasl.setObservable(authModule.getObservable());
 
-		this.modulesManager.register(new VCardModule(observable, sessionObject, writer));
-		this.modulesManager.register(new InBandRegistrationModule(sessionObject, writer));
+		this.modulesManager.register(new VCardModule(context));
+		this.modulesManager.register(new InBandRegistrationModule(context));
 
-		this.modulesManager.register(new SessionEstablishmentModule(observable, sessionObject, writer));
+		this.modulesManager.register(new SessionEstablishmentModule(context));
 
 		this.modulesManager.init();
 	}
@@ -431,7 +407,7 @@ public abstract class JaxmppCore {
 	}
 
 	public Context getContext() {
-		return jaxmppContext;
+		return context;
 	}
 
 	public EventBus getEventBus() {

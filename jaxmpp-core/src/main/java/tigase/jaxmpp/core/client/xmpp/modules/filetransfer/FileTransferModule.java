@@ -19,53 +19,94 @@ package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
-import tigase.jaxmpp.core.client.criteria.Or;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
-import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule.FileTransferRequestHandler.FileTransferRequestEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class FileTransferModule implements XmppModule, PacketWriterAware, ObservableAware {
+public class FileTransferModule implements XmppModule {
+
+	public interface FileTransferRequestHandler extends EventHandler {
+
+		public static class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
+
+			public static final EventType<FileTransferRequestHandler> TYPE = new EventType<FileTransferRequestHandler>();
+			private FileTransfer fileTransfer;
+			private String id;
+			private List<String> streamMethods;
+
+			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id, List<String> streamMethods) {
+				super(TYPE, sessionObject);
+				this.fileTransfer = ft;
+				this.id = id;
+				this.streamMethods = streamMethods;
+			}
+
+			@Override
+			protected void dispatch(FileTransferRequestHandler handler) {
+				handler.onFileTransferRequest(sessionObject, fileTransfer, id, streamMethods);
+			}
+
+			public FileTransfer getFileTransfer() {
+				return fileTransfer;
+			}
+
+			public String getId() {
+				return id;
+			}
+
+			public List<String> getStreamMethods() {
+				return streamMethods;
+			}
+
+			public void setFileTransfer(FileTransfer fileTransfer) {
+				this.fileTransfer = fileTransfer;
+			}
+
+			public void setId(String id) {
+				this.id = id;
+			}
+
+			public void setStreamMethods(List<String> streamMethods) {
+				this.streamMethods = streamMethods;
+			}
+
+		}
+
+		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer, String id, List<String> streamMethods);
+	}
 
 	public static final String XMLNS_SI = "http://jabber." + "org/protocol/si";
+
 	public static final String XMLNS_SI_FILE = "http://jabber.org/protocol/si/profile/file-transfer";
 
-	private static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("si", new String[] { "xmlns", "profile" },
-					new String[] { XMLNS_SI, XMLNS_SI_FILE }));
+	private static final Criteria CRIT = ElementCriteria.name("iq").add(
+			ElementCriteria.name("si", new String[] { "xmlns", "profile" }, new String[] { XMLNS_SI, XMLNS_SI_FILE }));
 
 	private static final String[] FEATURES = new String[] { XMLNS_SI, XMLNS_SI_FILE };
 
-	public static final EventType RequestEventType = new EventType();
-
-	private Observable observable;
-
-	private final SessionObject session;
+	private Context context;
 
 	private PacketWriter writer;
 
-	public FileTransferModule(SessionObject sessionObject) {
-		session = sessionObject;
+	public FileTransferModule(Context context) {
+		this.context = context;
 	}
 
 	public void acceptStreamInitiation(FileTransfer ft, String id, String streamMethod) throws JaxmppException {
@@ -94,24 +135,25 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 		writer.write(iq);
 	}
 
-	public void addListener(EventType eventType, Listener listener) {
-		observable.addListener(eventType, listener);
+	public void addFileTransferRequestHandler(FileTransferRequestHandler handler) {
+		context.getEventBus().addHandler(FileTransferRequestHandler.FileTransferRequestEvent.TYPE, handler);
 	}
-
-//	public void fileTransferProgressUpdated(FileTransfer ft) {
-//		FileTransferEvent event = new FileTransferProgressEvent(ProgressEventType, session, ft);
-//		try {
-//			observable.fireEvent(event);
-//		} catch (JaxmppException e) {
-//			// TODO - check - should not happen
-//			e.printStackTrace();
-//		}
-//	}
 
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
 	}
+
+	// public void fileTransferProgressUpdated(FileTransfer ft) {
+	// FileTransferEvent event = new
+	// FileTransferProgressEvent(ProgressEventType, session, ft);
+	// try {
+	// observable.fireEvent(event);
+	// } catch (JaxmppException e) {
+	// // TODO - check - should not happen
+	// e.printStackTrace();
+	// }
+	// }
 
 	@Override
 	public String[] getFeatures() {
@@ -173,12 +215,12 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 			filesize = Long.parseLong(file.getAttribute("size"));
 		}
 
-                FileTransfer ft = new FileTransfer(session, iq.getFrom(), si.getAttribute("id"));
-                ft.setFileInfo(file.getAttribute("name"), filesize, null, si.getAttribute("mimetype"));
-		FileTransferRequestEvent event = new FileTransferRequestEvent(RequestEventType, this.session, ft,
-				iq.getAttribute("id"), streamMethods);
+		FileTransfer ft = new FileTransfer(context.getSessionObject(), iq.getFrom(), si.getAttribute("id"));
+		ft.setFileInfo(file.getAttribute("name"), filesize, null, si.getAttribute("mimetype"));
 
-		observable.fireEvent(event);
+		FileTransferRequestEvent event = new FileTransferRequestEvent(context.getSessionObject(), ft, iq.getAttribute("id"),
+				streamMethods);
+		context.getEventBus().fire(event);
 	}
 
 	public void rejectStreamInitiation(FileTransfer ft, String id) throws JaxmppException {
@@ -186,8 +228,8 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 				new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas" });
 	}
 
-	public void removeListener(Listener listener) {
-		observable.removeListener(listener);
+	public void removeFileTransferRequestHandler(FileTransferRequestHandler handler) {
+		context.getEventBus().remove(FileTransferRequestHandler.FileTransferRequestEvent.TYPE, handler);
 	}
 
 	private void returnError(String to, String id, String type, String[] names, String[] xmlnss) throws JaxmppException {
@@ -212,12 +254,12 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 	}
 
 	public void sendNoValidStreams(FileTransferRequestEvent be) throws JaxmppException {
-		returnError(be.getFileTransfer().getPeer().toString(), be.getId(), "cancel", new String[] { "bad-request", "no-valid-streams" },
-				new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas", XMLNS_SI });
+		returnError(be.getFileTransfer().getPeer().toString(), be.getId(), "cancel", new String[] { "bad-request",
+				"no-valid-streams" }, new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas", XMLNS_SI });
 	}
 
-	public void sendStreamInitiationOffer(FileTransfer ft,
-			String[] streamMethods, StreamInitiationOfferAsyncCallback callback) throws XMLException, JaxmppException {
+	public void sendStreamInitiationOffer(FileTransfer ft, String[] streamMethods, StreamInitiationOfferAsyncCallback callback)
+			throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(ft.getPeer());
 		iq.setType(StanzaType.set);
@@ -226,9 +268,9 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 		si.setAttribute("profile", XMLNS_SI_FILE);
 		String sid = ft.getSid();
 		si.setAttribute("id", sid);
-                if (callback != null) {
-                        callback.setSid(sid);
-                }
+		if (callback != null) {
+			callback.setSid(sid);
+		}
 
 		if (ft.getFileMimeType() != null) {
 			si.setAttribute("mime-type", ft.getFileMimeType());
@@ -260,13 +302,4 @@ public class FileTransferModule implements XmppModule, PacketWriterAware, Observ
 		writer.write(iq, (long) (10 * 60 * 1000), callback);
 	}
 
-        @Override
-        public void setPacketWriter(PacketWriter packetWriter) {
-                writer = packetWriter;
-        }
-
-        @Override
-        public void setObservable(Observable parentObservable) {
-                observable = ObservableFactory.instance(parentObservable);
-        }
 }

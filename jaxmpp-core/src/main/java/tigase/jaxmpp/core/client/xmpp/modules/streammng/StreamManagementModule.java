@@ -9,8 +9,8 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -18,27 +18,20 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
-import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementEnabledHandler.StreamManagementEnabledEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler.StreamResumedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler.UnacknowledgedEvent;
 
-public class StreamManagementModule implements XmppModule, ObservableAware {
-
-	public static abstract class AbstractStreamManagementEvent extends BaseEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		protected AbstractStreamManagementEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-	}
+public class StreamManagementModule implements XmppModule {
 
 	private static class MutableLong extends Number {
 
@@ -72,95 +65,140 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 		}
 	}
 
-	public static class StreamManagementEnabledEvent extends AbstractStreamManagementEvent {
+	public interface StreamManagementEnabledHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class StreamManagementEnabledEvent extends JaxmppEvent<StreamManagementEnabledHandler> {
 
-		private Boolean resume;
+			public static final EventType<StreamManagementEnabledHandler> TYPE = new EventType<StreamManagementEnabledHandler>();
+			private Boolean resume;
+			private String resumeId;
 
-		private String resumeId;
+			public StreamManagementEnabledEvent(SessionObject sessionObject, Boolean resume, String id) {
+				super(TYPE, sessionObject);
+				this.resume = resume;
+				this.resumeId = id;
 
-		StreamManagementEnabledEvent(SessionObject sessionObject, Boolean resume, String id) {
-			super(StreamManagementEnabled, sessionObject);
-			this.resume = resume;
-			this.resumeId = id;
+			}
+
+			@Override
+			protected void dispatch(StreamManagementEnabledHandler handler) {
+				handler.onStreamManagementEnabled(sessionObject, resume, resumeId);
+			}
+
+			public Boolean getResume() {
+				return resume;
+			}
+
+			public String getResumeId() {
+				return resumeId;
+			}
+
+			public void setResume(Boolean resume) {
+				this.resume = resume;
+			}
+
+			public void setResumeId(String resumeId) {
+				this.resumeId = resumeId;
+			}
+
 		}
 
-		public Boolean getResume() {
-			return resume;
-		}
-
-		public String getResumeId() {
-			return resumeId;
-		}
-
-		public void setResume(Boolean resume) {
-			this.resume = resume;
-		}
-
-		public void setResumeId(String resumeId) {
-			this.resumeId = resumeId;
-		}
+		void onStreamManagementEnabled(SessionObject sessionObject, Boolean resume, String resumeId);
 	}
 
-	public static class StreamManagementFailedEvent extends AbstractStreamManagementEvent {
+	public interface StreamManagementFailedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class StreamManagementFailedEvent extends JaxmppEvent<StreamManagementFailedHandler> {
 
-		private ErrorCondition condition;
+			public static final EventType<StreamManagementFailedHandler> TYPE = new EventType<StreamManagementFailedHandler>();
 
-		public StreamManagementFailedEvent(SessionObject sessionObject, ErrorCondition condition) {
-			super(StreamManagementFailed, sessionObject);
-			this.condition = condition;
+			private ErrorCondition condition;
+
+			public StreamManagementFailedEvent(SessionObject sessionObject, ErrorCondition condition) {
+				super(TYPE, sessionObject);
+				this.condition = condition;
+			}
+
+			@Override
+			protected void dispatch(StreamManagementFailedHandler handler) {
+				handler.onStreamManagementFailed(sessionObject, condition);
+			}
+
 		}
 
-		public ErrorCondition getCondition() {
-			return condition;
-		}
-
-		public void setCondition(ErrorCondition condition) {
-			this.condition = condition;
-		}
+		void onStreamManagementFailed(SessionObject sessionObject, ErrorCondition condition);
 	}
 
-	public static class StreamResumedEvent extends AbstractStreamManagementEvent {
+	public interface StreamResumedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class StreamResumedEvent extends JaxmppEvent<StreamResumedHandler> {
 
-		private Long h;
+			public static final EventType<StreamResumedHandler> TYPE = new EventType<StreamResumedHandler>();
 
-		private String previd;
+			private Long h;
 
-		public StreamResumedEvent(EventType type, SessionObject sessionObject, Long h, String previd) {
-			super(type, sessionObject);
-			this.h = h;
-			this.previd = previd;
+			private String previd;
+
+			public StreamResumedEvent(SessionObject sessionObject, Long h, String previd) {
+				super(TYPE, sessionObject);
+				this.h = h;
+				this.previd = previd;
+			}
+
+			@Override
+			protected void dispatch(StreamResumedHandler handler) {
+				handler.onStreamResumed(sessionObject, h, previd);
+			}
+
+			public Long getH() {
+				return h;
+			}
+
+			public String getPrevid() {
+				return previd;
+			}
+
+			public void setH(Long h) {
+				this.h = h;
+			}
+
+			public void setPrevid(String previd) {
+				this.previd = previd;
+			}
+
 		}
 
-		protected StreamResumedEvent(SessionObject sessionObject, Long h, String previd) {
-			super(StreamResumed, sessionObject);
-			this.h = h;
-			this.previd = previd;
-		}
+		void onStreamResumed(SessionObject sessionObject, Long h, String previd);
 	}
 
-	public static class UnacknowledgedEvent extends AbstractStreamManagementEvent {
+	public interface UnacknowledgedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class UnacknowledgedEvent extends JaxmppEvent<UnacknowledgedHandler> {
 
-		private List<Element> elements = new ArrayList<Element>();
+			public static final EventType<UnacknowledgedHandler> TYPE = new EventType<UnacknowledgedHandler>();
+			private List<Element> elements;
 
-		UnacknowledgedEvent(SessionObject sessionObject) {
-			super(Unacknowledged, sessionObject);
+			public UnacknowledgedEvent(SessionObject sessionObject, List<Element> elements) {
+				super(TYPE, sessionObject);
+				this.elements = elements;
+			}
+
+			@Override
+			protected void dispatch(UnacknowledgedHandler handler) {
+				handler.onUnacknowledged(sessionObject, elements);
+			}
+
+			public List<Element> getElements() {
+				return elements;
+			}
+
+			public void setElements(List<Element> elements) {
+				this.elements = elements;
+			}
+
 		}
 
-		public List<Element> getElements() {
-			return elements;
-		}
-
-		public void setElements(List<Element> elements) {
-			this.elements = elements;
-		}
+		void onUnacknowledged(SessionObject sessionObject, List<Element> elements);
 	}
 
 	public static final String INCOMING_STREAM_H_KEY = "urn:xmpp:sm:3#INCOMING_STREAM_H";
@@ -186,14 +224,6 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	 * Property to keep Boolean if stream management is turned on.
 	 */
 	public final static String STREAM_MANAGEMENT_TURNED_ON_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_TURNED_ON";
-
-	public static final EventType StreamManagementEnabled = new EventType();
-
-	public static final EventType StreamManagementFailed = new EventType();
-
-	public static final EventType StreamResumed = new EventType();
-
-	public static final EventType Unacknowledged = new EventType();
 
 	public static final String XMLNS = "urn:xmpp:sm:3";
 
@@ -242,25 +272,20 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 		sessionObject.setProperty(INCOMING_STREAM_H_KEY, null);
 	}
 
+	private final Context context;
+
 	private final Criteria crit = ElementCriteria.xmlns(XMLNS);
 
 	private final JaxmppCore jaxmpp;
 
 	protected final Logger log;
 
-	private Observable observable;
-
 	private final LinkedList<Element> outgoingQueue = new LinkedList<Element>();
 
-	private final SessionObject sessionObject;
-
-	private final PacketWriter writer;
-
-	public StreamManagementModule(JaxmppCore jaxmpp, SessionObject sessionObject, PacketWriter writer) {
+	public StreamManagementModule(JaxmppCore jaxmpp, Context context) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.jaxmpp = jaxmpp;
-		this.sessionObject = sessionObject;
-		this.writer = writer;
+		this.context = context;
 
 		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.TYPE,
 				new Connector.StanzaSendingHandler() {
@@ -274,28 +299,6 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	}
 
 	/**
-	 * Adds a listener bound by the given event type.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	/**
-	 * Add a listener bound by the all event types.
-	 * 
-	 * @param listener
-	 *            the listener
-	 */
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
-	}
-
-	/**
 	 * Client enables stream management.
 	 */
 	public void enable() throws JaxmppException {
@@ -306,14 +309,14 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 
 		request.setAttribute("resume", "true");
 
-		writer.write(request);
+		context.getWriter().write(request);
 	}
 
 	private Number getAckHValue(String key) {
-		MutableLong v = sessionObject.getProperty(key);
+		MutableLong v = context.getSessionObject().getProperty(key);
 		if (v == null) {
 			v = new MutableLong();
-			sessionObject.setProperty(key, v);
+			context.getSessionObject().setProperty(key, v);
 		}
 		return v;
 	}
@@ -329,10 +332,10 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	}
 
 	private long incrementAckHValue(String key) {
-		MutableLong v = sessionObject.getProperty(key);
+		MutableLong v = context.getSessionObject().getProperty(key);
 		if (v == null) {
 			v = new MutableLong();
-			sessionObject.setProperty(key, v);
+			context.getSessionObject().setProperty(key, v);
 		}
 		++v.value;
 		if (v.value < 0)
@@ -342,7 +345,7 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
-		final boolean enabled = isStreamManagementTurnedOn(sessionObject);
+		final boolean enabled = isStreamManagementTurnedOn(context.getSessionObject());
 		if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 			processResumed(element);
 		} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
@@ -377,9 +380,8 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 					}
 					this.outgoingQueue.clear();
 				}
-				UnacknowledgedEvent event = new UnacknowledgedEvent(sessionObject);
-				event.setElements(notSentElements);
-				observable.fireEvent(event);
+				UnacknowledgedEvent event = new UnacknowledgedEvent(context.getSessionObject(), notSentElements);
+				context.getEventBus().fire(event);
 			} else {
 				synchronized (this.outgoingQueue) {
 					this.outgoingQueue.clear();
@@ -395,16 +397,16 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	private void processAckRequest(Element element) throws JaxmppException {
 		Element response = new DefaultElement("a", null, XMLNS);
 		response.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
-		writer.write(response);
+		context.getWriter().write(response);
 	}
 
 	private void processFailed(Element element) throws JaxmppException {
 		List<Element> errors = element.getChildrenNS(XMPPException.XMLNS);
 
-		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
-		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
-		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
-		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
+		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
 
 		XMPPException.ErrorCondition condition = ErrorCondition.unexpected_request;
 		for (Element element2 : errors) {
@@ -415,12 +417,12 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 			}
 		}
 
-		StreamManagementFailedEvent event = new StreamManagementFailedEvent(sessionObject, condition);
-		observable.fireEvent(event);
+		StreamManagementFailedEvent event = new StreamManagementFailedEvent(context.getSessionObject(), condition);
+		context.getEventBus().fire(event);
 	}
 
 	public boolean processIncomingStanza(Element element) throws XMLException {
-		if (!isAckEnabled(sessionObject))
+		if (!isAckEnabled(context.getSessionObject()))
 			return false;
 
 		if (element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
@@ -438,7 +440,7 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 	}
 
 	public void processOutgoingElement(final Element element) throws JaxmppException {
-		if (!isAckEnabled(sessionObject))
+		if (!isAckEnabled(context.getSessionObject()))
 			return;
 		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null
 				&& XMLNS.endsWith(element.getXMLNS()))
@@ -468,10 +470,10 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 		String hs = element.getAttribute("h");
 		final Long newH = hs == null ? null : Long.parseLong(hs);
 
-		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
 
-		StreamResumedEvent event = new StreamResumedEvent(sessionObject, newH, element.getAttribute("previd"));
-		observable.fireEvent(event);
+		StreamResumedEvent event = new StreamResumedEvent(context.getSessionObject(), newH, element.getAttribute("previd"));
+		context.getEventBus().fire(event);
 	}
 
 	private void processStreamManagementEnabled(Element element) throws JaxmppException {
@@ -484,53 +486,24 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 			log.info("Stream management is enabled. id=" + id + "; resume=" + r);
 		}
 
-		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.TRUE);
-		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, resume);
-		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, id);
-		sessionObject.setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.TRUE);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUME_KEY, resume);
+		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, id);
+		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
 
 		if (mx != null) {
-			sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_TIME_KEY, Long.valueOf(mx));
+			context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUMPTION_TIME_KEY, Long.valueOf(mx));
 		}
 
-		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(sessionObject, resume, id);
-		observable.fireEvent(event);
-	}
-
-	/**
-	 * Removes all listeners.
-	 */
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param eventType
-	 *            type of event
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	/**
-	 * Removes a listener.
-	 * 
-	 * @param listener
-	 *            listener
-	 */
-	public void removeListener(Listener<? extends BaseEvent> listener) {
-		observable.removeListener(listener);
+		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(context.getSessionObject(), resume, id);
+		context.getEventBus().fire(event);
 	}
 
 	/**
 	 * Request acknowledgement of received stanzas.
 	 */
 	public void request() throws JaxmppException {
-		Long lr = sessionObject.getProperty(LAST_REQUEST_TIMESTAMP_KEY);
+		Long lr = context.getSessionObject().getProperty(LAST_REQUEST_TIMESTAMP_KEY);
 
 		final long now = (new Date()).getTime();
 
@@ -538,37 +511,32 @@ public class StreamManagementModule implements XmppModule, ObservableAware {
 			return;
 
 		Element request = new DefaultElement("r", null, XMLNS);
-		// writer.write(request);
+		// context.getWriter().write(request);
 		jaxmpp.getConnector().send(request);
-		sessionObject.setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
+		context.getSessionObject().setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
 	}
 
 	public void resume() throws JaxmppException {
 		Element resume = new DefaultElement("resume", null, XMLNS);
 
 		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
-		resume.setAttribute("previd", (String) sessionObject.getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
+		resume.setAttribute("previd", (String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
 
 		if (log.isLoggable(Level.INFO))
 			log.info("Stream resumption");
 
-		writer.write(resume);
+		context.getWriter().write(resume);
 	}
 
 	private void setAckHValue(String key, Long value) {
-		MutableLong v = sessionObject.getProperty(key);
+		MutableLong v = context.getSessionObject().getProperty(key);
 		if (v == null) {
 			v = new MutableLong();
-			sessionObject.setProperty(key, v);
+			context.getSessionObject().setProperty(key, v);
 		}
 		v.value = value == null ? 0 : value;
 		if (v.value < 0)
 			v.value = 0;
-	}
-
-	@Override
-	public void setObservable(Observable observable) {
-		this.observable = observable;
 	}
 
 }

@@ -19,7 +19,9 @@ package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -27,28 +29,86 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
-import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule.StreamhostsHandler.StreamhostsEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
- *
+ * 
  * @author andrzej
  */
-public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, ObservableAware {
-	
+public class Socks5BytestreamsModule implements XmppModule {
+
 	public static abstract class ActivateCallback implements AsyncCallback {
 
+	}
+
+	public interface StreamhostsHandler extends EventHandler {
+
+		public static class StreamhostsEvent extends JaxmppEvent<StreamhostsHandler> {
+
+			public static final EventType<StreamhostsHandler> TYPE = new EventType<StreamhostsHandler>();
+
+			private JID from;
+
+			private List<Streamhost> hosts;
+
+			private String id;
+
+			private String sid;
+
+			public StreamhostsEvent(SessionObject sessionObject) {
+				super(TYPE, sessionObject);
+			}
+
+			@Override
+			protected void dispatch(StreamhostsHandler handler) {
+				handler.onACTION(sessionObject);
+			}
+
+			public JID getFrom() {
+				return from;
+			}
+
+			public List<Streamhost> getHosts() {
+				return hosts;
+			}
+
+			public String getId() {
+				return id;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setFrom(JID from) {
+				this.from = from;
+			}
+
+			public void setHosts(List<Streamhost> hosts) {
+				this.hosts = hosts;
+			}
+
+			public void setId(String id) {
+				this.id = id;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+		}
+
+		void onACTION(SessionObject sessionObject);
 	}
 
 	public static final String XMLNS_BS = "http://jabber.org/protocol/bytestreams";
@@ -56,23 +116,15 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("query", XMLNS_BS));
 
 	private static final String[] FEATURES = new String[] { XMLNS_BS };
-        
-        public static final EventType StreamhostsEventType = new EventType();
 
-	private Observable observable;
-
-	private final SessionObject session;
+	private final Context context;
 
 	private PacketWriter writer;
 
-	public Socks5BytestreamsModule(SessionObject sessionObject) {
-		session = sessionObject;
-	}        
-
-	public void addListener(EventType eventType, Listener listener) {
-		observable.addListener(eventType, listener);
+	public Socks5BytestreamsModule(Context context) {
+		this.context = context;
 	}
-        
+
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
@@ -88,19 +140,19 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		final IQ iq = element instanceof Stanza ? (IQ) element : (IQ) Stanza.create(element);
 		process(iq);
 	}
-        
+
 	public void process(IQ iq) throws XMLException, JaxmppException {
 		Element query = iq.getChildrenNS("query", XMLNS_BS);
 		if (query != null) {
 			List<Streamhost> hosts = processStreamhosts(iq);
 			if (hosts != null) {
-				StreamhostsEvent event = new StreamhostsEvent(StreamhostsEventType, this.session);
+				StreamhostsEvent event = new StreamhostsEvent(this.context.getSessionObject());
 				event.setId(iq.getId());
 				event.setSid(iq.getChildrenNS("query", XMLNS_BS).getAttribute("sid"));
 				event.setFrom(iq.getFrom());
 				event.setHosts(hosts);
 
-				observable.fireEvent(event);
+				context.getEventBus().fire(event);
 				return;
 			}
 		}
@@ -116,7 +168,7 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		List<Streamhost> hosts = new ArrayList<Streamhost>();
 
 		if (el_hosts != null) {
-			StreamhostsEvent event = new StreamhostsEvent(StreamhostsEventType, this.session);
+			StreamhostsEvent event = new StreamhostsEvent(this.context.getSessionObject());
 			for (Element el_host : el_hosts) {
 				String jid = el_host.getAttribute("jid");
 				hosts.add(new Streamhost(jid, el_host.getAttribute("host"), Integer.parseInt(el_host.getAttribute("port"))));
@@ -126,14 +178,10 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		return hosts;
 	}
 
-        public void removeListener(Listener listener) {
-		observable.removeListener(listener);
-	}
-        
-	public void requestActivate(JID host, String sid, JID jid, ActivateCallback callback) throws XMLException,
-			JaxmppException {
-		if (host == null) host = jid;
-		
+	public void requestActivate(JID host, String sid, JID jid, ActivateCallback callback) throws XMLException, JaxmppException {
+		if (host == null)
+			host = jid;
+
 		IQ iq = IQ.create();
 		iq.setTo(host);
 		iq.setType(StanzaType.set);
@@ -158,7 +206,7 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 
 		writer.write(iq, callback);
 	}
-        
+
 	public void sendStreamhosts(JID recipient, String sid, List<Streamhost> hosts, AsyncCallback callback) throws XMLException,
 			JaxmppException {
 		IQ iq = IQ.create();
@@ -197,15 +245,5 @@ public class Socks5BytestreamsModule implements XmppModule, PacketWriterAware, O
 		// session.registerResponseHandler(iq, callback);
 		writer.write(iq);
 	}
-        
-        @Override
-        public void setPacketWriter(PacketWriter packetWriter) {
-                writer = packetWriter;
-        }
 
-        @Override
-        public void setObservable(Observable parentObservable) {
-                observable = ObservableFactory.instance(parentObservable);
-        }
-        
 }

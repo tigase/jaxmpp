@@ -17,71 +17,69 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
 
-import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
-import java.io.File;
-import java.io.InputStream;
 import java.util.Date;
-import java.util.logging.Logger;
-import tigase.jaxmpp.core.client.DataHolder;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 
 public class FileTransfer extends ConnectionSession {
 
-        private String filename;
-        private long fileSize;
-        private String fileMimeType;
-        private Date lastModified;
+	private String fileMimeType;
+	private String filename;
+	private long fileSize;
+	private Date lastModified;
 
-		private long transferredBytes = 0;
-        
-        protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
-                super(sessionObject, peer, sid, true);
-        }
-        
-        protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
-                this.filename = filename;
-                this.fileSize = fileSize;
-                this.fileMimeType = mimeType;
-                this.lastModified = lastModified;
-        }
-        
-        public String getFilename() {
-                return filename;
-        }
-        
-        public long getFileSize() {
-                return fileSize;
-        }
-        
-        public String getFileMimeType() {
-                return fileMimeType;
-        }
+	private long transferredBytes = 0;
 
-        public void setFileMimeType(String mimeType) {
-        		this.fileMimeType = mimeType;
-        }
-        
-        public Date getFileModification() {
-                return lastModified;
-        }
-        
-		public long getTransferredBytes() {
-				return transferredBytes;
-		}
-		
-		protected void transferredBytes(long count) {
-				transferredBytes += count;
-		}
-		
-		public Double getProgress() {
-				if (getFileSize() == 0) return null;
-				return ((double) transferredBytes * 100) / getFileSize();
-		}
-	
-		@Override
-		public String toString() {
-			return "sid = " + getSid() + ", jid = " + getPeer().toString() + ", file = " + getFilename();
-		}
+	protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
+		super(sessionObject, peer, sid, true);
+	}
+
+	public String getFileMimeType() {
+		return fileMimeType;
+	}
+
+	public Date getFileModification() {
+		return lastModified;
+	}
+
+	public String getFilename() {
+		return filename;
+	}
+
+	public long getFileSize() {
+		return fileSize;
+	}
+
+	public Double getProgress() {
+		if (getFileSize() == 0)
+			return null;
+		return ((double) transferredBytes * 100) / getFileSize();
+	}
+
+	public long getTransferredBytes() {
+		return transferredBytes;
+	}
+
+	protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
+		this.filename = filename;
+		this.fileSize = fileSize;
+		this.fileMimeType = mimeType;
+		this.lastModified = lastModified;
+	}
+
+	public void setFileMimeType(String mimeType) {
+		this.fileMimeType = mimeType;
+	}
+
+	@Override
+	public String toString() {
+		return "sid = " + getSid() + ", jid = " + getPeer().toString() + ", file = " + getFilename();
+	}
+
+	protected void transferredBytes(long count) {
+		transferredBytes += count;
+	}
 
 }

@@ -33,11 +33,11 @@ public class Streamhost implements ConnectionEndpoint {
 	}
 
 	@Override
-	public String getHost() {                
-                int idx;
-                if (address != null && (idx = address.indexOf("%")) > 0) {
-                        address = address.substring(0, idx);
-                }
+	public String getHost() {
+		int idx;
+		if (address != null && (idx = address.indexOf("%")) > 0) {
+			address = address.substring(0, idx);
+		}
 		return address;
 	}
 

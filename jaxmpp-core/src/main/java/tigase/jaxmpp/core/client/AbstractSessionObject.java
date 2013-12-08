@@ -23,12 +23,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedHandler.ClearedEvent;
+import tigase.jaxmpp.core.client.eventbus.EventBus;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -41,25 +41,35 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
  */
 public abstract class AbstractSessionObject implements SessionObject {
 
-	public static class ClearedEvent extends BaseEvent {
+	public interface ClearedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class ClearedEvent extends JaxmppEvent<ClearedHandler> {
 
-		private Set<Scope> scopes;
+			public static final EventType<ClearedHandler> TYPE = new EventType<ClearedHandler>();
 
-		public ClearedEvent(SessionObject sessionObject, Set<Scope> scopes) {
-			super(Cleared, sessionObject);
-			this.scopes = scopes;
+			private Set<Scope> scopes;
+
+			public ClearedEvent(SessionObject sessionObject, Set<Scope> scopes) {
+				super(TYPE, sessionObject);
+				this.scopes = scopes;
+			}
+
+			@Override
+			protected void dispatch(ClearedHandler handler) throws JaxmppException {
+				handler.onCleared(sessionObject, scopes);
+			}
+
+			public Set<Scope> getScopes() {
+				return scopes;
+			}
+
+			public void setScopes(Set<Scope> scopes) {
+				this.scopes = scopes;
+			}
+
 		}
 
-		public Set<Scope> getScopes() {
-			return scopes;
-		}
-
-		public void setScopes(Set<Scope> scopes) {
-			this.scopes = scopes;
-		}
-
+		void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException;
 	}
 
 	protected class Entry {
@@ -67,13 +77,11 @@ public abstract class AbstractSessionObject implements SessionObject {
 		private Object value;
 	}
 
-	public final static EventType Cleared = new EventType();
-
 	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
 
-	protected final Logger log = Logger.getLogger(this.getClass().getName());
+	private final EventBus eventBus;
 
-	private final Observable observable = ObservableFactory.instance();
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected PresenceStore presence;
 
@@ -83,15 +91,12 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	protected RosterStore roster;
 
-	protected AbstractSessionObject() {
+	protected AbstractSessionObject(EventBus eventBus) {
+		this.eventBus = eventBus;
 	}
 
-	public void addListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+	public void addClearedHandler(ClearedHandler handler) {
+		eventBus.addHandler(ClearedHandler.ClearedEvent.TYPE, handler);
 	}
 
 	/**
@@ -145,19 +150,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 		}
 
 		ClearedEvent event = new ClearedEvent(this, scopes);
-		observable.fireEvent(event);
-	}
-
-	public void fireEvent(BaseEvent event) throws JaxmppException {
-		observable.fireEvent(event);
-	}
-
-	public void fireEvent(EventType eventType, BaseEvent event) throws JaxmppException {
-		observable.fireEvent(eventType, event);
-	}
-
-	public void fireEvent(EventType eventType, SessionObject sessionObject) throws JaxmppException {
-		observable.fireEvent(eventType, sessionObject);
+		eventBus.fire(event);
 	}
 
 	/**
@@ -176,6 +169,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 		return presence;
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T> T getProperty(Scope scope, String key) {
 		Entry entry = this.properties.get(key);
 		if (entry == null)
@@ -190,7 +184,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 * {@inheritDoc}
 	 */
 	@Override
-	@SuppressWarnings("unchecked")
 	public <T> T getProperty(String key) {
 		return getProperty(null, key);
 	}
@@ -229,7 +222,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getUserProperty(String key) {
 		return getProperty(Scope.user, key);
@@ -239,16 +231,8 @@ public abstract class AbstractSessionObject implements SessionObject {
 		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
 
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	public void removeListener(EventType eventType, Listener<? extends BaseEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	public void removeListener(Listener<? extends BaseEvent> listener) {
-		observable.removeListener(listener);
+	public void removeClearedHandler(ClearedHandler handler) {
+		eventBus.remove(ClearedHandler.ClearedEvent.TYPE, handler);
 	}
 
 	@Override

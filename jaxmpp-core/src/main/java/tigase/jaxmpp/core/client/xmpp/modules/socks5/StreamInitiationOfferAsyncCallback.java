@@ -17,11 +17,11 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public abstract class StreamInitiationOfferAsyncCallback implements AsyncCallback {
@@ -85,5 +85,5 @@ public abstract class StreamInitiationOfferAsyncCallback implements AsyncCallbac
 	public void setSid(String sid) {
 		this.sid = sid;
 	}
-        
+
 }

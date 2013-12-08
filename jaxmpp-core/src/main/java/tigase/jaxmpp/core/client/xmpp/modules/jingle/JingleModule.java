@@ -20,156 +20,367 @@ package tigase.jaxmpp.core.client.xmpp.modules.jingle;
 import java.util.ArrayList;
 import java.util.List;
 
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
-import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionInfoHandler.JingleSessionInfoEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionInitiationHandler.JingleSessionInitiationEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleTransportInfoHandler.JingleTransportInfoEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class JingleModule implements XmppModule, PacketWriterAware, ObservableAware {
+public class JingleModule implements XmppModule {
 
-	public static class JingleSessionAcceptEvent extends JingleSessionEvent {
+	public interface JingleSessionAcceptHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class JingleSessionAcceptEvent extends JaxmppEvent<JingleSessionAcceptHandler> {
 
-		private final Element description;
-		private final List<Transport> transports;
+			public static final EventType<JingleSessionAcceptHandler> TYPE = new EventType<JingleSessionAcceptHandler>();
 
-		public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Transport> transports) {
-			super(JingleSessionAccept, sessionObject, sender, sid);
+			private Element description;
 
-			this.description = description;
-			this.transports = transports;
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			private List<Transport> transports;
+
+			public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
+					List<Transport> transports, MutableBoolean handled) {
+				super(TYPE, sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.description = description;
+				this.transports = transports;
+				this.handled = handled;
+			}
+
+			@Override
+			protected void dispatch(JingleSessionAcceptHandler handler) {
+				handler.onJingleSessionAccept(sessionObject, sender, sid, description, transports, handled);
+			}
+
+			public Element getDescription() {
+				return description;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public List<Transport> getTransports() {
+				return transports;
+			}
+
+			public void setDescription(Element description) {
+				this.description = description;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+			public void setTransports(List<Transport> transports) {
+				this.transports = transports;
+			}
+
 		}
 
-		public Element getDescription() {
-			return description;
-		}
-
-		public List<Transport> getTransport() {
-			return transports;
-		}
-
+		void onJingleSessionAccept(SessionObject sessionObject, JID sender, String sid, Element description,
+				List<Transport> transports, MutableBoolean handled);
 	}
 
-	public static class JingleSessionEvent extends BaseEvent {
+	public interface JingleSessionInfoHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class JingleSessionInfoEvent extends JaxmppEvent<JingleSessionInfoHandler> {
 
-		private final JID sender;
-		private final String sid;
+			public static final EventType<JingleSessionInfoHandler> TYPE = new EventType<JingleSessionInfoHandler>();
 
-		private boolean handled = false;
-		
-		public JingleSessionEvent(EventType type, SessionObject sessionObject, JID sender, String sid) {
-			super(type, sessionObject);
+			private List<Element> content;
 
-			this.sender = sender;
-			this.sid = sid;
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content,
+					MutableBoolean handled) {
+				super(TYPE, sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.content = content;
+				this.handled = handled;
+			}
+
+			@Override
+			protected void dispatch(JingleSessionInfoHandler handler) {
+				handler.onJingleSessionInfo(sessionObject, sender, sid, content, handled);
+			}
+
+			public List<Element> getContent() {
+				return content;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setContent(List<Element> content) {
+				this.content = content;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
 		}
 
-		public JID getSender() {
-			return sender;
-		}
-
-		public String getSid() {
-			return sid;
-		}
-
-		public boolean isJingleHandled() {
-			return handled;
-		}
-		
-		public void setJingleHandled(boolean value) {
-			this.handled = value;
-		}
-		
+		void onJingleSessionInfo(SessionObject sessionObject, JID sender, String sid, List<Element> content,
+				MutableBoolean handled);
 	}
 
-	public static class JingleSessionInfoEvent extends JingleSessionEvent {
+	public interface JingleSessionInitiationHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class JingleSessionInitiationEvent extends JaxmppEvent<JingleSessionInitiationHandler> {
 
-		private final List<Element> content;
+			public static final EventType<JingleSessionInitiationHandler> TYPE = new EventType<JingleSessionInitiationHandler>();
 
-		public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content) {
-			super(JingleTransportInfo, sessionObject, sender, sid);
+			private Element description;
 
-			this.content = content;
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			private List<Transport> transports;
+
+			public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid, Element description,
+					List<Transport> transports, MutableBoolean handled) {
+				super(TYPE, sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.description = description;
+				this.transports = transports;
+				this.handled = handled;
+			}
+
+			@Override
+			protected void dispatch(JingleSessionInitiationHandler handler) {
+				handler.onJingleSessionInitiation(sessionObject, sender, sid, description, transports, handled);
+			}
+
+			public Element getDescription() {
+				return description;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public List<Transport> getTransports() {
+				return transports;
+			}
+
+			public void setDescription(Element description) {
+				this.description = description;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+			public void setTransports(List<Transport> transports) {
+				this.transports = transports;
+			}
+
 		}
 
-		public List<Element> getContent() {
-			return content;
-		}
-
+		void onJingleSessionInitiation(SessionObject sessionObject, JID sender, String sid, Element description,
+				List<Transport> transports, MutableBoolean handled);
 	}
 
-	public static class JingleSessionInitiationEvent extends JingleSessionEvent {
+	public interface JingleSessionTerminateHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class JingleSessionTerminateEvent extends JaxmppEvent<JingleSessionTerminateHandler> {
 
-		private final Element description;
-		private final List<Transport> transports;
+			public static final EventType<JingleSessionTerminateHandler> TYPE = new EventType<JingleSessionTerminateHandler>();
 
-		public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Transport> transports) {
-			super(JingleSessionInitiation, sessionObject, sender, sid);
+			private MutableBoolean handled;
 
-			this.description = description;
-			this.transports = transports;
+			private JID sender;
+
+			private String sid;
+
+			public JingleSessionTerminateEvent(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled) {
+				super(TYPE, sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.handled = handled;
+			}
+
+			@Override
+			protected void dispatch(JingleSessionTerminateHandler handler) {
+				handler.onJingleSessionTerminate(sessionObject, sender, sid, handled);
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
 		}
 
-		public Element getDescription() {
-			return description;
-		}
-
-		public List<Transport> getTransports() {
-			return transports;
-		}
-
+		void onJingleSessionTerminate(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled);
 	}
 
-	public static class JingleSessionTerminateEvent extends JingleSessionEvent {
+	public interface JingleTransportInfoHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class JingleTransportInfoEvent extends JaxmppEvent<JingleTransportInfoHandler> {
 
-		public JingleSessionTerminateEvent(SessionObject sessionObject, JID sender, String sid) {
-			super(JingleSessionTerminate, sessionObject, sender, sid);
+			public static final EventType<JingleTransportInfoHandler> TYPE = new EventType<JingleTransportInfoHandler>();
+
+			private Element content;
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content,
+					MutableBoolean handled) {
+				super(TYPE, sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.content = content;
+				this.handled = handled;
+			}
+
+			@Override
+			protected void dispatch(JingleTransportInfoHandler handler) {
+				handler.onJingleTransportInfo(sessionObject, sender, sid, content, handled);
+			}
+
+			public Element getContent() {
+				return content;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setContent(Element content) {
+				this.content = content;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
 		}
 
-	}
-
-	public static class JingleTransportInfoEvent extends JingleSessionEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private final Element content;
-
-		public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content) {
-			super(JingleTransportInfo, sessionObject, sender, sid);
-
-			this.content = content;
-		}
-
-		public Element getContent() {
-			return content;
-		}
-
+		void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content, MutableBoolean handled);
 	}
 
 	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
@@ -180,18 +391,10 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 
 	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
 
-	public static final EventType JingleSessionAccept = new EventType();
-	public static final EventType JingleSessionInfo = new EventType();
-	public static final EventType JingleSessionInitiation = new EventType();
-	public static final EventType JingleSessionTerminate = new EventType();
-	public static final EventType JingleTransportInfo = new EventType();
+	private Context context;
 
-	private final SessionObject sessionObject;
-	private PacketWriter writer;
-	private Observable observable;
-	
-	public JingleModule(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
+	public JingleModule(Context context) {
+		this.context = context;
 	}
 
 	public void acceptSession(JID jid, String sid, String name, Element description, List<Transport> transports)
@@ -208,7 +411,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 
 		jingle.setAttribute("initiator", jid.toString());
 
-		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		JID initiator = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 		jingle.setAttribute("responder", initiator.toString());
 
 		iq.addChild(jingle);
@@ -227,7 +430,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			}
 		}
 
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
 
 	@Override
@@ -240,17 +443,6 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		return FEATURES;
 	}
 
-	@Override
-	public void setPacketWriter(PacketWriter packetWriter) {
-		writer = packetWriter;
-	}
-
-	@Override
-	public void setObservable(Observable observable) {
-		this.observable = observable;
-	}
-
-	
 	public void initiateSession(JID jid, String sid, String name, Element description, List<Transport> transports)
 			throws JaxmppException {
 		IQ iq = IQ.create();
@@ -263,7 +455,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		jingle.setAttribute("action", "session-initiate");
 		jingle.setAttribute("sid", sid);
 
-		JID initiator = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		JID initiator = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 		jingle.setAttribute("initiator", initiator.toString());
 
 		iq.addChild(jingle);
@@ -280,7 +472,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			content.addChild(transport);
 		}
 
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
 
 	@Override
@@ -289,8 +481,8 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			IQ iq = new IQ(element);
 			processIq(iq);
 		}
-	}	
-	
+	}
+
 	protected void processIq(IQ iq) throws JaxmppException {
 		Element jingle = iq.getChildrenNS("jingle", JINGLE_XMLNS);
 
@@ -304,18 +496,19 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		String sid = jingle.getAttribute("sid");
 
 		String action = jingle.getAttribute("action");
-		
-		JingleSessionEvent event = null;
-		
+
+		final MutableBoolean handled = new MutableBoolean();
 		if ("session-terminate".equals(action)) {
-			event = new JingleSessionTerminateEvent(sessionObject, from, sid);
-			observable.fireEvent(JingleSessionTerminate, event);
+			JingleSessionTerminateEvent event = new JingleSessionTerminateEvent(context.getSessionObject(), from, sid, handled);
+			context.getEventBus().fire(event);
 		} else if ("session-info".equals(action)) {
-			event = new JingleSessionInfoEvent(sessionObject, from, sid, jingle.getChildren());
-			observable.fireEvent(JingleSessionInfo, event);
+			JingleSessionInfoEvent event = new JingleSessionInfoEvent(context.getSessionObject(), from, sid,
+					jingle.getChildren(), handled);
+			context.getEventBus().fire(event);
 		} else if ("transport-info".equals(action)) {
-			event = new JingleTransportInfoEvent(sessionObject, from, sid, contents.get(0));
-			observable.fireEvent(JingleTransportInfo, event);
+			JingleTransportInfoEvent event = new JingleTransportInfoEvent(context.getSessionObject(), from, sid,
+					contents.get(0), handled);
+			context.getEventBus().fire(event);
 		} else {
 			Element content = contents.get(0);
 			List<Element> descriptions = content.getChildren("description");
@@ -330,23 +523,24 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 			}
 
 			if ("session-initiate".equals(action)) {
-				event = new JingleSessionInitiationEvent(sessionObject, from, sid, description, transports);
-				observable.fireEvent(JingleSessionInitiation, event);
+				JingleSessionInitiationEvent event = new JingleSessionInitiationEvent(context.getSessionObject(), from, sid,
+						description, transports, handled);
+				context.getEventBus().fire(event);
 			} else if ("session-accept".equals(action)) {
-				event = new JingleSessionAcceptEvent(sessionObject, from, sid, description, transports);
-				observable.fireEvent(JingleSessionAccept, event);
+				JingleSessionAcceptEvent event = new JingleSessionAcceptEvent(context.getSessionObject(), from, sid,
+						description, transports, handled);
+				context.getEventBus().fire(event);
 			}
 		}
 
-		if (event != null && event.isHandled() && event.isJingleHandled()) {
+		if (handled.isValue()) {
 			// sending result - here should be always ok
 			IQ response = IQ.create();
 			response.setTo(iq.getFrom());
 			response.setId(iq.getId());
-			response.setType(StanzaType.result);			
-			writer.write(response);
-		}
-		else {
+			response.setType(StanzaType.result);
+			context.getWriter().write(response);
+		} else {
 			throw new XMPPException(XMPPException.ErrorCondition.feature_not_implemented);
 		}
 	}
@@ -372,7 +566,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 		Element success = new DefaultElement("success");
 		reason.addChild(success);
 
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
 
 	public void transportInfo(JID recipient, JID initiator, String sid, Element content) throws JaxmppException {
@@ -391,6 +585,7 @@ public class JingleModule implements XmppModule, PacketWriterAware, ObservableAw
 
 		jingle.addChild(content);
 
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
+
 }

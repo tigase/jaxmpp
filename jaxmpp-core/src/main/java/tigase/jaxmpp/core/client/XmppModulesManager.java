@@ -23,13 +23,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ObservableAware;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 
 /**

@@ -22,15 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.observer.Observable;
 
 public abstract class AbstractRoomsManager {
 
-	protected Observable observable;
-
-	protected PacketWriter packetWriter;
+	protected Context context;
 
 	protected final Map<BareJID, Room> rooms = new HashMap<BareJID, Room>();
 
@@ -44,14 +41,6 @@ public abstract class AbstractRoomsManager {
 
 	public Room get(BareJID roomJid) {
 		return this.rooms.get(roomJid);
-	}
-
-	Observable getObservable() {
-		return observable;
-	}
-
-	PacketWriter getPacketWriter() {
-		return packetWriter;
 	}
 
 	public Collection<Room> getRooms() {
@@ -74,12 +63,8 @@ public abstract class AbstractRoomsManager {
 		return this.rooms.remove(room.getRoomJid()) != null;
 	}
 
-	void setObservable(Observable observable) {
-		this.observable = observable;
-	}
-
-	void setPacketWriter(PacketWriter packetWriter) {
-		this.packetWriter = packetWriter;
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	void setSessionObject(SessionObject sessionObject) {

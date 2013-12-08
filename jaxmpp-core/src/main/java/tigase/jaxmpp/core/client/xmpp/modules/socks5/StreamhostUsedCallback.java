@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -29,71 +30,72 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public abstract class StreamhostUsedCallback implements AsyncCallback {
 
-        private static final Logger log = Logger.getLogger("tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback");
-        private List<Streamhost> hosts;
+	private static final Logger log = Logger.getLogger("tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback");
+	private List<Streamhost> hosts;
 
-        public List<Streamhost> getHosts() {
-                return this.hosts;
-        }
+	public List<Streamhost> getHosts() {
+		return this.hosts;
+	}
 
-        public void setHosts(List<Streamhost> hosts) {
-                this.hosts = hosts;
-        }
+	public abstract void onError(Exception ex, String errorText);
 
-        @Override
-        public void onSuccess(Stanza responseStanza) throws JaxmppException {
-                IQ iq = (IQ) responseStanza;
-                Element query = iq.getChildrenNS("query", Socks5BytestreamsModule.XMLNS_BS);
-                JID streamhostUsed = JID.jidInstance(query.getFirstChild().getAttribute("jid"));
-                boolean connected = false;
-                for (Streamhost host : getHosts()) {
+	@Override
+	public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+		onError(null, error.toString());
+	}
 
-                        // is it possible that we try to activate same record twice?
-                        // we get 'connection error' but also 'activation for
-                        // xxx@sss succeeded'
-                        // how it is possible?
+	@Override
+	public void onSuccess(Stanza responseStanza) throws JaxmppException {
+		IQ iq = (IQ) responseStanza;
+		Element query = iq.getChildrenNS("query", Socks5BytestreamsModule.XMLNS_BS);
+		JID streamhostUsed = JID.jidInstance(query.getFirstChild().getAttribute("jid"));
+		boolean connected = false;
+		for (Streamhost host : getHosts()) {
 
-                        if (streamhostUsed.equals(host.getJid())) {
-                                try {
-                                        log.log(Level.FINEST, "activating stream for = " + host.getJid());
-//                                        if (host.getJid().equals(ft.jid.toString())) {
-//                                                ft.outgoingConnected();
-//                                        } else {
-//                                                ft.connectToProxy(host, null);
-//                                        }
-                                        log.log(Level.FINEST, "activation of stream completed");
-                                        connected = onSuccess(host);
-                                        log.log(Level.FINEST, "connected set to = " + connected);
-                                        if (connected) break;
-                                } catch (Exception ex) {
-                                        log.log(Level.FINEST, "exception connecting to proxy", ex);
-                                        // stop();
-                                        onError(ex, null);
-                                }
-                        }
-                }
-                if (!connected) {
-                        log.log(Level.FINEST, "result = " + connected);
-                        onError(null, "connection error");
-                }
-        }
+			// is it possible that we try to activate same record twice?
+			// we get 'connection error' but also 'activation for
+			// xxx@sss succeeded'
+			// how it is possible?
 
-        @Override
-        public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-                onError(null, error.toString());
-        }
+			if (streamhostUsed.equals(host.getJid())) {
+				try {
+					log.log(Level.FINEST, "activating stream for = " + host.getJid());
+					// if (host.getJid().equals(ft.jid.toString())) {
+					// ft.outgoingConnected();
+					// } else {
+					// ft.connectToProxy(host, null);
+					// }
+					log.log(Level.FINEST, "activation of stream completed");
+					connected = onSuccess(host);
+					log.log(Level.FINEST, "connected set to = " + connected);
+					if (connected)
+						break;
+				} catch (Exception ex) {
+					log.log(Level.FINEST, "exception connecting to proxy", ex);
+					// stop();
+					onError(ex, null);
+				}
+			}
+		}
+		if (!connected) {
+			log.log(Level.FINEST, "result = " + connected);
+			onError(null, "connection error");
+		}
+	}
 
-        @Override
-        public void onTimeout() throws JaxmppException {
-                onError(null, "request timed out");
-        }
-        
-        public abstract boolean onSuccess(Streamhost host);
-        
-        public abstract void onError(Exception ex, String errorText);
+	public abstract boolean onSuccess(Streamhost host);
+
+	@Override
+	public void onTimeout() throws JaxmppException {
+		onError(null, "request timed out");
+	}
+
+	public void setHosts(List<Streamhost> hosts) {
+		this.hosts = hosts;
+	}
 }

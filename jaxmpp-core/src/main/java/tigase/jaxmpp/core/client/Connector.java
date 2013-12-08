@@ -314,7 +314,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(StateChangedHandler handler) {
+			protected void dispatch(StateChangedHandler handler) throws JaxmppException {
 				handler.onStateChanged(sessionObject, oldState, newState);
 			}
 
@@ -328,7 +328,7 @@ public interface Connector {
 
 		}
 
-		void onStateChanged(SessionObject sessionObject, State oldState, State newState);
+		void onStateChanged(SessionObject sessionObject, State oldState, State newState) throws JaxmppException;
 	}
 
 	/**

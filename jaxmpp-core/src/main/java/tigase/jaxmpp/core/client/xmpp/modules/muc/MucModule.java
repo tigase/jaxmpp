@@ -23,31 +23,39 @@ import java.util.Date;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
-import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedEvent;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventType;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationEvent.Type;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationDeclinedHandler.InvitationDeclinedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationReceivedHandler.InvitationReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.JoinRequestedHandler.JoinRequestedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MessageErrorHandler.MessageErrorEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MucMessageReceivedHandler.MucMessageReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.NewRoomCreatedHandler.NewRoomCreatedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.OccupantChangedNickHandler.OccupantChangedNickEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.OccupantChangedPresenceHandler.OccupantChangedPresenceEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.OccupantComesHandler.OccupantComesEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.OccupantLeavedHandler.OccupantLeavedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.PresenceErrorHandler.PresenceErrorEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.RoomClosedHandler.RoomClosedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.YouJoinedHandler.YouJoinedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -57,100 +65,14 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class MucModule extends AbstractStanzaModule<Stanza> {
 
-	public static class InvitationDeclinedEvent extends AbstractMessageEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		private JID inviteeJID;
-
-		private String reason;
-
-		private Room room;
-
-		private JID roomJID;
-
-		public InvitationDeclinedEvent(SessionObject sessionObject) {
-			super(InvitationDeclined, sessionObject);
-		}
-
-		public JID getInviteeJID() {
-			return inviteeJID;
-		}
-
-		public String getReason() {
-			return reason;
-		}
-
-		public Room getRoom() {
-			return room;
-		}
-
-		public JID getRoomJID() {
-			return roomJID;
-		}
-
-		public void setInviteeJID(JID inviteeJID) {
-			this.inviteeJID = inviteeJID;
-		}
-
-		public void setReason(String reason) {
-			this.reason = reason;
-		}
-
-		public void setRoom(Room room) {
-			this.room = room;
-		}
-
-		public void setRoomJID(JID roomJID) {
-			this.roomJID = roomJID;
-		}
-	}
-
-	public static class InvitationEvent extends AbstractMessageEvent {
-
-		public static enum Type {
-			direct,
-			mediated;
-		}
-
-		private static final long serialVersionUID = 1L;
+	public final class DirectInvitation extends Invitation {
 
 		private boolean continueFlag;
 
-		private Type invitationType;
-
-		private JID inviterJID;
-
-		private String password;
-
-		private String reaseon;
-
-		private BareJID roomJID;
-
 		private String threadID;
 
-		InvitationEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-		public Type getInvitationType() {
-			return invitationType;
-		}
-
-		public JID getInviterJID() {
-			return inviterJID;
-		}
-
-		public String getPassword() {
-			return password;
-		}
-
-		public String getReaseon() {
-			return reaseon;
-		}
-
-		public BareJID getRoomJID() {
-			return roomJID;
+		DirectInvitation(SessionObject sessionObject) {
+			super(sessionObject);
 		}
 
 		public String getThreadID() {
@@ -161,131 +83,861 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return continueFlag;
 		}
 
-		public void setContinueFlag(boolean b) {
-			this.continueFlag = b;
+		void setContinueFlag(boolean continueFlag) {
+			this.continueFlag = continueFlag;
 		}
 
-		public void setInvitationType(Type invitationType) {
-			this.invitationType = invitationType;
+		void setThreadID(String threadID) {
+			this.threadID = threadID;
 		}
 
-		public void setInviterJID(JID jidInstance) {
-			this.inviterJID = jidInstance;
+	}
+
+	protected abstract class Invitation {
+
+		private JID inviterJID;
+
+		private String password;
+
+		private String reason;
+
+		private BareJID roomJID;
+
+		protected final SessionObject sessionObject;
+
+		protected Invitation(SessionObject sessionObject) {
+			this.sessionObject = sessionObject;
 		}
 
-		public void setPassword(String value) {
-			this.password = value;
+		public JID getInviterJID() {
+			return inviterJID;
 		}
 
-		public void setReaseon(String reaseon) {
-			this.reaseon = reaseon;
+		public String getPassword() {
+			return password;
 		}
 
-		public void setReason(String value) {
-			this.reaseon = value;
+		public String getReason() {
+			return reason;
 		}
 
-		public void setRoomJID(BareJID from) {
-			this.roomJID = from;
+		public BareJID getRoomJID() {
+			return roomJID;
 		}
 
-		public void setThreadID(String attribute) {
-			this.threadID = attribute;
+		public SessionObject getSessionObject() {
+			return sessionObject;
+		}
+
+		void setInviterJID(JID inviterJID) {
+			this.inviterJID = inviterJID;
+		}
+
+		void setMessage(Message message) {
+
+		}
+
+		void setPassword(String password) {
+			this.password = password;
+		}
+
+		void setReason(String reason) {
+			this.reason = reason;
+		}
+
+		void setRoomJID(BareJID roomJID) {
+			this.roomJID = roomJID;
 		}
 	}
 
-	public static class MucEvent extends AbstractMessageEvent {
+	public interface InvitationDeclinedHandler extends EventHandler {
 
-		private static final long serialVersionUID = 1L;
+		public static class InvitationDeclinedEvent extends JaxmppEvent<InvitationDeclinedHandler> {
 
-		private Date date;
+			public static final EventType<InvitationDeclinedHandler> TYPE = new EventType<InvitationDeclinedHandler>();
 
-		private String nickname;
+			private JID inviteeJID;
 
-		private Occupant occupant;
+			private Message message;
 
-		private String oldNickname;
+			private String reason;
 
-		private Presence presence;
+			private Room room;
 
-		private Room room;
+			public InvitationDeclinedEvent(SessionObject sessionObject, Message message, Room room, JID inviteeJID,
+					String reason) {
+				super(TYPE, sessionObject);
+				this.message = message;
+				this.room = room;
+				this.inviteeJID = inviteeJID;
+				this.reason = reason;
+			}
 
-		private XMucUserElement xMucUserElement;
+			@Override
+			protected void dispatch(InvitationDeclinedHandler handler) {
+				handler.onInvitationDeclined(sessionObject, message, room, inviteeJID, reason);
+			}
 
-		public MucEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
+			public JID getInviteeJID() {
+				return inviteeJID;
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getReason() {
+				return reason;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setInviteeJID(JID inviteeJID) {
+				this.inviteeJID = inviteeJID;
+			}
+
+			public void setMessage(Message message) {
+				this.message = message;
+			}
+
+			public void setReason(String reason) {
+				this.reason = reason;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public Date getDate() {
-			return date;
+		void onInvitationDeclined(SessionObject sessionObject, Message message, Room room, JID inviteeJID, String reason);
+	}
+
+	public interface InvitationReceivedHandler extends EventHandler {
+
+		public static class InvitationReceivedEvent extends JaxmppEvent<InvitationReceivedHandler> {
+
+			public static final EventType<InvitationReceivedHandler> TYPE = new EventType<InvitationReceivedHandler>();
+
+			private Invitation invitation;
+
+			public InvitationReceivedEvent(SessionObject sessionObject, Invitation invitation) {
+				super(TYPE, sessionObject);
+				this.invitation = invitation;
+			}
+
+			@Override
+			protected void dispatch(InvitationReceivedHandler handler) {
+				handler.onInvitationReceived(sessionObject, invitation, invitation.getInviterJID(), invitation.getRoomJID());
+			}
+
+			public Invitation getInvitation() {
+				return invitation;
+			}
+
+			public void setInvitation(Invitation invitation) {
+				this.invitation = invitation;
+			}
+
 		}
 
-		public String getNickname() {
-			return nickname;
+		void onInvitationReceived(SessionObject sessionObject, Invitation invitation, JID inviterJID, BareJID roomJID);
+	}
+
+	public interface JoinRequestedHandler extends EventHandler {
+
+		public static class JoinRequestedEvent extends JaxmppEvent<JoinRequestedHandler> {
+
+			public static final EventType<JoinRequestedHandler> TYPE = new EventType<JoinRequestedHandler>();
+			private String nickname;
+			private Room room;
+			private Presence sentPresence;
+
+			public JoinRequestedEvent(SessionObject sessionObject, Presence presence, String nickname, Room room) {
+				super(TYPE, sessionObject);
+				this.sentPresence = presence;
+				this.nickname = nickname;
+				this.room = room;
+			}
+
+			@Override
+			protected void dispatch(JoinRequestedHandler handler) {
+				handler.onJoinRequested(sessionObject, room, nickname, sentPresence);
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public Presence getSentPresence() {
+				return sentPresence;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
+			public void setSentPresence(Presence sentPresence) {
+				this.sentPresence = sentPresence;
+			}
+
 		}
 
-		public Occupant getOccupant() {
-			return occupant;
+		void onJoinRequested(SessionObject sessionObject, Room room, String nickname, Presence sentPresence);
+	}
+
+	public final class MediatedInvitation extends Invitation {
+
+		MediatedInvitation(SessionObject sessionObject) {
+			super(sessionObject);
 		}
 
-		public String getOldNickname() {
-			return oldNickname;
+	}
+
+	public interface MessageErrorHandler extends EventHandler {
+
+		public static class MessageErrorEvent extends JaxmppEvent<MessageErrorHandler> {
+
+			public static final EventType<MessageErrorHandler> TYPE = new EventType<MessageErrorHandler>();
+
+			private Message message;
+
+			private String nickname;
+
+			private Room room;
+
+			private Date timestamp;
+
+			public MessageErrorEvent(SessionObject sessionObject, Message message, Room room, String nickname, Date delayTime) {
+				super(TYPE, sessionObject);
+				this.room = room;
+				this.message = message;
+				this.nickname = nickname;
+				this.timestamp = delayTime;
+			}
+
+			@Override
+			protected void dispatch(MessageErrorHandler handler) {
+				handler.onMessageError(sessionObject, message, room, nickname, timestamp);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public Date getTimestamp() {
+				return timestamp;
+			}
+
+			public void setMessage(Message message) {
+				this.message = message;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
+			public void setTimestamp(Date timestamp) {
+				this.timestamp = timestamp;
+			}
+
 		}
 
-		public Presence getPresence() {
-			return presence;
+		void onMessageError(SessionObject sessionObject, Message message, Room room, String nickname, Date timestamp);
+	}
+
+	public interface MucMessageReceivedHandler extends EventHandler {
+
+		public static class MucMessageReceivedEvent extends JaxmppEvent<MucMessageReceivedHandler> {
+
+			public static final EventType<MucMessageReceivedHandler> TYPE = new EventType<MucMessageReceivedHandler>();
+
+			private Message message;
+
+			private String nickname;
+
+			private Room room;
+
+			private Date timestamp;
+
+			public MucMessageReceivedEvent(SessionObject sessionObject, Message message, Room room, String nickname,
+					Date delayTime) {
+				super(TYPE, sessionObject);
+				this.message = message;
+				this.room = room;
+				this.nickname = nickname;
+				this.timestamp = delayTime;
+			}
+
+			@Override
+			protected void dispatch(MucMessageReceivedHandler handler) {
+				handler.onMucMessageReceived(sessionObject, message, room, nickname, timestamp);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public Date getTimestamp() {
+				return timestamp;
+			}
+
+			public void setMessage(Message message) {
+				this.message = message;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
+			public void setTimestamp(Date timestamp) {
+				this.timestamp = timestamp;
+			}
+
 		}
 
-		public Room getRoom() {
-			return room;
+		void onMucMessageReceived(SessionObject sessionObject, Message message, Room room, String nickname, Date timestamp);
+	}
+
+	public interface NewRoomCreatedHandler extends EventHandler {
+
+		public static class NewRoomCreatedEvent extends JaxmppEvent<NewRoomCreatedHandler> {
+
+			public static final EventType<NewRoomCreatedHandler> TYPE = new EventType<NewRoomCreatedHandler>();
+
+			private Presence presence;
+
+			private Room room;
+
+			public NewRoomCreatedEvent(SessionObject sessionObject, Room room, Presence element) {
+				super(TYPE, sessionObject);
+				this.room = room;
+				this.presence = element;
+			}
+
+			@Override
+			protected void dispatch(NewRoomCreatedHandler handler) {
+				handler.onNewRoomCreated(sessionObject, room);
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public XMucUserElement getxMucUserElement() {
-			return xMucUserElement;
+		void onNewRoomCreated(SessionObject sessionObject, Room room);
+	}
+
+	public interface OccupantChangedNickHandler extends EventHandler {
+
+		public static class OccupantChangedNickEvent extends JaxmppEvent<OccupantChangedNickHandler> {
+
+			public static final EventType<OccupantChangedNickHandler> TYPE = new EventType<OccupantChangedNickHandler>();
+
+			private String nickname;
+
+			private Occupant occupant;
+
+			private String oldNickname;
+
+			private Presence presence;
+
+			private Room room;
+
+			public OccupantChangedNickEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
+					String oldNickname, String nickname) {
+				super(TYPE, sessionObject);
+				this.presence = element;
+				this.room = room;
+				this.occupant = occupant;
+				this.oldNickname = oldNickname;
+				this.nickname = nickname;
+
+			}
+
+			@Override
+			protected void dispatch(OccupantChangedNickHandler handler) {
+				handler.onOccupantChangedNick(sessionObject, room, occupant, oldNickname, nickname);
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Occupant getOccupant() {
+				return occupant;
+			}
+
+			public String getOldNickname() {
+				return oldNickname;
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setOccupant(Occupant occupant) {
+				this.occupant = occupant;
+			}
+
+			public void setOldNickname(String oldNickname) {
+				this.oldNickname = oldNickname;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public void setDate(Date date) {
-			this.date = date;
+		void onOccupantChangedNick(SessionObject sessionObject, Room room, Occupant occupant, String oldNickname,
+				String newNickname);
+	}
+
+	public interface OccupantChangedPresenceHandler extends EventHandler {
+
+		public static class OccupantChangedPresenceEvent extends JaxmppEvent<OccupantChangedPresenceHandler> {
+
+			public static final EventType<OccupantChangedPresenceHandler> TYPE = new EventType<OccupantChangedPresenceHandler>();
+
+			private String nickname;
+
+			private Occupant occupant;
+
+			private Presence presence;
+
+			private Room room;
+
+			private XMucUserElement xUserElement;
+
+			public OccupantChangedPresenceEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
+					String nickname, XMucUserElement xUser) {
+				super(TYPE, sessionObject);
+				this.presence = element;
+				this.room = room;
+				this.occupant = occupant;
+				this.nickname = nickname;
+				this.xUserElement = xUser;
+			}
+
+			@Override
+			protected void dispatch(OccupantChangedPresenceHandler handler) {
+				handler.onOccupantChangedPresence(sessionObject, room, occupant, presence);
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Occupant getOccupant() {
+				return occupant;
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public XMucUserElement getxUserElement() {
+				return xUserElement;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setOccupant(Occupant occupant) {
+				this.occupant = occupant;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
+			public void setxUserElement(XMucUserElement xUserElement) {
+				this.xUserElement = xUserElement;
+			}
+
 		}
 
-		public void setNickname(String nickname) {
-			this.nickname = nickname;
+		void onOccupantChangedPresence(SessionObject sessionObject, Room room, Occupant occupant, Presence newPresence);
+	}
+
+	public interface OccupantComesHandler extends EventHandler {
+
+		public static class OccupantComesEvent extends JaxmppEvent<OccupantComesHandler> {
+
+			public static final EventType<OccupantComesHandler> TYPE = new EventType<OccupantComesHandler>();
+
+			private String nickname;
+
+			private Occupant occupant;
+
+			private Presence presence;
+
+			private Room room;
+
+			private XMucUserElement xUserElement;
+
+			public OccupantComesEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
+					String nickname, XMucUserElement xUser) {
+				super(TYPE, sessionObject);
+				this.presence = element;
+				this.room = room;
+				this.occupant = occupant;
+				this.nickname = nickname;
+				this.xUserElement = xUser;
+			}
+
+			@Override
+			protected void dispatch(OccupantComesHandler handler) {
+				handler.onOccupantComes(sessionObject, room, occupant, nickname);
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Occupant getOccupant() {
+				return occupant;
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public XMucUserElement getxUserElement() {
+				return xUserElement;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setOccupant(Occupant occupant) {
+				this.occupant = occupant;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
+			public void setxUserElement(XMucUserElement xUserElement) {
+				this.xUserElement = xUserElement;
+			}
+
 		}
 
-		public void setOccupant(Occupant occupant) {
-			this.occupant = occupant;
+		void onOccupantComes(SessionObject sessionObject, Room room, Occupant occupant, String nickname);
+	}
+
+	public interface OccupantLeavedHandler extends EventHandler {
+
+		public static class OccupantLeavedEvent extends JaxmppEvent<OccupantLeavedHandler> {
+
+			public static final EventType<OccupantLeavedHandler> TYPE = new EventType<OccupantLeavedHandler>();
+
+			private String nickname;
+
+			private Occupant occupant;
+
+			private Presence presence;
+
+			private Room room;
+
+			private XMucUserElement xUserElement;
+
+			public OccupantLeavedEvent(SessionObject sessionObject, Occupant occupant, Room room) throws XMLException {
+				super(TYPE, sessionObject);
+				this.occupant = occupant;
+				this.room = room;
+				this.nickname = occupant.getNickname();
+			}
+
+			public OccupantLeavedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
+					String nickname, XMucUserElement xUser) {
+				super(TYPE, sessionObject);
+				this.occupant = occupant;
+				this.room = room;
+				this.presence = element;
+				this.nickname = nickname;
+				this.xUserElement = xUser;
+			}
+
+			@Override
+			protected void dispatch(OccupantLeavedHandler handler) {
+				handler.onOccupantLeaved(sessionObject, room, occupant);
+			}
+
+			public Occupant getOccupant() {
+				return occupant;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setOccupant(Occupant occupant) {
+				this.occupant = occupant;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public void setOldNickname(String nickname2) {
-			this.oldNickname = nickname2;
+		void onOccupantLeaved(SessionObject sessionObject, Room room, Occupant occupant);
+	}
+
+	public interface PresenceErrorHandler extends EventHandler {
+
+		public static class PresenceErrorEvent extends JaxmppEvent<PresenceErrorHandler> {
+
+			public static final EventType<PresenceErrorHandler> TYPE = new EventType<PresenceErrorHandler>();
+
+			private String nickname;
+
+			private Presence presence;
+
+			private Room room;
+
+			public PresenceErrorEvent(SessionObject sessionObject, Presence element, Room room, String nickname) {
+				super(TYPE, sessionObject);
+				this.presence = element;
+				this.room = room;
+				this.nickname = nickname;
+			}
+
+			@Override
+			protected void dispatch(PresenceErrorHandler handler) {
+				handler.onPresenceError(sessionObject);
+			}
+
+			public String getNickname() {
+				return nickname;
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setNickname(String nickname) {
+				this.nickname = nickname;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public void setPresence(Presence presence) {
-			this.presence = presence;
+		void onPresenceError(SessionObject sessionObject);
+	}
+
+	/**
+	 * Local instance of Chat Room was closed because of, for example, presence
+	 * error.
+	 */
+	public interface RoomClosedHandler extends EventHandler {
+
+		public static class RoomClosedEvent extends JaxmppEvent<RoomClosedHandler> {
+
+			public static final EventType<RoomClosedHandler> TYPE = new EventType<RoomClosedHandler>();
+
+			private Presence presence;
+
+			private Room room;
+
+			public RoomClosedEvent(SessionObject sessionObject, Presence element, Room room) {
+				super(TYPE, sessionObject);
+				this.room = room;
+				this.presence = element;
+			}
+
+			@Override
+			protected void dispatch(RoomClosedHandler handler) {
+				handler.onRoomClosed(sessionObject, presence, room);
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public void setRoom(Room room) {
-			this.room = room;
+		void onRoomClosed(SessionObject sessionObject, Presence presence, Room room);
+	}
+
+	public interface StateChangeHandler extends EventHandler {
+
+		public static class StateChangeEvent extends JaxmppEvent<StateChangeHandler> {
+
+			public static final EventType<StateChangeHandler> TYPE = new EventType<StateChangeHandler>();
+
+			private State newState;
+
+			private State oldState;
+
+			private Room room;
+
+			public StateChangeEvent(SessionObject sessionObject, Room room, State oldState, State newState) {
+				super(TYPE, sessionObject);
+				this.room = room;
+				this.oldState = oldState;
+				this.newState = newState;
+			}
+
+			@Override
+			protected void dispatch(StateChangeHandler handler) {
+				handler.onStateChange(sessionObject, room, oldState, newState);
+			}
+
 		}
 
-		public void setxMucUserElement(XMucUserElement xMucUserElement) {
-			this.xMucUserElement = xMucUserElement;
+		void onStateChange(SessionObject sessionObject, Room room, State oldState, State newState);
+	}
+
+	public interface YouJoinedHandler extends EventHandler {
+
+		public static class YouJoinedEvent extends JaxmppEvent<YouJoinedHandler> {
+
+			public static final EventType<YouJoinedHandler> TYPE = new EventType<YouJoinedHandler>();
+
+			private String nickname;
+
+			private Occupant occupant;
+
+			private Presence presence;
+
+			private Room room;
+
+			private XMucUserElement xUserElement;
+
+			public YouJoinedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant, String nickname,
+					XMucUserElement xUser) {
+				super(TYPE, sessionObject);
+				this.room = room;
+				this.presence = element;
+				this.occupant = occupant;
+				this.nickname = nickname;
+				this.xUserElement = xUser;
+			}
+
+			@Override
+			protected void dispatch(YouJoinedHandler handler) {
+				handler.onYouJoined(sessionObject, room, nickname);
+			}
+
+			public Room getRoom() {
+				return room;
+			}
+
+			public void setRoom(Room room) {
+				this.room = room;
+			}
+
 		}
 
-		public void setXMucUserElement(XMucUserElement xUser) {
-			this.xMucUserElement = xUser;
-		}
-
+		void onYouJoined(SessionObject sessionObject, Room room, String asNickname);
 	}
 
 	private final static Criteria DIRECT_INVITATION_CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("x", "jabber:x:conference"));
-
-	public static final EventType InvitationDeclined = new EventType();
-
-	public static final EventType InvitationReceived = new EventType();
-
-	public static final EventType JoinRequested = new EventType();
 
 	private final static Criteria MEDIATED_INVITATION_CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("x", "http://jabber.org/protocol/muc#user")).add(ElementCriteria.name("invite"));
@@ -293,33 +945,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	private final static Criteria MEDIATED_INVITATION_DECLINED_CRIT = ElementCriteria.name("message").add(
 			ElementCriteria.name("x", "http://jabber.org/protocol/muc#user")).add(ElementCriteria.name("decline"));
 
-	public static final EventType MessageError = new EventType();
-
-	public static final EventType MucMessageReceived = new EventType();
-
-	public static final EventType NewRoomCreated = new EventType();
-
-	public static final EventType OccupantChangedNick = new EventType();
-
-	public static final EventType OccupantChangedPresence = new EventType();
-
-	public static final EventType OccupantComes = new EventType();
-
-	public static final EventType OccupantLeaved = new EventType();
-
-	public static final EventType PresenceError = new EventType();
-
-	/**
-	 * Local instance of Chat Room was closed because of, for example, presence
-	 * error.
-	 */
-	public static final EventType RoomClosed = new EventType();
-
-	public static final EventType StateChange = new EventType();
-
 	public static final Integer STATUS_NEW_NICKNAME = 303;
-
-	public static final EventType YouJoined = new EventType();
 
 	private final Criteria crit;
 
@@ -327,36 +953,32 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private AbstractRoomsManager roomsManager;
 
-	public MucModule(Observable parentObservable, final SessionObject sessionObject, PacketWriter packetWriter) {
-		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
-		parentObservable.addListener(Connector.StateChanged, new Listener<ConnectorEvent>() {
+	public MucModule(Context context) {
+		super(context);
+		context.getEventBus().addHandler(Connector.StateChangedHandler.StateChangedEvent.TYPE,
+				new Connector.StateChangedHandler() {
 
-			@Override
-			public void handleEvent(ConnectorEvent be) throws JaxmppException {
-				Connector.State s = sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY);
-				if (s == null || s == Connector.State.disconnected || s == Connector.State.disconnecting) {
-					onNetworkDisconnected();
-				}
-			}
-		});
+					@Override
+					public void onStateChanged(SessionObject sessionObject, tigase.jaxmpp.core.client.Connector.State oldState,
+							tigase.jaxmpp.core.client.Connector.State newState) throws JaxmppException {
+						onConnectorStateChanged(sessionObject, oldState, newState);
+					}
+				});
 
 		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
 		this.roomsManager = cm != null ? cm : new DefaultRoomsManager();
-		this.roomsManager.setObservable(this.observable);
-		this.roomsManager.setPacketWriter(packetWriter);
-		this.roomsManager.setSessionObject(sessionObject);
+		this.roomsManager.setContext(this.context);
 		this.roomsManager.initialize();
 
-		if (this.sessionObject instanceof AbstractSessionObject) {
-			((AbstractSessionObject) this.sessionObject).addListener(AbstractSessionObject.Cleared,
-					new Listener<ClearedEvent>() {
+		this.context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.TYPE,
+				new AbstractSessionObject.ClearedHandler() {
 
-						@Override
-						public void handleEvent(ClearedEvent be) throws JaxmppException {
-							onSessionObjectCleared(be.getSessionObject(), be.getScopes());
-						}
-					});
-		}
+					@Override
+					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+						onSessionObjectCleared(sessionObject, scopes);
+					}
+				});
+
 		this.crit = new Criteria() {
 
 			@Override
@@ -372,6 +994,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		dtf = new DateTimeFormat();
 
 	}
+
+	// XXX What is it???
+	// public void enable(Room room) throws JaxmppException {
+	// YouJoinedEvent event = new YouJoinedEvent(context.getSessionObject(),
+	// room);
+	// fireEvent(event);
+	// }
 
 	protected boolean checkElement(Element element) throws XMLException {
 		final String from = element.getAttribute("from");
@@ -396,8 +1025,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return false;
 	}
 
-	public void declineInvitation(InvitationEvent invitation, String reasonMsg) throws JaxmppException {
-		if (invitation.getInvitationType() == Type.mediated) {
+	public void declineInvitation(Invitation invitation, String reasonMsg) throws JaxmppException {
+		if (invitation instanceof MediatedInvitation) {
 			Message message = Message.create();
 			message.setTo(JID.jidInstance(invitation.getRoomJID()));
 
@@ -410,41 +1039,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 				Element reason = new DefaultElement("reason", reasonMsg, null);
 				decline.addChild(reason);
 			}
-			writer.write(message);
+			write(message);
 		}
 
-	}
-
-	public void enable(Room room) throws JaxmppException {
-		fireYouJoinedEvent(null, null, room, null);
-	}
-
-	private void fireJoinRequestedEvent(Presence element, String nickname, Room room) throws JaxmppException {
-		MucEvent event = new MucEvent(JoinRequested, sessionObject);
-		fireMucEvent(event, element, nickname, room, null, null);
-	}
-
-	private void fireMucEvent(MucEvent event, Presence element, String nickname, Room room, Occupant occupant,
-			XMucUserElement xUser) throws JaxmppException {
-		if (event == null)
-			return;
-		event.setNickname(nickname);
-		event.setPresence(element);
-		event.setRoom(room);
-		event.setOccupant(occupant);
-		event.setXMucUserElement(xUser);
-		observable.fireEvent(event);
-	}
-
-	private void fireNewRoomCreatedEvent(Presence element, String nickname, Room room, Occupant occupant)
-			throws JaxmppException {
-		MucEvent event = new MucEvent(NewRoomCreated, sessionObject);
-		fireMucEvent(event, element, nickname, room, occupant, null);
-	}
-
-	private void fireYouJoinedEvent(Presence element, String nickname, Room room, Occupant occupant) throws JaxmppException {
-		MucEvent event = new MucEvent(YouJoined, sessionObject);
-		fireMucEvent(event, element, nickname, room, occupant, null);
 	}
 
 	@Override
@@ -482,7 +1079,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			invite.addChild(new DefaultElement("reason", reason, null));
 		}
 
-		writer.write(message);
+		write(message);
 	}
 
 	public void inviteDirectly(Room room, JID inviteeJID, String reason, String threadId) throws JaxmppException {
@@ -503,10 +1100,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			x.setAttribute("continue", "true");
 		}
 
-		writer.write(message);
+		write(message);
 	}
 
-	public Room join(final InvitationEvent invitation, final String nickname) throws XMLException, JaxmppException {
+	public Room join(final Invitation invitation, final String nickname) throws XMLException, JaxmppException {
 		return join(invitation.getRoomJID().getLocalpart(), invitation.getRoomJID().getDomain(), nickname,
 				invitation.getPassword());
 	}
@@ -526,7 +1123,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		Presence presence = room.rejoin();
 
-		fireJoinRequestedEvent(presence, nickname, room);
+		JoinRequestedEvent event = new JoinRequestedEvent(context.getSessionObject(), presence, nickname, room);
+		fireEvent(event);
+
 		return room;
 	}
 
@@ -536,14 +1135,21 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			Presence presence = Presence.create();
 			presence.setType(StanzaType.unavailable);
 			presence.setTo(JID.jidInstance(room.getRoomJid(), room.getNickname()));
-			writer.write(presence);
+			write(presence);
 		}
 
 		this.roomsManager.remove(room);
 
-		MucEvent event = new MucEvent(RoomClosed, sessionObject);
-		event.setRoom(room);
-		observable.fireEvent(event);
+		RoomClosedEvent event = new RoomClosedEvent(context.getSessionObject(), null, room);
+		fireEvent(event);
+	}
+
+	protected void onConnectorStateChanged(SessionObject sessionObject, Connector.State oldState, Connector.State newState)
+			throws XMLException, JaxmppException {
+		if (newState == null || newState == Connector.State.disconnected || newState == Connector.State.disconnecting) {
+			onNetworkDisconnected();
+		}
+
 	}
 
 	protected void onNetworkDisconnected() throws XMLException, JaxmppException {
@@ -551,15 +1157,14 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	protected void onSessionObjectCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
 		if (scopes != null && scopes.contains(Scope.session)) {
-			for (Room r : roomsManager.getRooms()) {
-				r.setState(State.not_joined);
+			for (Room room : roomsManager.getRooms()) {
+				room.setState(State.not_joined);
 
 				ArrayList<Occupant> ocs = new ArrayList<Occupant>();
-				ocs.addAll(r.getPresences().values());
+				ocs.addAll(room.getPresences().values());
 				for (Occupant occupant : ocs) {
-					MucEvent event = new MucEvent(OccupantLeaved, sessionObject);
-					r.remove(occupant);
-					fireMucEvent(event, null, occupant.getNickname(), r, occupant, null);
+					OccupantLeavedEvent event = new OccupantLeavedEvent(context.getSessionObject(), occupant, room);
+					room.remove(occupant);
 				}
 			}
 		}
@@ -583,21 +1188,19 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	protected void processDirectInvitationMessage(Message message) throws JaxmppException {
 		Element x = message.getChildrenNS("x", "jabber:x:conference");
-
-		InvitationEvent event = new InvitationEvent(InvitationReceived, sessionObject);
-		event.setInvitationType(Type.direct);
-		event.setMessage(message);
-
-		event.setInviterJID(message.getFrom());
-		event.setRoomJID(BareJID.bareJIDInstance(x.getAttribute("jid")));
-		event.setPassword(x.getAttribute("password"));
-		event.setReason(x.getAttribute("reason"));
-		event.setThreadID(x.getAttribute("thread"));
-
 		String cont = x.getAttribute("continue");
-		event.setContinueFlag(BooleanField.parse(cont));
 
-		observable.fireEvent(event);
+		DirectInvitation invitation = new DirectInvitation(context.getSessionObject());
+		invitation.setMessage(message);
+		invitation.setInviterJID(message.getFrom());
+		invitation.setRoomJID(BareJID.bareJIDInstance(x.getAttribute("jid")));
+		invitation.setPassword(x.getAttribute("password"));
+		invitation.setReason(x.getAttribute("reason"));
+		invitation.setThreadID(x.getAttribute("thread"));
+		invitation.setContinueFlag(BooleanField.parse(cont));
+
+		InvitationReceivedEvent event = new InvitationReceivedEvent(context.getSessionObject(), invitation);
+		fireEvent(event);
 	}
 
 	protected void processInvitationDeclinedMessage(Message message) throws JaxmppException {
@@ -610,16 +1213,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		final Element decline = getFirstChild(x, "decline");
 		final Element reason = getFirstChild(decline, "reason");
 
-		InvitationDeclinedEvent event = new InvitationDeclinedEvent(sessionObject);
-		event.setMessage(message);
-		event.setRoomJID(message.getFrom());
-		event.setRoom(room);
-		if (decline.getAttribute("from") != null)
-			event.setInviteeJID(JID.jidInstance(decline.getAttribute("from")));
-		if (reason != null)
-			event.setReason(reason.getValue());
-
-		observable.fireEvent(event);
+		InvitationDeclinedEvent event = new InvitationDeclinedEvent(context.getSessionObject(), message, room,
+				decline.getAttribute("from") == null ? null : JID.jidInstance(decline.getAttribute("from")),
+				reason == null ? null : reason.getValue());
+		fireEvent(event);
 	}
 
 	protected void processMediatedInvitationMessage(Message message) throws JaxmppException {
@@ -629,28 +1226,28 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		Element password = getFirstChild(x, "password");
 		String inviter = invite.getAttribute("from");
 
-		InvitationEvent event = new InvitationEvent(InvitationReceived, sessionObject);
-		event.setInvitationType(Type.mediated);
-		event.setMessage(message);
-		event.setRoomJID(message.getFrom().getBareJid());
+		MediatedInvitation invitation = new MediatedInvitation(context.getSessionObject());
+		invitation.setMessage(message);
+		invitation.setRoomJID(message.getFrom().getBareJid());
 
 		if (inviter != null) {
-			event.setInviterJID(JID.jidInstance(inviter));
+			invitation.setInviterJID(JID.jidInstance(inviter));
 		}
 
 		if (reason != null) {
-			event.setReason(reason.getValue());
+			invitation.setReason(reason.getValue());
 		}
 
 		if (password != null) {
-			event.setPassword(password.getValue());
+			invitation.setPassword(password.getValue());
 		}
 
-		observable.fireEvent(event);
+		InvitationReceivedEvent event = new InvitationReceivedEvent(context.getSessionObject(), invitation);
+		fireEvent(event);
 	}
 
-	protected void processMessage(Message element) throws JaxmppException {
-		final JID from = element.getFrom();
+	protected void processMessage(Message message) throws JaxmppException {
+		final JID from = message.getFrom();
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
 
@@ -659,30 +1256,28 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			return;
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
-		MucEvent event;
-		if (element.getType() == StanzaType.error) {
-			event = new MucEvent(MessageError, sessionObject);
-		} else {
-			if (room.getState() != State.joined) {
-				room.setState(State.joined);
-			}
-			event = new MucEvent(MucMessageReceived, sessionObject);
-		}
-
-		final Element delay = element.getChildrenNS("delay", "urn:xmpp:delay");
+		final Element delay = message.getChildrenNS("delay", "urn:xmpp:delay");
 		Date delayTime;
 		if (delay != null && delay.getAttribute("stamp") != null) {
 			delayTime = dtf.parse(delay.getAttribute("stamp"));
 		} else {
 			delayTime = null;
 		}
+		delayTime = delayTime == null ? new Date() : delayTime;
 
-		event.setMessage(element);
-		event.setRoom(room);
-		event.setNickname(nickname);
-		event.setDate(delayTime == null ? new Date() : delayTime);
-		room.setLastMessageDate(event.date);
-		observable.fireEvent(event);
+		if (message.getType() == StanzaType.error) {
+			MessageErrorEvent event = new MessageErrorEvent(context.getSessionObject(), message, room, nickname, delayTime);
+			fireEvent(event);
+		} else {
+			if (room.getState() != State.joined) {
+				room.setState(State.joined);
+			}
+			MucMessageReceivedEvent event = new MucMessageReceivedEvent(context.getSessionObject(), message, room, nickname,
+					delayTime);
+			fireEvent(event);
+		}
+
+		room.setLastMessageDate(delayTime);
 	}
 
 	protected void processPresence(Presence element) throws JaxmppException {
@@ -696,17 +1291,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (element.getType() == StanzaType.error && room.getState() != State.joined && nickname == null) {
 			room.setState(State.not_joined);
 			// this.rooms.remove(room.getRoomJid());
-			MucEvent event = new MucEvent(RoomClosed, sessionObject);
-			event.setNickname(nickname);
-			event.setPresence(element);
-			event.setRoom(room);
-			observable.fireEvent(event);
+			fireEvent(new RoomClosedEvent(context.getSessionObject(), element, room));
 		} else if (element.getType() == StanzaType.error) {
-			MucEvent event = new MucEvent(PresenceError, sessionObject);
-			event.setNickname(nickname);
-			event.setPresence(element);
-			event.setRoom(room);
-			observable.fireEvent(event);
+			fireEvent(new PresenceErrorEvent(context.getSessionObject(), element, room, nickname));
 			return;
 		}
 
@@ -733,44 +1320,40 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		}
 		Presence presNew = element;
 
-		MucEvent event;
 		if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable && xUser != null
 				&& xUser.getStatuses().contains(STATUS_NEW_NICKNAME)) {
-			event = null;
 			String newNickName = xUser.getNick();
 			room.remove(occupant);
 			room.getTempOccupants().put(newNickName, occupant);
 			log.finer(element.getFrom() + " wants to change nickname to " + newNickName);
 		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
 			room.setState(State.joined);
-			event = new MucEvent(YouJoined, sessionObject);
+			fireEvent(new YouJoinedEvent(context.getSessionObject(), element, room, occupant, nickname, xUser));
 			occupant.setPresence(element);
 			room.add(occupant);
 		} else if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
 			Occupant tmp = room.getTempOccupants().remove(nickname);
 			if (tmp != null) {
 				log.finer(element.getFrom() + " successfully changed nickname ");
-				event = new MucEvent(OccupantChangedNick, sessionObject);
-				event.setOldNickname(tmp.getNickname());
+				fireEvent(new OccupantChangedNickEvent(context.getSessionObject(), element, room, occupant, tmp.getNickname(),
+						nickname));
 				occupant = tmp;
 			} else {
-				event = new MucEvent(OccupantComes, sessionObject);
+				fireEvent(new OccupantComesEvent(context.getSessionObject(), element, room, occupant, nickname, xUser));
 			}
 			occupant.setPresence(element);
 			room.add(occupant);
 		} else if ((presOld != null && presOld.getType() == null) && presNew.getType() == StanzaType.unavailable) {
 			occupant.setPresence(element);
 			room.remove(occupant);
-			event = new MucEvent(OccupantLeaved, sessionObject);
+			fireEvent(new OccupantLeavedEvent(context.getSessionObject(), element, room, occupant, nickname, xUser));
 		} else {
 			occupant.setPresence(element);
-			event = new MucEvent(OccupantChangedPresence, sessionObject);
+			fireEvent(new OccupantChangedPresenceEvent(context.getSessionObject(), element, room, occupant, nickname, xUser));
 		}
 
-		fireMucEvent(event, element, nickname, room, occupant, xUser);
-
 		if (xUser != null && xUser.getStatuses().contains(201)) {
-			fireNewRoomCreatedEvent(element, nickname, room, occupant);
+			fireEvent(new NewRoomCreatedEvent(context.getSessionObject(), room, element));
 		}
 
 	}

@@ -26,41 +26,49 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionEndpoint;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 
-	public static final String CID_ATTR = "cid";
-	public static final String HOST_ATTR = "host";
-	public static final String PORT_ATTR = "port";
-	public static final String JID_ATTR = "jid";
-	public static final String PRIORITY_ATTR = "priority";
-	public static final String TYPE_ATTR = "type";
-
 	public static enum Type {
 
-		direct,
 		assisted,
-		tunnel,
-		proxy
+		direct,
+		proxy,
+		tunnel
 	}
-//	private String cid;
-//	private String host;
-//	private Integer port;
-//	private JID jid;
-//	private Integer priority;
-//	private Type type;
+
+	// private String cid;
+	// private String host;
+	// private Integer port;
+	// private JID jid;
+	// private Integer priority;
+	// private Type type;
+	public static final String CID_ATTR = "cid";
+	public static final String HOST_ATTR = "host";
+	public static final String JID_ATTR = "jid";
+	public static final String PORT_ATTR = "port";
+	public static final String PRIORITY_ATTR = "priority";
+
+	public static final String TYPE_ATTR = "type";
+
+	public Candidate(Element elem) throws JaxmppException {
+		super(elem);
+		if (!"candidate".equals(elem.getName())) {
+			throw new JaxmppException("Invalid jingle transport candidate element");
+		}
+	}
 
 	public Candidate(String cid, String host, Integer port, JID jid, Integer priority, Type type) throws JaxmppException {
 		super(new DefaultElement("candidate"));
-//		this.cid = cid;
-//		this.host = host;
-//		this.port = port;
-//		this.priority = priority;
-//		this.jid = jid;
-//		this.type = type;
-		
+		// this.cid = cid;
+		// this.host = host;
+		// this.port = port;
+		// this.priority = priority;
+		// this.jid = jid;
+		// this.type = type;
+
 		setAttribute(CID_ATTR, cid);
 		setAttribute(HOST_ATTR, host);
 		setAttribute(PORT_ATTR, String.valueOf(port));
@@ -68,55 +76,52 @@ public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 		setAttribute(PRIORITY_ATTR, String.valueOf(priority));
 		setAttribute(TYPE_ATTR, type.name());
 	}
-	
-	public Candidate(Element elem) throws JaxmppException {
-		super(elem);
-		if (!"candidate".equals(elem.getName())) {
-			throw new JaxmppException("Invalid jingle transport candidate element");
-		}
-	}
-	
+
 	public String getCid() throws XMLException {
 		return getAttribute(CID_ATTR);
 	}
-	
+
 	@Override
 	public String getHost() throws XMLException {
 		return getAttribute(HOST_ATTR);
 	}
-	
-	@Override
-	public Integer getPort() throws XMLException {
-		return Integer.parseInt(getAttribute(PORT_ATTR));
-	}
-	
+
 	@Override
 	public JID getJid() throws XMLException {
 		return JID.jidInstance(getAttribute(JID_ATTR));
 	}
-	
+
+	@Override
+	public Integer getPort() throws XMLException {
+		return Integer.parseInt(getAttribute(PORT_ATTR));
+	}
+
 	public Integer getPriority() throws XMLException {
 		return Integer.parseInt(getAttribute(PRIORITY_ATTR));
 	}
-	
+
 	public Type getType() throws XMLException {
 		return Type.valueOf(getAttribute(TYPE_ATTR));
 	}
 
-//	public static Candidate fromElement(Element elem) throws JaxmppException {
-//		return new Candidate(elem.getAttribute(CID_ATTR), elem.getAttribute(HOST_ATTR), 
-//				Integer.parseInt(elem.getAttribute(PORT_ATTR)), JID.jidInstance(elem.getAttribute(JID_ATTR)), 
-//				Integer.parseInt(elem.getAttribute(PRIORITY_ATTR)), Type.valueOf(elem.getAttribute(TYPE_ATTR)));
-//	}
-	
-//	public Element toElement() throws JaxmppException {
-//		Element elem = new DefaultElement("candidate");
-//		elem.setAttribute(CID_ATTR, cid);
-//		elem.setAttribute(HOST_ATTR, host);
-//		elem.setAttribute(PORT_ATTR, String.valueOf(port));
-//		elem.setAttribute(JID_ATTR, jid.toString());
-//		elem.setAttribute(PRIORITY_ATTR, String.valueOf(priority));
-//		elem.setAttribute(TYPE_ATTR, type.name());
-//		return elem;
-//	}
+	// public static Candidate fromElement(Element elem) throws JaxmppException
+	// {
+	// return new Candidate(elem.getAttribute(CID_ATTR),
+	// elem.getAttribute(HOST_ATTR),
+	// Integer.parseInt(elem.getAttribute(PORT_ATTR)),
+	// JID.jidInstance(elem.getAttribute(JID_ATTR)),
+	// Integer.parseInt(elem.getAttribute(PRIORITY_ATTR)),
+	// Type.valueOf(elem.getAttribute(TYPE_ATTR)));
+	// }
+
+	// public Element toElement() throws JaxmppException {
+	// Element elem = new DefaultElement("candidate");
+	// elem.setAttribute(CID_ATTR, cid);
+	// elem.setAttribute(HOST_ATTR, host);
+	// elem.setAttribute(PORT_ATTR, String.valueOf(port));
+	// elem.setAttribute(JID_ATTR, jid.toString());
+	// elem.setAttribute(PRIORITY_ATTR, String.valueOf(priority));
+	// elem.setAttribute(TYPE_ATTR, type.name());
+	// return elem;
+	// }
 }
