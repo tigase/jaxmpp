@@ -158,7 +158,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	protected Connector createConnector() {
 		String url = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
-		if (url.startsWith("ws:")) {
+		if (url.startsWith("ws:") || url.startsWith("wss:")) {
 			if (!WebSocket.isSupported()) {
 				throw new RuntimeException("WebSocket protocol is not supported by browser");
 			}
