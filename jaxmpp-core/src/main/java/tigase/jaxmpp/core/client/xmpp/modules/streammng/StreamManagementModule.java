@@ -146,7 +146,7 @@ public class StreamManagementModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(StreamResumedHandler handler) {
+			protected void dispatch(StreamResumedHandler handler) throws JaxmppException {
 				handler.onStreamResumed(sessionObject, h, previd);
 			}
 
@@ -168,7 +168,7 @@ public class StreamManagementModule implements XmppModule {
 
 		}
 
-		void onStreamResumed(SessionObject sessionObject, Long h, String previd);
+		void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException;
 	}
 
 	public interface UnacknowledgedHandler extends EventHandler {
@@ -184,7 +184,7 @@ public class StreamManagementModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(UnacknowledgedHandler handler) {
+			protected void dispatch(UnacknowledgedHandler handler) throws JaxmppException {
 				handler.onUnacknowledged(sessionObject, elements);
 			}
 
@@ -198,7 +198,7 @@ public class StreamManagementModule implements XmppModule {
 
 		}
 
-		void onUnacknowledged(SessionObject sessionObject, List<Element> elements);
+		void onUnacknowledged(SessionObject sessionObject, List<Element> elements) throws JaxmppException;
 	}
 
 	public static final String INCOMING_STREAM_H_KEY = "urn:xmpp:sm:3#INCOMING_STREAM_H";

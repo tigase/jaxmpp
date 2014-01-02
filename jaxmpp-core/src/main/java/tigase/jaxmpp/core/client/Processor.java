@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -84,15 +85,12 @@ public class Processor {
 		}
 	}
 
-	private final AbstractSessionObject sessionObject;
-
-	private final PacketWriter writer;
-
 	private final XmppModulesManager xmppModulesManages;
 
-	public Processor(XmppModulesManager xmppModulesManages, final AbstractSessionObject sessionObject, final PacketWriter writer) {
-		this.sessionObject = sessionObject;
-		this.writer = writer;
+	private final Context context;
+
+	public Processor(XmppModulesManager xmppModulesManages, Context context) {
+		this.context = context;
 		this.xmppModulesManages = xmppModulesManages;
 	}
 
@@ -111,7 +109,8 @@ public class Processor {
 		try {
 			final Element element = Stanza.canBeConverted(receivedElement) ? Stanza.create(receivedElement) : receivedElement;
 
-			Runnable result = sessionObject.getResponseHandler(element, writer);
+			Runnable result = ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element,
+					context.getWriter());
 			if (result != null)
 				return result;
 
@@ -122,9 +121,9 @@ public class Processor {
 			final List<XmppModule> modules = xmppModulesManages.findModules(element);
 
 			if (modules == null)
-				result = new FeatureNotImplementedResponse(element, writer, sessionObject);
+				result = new FeatureNotImplementedResponse(element, context.getWriter(), context.getSessionObject());
 			else {
-				result = new AbstractStanzaHandler(element, writer, sessionObject) {
+				result = new AbstractStanzaHandler(element, context.getWriter(), context.getSessionObject()) {
 
 					@Override
 					protected void process() throws XMLException, XMPPException, JaxmppException {

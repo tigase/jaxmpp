@@ -200,7 +200,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(ErrorHandler handler) {
+			protected void dispatch(ErrorHandler handler) throws JaxmppException {
 				handler.onError(sessionObject, condition, caught);
 			}
 
@@ -214,7 +214,7 @@ public interface Connector {
 
 		}
 
-		void onError(SessionObject sessionObject, ErrorCondition condition, Throwable caught);
+		void onError(SessionObject sessionObject, ErrorCondition condition, Throwable caught) throws JaxmppException;
 	}
 
 	/**
@@ -345,13 +345,13 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(StreamTerminatedHandler handler) {
+			protected void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
 				handler.onStreamTerminated(sessionObject);
 			}
 
 		}
 
-		void onStreamTerminated(SessionObject sessionObject);
+		void onStreamTerminated(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	/**

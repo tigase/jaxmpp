@@ -17,27 +17,21 @@
  */
 package tigase.jaxmpp.core.client;
 
-import junit.framework.TestCase;
-import tigase.jaxmpp.core.client.observer.DefaultObservable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 
-public class ProcessorTest extends TestCase {
+public class ProcessorTest extends AbstractJaxmppTest {
 
 	private Processor processor;
 
-	private MockWriter writer;
-
-	public ProcessorTest() {
-		MockSessionObject sessionObject = new MockSessionObject();
-		this.writer = new MockWriter(sessionObject);
-
-		DefaultObservable observable = new DefaultObservable();
-		XmppModulesManager xmppModulesManages = new XmppModulesManager(observable, writer);
-		xmppModulesManages.register(new PingModule(sessionObject, writer));
-		this.processor = new Processor(xmppModulesManages, sessionObject, writer);
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		XmppModulesManager xmppModulesManages = new XmppModulesManager(context);
+		xmppModulesManages.register(new PingModule(context));
+		this.processor = new Processor(xmppModulesManages, context);
 	}
 
 	public void test01() throws XMLException {
@@ -46,7 +40,7 @@ public class ProcessorTest extends TestCase {
 		r.run();
 		assertEquals(
 				"<iq type=\"error\"><error code=\"501\" type=\"cancel\"><feature-not-implemented xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error></iq>",
-				writer.poll().getAsString());
+				((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 	public void test02() throws XMLException {
@@ -58,7 +52,7 @@ public class ProcessorTest extends TestCase {
 		r.run();
 		assertEquals(
 				"<iq type=\"error\"><error code=\"405\" type=\"cancel\"><not-allowed xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error></iq>",
-				writer.poll().getAsString());
+				((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 	public void test03() throws XMLException {
@@ -69,7 +63,7 @@ public class ProcessorTest extends TestCase {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", writer.poll().getAsString());
+		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 	public void test04() throws XMLException {
@@ -80,7 +74,7 @@ public class ProcessorTest extends TestCase {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", writer.poll().getAsString());
+		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 }

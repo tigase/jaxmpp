@@ -17,7 +17,6 @@
  */
 package tigase.jaxmpp.core.client;
 
-import junit.framework.TestCase;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -25,11 +24,9 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public class ResponseManagerTest extends TestCase {
+public class ResponseManagerTest extends AbstractJaxmppTest {
 
 	private final ResponseManager rm = new ResponseManager();
-
-	private final MockWriter writer = new MockWriter(new MockSessionObject());
 
 	public void test01() {
 		try {
@@ -51,12 +48,12 @@ public class ResponseManagerTest extends TestCase {
 				}
 
 				@Override
-				public void onSuccess(Stanza responseStanza) throws XMLException {
+				public void onSuccess(Stanza responseStanza) throws JaxmppException {
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
 
 					Element es = new DefaultElement("response");
-					writer.write(es);
+					context.getWriter().write(es);
 				}
 
 				@Override
@@ -65,11 +62,11 @@ public class ResponseManagerTest extends TestCase {
 				}
 			});
 
-			Runnable r = rm.getResponseHandler(er, writer, null);
+			Runnable r = rm.getResponseHandler(er, context.getWriter(), null);
 
 			r.run();
 
-			assertEquals("response", writer.poll().getName());
+			assertEquals("response", ((MockWriter) context.getWriter()).poll().getName());
 
 		} catch (JaxmppException e1) {
 			e1.printStackTrace();
@@ -100,13 +97,13 @@ public class ResponseManagerTest extends TestCase {
 			rm.registerResponseHandler(es, null, new AsyncCallback() {
 
 				@Override
-				public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+				public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 					assertEquals(ErrorCondition.internal_server_error, error);
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
 
 					Element es = new DefaultElement("response");
-					writer.write(es);
+					context.getWriter().write(es);
 				}
 
 				@Override
@@ -120,11 +117,11 @@ public class ResponseManagerTest extends TestCase {
 				}
 			});
 
-			Runnable r = rm.getResponseHandler(er, writer, null);
+			Runnable r = rm.getResponseHandler(er, context.getWriter(), null);
 
 			r.run();
 
-			assertEquals("response", writer.poll().getName());
+			assertEquals("response", ((MockWriter) context.getWriter()).poll().getName());
 
 		} catch (JaxmppException e1) {
 			e1.printStackTrace();

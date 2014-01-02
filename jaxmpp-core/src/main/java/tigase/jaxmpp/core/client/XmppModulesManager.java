@@ -43,10 +43,10 @@ public class XmppModulesManager {
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
 
-	private JaxmppCore jaxmpp;
+	private Context context;
 
-	public XmppModulesManager(JaxmppCore jaxmpp) {
-		this.jaxmpp = jaxmpp;
+	public XmppModulesManager(Context context) {
+		this.context = context;
 	}
 
 	/**
@@ -119,11 +119,11 @@ public class XmppModulesManager {
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T register(T plugin) {
 		if (plugin instanceof ContextAware) {
-			((ContextAware) plugin).setContext(jaxmpp.getContext());
+			((ContextAware) plugin).setContext(context);
 		}
 
 		if (plugin instanceof PacketWriterAware) {
-			((PacketWriterAware) plugin).setPacketWriter(jaxmpp.writer);
+			((PacketWriterAware) plugin).setPacketWriter(context.getWriter());
 		}
 
 		if (plugin instanceof InitializingModule) {

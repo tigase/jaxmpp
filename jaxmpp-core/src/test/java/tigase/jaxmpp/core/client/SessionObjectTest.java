@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.SessionObject.Scope;
+import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 public class SessionObjectTest {
@@ -19,7 +20,8 @@ public class SessionObjectTest {
 
 	@Before
 	public void setUp() throws Exception {
-		sessionObject = new MockSessionObject();
+		final DefaultEventBus eventBus = new DefaultEventBus();
+		sessionObject = new MockSessionObject(eventBus);
 	}
 
 	@Test

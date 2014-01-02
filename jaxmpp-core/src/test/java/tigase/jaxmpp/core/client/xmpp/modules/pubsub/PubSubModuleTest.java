@@ -17,29 +17,25 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.pubsub;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.util.Collection;
+import java.util.Date;
 
 import org.junit.Test;
 
+import tigase.jaxmpp.core.client.AbstractJaxmppTest;
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.MockSessionObject;
-import tigase.jaxmpp.core.client.MockWriter;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.tpath.TPath;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.DefaultObservable;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PubSubEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PublishAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.RetrieveItemsAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.SubscriptionAsyncCallback;
@@ -49,25 +45,24 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class PubSubModuleTest {
+public class PubSubModuleTest extends AbstractJaxmppTest {
 
 	private final PubSubModule pubsub;
 
-	private final MockSessionObject sessionObject = new MockSessionObject();
-
 	private final TPath tpath = new TPath();
 
-	private final MockWriter writer;
-
 	public PubSubModuleTest() {
-		this.writer = new MockWriter(sessionObject);
-
-		DefaultObservable observable = new DefaultObservable();
-		XmppModulesManager xmppModulesManages = new XmppModulesManager(observable, writer);
-		xmppModulesManages.register(new PingModule(sessionObject, writer));
-		this.pubsub = new PubSubModule(null, sessionObject, this.writer);
+		XmppModulesManager xmppModulesManages = new XmppModulesManager(context);
+		xmppModulesManages.register(new PingModule(context));
+		this.pubsub = new PubSubModule(context);
 	}
 
+	@Override
+	protected void setUp() throws Exception {
+		// TODO Auto-generated method stub
+		super.setUp();
+	}
+	
 	@Test
 	public void testDeleteItem() throws XMLException, JaxmppException {
 		final boolean[] check = new boolean[] { false };
@@ -92,7 +87,7 @@ public class PubSubModuleTest {
 					}
 				});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
 		assertEquals("workflows.shakespeare.lit", tpath.compile("/iq/attr('to')").evaluate(iq));
@@ -105,8 +100,12 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer).run();
+		getResponseHandler(responseIq).run();
 		org.junit.Assert.assertTrue("Callback not called", check[0]);
+	}
+
+	private Runnable getResponseHandler(Element element) throws JaxmppException {
+		return ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element, context.getWriter());
 	}
 
 	@Test
@@ -137,29 +136,31 @@ public class PubSubModuleTest {
 				tpath.compile("/message/event/items/item[@id='ae890ac52d0df67ed7cfdf51b644e901']/content/value()").evaluate(
 						message));
 
-		this.pubsub.addListener(PubSubModule.NotificationReceived, new Listener<PubSubModule.PubSubEvent>() {
+		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.TYPE,
+				new PubSubModule.NotificationReceivedHandler() {
 
-			@Override
-			public void handleEvent(PubSubEvent be) {
-				check[0] = true;
-				try {
-					assertEquals("ae890ac52d0df67ed7cfdf51b644e901", be.getItemId());
-					assertEquals(
-							"dupa",
-							tpath.compile("/message/event/items/item[@id='ae890ac52d0df67ed7cfdf51b644e901']/content/value()").evaluate(
-									be.getMessage()));
-					assertEquals(JID.jidInstance("pubsub.shakespeare.lit"), be.getPubSubJID());
-					assertEquals("princely_musings", be.getNodeName());
-					assertEquals(payload, be.getPayload());
-				} catch (XMLException e) {
-					fail(e.getMessage());
-				}
+					@Override
+					public void onNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID,
+							String nodeName, String itemId, Element recPayload, Date delayTime, String itemType) {
+						check[0] = true;
+						try {
+							assertEquals("ae890ac52d0df67ed7cfdf51b644e901", itemId);
+							assertEquals(
+									"dupa",
+									tpath.compile(
+											"/message/event/items/item[@id='ae890ac52d0df67ed7cfdf51b644e901']/content/value()").evaluate(
+											message));
+							assertEquals(JID.jidInstance("pubsub.shakespeare.lit"), pubSubJID);
+							assertEquals("princely_musings", nodeName);
+							assertEquals(payload, recPayload);
+						} catch (XMLException e) {
+							fail(e.getMessage());
+						}
 
-			}
-		});
+					}
+				});
 		this.pubsub.process(message);
 		assertEquals("Listener not called", true, check[0]);
-		this.pubsub.removeAllListeners();
 	}
 
 	@Test
@@ -185,7 +186,7 @@ public class PubSubModuleTest {
 			}
 		});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
@@ -210,7 +211,7 @@ public class PubSubModuleTest {
 		item.setAttribute("id", "123");
 		publish.addChild(item);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
+		Runnable handler = getResponseHandler(responseIq);
 
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
@@ -240,7 +241,7 @@ public class PubSubModuleTest {
 			}
 		});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
@@ -264,7 +265,7 @@ public class PubSubModuleTest {
 		uns.setAttribute("feature", "publish");
 		error.addChild(uns);
 
-		Runnable handler = this.sessionObject.getResponseHandler(responseIq, writer);
+		Runnable handler = getResponseHandler(responseIq);
 		handler.run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
@@ -301,7 +302,7 @@ public class PubSubModuleTest {
 					}
 				});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 		assertEquals("get", tpath.compile("/iq/attr('type')").evaluate(iq));
 		assertEquals("pubsub.shakespeare.lit", tpath.compile("/iq/attr('to')").evaluate(iq));
@@ -325,7 +326,7 @@ public class PubSubModuleTest {
 		items.addChild(item0);
 		item0.addChild(new DefaultElement("payload", "dupa_01", "tigase:test"));
 
-		this.sessionObject.getResponseHandler(responseIq, writer).run();
+		getResponseHandler(responseIq).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -360,7 +361,7 @@ public class PubSubModuleTest {
 
 				});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
 		assertEquals("pubsub.shakespeare.lit", tpath.compile("/iq/attr('to')").evaluate(iq));
@@ -382,7 +383,7 @@ public class PubSubModuleTest {
 		subs.setAttribute("subscription", "subscribed");
 		pubsub.addChild(subs);
 
-		this.sessionObject.getResponseHandler(responseIq, writer).run();
+		getResponseHandler(responseIq).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 
@@ -409,7 +410,7 @@ public class PubSubModuleTest {
 					}
 				});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
 		assertEquals("workflows.shakespeare.lit", tpath.compile("/iq/attr('to')").evaluate(iq));
@@ -423,7 +424,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "workflows.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer).run();
+		getResponseHandler(responseIq).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 
 		Message message = Message.create();
@@ -441,23 +442,25 @@ public class PubSubModuleTest {
 		unlock.setAttribute("id", "ae890ac52d0df67ed7cfdf51b644e901");
 		items.addChild(unlock);
 
-		this.pubsub.addListener(PubSubModule.NotificationReceived, new Listener<PubSubModule.PubSubEvent>() {
+		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.TYPE,
+				new PubSubModule.NotificationReceivedHandler() {
 
-			@Override
-			public void handleEvent(PubSubEvent be) {
-				check[1] = true;
-				try {
-					assertEquals("unlock", be.getItemType());
-					assertEquals("a290fjsl29j19kjb", be.getNodeName());
-					assertEquals("ae890ac52d0df67ed7cfdf51b644e901", be.getItemId());
-				} catch (Exception e) {
-					fail(e.getMessage());
-				}
+					@Override
+					public void onNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID,
+							String nodeName, String itemId, Element payload, Date delayTime, String itemType) {
+						check[1] = true;
+						try {
+							assertEquals("unlock", itemType);
+							assertEquals("a290fjsl29j19kjb", nodeName);
+							assertEquals("ae890ac52d0df67ed7cfdf51b644e901", itemId);
+						} catch (Exception e) {
+							fail(e.getMessage());
+						}
 
-			}
-		});
+					}
+				});
+
 		this.pubsub.process(message);
-		this.pubsub.removeAllListeners();
 		assertEquals("Listener not called", true, check[1]);
 	}
 
@@ -484,7 +487,7 @@ public class PubSubModuleTest {
 					}
 				});
 
-		final Element iq = this.writer.poll();
+		final Element iq = this.poll();
 		final String id = iq.getAttribute("id");
 		assertEquals("set", tpath.compile("/iq/attr('type')").evaluate(iq));
 		assertEquals("pubsub.shakespeare.lit", tpath.compile("/iq/attr('to')").evaluate(iq));
@@ -497,7 +500,7 @@ public class PubSubModuleTest {
 		responseIq.setAttribute("from", "pubsub.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		this.sessionObject.getResponseHandler(responseIq, writer).run();
+		getResponseHandler(responseIq).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
 	}
 }

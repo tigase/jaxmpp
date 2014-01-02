@@ -93,7 +93,7 @@ public class ResourceBinderModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(ResourceBindSuccessHandler handler) {
+			protected void dispatch(ResourceBindSuccessHandler handler) throws JaxmppException {
 				handler.onResourceBindSuccess(sessionObject, bindedJid);
 			}
 
@@ -107,7 +107,7 @@ public class ResourceBinderModule implements XmppModule {
 
 		}
 
-		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid);
+		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException;
 	}
 
 	/**
