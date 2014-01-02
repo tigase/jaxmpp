@@ -44,6 +44,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.PlainMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.XOAuth2Mechanism;
 
 /**
  * Module for SASL authentication.
@@ -175,7 +176,9 @@ public class SaslModule implements XmppModule {
 
 		this.mechanisms.put("ANONYMOUS", new AnonymousMechanism());
 		this.mechanisms.put("PLAIN", new PlainMechanism());
+		this.mechanisms.put("X-OAUTH2", new XOAuth2Mechanism());
 
+		this.mechanismsOrder.add("X-OAUTH2");
 		this.mechanismsOrder.add("PLAIN");
 		this.mechanismsOrder.add("ANONYMOUS");
 	}

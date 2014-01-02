@@ -15,29 +15,20 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
+package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 
-public class AnonymousMechanism implements SaslMechanism {
+/**
+ * With this callback user password may be not stored in
+ * {@linkplain SessionObject} but may be calculated my class.
+ * <p>
+ * Callback must be stored in {@linkplain SessionObject} with key
+ * {@linkplain AuthModule#CREDENTIALS_CALLBACK}.
+ * </p>
+ */
+public interface XOAuth2TokenCallback {
 
-	public AnonymousMechanism() {
-	}
-
-	@Override
-	public String evaluateChallenge(String input, SessionObject sessionObjec) {
-		return null;
-	}
-
-	@Override
-	public boolean isAllowedToUse(SessionObject sessionObject) {
-		return false;
-	}
-
-	@Override
-	public String name() {
-		return "ANONYMOUS";
-	}
+	String getCredential();
 
 }
