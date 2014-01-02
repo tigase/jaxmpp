@@ -20,25 +20,42 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.XOAuth2TokenCallback;
 
-public class PlainMechanism implements SaslMechanism {
+public class XOAuth2Mechanism implements SaslMechanism {
+
+	private class DefaultXOAuth2TokenCallback implements XOAuth2TokenCallback {
+
+		private SessionObject sessionObject;
+
+		public DefaultXOAuth2TokenCallback(SessionObject sessionObject) {
+			this.sessionObject = sessionObject;
+		}
+
+		@Override
+		public String getCredential() {
+			return sessionObject.getProperty(X_OAUTH2_TOKEN_KEY);
+		}
+	}
 
 	private static final String NULL = String.valueOf((char) 0);
 
-	public PlainMechanism() {
+	public static final String X_OAUTH2_TOKEN_CALLBACK_KEY = "X_OAUTH2_TOKEN_CALLBACK";
+
+	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
+
+	public XOAuth2Mechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
 		if (input == null) {
-			CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
+			XOAuth2TokenCallback callback = sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY);
 			if (callback == null)
-				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
+				callback = new DefaultXOAuth2TokenCallback(sessionObject);
 			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getCredential();
+			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
 			return base64;
@@ -48,13 +65,13 @@ public class PlainMechanism implements SaslMechanism {
 
 	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
-		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
+		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null || sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
 	}
 
 	@Override
 	public String name() {
-		return "PLAIN";
+		return "X-OAUTH2";
 	}
 
 }
