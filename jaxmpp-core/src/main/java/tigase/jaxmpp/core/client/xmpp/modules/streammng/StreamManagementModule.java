@@ -19,7 +19,6 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -69,12 +68,11 @@ public class StreamManagementModule implements XmppModule {
 
 		public static class StreamManagementEnabledEvent extends JaxmppEvent<StreamManagementEnabledHandler> {
 
-			public static final EventType<StreamManagementEnabledHandler> TYPE = new EventType<StreamManagementEnabledHandler>();
 			private Boolean resume;
 			private String resumeId;
 
 			public StreamManagementEnabledEvent(SessionObject sessionObject, Boolean resume, String id) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.resume = resume;
 				this.resumeId = id;
 
@@ -110,12 +108,10 @@ public class StreamManagementModule implements XmppModule {
 
 		public static class StreamManagementFailedEvent extends JaxmppEvent<StreamManagementFailedHandler> {
 
-			public static final EventType<StreamManagementFailedHandler> TYPE = new EventType<StreamManagementFailedHandler>();
-
 			private ErrorCondition condition;
 
 			public StreamManagementFailedEvent(SessionObject sessionObject, ErrorCondition condition) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.condition = condition;
 			}
 
@@ -133,14 +129,12 @@ public class StreamManagementModule implements XmppModule {
 
 		public static class StreamResumedEvent extends JaxmppEvent<StreamResumedHandler> {
 
-			public static final EventType<StreamResumedHandler> TYPE = new EventType<StreamResumedHandler>();
-
 			private Long h;
 
 			private String previd;
 
 			public StreamResumedEvent(SessionObject sessionObject, Long h, String previd) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.h = h;
 				this.previd = previd;
 			}
@@ -175,11 +169,10 @@ public class StreamManagementModule implements XmppModule {
 
 		public static class UnacknowledgedEvent extends JaxmppEvent<UnacknowledgedHandler> {
 
-			public static final EventType<UnacknowledgedHandler> TYPE = new EventType<UnacknowledgedHandler>();
 			private List<Element> elements;
 
 			public UnacknowledgedEvent(SessionObject sessionObject, List<Element> elements) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.elements = elements;
 			}
 
@@ -287,7 +280,7 @@ public class StreamManagementModule implements XmppModule {
 		this.jaxmpp = jaxmpp;
 		this.context = context;
 
-		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.TYPE,
+		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
 				new Connector.StanzaSendingHandler() {
 
 					@Override

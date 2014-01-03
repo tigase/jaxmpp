@@ -26,7 +26,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -46,12 +45,10 @@ public class StreamFeaturesModule implements XmppModule {
 
 		public static class StreamFeaturesReceivedEvent extends JaxmppEvent<StreamFeaturesReceivedHandler> {
 
-			public static final EventType<StreamFeaturesReceivedHandler> TYPE = new EventType<StreamFeaturesReceivedHandler>();
-
 			private Element featuresElement;
 
 			public StreamFeaturesReceivedEvent(SessionObject sessionObject, Element element) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.featuresElement = element;
 			}
 
@@ -86,7 +83,7 @@ public class StreamFeaturesModule implements XmppModule {
 	}
 
 	public void addStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
-		context.getEventBus().addHandler(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.TYPE, handler);
+		context.getEventBus().addHandler(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.class, handler);
 	}
 
 	@Override
@@ -106,7 +103,7 @@ public class StreamFeaturesModule implements XmppModule {
 	}
 
 	public void removeStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
-		context.getEventBus().remove(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.TYPE, handler);
+		context.getEventBus().remove(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.class, handler);
 	}
 
 }

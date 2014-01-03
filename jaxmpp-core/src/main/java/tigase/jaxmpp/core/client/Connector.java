@@ -21,7 +21,6 @@ import javax.net.ssl.TrustManager;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -91,8 +90,6 @@ public interface Connector {
 
 		public static class BodyReceivedvent extends JaxmppEvent<BodyReceivedHandler> {
 
-			public static final EventType<BodyReceivedHandler> TYPE = new EventType<BodyReceivedHandler>();
-
 			private String receivedData;
 
 			private Element response;
@@ -100,7 +97,7 @@ public interface Connector {
 			private int responseCode;
 
 			public BodyReceivedvent(SessionObject sessionObject, int responseCode, Element response, String responseData) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.responseCode = responseCode;
 				this.response = response;
 				this.receivedData = responseData;
@@ -135,10 +132,8 @@ public interface Connector {
 
 		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
 
-			public static final EventType<ConnectedHandler> TYPE = new EventType<ConnectedHandler>();
-
 			public ConnectedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -158,10 +153,8 @@ public interface Connector {
 
 		public static class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
 
-			public static final EventType<EncryptionEstablishedHandler> TYPE = new EventType<EncryptionEstablishedHandler>();
-
 			public EncryptionEstablishedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -187,14 +180,12 @@ public interface Connector {
 
 		public static class ErrorEvent extends JaxmppEvent<ErrorHandler> {
 
-			public static final EventType<ErrorHandler> TYPE = new EventType<ErrorHandler>();
-
 			private Throwable caught;
 
 			private ErrorCondition condition;
 
 			public ErrorEvent(SessionObject sessionObject, ErrorCondition condition, Throwable caught) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.condition = condition;
 				this.caught = caught;
 			}
@@ -230,12 +221,10 @@ public interface Connector {
 
 		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
 
-			public static final EventType<StanzaReceivedHandler> TYPE = new EventType<StanzaReceivedHandler>();
-
 			private Element stanza;
 
 			public StanzaReceivedEvent(SessionObject sessionObject, Element stanza) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = stanza;
 			}
 
@@ -257,12 +246,10 @@ public interface Connector {
 
 		public static class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
 
-			public static final EventType<StanzaSendingHandler> TYPE = new EventType<StanzaSendingHandler>();
-
 			private Element stanza;
 
 			public StanzaSendingEvent(SessionObject sessionObject, Element stanza) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = stanza;
 			}
 
@@ -301,14 +288,12 @@ public interface Connector {
 
 		public static class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
 
-			public static final EventType<StateChangedHandler> TYPE = new EventType<StateChangedHandler>();
-
 			private State newState;
 
 			private State oldState;
 
 			public StateChangedEvent(SessionObject sessionObject, State oldState, State newState) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.oldState = oldState;
 				this.newState = newState;
 			}
@@ -338,10 +323,8 @@ public interface Connector {
 
 		public static class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
 
-			public static final EventType<StreamTerminatedHandler> TYPE = new EventType<StreamTerminatedHandler>();
-
 			public StreamTerminatedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override

@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -46,13 +45,14 @@ public class FileTransferModule implements XmppModule {
 
 		public static class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
 
-			public static final EventType<FileTransferRequestHandler> TYPE = new EventType<FileTransferRequestHandler>();
 			private FileTransfer fileTransfer;
+
 			private String id;
+
 			private List<String> streamMethods;
 
 			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id, List<String> streamMethods) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.fileTransfer = ft;
 				this.id = id;
 				this.streamMethods = streamMethods;
@@ -136,7 +136,7 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	public void addFileTransferRequestHandler(FileTransferRequestHandler handler) {
-		context.getEventBus().addHandler(FileTransferRequestHandler.FileTransferRequestEvent.TYPE, handler);
+		context.getEventBus().addHandler(FileTransferRequestHandler.FileTransferRequestEvent.class, handler);
 	}
 
 	@Override
@@ -229,7 +229,7 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	public void removeFileTransferRequestHandler(FileTransferRequestHandler handler) {
-		context.getEventBus().remove(FileTransferRequestHandler.FileTransferRequestEvent.TYPE, handler);
+		context.getEventBus().remove(FileTransferRequestHandler.FileTransferRequestEvent.class, handler);
 	}
 
 	private void returnError(String to, String id, String type, String[] names, String[] xmlnss) throws JaxmppException {

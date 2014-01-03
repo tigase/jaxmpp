@@ -10,7 +10,7 @@ import java.util.Random;
 import org.junit.Test;
 
 public class Base64Test {
-	
+
 	@Test
 	public void testDecode() {
 		assertEquals("foobar", new String(Base64.decode("Zm9vYmFy")));

@@ -18,7 +18,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -166,14 +165,12 @@ public class DiscoveryModule extends AbstractIQModule {
 
 		public static class ServerFeaturesReceivedEvent extends JaxmppEvent<ServerFeaturesReceivedHandler> {
 
-			public static final EventType<ServerFeaturesReceivedHandler> TYPE = new EventType<ServerFeaturesReceivedHandler>();
-
 			private final String[] features;
 
 			private final IQ stanza;
 
 			public ServerFeaturesReceivedEvent(SessionObject sessionObject, IQ responseStanza, String[] features) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = responseStanza;
 				this.features = features;
 			}
@@ -244,7 +241,7 @@ public class DiscoveryModule extends AbstractIQModule {
 	}
 
 	public void addServerFeaturesReceivedHandler(ServerFeaturesReceivedHandler handler) {
-		context.getEventBus().addHandler(ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent.TYPE, handler);
+		context.getEventBus().addHandler(ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent.class, handler);
 	}
 
 	public void discoverServerFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {
@@ -414,7 +411,7 @@ public class DiscoveryModule extends AbstractIQModule {
 	}
 
 	public void removeServerFeaturesReceivedHandler(ServerFeaturesReceivedHandler handler) {
-		context.getEventBus().remove(ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent.TYPE, handler);
+		context.getEventBus().remove(ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent.class, handler);
 	}
 
 	public void setNodeCallback(String nodeName, NodeDetailsCallback callback) {

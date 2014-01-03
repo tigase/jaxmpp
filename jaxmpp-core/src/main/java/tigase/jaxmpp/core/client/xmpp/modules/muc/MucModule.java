@@ -34,7 +34,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
@@ -154,8 +153,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class InvitationDeclinedEvent extends JaxmppEvent<InvitationDeclinedHandler> {
 
-			public static final EventType<InvitationDeclinedHandler> TYPE = new EventType<InvitationDeclinedHandler>();
-
 			private JID inviteeJID;
 
 			private Message message;
@@ -166,7 +163,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public InvitationDeclinedEvent(SessionObject sessionObject, Message message, Room room, JID inviteeJID,
 					String reason) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.message = message;
 				this.room = room;
 				this.inviteeJID = inviteeJID;
@@ -219,12 +216,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class InvitationReceivedEvent extends JaxmppEvent<InvitationReceivedHandler> {
 
-			public static final EventType<InvitationReceivedHandler> TYPE = new EventType<InvitationReceivedHandler>();
-
 			private Invitation invitation;
 
 			public InvitationReceivedEvent(SessionObject sessionObject, Invitation invitation) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.invitation = invitation;
 			}
 
@@ -250,13 +245,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class JoinRequestedEvent extends JaxmppEvent<JoinRequestedHandler> {
 
-			public static final EventType<JoinRequestedHandler> TYPE = new EventType<JoinRequestedHandler>();
 			private String nickname;
 			private Room room;
 			private Presence sentPresence;
 
 			public JoinRequestedEvent(SessionObject sessionObject, Presence presence, String nickname, Room room) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sentPresence = presence;
 				this.nickname = nickname;
 				this.room = room;
@@ -308,8 +302,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class MessageErrorEvent extends JaxmppEvent<MessageErrorHandler> {
 
-			public static final EventType<MessageErrorHandler> TYPE = new EventType<MessageErrorHandler>();
-
 			private Message message;
 
 			private String nickname;
@@ -319,7 +311,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Date timestamp;
 
 			public MessageErrorEvent(SessionObject sessionObject, Message message, Room room, String nickname, Date delayTime) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.room = room;
 				this.message = message;
 				this.nickname = nickname;
@@ -372,8 +364,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class MucMessageReceivedEvent extends JaxmppEvent<MucMessageReceivedHandler> {
 
-			public static final EventType<MucMessageReceivedHandler> TYPE = new EventType<MucMessageReceivedHandler>();
-
 			private Message message;
 
 			private String nickname;
@@ -384,7 +374,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public MucMessageReceivedEvent(SessionObject sessionObject, Message message, Room room, String nickname,
 					Date delayTime) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.message = message;
 				this.room = room;
 				this.nickname = nickname;
@@ -437,14 +427,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class NewRoomCreatedEvent extends JaxmppEvent<NewRoomCreatedHandler> {
 
-			public static final EventType<NewRoomCreatedHandler> TYPE = new EventType<NewRoomCreatedHandler>();
-
 			private Presence presence;
 
 			private Room room;
 
 			public NewRoomCreatedEvent(SessionObject sessionObject, Room room, Presence element) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.room = room;
 				this.presence = element;
 			}
@@ -479,8 +467,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class OccupantChangedNickEvent extends JaxmppEvent<OccupantChangedNickHandler> {
 
-			public static final EventType<OccupantChangedNickHandler> TYPE = new EventType<OccupantChangedNickHandler>();
-
 			private String nickname;
 
 			private Occupant occupant;
@@ -493,7 +479,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public OccupantChangedNickEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
 					String oldNickname, String nickname) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.presence = element;
 				this.room = room;
 				this.occupant = occupant;
@@ -557,8 +543,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class OccupantChangedPresenceEvent extends JaxmppEvent<OccupantChangedPresenceHandler> {
 
-			public static final EventType<OccupantChangedPresenceHandler> TYPE = new EventType<OccupantChangedPresenceHandler>();
-
 			private String nickname;
 
 			private Occupant occupant;
@@ -571,7 +555,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public OccupantChangedPresenceEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
 					String nickname, XMucUserElement xUser) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.presence = element;
 				this.room = room;
 				this.occupant = occupant;
@@ -633,8 +617,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class OccupantComesEvent extends JaxmppEvent<OccupantComesHandler> {
 
-			public static final EventType<OccupantComesHandler> TYPE = new EventType<OccupantComesHandler>();
-
 			private String nickname;
 
 			private Occupant occupant;
@@ -647,7 +629,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public OccupantComesEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
 					String nickname, XMucUserElement xUser) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.presence = element;
 				this.room = room;
 				this.occupant = occupant;
@@ -709,8 +691,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class OccupantLeavedEvent extends JaxmppEvent<OccupantLeavedHandler> {
 
-			public static final EventType<OccupantLeavedHandler> TYPE = new EventType<OccupantLeavedHandler>();
-
 			private String nickname;
 
 			private Occupant occupant;
@@ -722,7 +702,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private XMucUserElement xUserElement;
 
 			public OccupantLeavedEvent(SessionObject sessionObject, Occupant occupant, Room room) throws XMLException {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.occupant = occupant;
 				this.room = room;
 				this.nickname = occupant.getNickname();
@@ -730,7 +710,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public OccupantLeavedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
 					String nickname, XMucUserElement xUser) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.occupant = occupant;
 				this.room = room;
 				this.presence = element;
@@ -768,8 +748,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class PresenceErrorEvent extends JaxmppEvent<PresenceErrorHandler> {
 
-			public static final EventType<PresenceErrorHandler> TYPE = new EventType<PresenceErrorHandler>();
-
 			private String nickname;
 
 			private Presence presence;
@@ -777,7 +755,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Room room;
 
 			public PresenceErrorEvent(SessionObject sessionObject, Presence element, Room room, String nickname) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.presence = element;
 				this.room = room;
 				this.nickname = nickname;
@@ -825,14 +803,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class RoomClosedEvent extends JaxmppEvent<RoomClosedHandler> {
 
-			public static final EventType<RoomClosedHandler> TYPE = new EventType<RoomClosedHandler>();
-
 			private Presence presence;
 
 			private Room room;
 
 			public RoomClosedEvent(SessionObject sessionObject, Presence element, Room room) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.room = room;
 				this.presence = element;
 			}
@@ -867,8 +843,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class StateChangeEvent extends JaxmppEvent<StateChangeHandler> {
 
-			public static final EventType<StateChangeHandler> TYPE = new EventType<StateChangeHandler>();
-
 			private State newState;
 
 			private State oldState;
@@ -876,7 +850,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Room room;
 
 			public StateChangeEvent(SessionObject sessionObject, Room room, State oldState, State newState) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.room = room;
 				this.oldState = oldState;
 				this.newState = newState;
@@ -896,8 +870,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		public static class YouJoinedEvent extends JaxmppEvent<YouJoinedHandler> {
 
-			public static final EventType<YouJoinedHandler> TYPE = new EventType<YouJoinedHandler>();
-
 			private String nickname;
 
 			private Occupant occupant;
@@ -910,7 +882,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			public YouJoinedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant, String nickname,
 					XMucUserElement xUser) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.room = room;
 				this.presence = element;
 				this.occupant = occupant;
@@ -955,7 +927,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public MucModule(Context context) {
 		super(context);
-		context.getEventBus().addHandler(Connector.StateChangedHandler.StateChangedEvent.TYPE,
+		context.getEventBus().addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
 				new Connector.StateChangedHandler() {
 
 					@Override
@@ -970,7 +942,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		this.roomsManager.setContext(this.context);
 		this.roomsManager.initialize();
 
-		this.context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.TYPE,
+		this.context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
 				new AbstractSessionObject.ClearedHandler() {
 
 					@Override

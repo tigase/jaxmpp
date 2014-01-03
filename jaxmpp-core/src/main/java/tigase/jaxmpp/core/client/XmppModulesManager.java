@@ -37,13 +37,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
  */
 public class XmppModulesManager {
 
+	private Context context;
+
 	private boolean initialized = false;
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
-
-	private Context context;
 
 	public XmppModulesManager(Context context) {
 		this.context = context;

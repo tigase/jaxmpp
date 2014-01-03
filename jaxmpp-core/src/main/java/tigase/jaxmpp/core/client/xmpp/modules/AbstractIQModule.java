@@ -34,29 +34,17 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public abstract class AbstractIQModule implements XmppModule {
 
-	protected final Logger log;
-
 	protected final Context context;
 
-	protected void fireEvent(Event<?> event) {
-		context.getEventBus().fire(event, this);
-	}
-
-	protected void write(Element stanza) throws JaxmppException {
-		context.getWriter().write(stanza);
-	}
-
-	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, asyncCallback);
-	}
-
-	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, timeout, asyncCallback);
-	}
+	protected final Logger log;
 
 	public AbstractIQModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.context = context;
+	}
+
+	protected void fireEvent(Event<?> event) {
+		context.getEventBus().fire(event, this);
 	}
 
 	@Override
@@ -90,5 +78,17 @@ public abstract class AbstractIQModule implements XmppModule {
 	 *            incoming XMPP stanza
 	 */
 	protected abstract void processSet(IQ element) throws JaxmppException;
+
+	protected void write(Element stanza) throws JaxmppException {
+		context.getWriter().write(stanza);
+	}
+
+	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, asyncCallback);
+	}
+
+	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		context.getWriter().write(stanza, timeout, asyncCallback);
+	}
 
 }

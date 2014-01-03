@@ -23,10 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedHandler.ClearedEvent;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -45,12 +43,10 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 		public static class ClearedEvent extends JaxmppEvent<ClearedHandler> {
 
-			public static final EventType<ClearedHandler> TYPE = new EventType<ClearedHandler>();
-
 			private Set<Scope> scopes;
 
 			public ClearedEvent(SessionObject sessionObject, Set<Scope> scopes) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.scopes = scopes;
 			}
 
@@ -96,7 +92,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 	}
 
 	public void addClearedHandler(ClearedHandler handler) {
-		eventBus.addHandler(ClearedHandler.ClearedEvent.TYPE, handler);
+		eventBus.addHandler(ClearedHandler.ClearedEvent.class, handler);
 	}
 
 	/**
@@ -149,7 +145,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 				iterator.remove();
 		}
 
-		ClearedEvent event = new ClearedEvent(this, scopes);
+		ClearedHandler.ClearedEvent event = new ClearedHandler.ClearedEvent(this, scopes);
 		eventBus.fire(event);
 	}
 
@@ -232,7 +228,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 	}
 
 	public void removeClearedHandler(ClearedHandler handler) {
-		eventBus.remove(ClearedHandler.ClearedEvent.TYPE, handler);
+		eventBus.remove(ClearedHandler.ClearedEvent.class, handler);
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.EventListener;
 import tigase.jaxmpp.core.client.eventbus.MultiEventBus;
@@ -38,12 +39,12 @@ public class MultiJaxmpp {
 
 	private final ArrayList<Chat> chats = new ArrayList<Chat>();
 
-	private final HashMap<BareJID, JaxmppCore> jaxmpps = new HashMap<BareJID, JaxmppCore>();
-
 	private final MultiEventBus eventBus = new MultiEventBus();
 
+	private final HashMap<BareJID, JaxmppCore> jaxmpps = new HashMap<BareJID, JaxmppCore>();
+
 	public MultiJaxmpp() {
-		eventBus.addHandler(MessageModule.ChatCreatedHandler.ChatCreatedEvent.TYPE, new MessageModule.ChatCreatedHandler() {
+		eventBus.addHandler(MessageModule.ChatCreatedHandler.ChatCreatedEvent.class, new MessageModule.ChatCreatedHandler() {
 
 			@Override
 			public void onChatCreated(SessionObject sessionObject, Chat chat, Message message) {
@@ -51,7 +52,7 @@ public class MultiJaxmpp {
 			}
 		});
 
-		eventBus.addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.TYPE, new MessageModule.ChatClosedHandler() {
+		eventBus.addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, new MessageModule.ChatClosedHandler() {
 
 			@Override
 			public void onChatClosed(SessionObject sessionObject, Chat chat) {
@@ -72,6 +73,26 @@ public class MultiJaxmpp {
 			jaxmpps.put(jaxmpp.getSessionObject().getUserBareJid(), jaxmpp);
 			this.chats.addAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
 		}
+	}
+
+	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
+		eventBus.addHandler(type, handler);
+	}
+
+	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler) {
+		eventBus.addHandler(type, source, handler);
+	}
+
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
+		eventBus.addListener(type, listener);
+	}
+
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source, EventListener listener) {
+		eventBus.addListener(type, source, listener);
+	}
+
+	public <H extends EventHandler> void addListener(EventListener listener) {
+		eventBus.addListener(listener);
 	}
 
 	/**
@@ -120,6 +141,18 @@ public class MultiJaxmpp {
 		return Collections.unmodifiableList(chats);
 	}
 
+	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
+		eventBus.remove(type, handler);
+	}
+
+	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
+		eventBus.remove(type, source, handler);
+	}
+
+	public void remove(EventHandler handler) {
+		eventBus.remove(handler);
+	}
+
 	/**
 	 * Unregisters {@linkplain JaxmppCore}.
 	 * 
@@ -132,88 +165,6 @@ public class MultiJaxmpp {
 			eventBus.removeEventBus(jaxmpp.getEventBus());
 			jaxmpps.remove(jaxmpp.getSessionObject().getUserBareJid());
 		}
-	}
-
-	/**
-	 * @param type
-	 * @param handler
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public <H extends EventHandler> void addHandler(tigase.jaxmpp.core.client.eventbus.EventType<H> type, H handler) {
-		eventBus.addHandler(type, handler);
-	}
-
-	/**
-	 * @param type
-	 * @param source
-	 * @param handler
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public <H extends EventHandler> void addHandler(tigase.jaxmpp.core.client.eventbus.EventType<H> type, Object source,
-			H handler) {
-		eventBus.addHandler(type, source, handler);
-	}
-
-	/**
-	 * @param listener
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(tigase.jaxmpp.core.client.eventbus.EventListener)
-	 */
-	public <H extends EventHandler> void addListener(EventListener listener) {
-		eventBus.addListener(listener);
-	}
-
-	/**
-	 * @param type
-	 * @param listener
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      tigase.jaxmpp.core.client.eventbus.EventListener)
-	 */
-	public <H extends EventHandler> void addListener(tigase.jaxmpp.core.client.eventbus.EventType<H> type,
-			EventListener listener) {
-		eventBus.addListener(type, listener);
-	}
-
-	/**
-	 * @param type
-	 * @param source
-	 * @param listener
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventListener)
-	 */
-	public <H extends EventHandler> void addListener(tigase.jaxmpp.core.client.eventbus.EventType<H> type, Object source,
-			EventListener listener) {
-		eventBus.addListener(type, source, listener);
-	}
-
-	/**
-	 * @param handler
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public void remove(EventHandler handler) {
-		eventBus.remove(handler);
-	}
-
-	/**
-	 * @param type
-	 * @param handler
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public void remove(tigase.jaxmpp.core.client.eventbus.EventType<?> type, EventHandler handler) {
-		eventBus.remove(type, handler);
-	}
-
-	/**
-	 * @param type
-	 * @param source
-	 * @param handler
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventType,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public void remove(tigase.jaxmpp.core.client.eventbus.EventType<?> type, Object source, EventHandler handler) {
-		eventBus.remove(type, source, handler);
 	}
 
 }

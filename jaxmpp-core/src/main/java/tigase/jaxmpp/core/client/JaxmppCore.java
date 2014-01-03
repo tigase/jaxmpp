@@ -29,7 +29,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -85,16 +84,12 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
  */
 public abstract class JaxmppCore {
 
-	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
-
 	public interface ConnectedHandler extends EventHandler {
 
 		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
 
-			public static final EventType<ConnectedHandler> TYPE = new EventType<ConnectedHandler>();
-
 			public ConnectedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -111,10 +106,8 @@ public abstract class JaxmppCore {
 
 		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
 
-			public static final EventType<DisconnectedHandler> TYPE = new EventType<DisconnectedHandler>();
-
 			public DisconnectedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -127,15 +120,19 @@ public abstract class JaxmppCore {
 		void onDisconnected(SessionObject sessionObject);
 	}
 
+	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
+
 	private StreamManagementModule ackModule;
 
 	protected Connector connector;
 
+	private Context context;
+
+	protected final EventBus eventBus;
+
 	protected final Logger log;
 
 	protected final XmppModulesManager modulesManager;
-
-	protected final EventBus eventBus;
 
 	protected Processor processor;
 
@@ -180,12 +177,6 @@ public abstract class JaxmppCore {
 
 	};
 
-	private Context context;
-
-	protected EventBus createEventBus() {
-		return new DefaultEventBus();
-	}
-
 	public JaxmppCore(SessionObject sessionObject) {
 		this.eventBus = createEventBus();
 		this.sessionObject = (AbstractSessionObject) sessionObject;
@@ -194,8 +185,8 @@ public abstract class JaxmppCore {
 		this.context = new Context() {
 
 			@Override
-			public PacketWriter getWriter() {
-				return JaxmppCore.this.writer;
+			public EventBus getEventBus() {
+				return JaxmppCore.this.eventBus;
 			}
 
 			@Override
@@ -204,14 +195,14 @@ public abstract class JaxmppCore {
 			}
 
 			@Override
-			public EventBus getEventBus() {
-				return JaxmppCore.this.eventBus;
+			public PacketWriter getWriter() {
+				return JaxmppCore.this.writer;
 			}
 		};
 
 		modulesManager = new XmppModulesManager(context);
 
-		eventBus.addHandler(StreamResumedHandler.StreamResumedEvent.TYPE, new StreamResumedHandler() {
+		eventBus.addHandler(StreamResumedHandler.StreamResumedEvent.class, new StreamResumedHandler() {
 
 			@Override
 			public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
@@ -219,7 +210,7 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.TYPE, new ResourceBindSuccessHandler() {
+		eventBus.addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, new ResourceBindSuccessHandler() {
 
 			@Override
 			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
@@ -227,7 +218,7 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(StreamTerminatedHandler.StreamTerminatedEvent.TYPE, new StreamTerminatedHandler() {
+		eventBus.addHandler(StreamTerminatedHandler.StreamTerminatedEvent.class, new StreamTerminatedHandler() {
 
 			@Override
 			public void onStreamTerminated(SessionObject sessionObject) throws JaxmppException {
@@ -235,7 +226,7 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(ErrorHandler.ErrorEvent.TYPE, new ErrorHandler() {
+		eventBus.addHandler(ErrorHandler.ErrorEvent.class, new ErrorHandler() {
 
 			@Override
 			public void onError(SessionObject sessionObject, ErrorCondition condition, Throwable caught) throws JaxmppException {
@@ -243,7 +234,7 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(StanzaReceivedHandler.StanzaReceivedEvent.TYPE, new StanzaReceivedHandler() {
+		eventBus.addHandler(StanzaReceivedHandler.StanzaReceivedEvent.class, new StanzaReceivedHandler() {
 
 			@Override
 			public void onStanzaReceived(SessionObject sessionObject, Element stanza) {
@@ -251,7 +242,7 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(UnacknowledgedHandler.UnacknowledgedEvent.TYPE, new UnacknowledgedHandler() {
+		eventBus.addHandler(UnacknowledgedHandler.UnacknowledgedEvent.class, new UnacknowledgedHandler() {
 
 			@Override
 			public void onUnacknowledged(SessionObject sessionObject, List<Element> elements) throws JaxmppException {
@@ -260,31 +251,12 @@ public abstract class JaxmppCore {
 		});
 	}
 
-	protected void onUnacknowledged(List<Element> elements) throws JaxmppException {
-		for (Element e : elements) {
-			if (e == null)
-				continue;
-			String to = e.getAttribute("to");
-			String from = e.getAttribute("from");
-
-			e.setAttribute("type", "error");
-			e.setAttribute("to", from);
-			e.setAttribute("from", to);
-
-			Element error = new DefaultElement("error");
-			error.setAttribute("type", "wait");
-			error.addChild(new DefaultElement("recipient-unavailable", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
-
-			e.addChild(error);
-
-			final Runnable r = processor.process(e);
-			if (r != null)
-				execute(r);
-		}
-	}
-
 	public Chat createChat(JID jid) throws JaxmppException {
 		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	}
+
+	protected EventBus createEventBus() {
+		return new DefaultEventBus();
 	}
 
 	public abstract void disconnect() throws JaxmppException;
@@ -302,6 +274,14 @@ public abstract class JaxmppCore {
 
 	public Connector getConnector() {
 		return connector;
+	}
+
+	public Context getContext() {
+		return context;
+	}
+
+	public EventBus getEventBus() {
+		return eventBus;
 	}
 
 	/**
@@ -420,6 +400,29 @@ public abstract class JaxmppCore {
 
 	protected abstract void onStreamTerminated() throws JaxmppException;
 
+	protected void onUnacknowledged(List<Element> elements) throws JaxmppException {
+		for (Element e : elements) {
+			if (e == null)
+				continue;
+			String to = e.getAttribute("to");
+			String from = e.getAttribute("from");
+
+			e.setAttribute("type", "error");
+			e.setAttribute("to", from);
+			e.setAttribute("from", to);
+
+			Element error = new DefaultElement("error");
+			error.setAttribute("type", "wait");
+			error.addChild(new DefaultElement("recipient-unavailable", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
+
+			e.addChild(error);
+
+			final Runnable r = processor.process(e);
+			if (r != null)
+				execute(r);
+		}
+	}
+
 	public void send(Stanza stanza) throws XMLException, JaxmppException {
 		this.writer.write(stanza);
 	}
@@ -434,14 +437,6 @@ public abstract class JaxmppCore {
 
 	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
 		(this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID, subject, message);
-	}
-
-	public Context getContext() {
-		return context;
-	}
-
-	public EventBus getEventBus() {
-		return eventBus;
 	}
 
 }

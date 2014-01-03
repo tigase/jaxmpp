@@ -27,7 +27,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -47,12 +46,10 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		public static class NonSaslAuthFailedEvent extends JaxmppEvent<NonSaslAuthFailedHandler> {
 
-			public static final EventType<NonSaslAuthFailedHandler> TYPE = new EventType<NonSaslAuthFailedHandler>();
-
 			private ErrorCondition errorCondition;
 
 			public NonSaslAuthFailedEvent(SessionObject sessionObject, ErrorCondition error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.errorCondition = error;
 			}
 
@@ -78,11 +75,10 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		public static class NonSaslAuthStartEvent extends JaxmppEvent<NonSaslAuthStartHandler> {
 
-			public static final EventType<NonSaslAuthStartHandler> TYPE = new EventType<NonSaslAuthStartHandler>();
 			private IQ iq;
 
 			public NonSaslAuthStartEvent(SessionObject sessionObject, IQ iq) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.iq = iq;
 			}
 
@@ -108,10 +104,8 @@ public class NonSaslAuthModule extends AbstractIQModule {
 
 		public static class NonSaslAuthSuccessEvent extends JaxmppEvent<NonSaslAuthSuccessHandler> {
 
-			public static final EventType<NonSaslAuthSuccessHandler> TYPE = new EventType<NonSaslAuthSuccessHandler>();
-
 			public NonSaslAuthSuccessEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override

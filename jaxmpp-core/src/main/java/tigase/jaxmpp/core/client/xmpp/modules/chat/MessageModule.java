@@ -25,7 +25,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
@@ -80,12 +79,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		public static class ChatClosedEvent extends JaxmppEvent<ChatClosedHandler> {
 
-			public static final EventType<ChatClosedHandler> TYPE = new EventType<ChatClosedHandler>();
-
 			private Chat chat;
 
 			public ChatClosedEvent(SessionObject sessionObject, Chat chat) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.chat = chat;
 			}
 
@@ -111,14 +108,12 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		public static class ChatCreatedEvent extends JaxmppEvent<ChatCreatedHandler> {
 
-			public static final EventType<ChatCreatedHandler> TYPE = new EventType<ChatCreatedHandler>();
-
 			private Chat chat;
 
 			private Message message;
 
 			public ChatCreatedEvent(SessionObject sessionObject, Chat chat, Message message) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.chat = chat;
 				this.message = message;
 			}
@@ -153,11 +148,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		public static class ChatUpdatedEvent extends JaxmppEvent<ChatUpdatedHandler> {
 
-			public static final EventType<ChatUpdatedHandler> TYPE = new EventType<ChatUpdatedHandler>();
 			private Chat chat;
 
 			public ChatUpdatedEvent(SessionObject sessionObject, Chat chat) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.chat = chat;
 			}
 
@@ -183,14 +177,12 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		public static class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
 
-			public static final EventType<MessageReceivedHandler> TYPE = new EventType<MessageReceivedHandler>();
-
 			private final Chat chat;
 
 			private final Message stanza;
 
 			public MessageReceivedEvent(SessionObject sessionObject, Message stanza, Chat chat) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = stanza;
 				this.chat = chat;
 			}

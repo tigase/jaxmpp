@@ -30,7 +30,6 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -55,8 +54,6 @@ public class Socks5BytestreamsModule implements XmppModule {
 
 		public static class StreamhostsEvent extends JaxmppEvent<StreamhostsHandler> {
 
-			public static final EventType<StreamhostsHandler> TYPE = new EventType<StreamhostsHandler>();
-
 			private JID from;
 
 			private List<Streamhost> hosts;
@@ -66,7 +63,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 			private String sid;
 
 			public StreamhostsEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override

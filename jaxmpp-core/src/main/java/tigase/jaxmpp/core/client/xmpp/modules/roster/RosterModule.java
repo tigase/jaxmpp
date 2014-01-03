@@ -33,7 +33,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
@@ -66,14 +65,12 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 		public static class ItemAddedEvent extends JaxmppEvent<ItemAddedHandler> {
 
-			public static final EventType<ItemAddedHandler> TYPE = new EventType<ItemAddedHandler>();
-
 			private RosterItem item;
 
 			private Set<String> modifiedGroups;
 
 			public ItemAddedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.item = currentItem;
 				this.modifiedGroups = modifiedGroups;
 			}
@@ -108,14 +105,12 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 		public static class ItemRemovedEvent extends JaxmppEvent<ItemRemovedHandler> {
 
-			public static final EventType<ItemRemovedHandler> TYPE = new EventType<ItemRemovedHandler>();
-
 			private RosterItem item;
 
 			private Set<String> modifiedGroups;
 
 			public ItemRemovedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.item = currentItem;
 				this.modifiedGroups = modifiedGroups;
 			}
@@ -150,8 +145,6 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 		public static class ItemUpdatedEvent extends JaxmppEvent<ItemUpdatedHandler> {
 
-			public static final EventType<ItemUpdatedHandler> TYPE = new EventType<ItemUpdatedHandler>();
-
 			private Action action;
 
 			private RosterItem item;
@@ -160,7 +153,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 			public ItemUpdatedEvent(SessionObject sessionObject, RosterItem currentItem, Action action,
 					Set<String> modifiedGroups) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.item = currentItem;
 				this.action = action;
 				this.modifiedGroups = modifiedGroups;

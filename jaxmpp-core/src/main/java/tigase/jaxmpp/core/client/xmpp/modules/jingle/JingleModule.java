@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -49,8 +48,6 @@ public class JingleModule implements XmppModule {
 
 		public static class JingleSessionAcceptEvent extends JaxmppEvent<JingleSessionAcceptHandler> {
 
-			public static final EventType<JingleSessionAcceptHandler> TYPE = new EventType<JingleSessionAcceptHandler>();
-
 			private Element description;
 
 			private MutableBoolean handled;
@@ -63,7 +60,7 @@ public class JingleModule implements XmppModule {
 
 			public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
 					List<Transport> transports, MutableBoolean handled) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sender = sender;
 				this.sid = sid;
 				this.description = description;
@@ -126,8 +123,6 @@ public class JingleModule implements XmppModule {
 
 		public static class JingleSessionInfoEvent extends JaxmppEvent<JingleSessionInfoHandler> {
 
-			public static final EventType<JingleSessionInfoHandler> TYPE = new EventType<JingleSessionInfoHandler>();
-
 			private List<Element> content;
 
 			private MutableBoolean handled;
@@ -138,7 +133,7 @@ public class JingleModule implements XmppModule {
 
 			public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content,
 					MutableBoolean handled) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sender = sender;
 				this.sid = sid;
 				this.content = content;
@@ -192,8 +187,6 @@ public class JingleModule implements XmppModule {
 
 		public static class JingleSessionInitiationEvent extends JaxmppEvent<JingleSessionInitiationHandler> {
 
-			public static final EventType<JingleSessionInitiationHandler> TYPE = new EventType<JingleSessionInitiationHandler>();
-
 			private Element description;
 
 			private MutableBoolean handled;
@@ -206,7 +199,7 @@ public class JingleModule implements XmppModule {
 
 			public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid, Element description,
 					List<Transport> transports, MutableBoolean handled) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sender = sender;
 				this.sid = sid;
 				this.description = description;
@@ -269,8 +262,6 @@ public class JingleModule implements XmppModule {
 
 		public static class JingleSessionTerminateEvent extends JaxmppEvent<JingleSessionTerminateHandler> {
 
-			public static final EventType<JingleSessionTerminateHandler> TYPE = new EventType<JingleSessionTerminateHandler>();
-
 			private MutableBoolean handled;
 
 			private JID sender;
@@ -278,7 +269,7 @@ public class JingleModule implements XmppModule {
 			private String sid;
 
 			public JingleSessionTerminateEvent(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sender = sender;
 				this.sid = sid;
 				this.handled = handled;
@@ -322,8 +313,6 @@ public class JingleModule implements XmppModule {
 
 		public static class JingleTransportInfoEvent extends JaxmppEvent<JingleTransportInfoHandler> {
 
-			public static final EventType<JingleTransportInfoHandler> TYPE = new EventType<JingleTransportInfoHandler>();
-
 			private Element content;
 
 			private MutableBoolean handled;
@@ -334,7 +323,7 @@ public class JingleModule implements XmppModule {
 
 			public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content,
 					MutableBoolean handled) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.sender = sender;
 				this.sid = sid;
 				this.content = content;

@@ -25,7 +25,6 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -45,10 +44,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		public static class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
 
-			public static final EventType<NotSupportedErrorHandler> TYPE = new EventType<NotSupportedErrorHandler>();
-
 			public NotSupportedErrorEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -65,14 +62,12 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		public static class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
 
-			public static final EventType<ReceivedErrorHandler> TYPE = new EventType<ReceivedErrorHandler>();
-
 			private ErrorCondition errorCondition;
 
 			private IQ responseStanza;
 
 			public ReceivedErrorEvent(SessionObject sessionObject, IQ responseStanza, ErrorCondition error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.responseStanza = responseStanza;
 				this.errorCondition = error;
 			}
@@ -107,11 +102,10 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		public static class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
 
-			public static final EventType<ReceivedRequestedFieldsHandler> TYPE = new EventType<ReceivedRequestedFieldsHandler>();
 			private IQ responseStanza;
 
 			public ReceivedRequestedFieldsEvent(SessionObject sessionObject, IQ responseStanza) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.responseStanza = responseStanza;
 			}
 
@@ -137,10 +131,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		public static class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
 
-			public static final EventType<ReceivedTimeoutHandler> TYPE = new EventType<ReceivedTimeoutHandler>();
-
 			public ReceivedTimeoutEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override

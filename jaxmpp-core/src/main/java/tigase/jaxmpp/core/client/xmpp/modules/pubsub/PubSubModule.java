@@ -31,7 +31,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -152,17 +151,22 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 		public static class NotificationReceivedEvent extends JaxmppEvent<NotificationReceivedHandler> {
 
-			public static final EventType<NotificationReceivedHandler> TYPE = new EventType<NotificationReceivedHandler>();
 			private Date delayTime;
+
 			private String itemId;
+
 			private String itemType;
+
 			private Message message;
+
 			private String nodeName;
+
 			private Element payload;
+
 			private JID pubSubJID;
 
 			public NotificationReceivedEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -445,7 +449,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void addNotificationReceivedHandler(NotificationReceivedHandler handler) {
-		context.getEventBus().addHandler(NotificationReceivedHandler.NotificationReceivedEvent.TYPE, this, handler);
+		context.getEventBus().addHandler(NotificationReceivedHandler.NotificationReceivedEvent.class, this, handler);
 	}
 
 	/**
@@ -1050,7 +1054,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	public void removeNotificationReceivedHandler(NotificationReceivedHandler handler) {
-		context.getEventBus().remove(NotificationReceivedHandler.NotificationReceivedEvent.TYPE, handler);
+		context.getEventBus().remove(NotificationReceivedHandler.NotificationReceivedEvent.class, handler);
 	}
 
 	/**

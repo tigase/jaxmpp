@@ -11,7 +11,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -32,14 +31,13 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 
 		public static class CarbonReceivedEvent extends JaxmppEvent<CarbonReceivedHandler> {
 
-			public static final EventType<CarbonReceivedHandler> TYPE = new EventType<CarbonReceivedHandler>();
 			private CarbonEventType carbonType;
 			private Chat chat;
 			private Message encapsulatedMessage;
 
 			public CarbonReceivedEvent(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage,
 					Chat chat) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.carbonType = carbonType;
 				this.encapsulatedMessage = encapsulatedMessage;
 				this.chat = chat;

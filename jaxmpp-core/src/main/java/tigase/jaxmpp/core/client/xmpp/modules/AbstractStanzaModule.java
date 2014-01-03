@@ -26,7 +26,6 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.EventListener;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -48,12 +47,12 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 		this.context = context;
 	}
 
-	public <H extends EventHandler> void addListener(EventListener listener) {
-		context.getEventBus().addListener(listener);
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
+		context.getEventBus().addListener(type, listener);
 	}
 
-	public <H extends EventHandler> void addListener(EventType<H> type, EventListener listener) {
-		context.getEventBus().addListener(type, listener);
+	public <H extends EventHandler> void addListener(EventListener listener) {
+		context.getEventBus().addListener(listener);
 	}
 
 	protected void fireEvent(Event<?> event) {
@@ -75,12 +74,12 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	 */
 	public abstract void process(T stanza) throws JaxmppException;
 
-	public void remove(EventHandler handler) {
-		context.getEventBus().remove(handler);
+	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
+		context.getEventBus().remove(type, handler);
 	}
 
-	public void remove(EventType<?> type, EventHandler handler) {
-		context.getEventBus().remove(type, handler);
+	public void remove(EventHandler handler) {
+		context.getEventBus().remove(handler);
 	}
 
 	protected void write(Element stanza) throws JaxmppException {

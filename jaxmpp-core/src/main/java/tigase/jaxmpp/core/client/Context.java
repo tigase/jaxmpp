@@ -4,9 +4,9 @@ import tigase.jaxmpp.core.client.eventbus.EventBus;
 
 public interface Context {
 
-	SessionObject getSessionObject();
-
 	EventBus getEventBus();
+
+	SessionObject getSessionObject();
 
 	PacketWriter getWriter();
 

@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -51,11 +50,10 @@ public class ResourceBinderModule implements XmppModule {
 
 		public static class ResourceBindErrorEvent extends JaxmppEvent<ResourceBindErrorHandler> {
 
-			public static final EventType<ResourceBindErrorHandler> TYPE = new EventType<ResourceBindErrorHandler>();
 			private ErrorCondition error;
 
 			public ResourceBindErrorEvent(SessionObject sessionObject, ErrorCondition error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.error = error;
 			}
 
@@ -84,11 +82,10 @@ public class ResourceBinderModule implements XmppModule {
 
 		public static class ResourceBindSuccessEvent extends JaxmppEvent<ResourceBindSuccessHandler> {
 
-			public static final EventType<ResourceBindSuccessHandler> TYPE = new EventType<ResourceBindSuccessHandler>();
 			private JID bindedJid;
 
 			public ResourceBindSuccessEvent(SessionObject sessionObject, JID jid) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.bindedJid = jid;
 			}
 
@@ -130,11 +127,11 @@ public class ResourceBinderModule implements XmppModule {
 	}
 
 	public void addResourceBindErrorHandler(ResourceBindErrorHandler handler) {
-		context.getEventBus().addHandler(ResourceBindErrorHandler.ResourceBindErrorEvent.TYPE, handler);
+		context.getEventBus().addHandler(ResourceBindErrorHandler.ResourceBindErrorEvent.class, handler);
 	}
 
 	public void addResourceBindSuccessHandler(ResourceBindSuccessHandler handler) {
-		context.getEventBus().addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.TYPE, handler);
+		context.getEventBus().addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, handler);
 	}
 
 	public void bind() throws XMLException, JaxmppException {
@@ -201,11 +198,11 @@ public class ResourceBinderModule implements XmppModule {
 	}
 
 	public void removeResourceBindErrorHandler(ResourceBindErrorHandler handler) {
-		context.getEventBus().remove(ResourceBindErrorHandler.ResourceBindErrorEvent.TYPE, handler);
+		context.getEventBus().remove(ResourceBindErrorHandler.ResourceBindErrorEvent.class, handler);
 	}
 
 	public void removeResourceBindSuccessHandler(ResourceBindSuccessHandler handler) {
-		context.getEventBus().remove(ResourceBindSuccessHandler.ResourceBindSuccessEvent.TYPE, handler);
+		context.getEventBus().remove(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, handler);
 	}
 
 }

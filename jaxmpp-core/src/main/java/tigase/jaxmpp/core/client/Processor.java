@@ -85,9 +85,9 @@ public class Processor {
 		}
 	}
 
-	private final XmppModulesManager xmppModulesManages;
-
 	private final Context context;
+
+	private final XmppModulesManager xmppModulesManages;
 
 	public Processor(XmppModulesManager xmppModulesManages, Context context) {
 		this.context = context;

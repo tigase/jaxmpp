@@ -29,7 +29,7 @@ public class PresenceModuleTest extends AbstractJaxmppTest {
 
 		final Set<JID> unavailableContacts = new HashSet<JID>();
 
-		context.getEventBus().addHandler(PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent.TYPE,
+		context.getEventBus().addHandler(PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent.class,
 				new ContactUnavailableHandler() {
 
 					@Override

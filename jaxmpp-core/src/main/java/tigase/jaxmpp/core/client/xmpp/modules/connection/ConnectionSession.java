@@ -22,40 +22,40 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public class ConnectionSession extends DataHolder {
-        
-        private final SessionObject sessionObject;        
-        private final JID peer;
-        private final String sid;
-        private boolean incoming = false;
 
-        protected ConnectionSession(SessionObject sessionObject, JID peer, String sid, boolean tcp) {
-                this.sessionObject = sessionObject;
-                this.peer = peer;
-                this.sid = sid;
-        }
+	private boolean incoming = false;
+	private final JID peer;
+	private final SessionObject sessionObject;
+	private final String sid;
 
-        public void setIncoming(boolean incoming) {
-                this.incoming = incoming;
-        }
-        
-        public boolean isIncoming() {
-                return incoming;
-        }
-        
-        public JID getPeer() {
-                return peer;
-        }
-        
-        public SessionObject getSessionObject() {
-                return sessionObject;
-        }        
-        
-        public String getSid() {
-                return sid;
-        }
-        
+	protected ConnectionSession(SessionObject sessionObject, JID peer, String sid, boolean tcp) {
+		this.sessionObject = sessionObject;
+		this.peer = peer;
+		this.sid = sid;
+	}
+
+	public JID getPeer() {
+		return peer;
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
+	}
+
+	public String getSid() {
+		return sid;
+	}
+
+	public boolean isIncoming() {
+		return incoming;
+	}
+
+	public void setIncoming(boolean incoming) {
+		this.incoming = incoming;
+	}
+
 }

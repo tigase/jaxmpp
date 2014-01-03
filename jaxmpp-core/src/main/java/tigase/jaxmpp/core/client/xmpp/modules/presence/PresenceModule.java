@@ -24,7 +24,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -51,10 +50,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class BeforePresenceSendEvent extends JaxmppEvent<BeforePresenceSendHandler> {
 
-			public static final EventType<BeforePresenceSendHandler> TYPE = new EventType<BeforePresenceSendHandler>();
-
 			public BeforePresenceSendEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -75,8 +72,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class ContactAvailableEvent extends JaxmppEvent<ContactAvailableHandler> {
 
-			public static final EventType<ContactAvailableHandler> TYPE = new EventType<ContactAvailableHandler>();
-
 			private JID jid;
 
 			private Integer priority;
@@ -89,7 +84,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 			public ContactAvailableEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
 					String statusMessage, Integer priority) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = presence;
 				this.jid = jid;
 				this.show = show;
@@ -155,8 +150,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class ContactChangedPresenceEvent extends JaxmppEvent<ContactChangedPresenceHandler> {
 
-			public static final EventType<ContactChangedPresenceHandler> TYPE = new EventType<ContactChangedPresenceHandler>();
-
 			private JID jid;
 
 			private Integer priority;
@@ -169,7 +162,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 			public ContactChangedPresenceEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
 					String statusMessage, Integer priority) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = presence;
 				this.jid = jid;
 				this.show = show;
@@ -236,8 +229,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class ContactUnavailableEvent extends JaxmppEvent<ContactUnavailableHandler> {
 
-			public static final EventType<ContactUnavailableHandler> TYPE = new EventType<ContactUnavailableHandler>();
-
 			private JID jid;
 
 			private Presence stanza;
@@ -245,7 +236,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			private String status;
 
 			public ContactUnavailableEvent(SessionObject sessionObject, Presence presence, JID jid, String statusMessage) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = presence;
 				this.jid = jid;
 				this.status = statusMessage;
@@ -292,14 +283,12 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class ContactUnsubscribedEvent extends JaxmppEvent<ContactUnsubscribedHandler> {
 
-			public static final EventType<ContactUnsubscribedHandler> TYPE = new EventType<ContactUnsubscribedHandler>();
-
 			private BareJID jid;
 
 			private Presence stanza;
 
 			public ContactUnsubscribedEvent(SessionObject sessionObject, Presence presence, BareJID bareJID) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = presence;
 				this.jid = bareJID;
 			}
@@ -337,14 +326,12 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class SubscribeRequestEvent extends JaxmppEvent<SubscribeRequestHandler> {
 
-			public static final EventType<SubscribeRequestHandler> TYPE = new EventType<SubscribeRequestHandler>();
-
 			private BareJID jid;
 
 			private Presence stanza;
 
 			public SubscribeRequestEvent(SessionObject sessionObject, Presence presence, BareJID bareJID) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.stanza = presence;
 				this.jid = bareJID;
 			}

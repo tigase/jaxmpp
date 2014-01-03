@@ -57,12 +57,16 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		this.pubsub = new PubSubModule(context);
 	}
 
+	private Runnable getResponseHandler(Element element) throws JaxmppException {
+		return ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element, context.getWriter());
+	}
+
 	@Override
 	protected void setUp() throws Exception {
 		// TODO Auto-generated method stub
 		super.setUp();
 	}
-	
+
 	@Test
 	public void testDeleteItem() throws XMLException, JaxmppException {
 		final boolean[] check = new boolean[] { false };
@@ -104,10 +108,6 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		org.junit.Assert.assertTrue("Callback not called", check[0]);
 	}
 
-	private Runnable getResponseHandler(Element element) throws JaxmppException {
-		return ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element, context.getWriter());
-	}
-
 	@Test
 	public void testProcess() throws XMLException, JaxmppException, XMPPException {
 		final boolean[] check = new boolean[] { false };
@@ -136,7 +136,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 				tpath.compile("/message/event/items/item[@id='ae890ac52d0df67ed7cfdf51b644e901']/content/value()").evaluate(
 						message));
 
-		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.TYPE,
+		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.class,
 				new PubSubModule.NotificationReceivedHandler() {
 
 					@Override
@@ -442,7 +442,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		unlock.setAttribute("id", "ae890ac52d0df67ed7cfdf51b644e901");
 		items.addChild(unlock);
 
-		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.TYPE,
+		context.getEventBus().addHandler(PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent.class,
 				new PubSubModule.NotificationReceivedHandler() {
 
 					@Override

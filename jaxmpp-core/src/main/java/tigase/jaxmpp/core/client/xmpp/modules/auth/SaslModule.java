@@ -34,7 +34,6 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -52,12 +51,10 @@ public class SaslModule implements XmppModule {
 
 		public static class SaslAuthFailedEvent extends JaxmppEvent<SaslAuthFailedHandler> {
 
-			public static final EventType<SaslAuthFailedHandler> TYPE = new EventType<SaslAuthFailedHandler>();
-
 			private SaslError error;
 
 			public SaslAuthFailedEvent(SessionObject sessionObject, SaslError error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.error = error;
 			}
 
@@ -83,11 +80,10 @@ public class SaslModule implements XmppModule {
 
 		public static class SaslAuthStartEvent extends JaxmppEvent<SaslAuthStartHandler> {
 
-			public static final EventType<SaslAuthStartHandler> TYPE = new EventType<SaslAuthStartHandler>();
 			private String mechanismName;
 
 			public SaslAuthStartEvent(SessionObject sessionObject, String mechanismName) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.mechanismName = mechanismName;
 			}
 
@@ -113,10 +109,8 @@ public class SaslModule implements XmppModule {
 
 		public static class SaslAuthSuccessEvent extends JaxmppEvent<SaslAuthSuccessHandler> {
 
-			public static final EventType<SaslAuthSuccessHandler> TYPE = new EventType<SaslAuthSuccessHandler>();
-
 			public SaslAuthSuccessEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override

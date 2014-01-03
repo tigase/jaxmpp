@@ -15,20 +15,30 @@ import java.util.logging.Logger;
 
 public class DefaultEventBus extends EventBus {
 
-	protected final Map<Object, Map<EventType<?>, List<EventHandler>>> handlers = new HashMap<Object, Map<EventType<?>, List<EventHandler>>>();
+	protected final Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> handlers = new HashMap<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>();
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected boolean throwingExceptionOn = true;
 
 	@Override
-	public <H extends EventHandler> void addHandler(EventType<H> type, H handler) {
+	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
 		doAdd(type, null, handler);
 	}
 
 	@Override
-	public <H extends EventHandler> void addHandler(EventType<H> type, Object source, H handler) {
+	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler) {
 		doAdd(type, source, handler);
+	}
+
+	@Override
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
+		doAdd(type, null, listener);
+	}
+
+	@Override
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source, EventListener listener) {
+		doAdd(type, source, listener);
 	}
 
 	@Override
@@ -36,21 +46,11 @@ public class DefaultEventBus extends EventBus {
 		doAdd(null, null, listener);
 	}
 
-	@Override
-	public <H extends EventHandler> void addListener(EventType<H> type, EventListener listener) {
-		doAdd(type, null, listener);
-	}
-
-	@Override
-	public <H extends EventHandler> void addListener(EventType<H> type, Object source, EventListener listener) {
-		doAdd(type, source, listener);
-	}
-
-	protected void doAdd(EventType<?> type, Object source, EventHandler handler) {
+	protected void doAdd(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
-			Map<EventType<?>, List<EventHandler>> hdlrs = handlers.get(source);
+			Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
 			if (hdlrs == null) {
-				hdlrs = new HashMap<EventType<?>, List<EventHandler>>();
+				hdlrs = new HashMap<Class<? extends Event<?>>, List<EventHandler>>();
 				handlers.put(source, hdlrs);
 			}
 
@@ -64,6 +64,7 @@ public class DefaultEventBus extends EventBus {
 
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void doFire(Event<EventHandler> event, Object source) {
 		if (event == null) {
 			throw new NullPointerException("Cannot fire null event");
@@ -72,10 +73,10 @@ public class DefaultEventBus extends EventBus {
 		setEventSource(event, source);
 
 		final ArrayList<EventHandler> handlers = new ArrayList<EventHandler>();
-		handlers.addAll(getHandlersList(event.getType(), source));
+		handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), source));
 		handlers.addAll(getHandlersList(null, source));
 		if (source != null) {
-			handlers.addAll(getHandlersList(event.getType(), null));
+			handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), null));
 			handlers.addAll(getHandlersList(null, null));
 		}
 
@@ -117,8 +118,8 @@ public class DefaultEventBus extends EventBus {
 		doFire((Event<EventHandler>) event, source);
 	}
 
-	protected Collection<EventHandler> getHandlersList(EventType<?> type, Object source) {
-		final Map<EventType<?>, List<EventHandler>> hdlrs = handlers.get(source);
+	protected Collection<EventHandler> getHandlersList(Class<? extends Event<?>> type, Object source) {
+		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
 		if (hdlrs == null) {
 			return Collections.emptyList();
 		} else {
@@ -135,36 +136,15 @@ public class DefaultEventBus extends EventBus {
 	}
 
 	@Override
-	public void remove(EventHandler handler) {
-		synchronized (this.handlers) {
-			Iterator<Entry<Object, Map<EventType<?>, List<EventHandler>>>> l = this.handlers.entrySet().iterator();
-			while (l.hasNext()) {
-				Map<EventType<?>, List<EventHandler>> eventHandlers = l.next().getValue();
-				Iterator<Entry<EventType<?>, List<EventHandler>>> iterator = eventHandlers.entrySet().iterator();
-				while (iterator.hasNext()) {
-					Entry<EventType<?>, List<EventHandler>> entry = iterator.next();
-					if (entry != null) {
-						entry.getValue().remove(handler);
-						if (entry.getValue().isEmpty())
-							iterator.remove();
-					}
-				}
-				if (eventHandlers.isEmpty())
-					l.remove();
-			}
-		}
-	}
-
-	@Override
-	public void remove(EventType<?> type, EventHandler handler) {
+	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
 		remove(type, null, handler);
 	}
 
 	@Override
-	public void remove(EventType<?> type, Object source, EventHandler handler) {
+	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
 
-			final Map<EventType<?>, List<EventHandler>> hdlrs = handlers.get(source);
+			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
 			if (hdlrs != null) {
 				List<EventHandler> lst = hdlrs.get(type);
 				if (lst != null) {
@@ -176,6 +156,27 @@ public class DefaultEventBus extends EventBus {
 						handlers.remove(source);
 					}
 				}
+			}
+		}
+	}
+
+	@Override
+	public void remove(EventHandler handler) {
+		synchronized (this.handlers) {
+			Iterator<Entry<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>> l = this.handlers.entrySet().iterator();
+			while (l.hasNext()) {
+				Map<Class<? extends Event<?>>, List<EventHandler>> eventHandlers = l.next().getValue();
+				Iterator<Entry<Class<? extends Event<?>>, List<EventHandler>>> iterator = eventHandlers.entrySet().iterator();
+				while (iterator.hasNext()) {
+					Entry<Class<? extends Event<?>>, List<EventHandler>> entry = iterator.next();
+					if (entry != null) {
+						entry.getValue().remove(handler);
+						if (entry.getValue().isEmpty())
+							iterator.remove();
+					}
+				}
+				if (eventHandlers.isEmpty())
+					l.remove();
 			}
 		}
 	}

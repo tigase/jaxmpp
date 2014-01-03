@@ -27,9 +27,9 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
+import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.EventListener;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -49,12 +49,10 @@ public class AuthModule implements XmppModule {
 
 		public static class AuthFailedEvent extends JaxmppEvent<AuthFailedHandler> {
 
-			public static final EventType<AuthFailedHandler> TYPE = new EventType<AuthFailedHandler>();
-
 			private SaslError error;
 
 			public AuthFailedEvent(SessionObject sessionObject, SaslError error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.error = error;
 			}
 
@@ -80,10 +78,8 @@ public class AuthModule implements XmppModule {
 
 		public static class AuthStartEvent extends JaxmppEvent<AuthStartHandler> {
 
-			public static final EventType<AuthStartHandler> TYPE = new EventType<AuthStartHandler>();
-
 			public AuthStartEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -100,10 +96,8 @@ public class AuthModule implements XmppModule {
 
 		public static class AuthSuccessEvent extends JaxmppEvent<AuthSuccessHandler> {
 
-			public static final EventType<AuthSuccessHandler> TYPE = new EventType<AuthSuccessHandler>();
-
 			public AuthSuccessEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -165,7 +159,7 @@ public class AuthModule implements XmppModule {
 		this.moduleManager = modulesManager;
 		this.log = Logger.getLogger(this.getClass().getName());
 
-		context.getEventBus().addHandler(SaslModule.SaslAuthFailedHandler.SaslAuthFailedEvent.TYPE,
+		context.getEventBus().addHandler(SaslModule.SaslAuthFailedHandler.SaslAuthFailedEvent.class,
 				new SaslModule.SaslAuthFailedHandler() {
 
 					@Override
@@ -174,7 +168,7 @@ public class AuthModule implements XmppModule {
 								new AuthFailedHandler.AuthFailedEvent(AuthModule.this.context.getSessionObject(), error));
 					}
 				});
-		context.getEventBus().addHandler(SaslModule.SaslAuthStartHandler.SaslAuthStartEvent.TYPE,
+		context.getEventBus().addHandler(SaslModule.SaslAuthStartHandler.SaslAuthStartEvent.class,
 				new SaslModule.SaslAuthStartHandler() {
 
 					@Override
@@ -183,7 +177,7 @@ public class AuthModule implements XmppModule {
 								new AuthStartHandler.AuthStartEvent(AuthModule.this.context.getSessionObject()));
 					}
 				});
-		context.getEventBus().addHandler(SaslModule.SaslAuthSuccessHandler.SaslAuthSuccessEvent.TYPE,
+		context.getEventBus().addHandler(SaslModule.SaslAuthSuccessHandler.SaslAuthSuccessEvent.class,
 				new SaslModule.SaslAuthSuccessHandler() {
 
 					@Override
@@ -193,7 +187,7 @@ public class AuthModule implements XmppModule {
 					}
 				});
 
-		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthFailedHandler.NonSaslAuthFailedEvent.TYPE,
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthFailedHandler.NonSaslAuthFailedEvent.class,
 				new NonSaslAuthModule.NonSaslAuthFailedHandler() {
 
 					@Override
@@ -210,7 +204,7 @@ public class AuthModule implements XmppModule {
 								new AuthFailedHandler.AuthFailedEvent(AuthModule.this.context.getSessionObject(), error));
 					}
 				});
-		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthStartHandler.NonSaslAuthStartEvent.TYPE,
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthStartHandler.NonSaslAuthStartEvent.class,
 				new NonSaslAuthModule.NonSaslAuthStartHandler() {
 
 					@Override
@@ -219,7 +213,7 @@ public class AuthModule implements XmppModule {
 								new AuthStartHandler.AuthStartEvent(AuthModule.this.context.getSessionObject()));
 					}
 				});
-		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthSuccessHandler.NonSaslAuthSuccessEvent.TYPE,
+		context.getEventBus().addHandler(NonSaslAuthModule.NonSaslAuthSuccessHandler.NonSaslAuthSuccessEvent.class,
 				new NonSaslAuthModule.NonSaslAuthSuccessHandler() {
 
 					@Override
@@ -231,23 +225,23 @@ public class AuthModule implements XmppModule {
 	}
 
 	public void addAuthFailedHandler(AuthFailedHandler handler) {
-		context.getEventBus().addHandler(AuthFailedHandler.AuthFailedEvent.TYPE, handler);
+		context.getEventBus().addHandler(AuthFailedHandler.AuthFailedEvent.class, handler);
 	}
 
 	public void addAuthStartHandler(AuthStartHandler handler) {
-		context.getEventBus().addHandler(AuthStartHandler.AuthStartEvent.TYPE, handler);
+		context.getEventBus().addHandler(AuthStartHandler.AuthStartEvent.class, handler);
 	}
 
 	public void addAuthSuccessHandler(AuthSuccessHandler handler) {
-		context.getEventBus().addHandler(AuthSuccessHandler.AuthSuccessEvent.TYPE, handler);
+		context.getEventBus().addHandler(AuthSuccessHandler.AuthSuccessEvent.class, handler);
+	}
+
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
+		context.getEventBus().addListener(type, listener);
 	}
 
 	public <H extends EventHandler> void addListener(EventListener listener) {
 		context.getEventBus().addListener(listener);
-	}
-
-	public <H extends EventHandler> void addListener(EventType<H> type, EventListener listener) {
-		context.getEventBus().addListener(type, listener);
 	}
 
 	@Override
@@ -294,24 +288,24 @@ public class AuthModule implements XmppModule {
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 	}
 
+	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
+		context.getEventBus().remove(type, handler);
+	}
+
 	public void remove(EventHandler handler) {
 		context.getEventBus().remove(handler);
 	}
 
-	public void remove(EventType<?> type, EventHandler handler) {
-		context.getEventBus().remove(type, handler);
-	}
-
 	public void removeAuthFailedHandler(AuthFailedHandler handler) {
-		context.getEventBus().remove(AuthFailedHandler.AuthFailedEvent.TYPE, handler);
+		context.getEventBus().remove(AuthFailedHandler.AuthFailedEvent.class, handler);
 	}
 
 	public void removeAuthStartHandler(AuthStartHandler handler) {
-		context.getEventBus().remove(AuthStartHandler.AuthStartEvent.TYPE, handler);
+		context.getEventBus().remove(AuthStartHandler.AuthStartEvent.class, handler);
 	}
 
 	public void removeAuthSuccessHandler(AuthSuccessHandler handler) {
-		context.getEventBus().remove(AuthSuccessHandler.AuthSuccessEvent.TYPE, handler);
+		context.getEventBus().remove(AuthSuccessHandler.AuthSuccessEvent.class, handler);
 	}
 
 }

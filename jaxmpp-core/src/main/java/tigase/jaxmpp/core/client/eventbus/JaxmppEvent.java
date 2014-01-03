@@ -6,8 +6,7 @@ public abstract class JaxmppEvent<H extends EventHandler> extends Event<H> {
 
 	protected final SessionObject sessionObject;
 
-	protected JaxmppEvent(EventType<H> type, SessionObject sessionObject) {
-		super(type);
+	protected JaxmppEvent(SessionObject sessionObject) {
 		this.sessionObject = sessionObject;
 	}
 

@@ -27,7 +27,6 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventType;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
@@ -47,12 +46,10 @@ public class SessionEstablishmentModule implements XmppModule {
 
 		public static class SessionEstablishmentErrorEvent extends JaxmppEvent<SessionEstablishmentErrorHandler> {
 
-			public static final EventType<SessionEstablishmentErrorHandler> TYPE = new EventType<SessionEstablishmentErrorHandler>();
-
 			private ErrorCondition error;
 
 			public SessionEstablishmentErrorEvent(SessionObject sessionObject, ErrorCondition error) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 				this.error = error;
 			}
 
@@ -78,10 +75,8 @@ public class SessionEstablishmentModule implements XmppModule {
 
 		public static class SessionEstablishmentSuccessEvent extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
 
-			public static final EventType<SessionEstablishmentSuccessHandler> TYPE = new EventType<SessionEstablishmentSuccessHandler>();
-
 			public SessionEstablishmentSuccessEvent(SessionObject sessionObject) {
-				super(TYPE, sessionObject);
+				super(sessionObject);
 			}
 
 			@Override
@@ -112,11 +107,11 @@ public class SessionEstablishmentModule implements XmppModule {
 	}
 
 	public void addSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.TYPE, handler);
+		context.getEventBus().addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
 	}
 
 	public void addSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.TYPE, handler);
+		context.getEventBus().addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
 	public void establish() throws XMLException, JaxmppException {
@@ -169,11 +164,11 @@ public class SessionEstablishmentModule implements XmppModule {
 	}
 
 	public void removeSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
-		context.getEventBus().remove(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.TYPE, handler);
+		context.getEventBus().remove(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
 	}
 
 	public void removeSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.TYPE, handler);
+		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
 }

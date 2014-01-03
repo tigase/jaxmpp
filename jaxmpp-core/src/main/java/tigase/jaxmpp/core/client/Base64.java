@@ -114,18 +114,6 @@ public class Base64 {
 		return buffer;
 	}
 
-	private static int findNexIt(String s, int i) {
-		final int sl = s.length() - 1;
-		int c2;
-		if (i >= sl)
-			return i;
-		do {
-			c2 = ALPHABET_1[s.charAt(++i)];
-		} while (c2 == -1 && i < sl);
-
-		return i;
-	}
-
 	/**
 	 * Translates the specified byte array into Base64 string.
 	 * 
@@ -157,5 +145,17 @@ public class Base64 {
 			output[--a] = '=';
 		}
 		return new String(output);
+	}
+
+	private static int findNexIt(String s, int i) {
+		final int sl = s.length() - 1;
+		int c2;
+		if (i >= sl)
+			return i;
+		do {
+			c2 = ALPHABET_1[s.charAt(++i)];
+		} while (c2 == -1 && i < sl);
+
+		return i;
 	}
 }
