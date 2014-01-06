@@ -53,7 +53,7 @@ public class StreamFeaturesModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(StreamFeaturesReceivedHandler handler) {
+			protected void dispatch(StreamFeaturesReceivedHandler handler) throws JaxmppException {
 				handler.onStreamFeaturesReceived(sessionObject, featuresElement);
 			}
 
@@ -67,7 +67,7 @@ public class StreamFeaturesModule implements XmppModule {
 
 		}
 
-		void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement);
+		void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException;
 	}
 
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),

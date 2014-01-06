@@ -54,7 +54,7 @@ public class SessionEstablishmentModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(SessionEstablishmentErrorHandler handler) {
+			protected void dispatch(SessionEstablishmentErrorHandler handler) throws JaxmppException {
 				handler.onSessionEstablishmentError(sessionObject, error);
 			}
 
@@ -68,7 +68,7 @@ public class SessionEstablishmentModule implements XmppModule {
 
 		}
 
-		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error);
+		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException;
 	}
 
 	public interface SessionEstablishmentSuccessHandler extends EventHandler {
@@ -80,13 +80,13 @@ public class SessionEstablishmentModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(SessionEstablishmentSuccessHandler handler) {
+			protected void dispatch(SessionEstablishmentSuccessHandler handler) throws JaxmppException {
 				handler.onSessionEstablishmentSuccess(sessionObject);
 			}
 
 		}
 
-		void onSessionEstablishmentSuccess(SessionObject sessionObject);
+		void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	public static final String SESSION_ESTABLISHED = "jaxmpp#sessionEstablished";

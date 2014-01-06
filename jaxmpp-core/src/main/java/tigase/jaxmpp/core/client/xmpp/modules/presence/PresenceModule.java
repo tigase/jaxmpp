@@ -28,6 +28,7 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.BeforePresenceSendHandler.BeforePresenceSendEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactAvailableHandler.ContactAvailableEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactChangedPresenceHandler.ContactChangedPresenceEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent;
@@ -50,18 +51,29 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 		public static class BeforePresenceSendEvent extends JaxmppEvent<BeforePresenceSendHandler> {
 
-			public BeforePresenceSendEvent(SessionObject sessionObject) {
+			private Presence presence;
+
+			public BeforePresenceSendEvent(SessionObject sessionObject, Presence presence) {
 				super(sessionObject);
+				this.presence = presence;
 			}
 
 			@Override
-			protected void dispatch(BeforePresenceSendHandler handler) {
-				handler.onBeforePresenceSend(sessionObject);
+			protected void dispatch(BeforePresenceSendHandler handler) throws JaxmppException {
+				handler.onBeforePresenceSend(sessionObject, presence);
+			}
+
+			public Presence getPresence() {
+				return presence;
+			}
+
+			public void setPresence(Presence presence) {
+				this.presence = presence;
 			}
 
 		}
 
-		void onBeforePresenceSend(SessionObject sessionObject);
+		void onBeforePresenceSend(SessionObject sessionObject, Presence presence) throws JaxmppException;
 	}
 
 	/**
@@ -93,7 +105,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			}
 
 			@Override
-			protected void dispatch(ContactAvailableHandler handler) {
+			protected void dispatch(ContactAvailableHandler handler) throws JaxmppException {
 				handler.onContactAvailable(sessionObject, stanza, jid, show, status, priority);
 			}
 
@@ -140,7 +152,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		}
 
 		void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
-				Integer priority);
+				Integer priority) throws JaxmppException;
 	}
 
 	/**
@@ -171,7 +183,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 			}
 
 			@Override
-			protected void dispatch(ContactChangedPresenceHandler handler) {
+			protected void dispatch(ContactChangedPresenceHandler handler) throws JaxmppException {
 				handler.onContactChangedPresence(sessionObject, stanza, jid, show, status, priority);
 			}
 
@@ -218,7 +230,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		}
 
 		void onContactChangedPresence(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
-				Integer priority);
+				Integer priority) throws JaxmppException;
 	}
 
 	/**
@@ -380,6 +392,30 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		});
 	}
 
+	public void addBeforePresenceSendHandler(BeforePresenceSendHandler handler) {
+		context.getEventBus().addHandler(BeforePresenceSendHandler.BeforePresenceSendEvent.class, handler);
+	}
+
+	public void addContactAvailableHandler(ContactAvailableHandler handler) {
+		context.getEventBus().addHandler(ContactAvailableHandler.ContactAvailableEvent.class, handler);
+	}
+
+	public void addContactChangedPresenceHandler(ContactChangedPresenceHandler handler) {
+		context.getEventBus().addHandler(ContactChangedPresenceHandler.ContactChangedPresenceEvent.class, handler);
+	}
+
+	public void addContactUnavailableHandler(ContactUnavailableHandler handler) {
+		context.getEventBus().addHandler(ContactUnavailableHandler.ContactUnavailableEvent.class, handler);
+	}
+
+	public void addContactUnsubscribedHandler(ContactUnsubscribedHandler handler) {
+		context.getEventBus().addHandler(ContactUnsubscribedHandler.ContactUnsubscribedEvent.class, handler);
+	}
+
+	public void addSubscribeRequestHandler(SubscribeRequestHandler handler) {
+		context.getEventBus().addHandler(SubscribeRequestHandler.SubscribeRequestEvent.class, handler);
+	}
+
 	protected void contactOffline(Presence i, final JID jid) throws JaxmppException {
 		fireEvent(new ContactUnavailableEvent(context.getSessionObject(), i, jid, null));
 	}
@@ -438,12 +474,38 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		}
 	}
 
+	public void removeBeforePresenceSendHandler(BeforePresenceSendHandler handler) {
+		context.getEventBus().remove(BeforePresenceSendHandler.BeforePresenceSendEvent.class, handler);
+	}
+
+	public void removeContactAvailableHandler(ContactAvailableHandler handler) {
+		context.getEventBus().remove(ContactAvailableHandler.ContactAvailableEvent.class, handler);
+	}
+
+	public void removeContactChangedPresenceHandler(ContactChangedPresenceHandler handler) {
+		context.getEventBus().remove(ContactChangedPresenceHandler.ContactChangedPresenceEvent.class, handler);
+	}
+
+	public void removeContactUnavailableHandler(ContactUnavailableHandler handler) {
+		context.getEventBus().remove(ContactUnavailableHandler.ContactUnavailableEvent.class, handler);
+	}
+
+	public void removeContactUnsubscribedHandler(ContactUnsubscribedHandler handler) {
+		context.getEventBus().remove(ContactUnsubscribedHandler.ContactUnsubscribedEvent.class, handler);
+	}
+
+	public void removeSubscribeRequestHandler(SubscribeRequestHandler handler) {
+		context.getEventBus().remove(SubscribeRequestHandler.SubscribeRequestEvent.class, handler);
+	}
+
 	public void sendInitialPresence() throws XMLException, JaxmppException {
 		Presence presence = Presence.create();
 
 		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
+
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence));
 
 		write(presence);
 	}
@@ -466,6 +528,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
+
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence));
 
 		write(presence);
 	}

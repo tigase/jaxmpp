@@ -291,6 +291,22 @@ public class StreamManagementModule implements XmppModule {
 
 	}
 
+	public void addStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
+		this.context.getEventBus().addHandler(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
+	}
+
+	public void addStreamManagementFailedHandler(StreamManagementFailedHandler handler) {
+		this.context.getEventBus().addHandler(StreamManagementFailedHandler.StreamManagementFailedEvent.class, handler);
+	}
+
+	public void addStreamResumedHandler(StreamResumedHandler handler) {
+		this.context.getEventBus().addHandler(StreamResumedHandler.StreamResumedEvent.class, handler);
+	}
+
+	public void addUnacknowledgedHandler(UnacknowledgedHandler handler) {
+		this.context.getEventBus().addHandler(UnacknowledgedHandler.UnacknowledgedEvent.class, handler);
+	}
+
 	/**
 	 * Client enables stream management.
 	 */
@@ -490,6 +506,22 @@ public class StreamManagementModule implements XmppModule {
 
 		StreamManagementEnabledEvent event = new StreamManagementEnabledEvent(context.getSessionObject(), resume, id);
 		context.getEventBus().fire(event);
+	}
+
+	public void removeStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
+		this.context.getEventBus().remove(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
+	}
+
+	public void removeStreamManagementFailedHandler(StreamManagementFailedHandler handler) {
+		this.context.getEventBus().remove(StreamManagementFailedHandler.StreamManagementFailedEvent.class, handler);
+	}
+
+	public void removeStreamResumedHandler(StreamResumedHandler handler) {
+		this.context.getEventBus().remove(StreamResumedHandler.StreamResumedEvent.class, handler);
+	}
+
+	public void removeUnacknowledgedHandler(UnacknowledgedHandler handler) {
+		this.context.getEventBus().remove(UnacknowledgedHandler.UnacknowledgedEvent.class, handler);
 	}
 
 	/**

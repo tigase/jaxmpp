@@ -15,11 +15,15 @@ import java.util.logging.Logger;
 
 public class DefaultEventBus extends EventBus {
 
-	protected final Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> handlers = new HashMap<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>();
+	protected final Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> handlers;
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected boolean throwingExceptionOn = true;
+
+	public DefaultEventBus() {
+		this.handlers = createMainHandlersMap();
+	}
 
 	@Override
 	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
@@ -46,17 +50,29 @@ public class DefaultEventBus extends EventBus {
 		doAdd(null, null, listener);
 	}
 
+	protected List<EventHandler> createHandlersArray() {
+		return new ArrayList<EventHandler>();
+	}
+
+	protected Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> createMainHandlersMap() {
+		return new HashMap<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>();
+	}
+
+	protected Map<Class<? extends Event<?>>, List<EventHandler>> createTypeHandlersMap() {
+		return new HashMap<Class<? extends Event<?>>, List<EventHandler>>();
+	}
+
 	protected void doAdd(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
 			Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
 			if (hdlrs == null) {
-				hdlrs = new HashMap<Class<? extends Event<?>>, List<EventHandler>>();
+				hdlrs = createTypeHandlersMap();
 				handlers.put(source, hdlrs);
 			}
 
 			List<EventHandler> lst = hdlrs.get(type);
 			if (lst == null) {
-				lst = new ArrayList<EventHandler>();
+				lst = createHandlersArray();
 				hdlrs.put(type, lst);
 			}
 			lst.add(handler);
@@ -71,15 +87,15 @@ public class DefaultEventBus extends EventBus {
 		}
 
 		setEventSource(event, source);
-
 		final ArrayList<EventHandler> handlers = new ArrayList<EventHandler>();
-		handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), source));
-		handlers.addAll(getHandlersList(null, source));
-		if (source != null) {
-			handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), null));
-			handlers.addAll(getHandlersList(null, null));
+		synchronized (this.handlers) {
+			handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), source));
+			handlers.addAll(getHandlersList(null, source));
+			if (source != null) {
+				handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), null));
+				handlers.addAll(getHandlersList(null, null));
+			}
 		}
-
 		doFire(event, source, handlers);
 	}
 
@@ -143,7 +159,6 @@ public class DefaultEventBus extends EventBus {
 	@Override
 	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
-
 			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
 			if (hdlrs != null) {
 				List<EventHandler> lst = hdlrs.get(type);

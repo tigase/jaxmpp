@@ -67,8 +67,8 @@ public class Socks5BytestreamsModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(StreamhostsHandler handler) {
-				handler.onACTION(sessionObject);
+			protected void dispatch(StreamhostsHandler handler) throws JaxmppException {
+				handler.onStreamhostsHandler(sessionObject, from, id, sid, hosts);
 			}
 
 			public JID getFrom() {
@@ -105,7 +105,8 @@ public class Socks5BytestreamsModule implements XmppModule {
 
 		}
 
-		void onACTION(SessionObject sessionObject);
+		void onStreamhostsHandler(SessionObject sessionObject, JID from, String id, String sid, List<Streamhost> hosts)
+				throws JaxmppException;
 	}
 
 	public static final String XMLNS_BS = "http://jabber.org/protocol/bytestreams";

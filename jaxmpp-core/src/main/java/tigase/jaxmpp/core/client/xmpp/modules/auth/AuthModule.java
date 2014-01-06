@@ -57,7 +57,7 @@ public class AuthModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(AuthFailedHandler handler) {
+			protected void dispatch(AuthFailedHandler handler) throws JaxmppException {
 				handler.onAuthFailed(sessionObject, error);
 			}
 
@@ -71,7 +71,7 @@ public class AuthModule implements XmppModule {
 
 		}
 
-		void onAuthFailed(SessionObject sessionObject, SaslError error);
+		void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException;
 	}
 
 	public interface AuthStartHandler extends EventHandler {
@@ -101,13 +101,13 @@ public class AuthModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(AuthSuccessHandler handler) {
+			protected void dispatch(AuthSuccessHandler handler) throws JaxmppException {
 				handler.onAuthSuccess(sessionObject);
 			}
 
 		}
 
-		void onAuthSuccess(SessionObject sessionObject);
+		void onAuthSuccess(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	public static class DefaultCredentialsCallback implements CredentialsCallback {

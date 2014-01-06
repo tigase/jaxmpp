@@ -34,6 +34,41 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class DiscoveryModule extends AbstractIQModule {
 
+	public static class DefaultNodeDetailsCallback implements NodeDetailsCallback {
+
+		private DiscoveryModule discoveryModule;
+
+		public DefaultNodeDetailsCallback(DiscoveryModule discoveryModule) {
+			super();
+			this.discoveryModule = discoveryModule;
+		}
+
+		@Override
+		public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) {
+			return discoveryModule.modulesManager.getAvailableFeatures().toArray(new String[] {});
+		}
+
+		@Override
+		public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) {
+			Identity identity = new Identity();
+
+			String category = sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
+			String type = sessionObject.getProperty(IDENTITY_TYPE_KEY);
+			String nme = sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
+			identity.setCategory(category == null ? "client" : category);
+			identity.setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
+			identity.setType(type == null ? "pc" : type);
+
+			return identity;
+		}
+
+		@Override
+		public Item[] getItems(SessionObject sessionObject, IQ requestStanza, String node) {
+			return null;
+		}
+
+	}
+
 	public static abstract class DiscoInfoAsyncCallback implements AsyncCallback {
 
 		private String requestedNode;
@@ -203,32 +238,7 @@ public class DiscoveryModule extends AbstractIQModule {
 
 	private final XmppModulesManager modulesManager;
 
-	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new NodeDetailsCallback() {
-
-		@Override
-		public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) {
-			return DiscoveryModule.this.modulesManager.getAvailableFeatures().toArray(new String[] {});
-		}
-
-		@Override
-		public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) {
-			Identity identity = new Identity();
-
-			String category = sessionObject.getProperty(IDENTITY_CATEGORY_KEY);
-			String type = sessionObject.getProperty(IDENTITY_TYPE_KEY);
-			String nme = sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
-			identity.setCategory(category == null ? "client" : category);
-			identity.setName(nme == null ? SoftwareVersionModule.DEFAULT_NAME_VAL : nme);
-			identity.setType(type == null ? "pc" : type);
-
-			return identity;
-		}
-
-		@Override
-		public Item[] getItems(SessionObject sessionObject, IQ requestStanza, String node) {
-			return null;
-		}
-	};
+	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new DefaultNodeDetailsCallback(this);
 
 	public DiscoveryModule(Context context, XmppModulesManager modulesManager) {
 		super(context);

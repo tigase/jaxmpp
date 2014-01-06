@@ -49,13 +49,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			}
 
 			@Override
-			protected void dispatch(NotSupportedErrorHandler handler) {
+			protected void dispatch(NotSupportedErrorHandler handler) throws JaxmppException {
 				handler.onNotSupportedError(sessionObject);
 			}
 
 		}
 
-		void onNotSupportedError(SessionObject sessionObject);
+		void onNotSupportedError(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	public interface ReceivedErrorHandler extends EventHandler {
@@ -73,7 +73,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			}
 
 			@Override
-			protected void dispatch(ReceivedErrorHandler handler) {
+			protected void dispatch(ReceivedErrorHandler handler) throws JaxmppException {
 				handler.onReceivedError(sessionObject, responseStanza, errorCondition);
 			}
 
@@ -95,7 +95,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		}
 
-		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition);
+		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
+				throws JaxmppException;
 	}
 
 	public interface ReceivedRequestedFieldsHandler extends EventHandler {
@@ -136,13 +137,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			}
 
 			@Override
-			protected void dispatch(ReceivedTimeoutHandler handler) {
+			protected void dispatch(ReceivedTimeoutHandler handler) throws JaxmppException {
 				handler.onReceivedTimeout(sessionObject);
 			}
 
 		}
 
-		void onReceivedTimeout(SessionObject sessionObject);
+		void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	public static final String IN_BAND_REGISTRATION_MODE_KEY = "IN_BAND_REGISTRATION_MODE_KEY";
@@ -162,6 +163,22 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 	public InBandRegistrationModule(Context context) {
 		super(context);
+	}
+
+	public void addNotSupportedErrorHandler(NotSupportedErrorHandler handler) {
+		context.getEventBus().addHandler(NotSupportedErrorHandler.NotSupportedErrorEvent.class, handler);
+	}
+
+	public void addReceivedErrorHandler(ReceivedErrorHandler handler) {
+		context.getEventBus().addHandler(ReceivedErrorHandler.ReceivedErrorEvent.class, handler);
+	}
+
+	public void addReceivedRequestedFieldsHandler(ReceivedRequestedFieldsHandler handler) {
+		context.getEventBus().addHandler(ReceivedRequestedFieldsHandler.ReceivedRequestedFieldsEvent.class, handler);
+	}
+
+	public void addReceivedTimeoutHandler(ReceivedTimeoutHandler handler) {
+		context.getEventBus().addHandler(ReceivedTimeoutHandler.ReceivedTimeoutEvent.class, handler);
 	}
 
 	@Override
@@ -212,6 +229,22 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		q.addChild(new DefaultElement("remove"));
 
 		write(iq, asyncCallback);
+	}
+
+	public void removeNotSupportedErrorHandler(NotSupportedErrorHandler handler) {
+		context.getEventBus().remove(NotSupportedErrorHandler.NotSupportedErrorEvent.class, handler);
+	}
+
+	public void removeReceivedErrorHandler(ReceivedErrorHandler handler) {
+		context.getEventBus().remove(ReceivedErrorHandler.ReceivedErrorEvent.class, handler);
+	}
+
+	public void removeReceivedRequestedFieldsHandler(ReceivedRequestedFieldsHandler handler) {
+		context.getEventBus().remove(ReceivedRequestedFieldsHandler.ReceivedRequestedFieldsEvent.class, handler);
+	}
+
+	public void removeReceivedTimeoutHandler(ReceivedTimeoutHandler handler) {
+		context.getEventBus().remove(ReceivedTimeoutHandler.ReceivedTimeoutEvent.class, handler);
 	}
 
 	public void start() throws JaxmppException {

@@ -19,7 +19,7 @@ package tigase.jaxmpp.core.client;
 
 import javax.net.ssl.TrustManager;
 
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -182,9 +182,9 @@ public interface Connector {
 
 			private Throwable caught;
 
-			private ErrorCondition condition;
+			private StreamError condition;
 
-			public ErrorEvent(SessionObject sessionObject, ErrorCondition condition, Throwable caught) {
+			public ErrorEvent(SessionObject sessionObject, StreamError condition, Throwable caught) {
 				super(sessionObject);
 				this.condition = condition;
 				this.caught = caught;
@@ -199,13 +199,13 @@ public interface Connector {
 				return caught;
 			}
 
-			public ErrorCondition getCondition() {
+			public StreamError getCondition() {
 				return condition;
 			}
 
 		}
 
-		void onError(SessionObject sessionObject, ErrorCondition condition, Throwable caught) throws JaxmppException;
+		void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException;
 	}
 
 	/**

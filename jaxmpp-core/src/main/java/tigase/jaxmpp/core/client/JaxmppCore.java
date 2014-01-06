@@ -25,7 +25,7 @@ import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler;
 import tigase.jaxmpp.core.client.Connector.State;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
+import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -229,7 +229,7 @@ public abstract class JaxmppCore {
 		eventBus.addHandler(ErrorHandler.ErrorEvent.class, new ErrorHandler() {
 
 			@Override
-			public void onError(SessionObject sessionObject, ErrorCondition condition, Throwable caught) throws JaxmppException {
+			public void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException {
 				JaxmppCore.this.onStreamError(condition, caught);
 			}
 		});
@@ -394,7 +394,7 @@ public abstract class JaxmppCore {
 		execute(r);
 	}
 
-	protected abstract void onStreamError(ErrorCondition condition, Throwable caught) throws JaxmppException;
+	protected abstract void onStreamError(StreamError condition, Throwable caught) throws JaxmppException;
 
 	protected abstract void onStreamResumed(Long h, String previd) throws JaxmppException;
 

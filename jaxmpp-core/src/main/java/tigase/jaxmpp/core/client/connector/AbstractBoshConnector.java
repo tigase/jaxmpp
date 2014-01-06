@@ -35,7 +35,6 @@ import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -62,7 +61,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
-	private final Context context;
+	protected final Context context;
 
 	protected final Logger log;
 
@@ -95,7 +94,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
 			SessionObject sessionObject) throws JaxmppException {
 		// XXX XXX FIXME
-		ErrorCondition condition = ErrorCondition.undefined_condition;
+		StreamError condition = StreamError.undefined_condition;
 		if (response != null) {
 			List<Element> streamErrors = response.getChildren("stream:error");
 			if (streamErrors != null && !streamErrors.isEmpty()) {

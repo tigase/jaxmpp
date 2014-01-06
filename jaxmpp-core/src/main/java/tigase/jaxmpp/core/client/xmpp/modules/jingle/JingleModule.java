@@ -331,7 +331,7 @@ public class JingleModule implements XmppModule {
 			}
 
 			@Override
-			protected void dispatch(JingleTransportInfoHandler handler) {
+			protected void dispatch(JingleTransportInfoHandler handler) throws JaxmppException {
 				handler.onJingleTransportInfo(sessionObject, sender, sid, content, handled);
 			}
 
@@ -369,7 +369,8 @@ public class JingleModule implements XmppModule {
 
 		}
 
-		void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content, MutableBoolean handled);
+		void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content, MutableBoolean handled)
+				throws JaxmppException;
 	}
 
 	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
