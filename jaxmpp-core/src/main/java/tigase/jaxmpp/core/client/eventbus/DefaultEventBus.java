@@ -64,10 +64,10 @@ public class DefaultEventBus extends EventBus {
 
 	protected void doAdd(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
-			Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
+			Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
 			if (hdlrs == null) {
 				hdlrs = createTypeHandlersMap();
-				handlers.put(source, hdlrs);
+				handlers.put(source == null ? NULL_SOURCE : source, hdlrs);
 			}
 
 			List<EventHandler> lst = hdlrs.get(type);
@@ -135,7 +135,7 @@ public class DefaultEventBus extends EventBus {
 	}
 
 	protected Collection<EventHandler> getHandlersList(Class<? extends Event<?>> type, Object source) {
-		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
+		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
 		if (hdlrs == null) {
 			return Collections.emptyList();
 		} else {
@@ -145,6 +145,12 @@ public class DefaultEventBus extends EventBus {
 			} else
 				return Collections.emptyList();
 		}
+	}
+
+	private final static Object NULL_SOURCE = new Object();
+
+	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
+		return handlers.get(source == null ? NULL_SOURCE : source);
 	}
 
 	public boolean isThrowingExceptionOn() {
@@ -159,7 +165,7 @@ public class DefaultEventBus extends EventBus {
 	@Override
 	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
-			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = handlers.get(source);
+			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
 			if (hdlrs != null) {
 				List<EventHandler> lst = hdlrs.get(type);
 				if (lst != null) {
@@ -168,7 +174,7 @@ public class DefaultEventBus extends EventBus {
 						hdlrs.remove(type);
 					}
 					if (hdlrs.isEmpty()) {
-						handlers.remove(source);
+						handlers.remove(source == null ? NULL_SOURCE : source);
 					}
 				}
 			}

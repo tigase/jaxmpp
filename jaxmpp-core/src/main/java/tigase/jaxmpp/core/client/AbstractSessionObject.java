@@ -75,7 +75,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
 
-	private final EventBus eventBus;
+	private  EventBus eventBus;
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
@@ -87,8 +87,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	protected RosterStore roster;
 
-	protected AbstractSessionObject(EventBus eventBus) {
-		this.eventBus = eventBus;
+	protected AbstractSessionObject() {
 	}
 
 	public void addClearedHandler(ClearedHandler handler) {
@@ -269,6 +268,14 @@ public abstract class AbstractSessionObject implements SessionObject {
 	@Override
 	public UserProperties setUserProperty(String key, Object value) {
 		return setProperty(Scope.user, key, value);
+	}
+
+	public EventBus getEventBus() {
+		return eventBus;
+	}
+
+	public void setEventBus(EventBus eventBus) {
+		this.eventBus = eventBus;
 	}
 
 }

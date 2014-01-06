@@ -26,34 +26,37 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public class J2SEStreamhostsResolver implements StreamhostsResolver {
 
-        @Override
-        public List<Streamhost> getLocalStreamHosts(JID jid, int port) {
-                List<Streamhost> hosts = new ArrayList<Streamhost>();
-                try {
-                        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
-                        for (NetworkInterface netint : Collections.list(nets)) {
-                                if (netint.isLoopback()) continue;
-                                if (!netint.isUp()) continue;
-                                
-                                Enumeration<InetAddress> addrs = netint.getInetAddresses();
-                                while(addrs.hasMoreElements()) {
-                                        InetAddress addr = addrs.nextElement();
-                                        hosts.add(new Streamhost(jid.toString(), addr.getHostAddress(), port));                                        
-                                }
-                        }
-                } catch (SocketException ex) {
-                        Logger.getLogger(J2SEStreamhostsResolver.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                return hosts;
-        }
-        
+	@Override
+	public List<Streamhost> getLocalStreamHosts(JID jid, int port) {
+		List<Streamhost> hosts = new ArrayList<Streamhost>();
+		try {
+			Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+			for (NetworkInterface netint : Collections.list(nets)) {
+				if (netint.isLoopback())
+					continue;
+				if (!netint.isUp())
+					continue;
+
+				Enumeration<InetAddress> addrs = netint.getInetAddresses();
+				while (addrs.hasMoreElements()) {
+					InetAddress addr = addrs.nextElement();
+					hosts.add(new Streamhost(jid.toString(), addr.getHostAddress(), port));
+				}
+			}
+		} catch (SocketException ex) {
+			Logger.getLogger(J2SEStreamhostsResolver.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return hosts;
+	}
+
 }

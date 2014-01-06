@@ -18,15 +18,16 @@
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
 import java.util.List;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public interface StreamhostsResolver {
 
-        public List<Streamhost> getLocalStreamHosts(JID jid, int port);
-        
+	public List<Streamhost> getLocalStreamHosts(JID jid, int port);
+
 }

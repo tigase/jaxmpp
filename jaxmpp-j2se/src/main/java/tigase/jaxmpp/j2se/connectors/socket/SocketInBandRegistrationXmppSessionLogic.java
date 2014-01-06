@@ -17,17 +17,22 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.Listener;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
+import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.NotSupportedErrorHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.ReceivedErrorHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.ReceivedTimeoutHandler;
+import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
 public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogic {
 
@@ -37,46 +42,57 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 
 	private final XmppModulesManager modulesManager;
 
-	private final Listener<BaseEvent> registrationListener;
+	private NotSupportedErrorHandler notSupportedErrorHandler;
+
+	private ReceivedErrorHandler receivedErrorHandler;
+
+	private ReceivedTimeoutHandler receivedTimeoutHandler;
 
 	private InBandRegistrationModule registrationModule;
 
 	private SessionListener sessionListener;
 
-	private final SessionObject sessionObject;
+	private final StreamFeaturesReceivedHandler streamFeaturesEventHandler;
 
-	private final Listener<StreamFeaturesReceivedEvent> streamFeaturesEventListener;
-
+	private final Context context;
+	
 	public SocketInBandRegistrationXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager,
-			SessionObject sessionObject, PacketWriter writer) {
+			Context context) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
-		this.sessionObject = sessionObject;
+		this.context = context;
 
-		this.streamFeaturesEventListener = new Listener<StreamFeaturesModule.StreamFeaturesReceivedEvent>() {
-
-			@Override
-			public void handleEvent(StreamFeaturesReceivedEvent be) throws JaxmppException {
-				try {
-					processStreamFeatures(be);
-				} catch (JaxmppException e) {
-					processException(e);
-				}
-			}
-		};
-		registrationListener = new Listener<BaseEvent>() {
+		this.streamFeaturesEventHandler = new StreamFeaturesReceivedHandler() {
 
 			@Override
-			public void handleEvent(BaseEvent be) throws JaxmppException {
-				if (be.getType() == InBandRegistrationModule.ReceivedError) {
-					SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
-				} else if (be.getType() == InBandRegistrationModule.ReceivedTimeout) {
-					SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
-				} else if (be.getType() == InBandRegistrationModule.NotSupportedError) {
-					SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
-				}
+			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
+				SocketInBandRegistrationXmppSessionLogic.this.processStreamFeatures(sessionObject, featuresElement);
 			}
 		};
+
+		this.receivedErrorHandler = new ReceivedErrorHandler() {
+
+			@Override
+			public void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
+					throws JaxmppException {
+				SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
+			}
+		};
+		this.receivedTimeoutHandler = new ReceivedTimeoutHandler() {
+
+			@Override
+			public void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException {
+				SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
+			}
+		};
+		this.notSupportedErrorHandler = new NotSupportedErrorHandler() {
+
+			@Override
+			public void onNotSupportedError(SessionObject sessionObject) throws JaxmppException {
+				SocketInBandRegistrationXmppSessionLogic.this.connector.stop();
+			}
+		};
+
 	}
 
 	@Override
@@ -90,8 +106,7 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 			sessionListener.onException(e);
 	}
 
-	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
-		System.out.println(be.getFeatures().getAsString());
+	protected void processStreamFeatures(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
 		try {
 			final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
@@ -114,14 +129,20 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
 		registrationModule = this.modulesManager.getModule(InBandRegistrationModule.class);
 
-		featuresModule.addListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		registrationModule.addListener(this.registrationListener);
+		registrationModule.addNotSupportedErrorHandler(notSupportedErrorHandler);
+		registrationModule.addReceivedErrorHandler(receivedErrorHandler);
+		registrationModule.addReceivedTimeoutHandler(receivedTimeoutHandler);
+
+		featuresModule.addStreamFeaturesReceivedHandler(streamFeaturesEventHandler);
 	}
 
 	@Override
 	public void unbind() throws JaxmppException {
-		featuresModule.removeListener(StreamFeaturesModule.StreamFeaturesReceived, streamFeaturesEventListener);
-		registrationModule.removeListener(this.registrationListener);
+		featuresModule.removeStreamFeaturesReceivedHandler(streamFeaturesEventHandler);
+
+		registrationModule.removeNotSupportedErrorHandler(notSupportedErrorHandler);
+		registrationModule.removeReceivedErrorHandler(receivedErrorHandler);
+		registrationModule.removeReceivedTimeoutHandler(receivedTimeoutHandler);
 	}
 
 }

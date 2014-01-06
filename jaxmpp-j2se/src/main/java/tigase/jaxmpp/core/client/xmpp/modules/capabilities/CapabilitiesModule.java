@@ -23,7 +23,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import tigase.jaxmpp.core.client.Base64;
-import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -31,18 +32,20 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoAsyncCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.DiscoInfoEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.DiscoInfoAsyncCallback;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.NodeDetailsCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.PresenceEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.BeforePresenceSendHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactAvailableHandler;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactChangedPresenceHandler;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class CapabilitiesModule implements XmppModule {
@@ -79,63 +82,74 @@ public class CapabilitiesModule implements XmppModule {
 
 	private CapabilitiesCache cache;
 
-	private final DiscoInfoModule discoInfoModule;
+	private final DiscoveryModule discoveryModule;
 
 	private final XmppModulesManager modulesManager;
 
-	private final PresenceModule presenceModule;
+	private final Context context;
 
-	private final SessionObject sessionObject;
+	private final NodeDetailsCallback nodeDetailsCallback;
 
-	private final PacketWriter writer;
+	public CapabilitiesModule(Context context, DiscoveryModule discoveryModule, PresenceModule presenceModule,
+			XmppModulesManager modulesManager) {
+		this.context = context;
+		this.discoveryModule = discoveryModule;
 
-	public CapabilitiesModule(SessionObject sessionObject, PacketWriter writer, DiscoInfoModule discoInfoModule,
-			PresenceModule presenceModule, XmppModulesManager modulesManager) {
-		this.sessionObject = sessionObject;
-		this.writer = writer;
-		this.discoInfoModule = discoInfoModule;
-		this.presenceModule = presenceModule;
-		this.presenceModule.addListener(PresenceModule.BeforePresenceSend, new Listener<PresenceModule.PresenceEvent>() {
+		final BeforePresenceSendHandler beforePresenceSendHandler = new BeforePresenceSendHandler() {
 
 			@Override
-			public void handleEvent(PresenceEvent be) throws JaxmppException {
-				onBeforePresenceSend(be);
+			public void onBeforePresenceSend(SessionObject sessionObject, Presence presence) throws JaxmppException {
+				CapabilitiesModule.this.onBeforePresenceSend(presence);
 			}
-		});
 
-		Listener<PresenceEvent> presenceListener = new Listener<PresenceModule.PresenceEvent>() {
+		};
+		final ContactAvailableHandler contactAvailableHandler = new ContactAvailableHandler() {
 
 			@Override
-			public void handleEvent(PresenceEvent be) throws JaxmppException {
-				onReceivedPresence(be);
+			public void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
+					Integer priority) throws JaxmppException {
+				CapabilitiesModule.this.onReceivedPresence(stanza);
 			}
 		};
-		this.presenceModule.addListener(PresenceModule.ContactAvailable, presenceListener);
-		this.presenceModule.addListener(PresenceModule.ContactChangedPresence, presenceListener);
-
-		this.discoInfoModule.addListener(new Listener<DiscoInfoEvent>() {
+		final ContactChangedPresenceHandler contactChangedPresenceHandler = new ContactChangedPresenceHandler() {
 
 			@Override
-			public void handleEvent(DiscoInfoEvent be) {
-				onDiscoInfoModuleRequest(be);
+			public void onContactChangedPresence(SessionObject sessionObject, Presence stanza, JID jid, Show show,
+					String status, Integer priority) throws JaxmppException {
+				CapabilitiesModule.this.onReceivedPresence(stanza);
 			}
-		});
+		};
+		nodeDetailsCallback = new DiscoveryModule.DefaultNodeDetailsCallback(discoveryModule);
+
+		presenceModule.addBeforePresenceSendHandler(beforePresenceSendHandler);
+		presenceModule.addContactAvailableHandler(contactAvailableHandler);
+		presenceModule.addContactChangedPresenceHandler(contactChangedPresenceHandler);
+
+		discoveryModule.setNodeCallback("", nodeDetailsCallback);
+
 		this.modulesManager = modulesManager;
 
 	}
 
 	private String calculateVerificationString() {
-		String category = sessionObject.getProperty(DiscoInfoModule.IDENTITY_CATEGORY_KEY);
-		String type = sessionObject.getProperty(DiscoInfoModule.IDENTITY_TYPE_KEY);
-		String nme = sessionObject.getProperty(SoftwareVersionModule.NAME_KEY);
-		String v = sessionObject.getProperty(SoftwareVersionModule.VERSION_KEY);
+		String category = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_CATEGORY_KEY);
+		String type = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_TYPE_KEY);
+		String nme = context.getSessionObject().getProperty(SoftwareVersionModule.NAME_KEY);
+		String v = context.getSessionObject().getProperty(SoftwareVersionModule.VERSION_KEY);
 
 		String identity = category + "/" + type + "//" + nme + " " + v;
 
 		String ver = generateVerificationString(new String[] { identity },
 				this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
 
-		sessionObject.setProperty(VERIFICATION_STRING_KEY, ver);
+		String oldVer = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
+		if (oldVer != null && !oldVer.equals(ver)) {
+			discoveryModule.removeNodeCallback(getNodeName() + "#" + oldVer);
+		}
+
+		context.getSessionObject().setProperty(VERIFICATION_STRING_KEY, ver);
+		discoveryModule.setNodeCallback(getNodeName() + "#" + ver, nodeDetailsCallback);
+
 		return ver;
 	}
 
@@ -154,56 +168,36 @@ public class CapabilitiesModule implements XmppModule {
 	}
 
 	protected String getNodeName() {
-		String s = sessionObject.getProperty(NODE_NAME_KEY);
-		return s == null ? "http://tigase.org" : s;
+		String s = context.getSessionObject().getProperty(NODE_NAME_KEY);
+		return s == null ? "http://tigase.org/jaxmpp" : s;
 	}
 
 	protected boolean isEnabled() {
 		return true;
 	}
 
-	protected void onBeforePresenceSend(PresenceEvent be) throws XMLException {
+	protected void onBeforePresenceSend(final Presence presence) throws XMLException {
 		if (!isEnabled())
 			return;
-		String ver = sessionObject.getProperty(VERIFICATION_STRING_KEY);
+		String ver = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
 		if (ver == null) {
 			ver = calculateVerificationString();
 		}
 		if (ver == null)
 			return;
 
-		Presence p = be.getPresence();
-		if (p != null) {
+		if (presence != null) {
 			final DefaultElement c = new DefaultElement("c", null, "http://jabber.org/protocol/caps");
 			c.setAttribute("hash", "sha-1");
 			c.setAttribute("node", getNodeName());
 			c.setAttribute("ver", ver);
-			p.addChild(c);
+			presence.addChild(c);
 		}
 	}
 
-	protected void onDiscoInfoModuleRequest(DiscoInfoEvent be) {
-		if (be.getNode() == null)
-			return;
-		if (!isEnabled())
-			return;
-		String ver = sessionObject.getProperty(VERIFICATION_STRING_KEY);
-		if (ver == null) {
-			ver = calculateVerificationString();
-		}
-		if (ver == null)
-			return;
-
-		if (!be.getNode().equals(getNodeName() + '#' + ver))
-			return;
-
-		this.discoInfoModule.processDefaultDiscoEvent(be);
-	}
-
-	protected void onReceivedPresence(final PresenceEvent be) throws JaxmppException {
+	protected void onReceivedPresence(final Presence presence) throws JaxmppException {
 		if (cache == null)
 			return;
-		final Presence presence = be.getPresence();
 		if (presence == null)
 			return;
 		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
@@ -218,7 +212,7 @@ public class CapabilitiesModule implements XmppModule {
 		if (cache.isCached(node + "#" + ver))
 			return;
 
-		discoInfoModule.getInfo(presence.getFrom(), node + "#" + ver, new DiscoInfoAsyncCallback(node + "#" + ver) {
+		discoveryModule.getInfo(presence.getFrom(), node + "#" + ver, new DiscoInfoAsyncCallback(node + "#" + ver) {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {

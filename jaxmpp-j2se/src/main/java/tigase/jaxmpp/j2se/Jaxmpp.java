@@ -22,37 +22,29 @@ import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
+import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
-import tigase.jaxmpp.core.client.observer.ObservableFactory.FactorySpi;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
-import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
-import tigase.jaxmpp.j2se.filetransfer.JingleFileTransferNegotiator;
-import tigase.jaxmpp.j2se.filetransfer.Socks5FileTransferNegotiator;
-import tigase.jaxmpp.j2se.observer.ThreadSafeObservable;
+import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 
 /**
@@ -81,7 +73,7 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
-	private final ConnectorWrapper connectorWrapper;
+	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
 
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
 
@@ -90,36 +82,35 @@ public class Jaxmpp extends JaxmppCore {
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
 	static {
-		ObservableFactory.setFactorySpi(new FactorySpi() {
-
-			@Override
-			public Observable create() {
-				return create(null);
-			}
-
-			@Override
-			public Observable create(Observable parent) {
-				return new ThreadSafeObservable(parent);
-			}
-		});
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
 
 	private Executor executor;
 
-	private FileTransferManager fileTransferManager;
+	// private FileTransferManager fileTransferManager;
 
 	private TimerTask loginTimeoutTask;
 
 	private final Timer timer = new Timer(true);
 
 	public Jaxmpp() {
-		this(new J2SESessionObject());
-		setExecutor(DEFAULT_EXECUTOR);
+		super();
+		this.eventBus = new ThreadSafeEventBus();
+		this.sessionObject = new J2SESessionObject();
+		init();
 	}
 
 	public Jaxmpp(SessionObject sessionObject) {
-		super(sessionObject);
+		super();
+		this.eventBus = new ThreadSafeEventBus();
+		this.sessionObject = (AbstractSessionObject) sessionObject;
+		init();
+	}
+
+	@Override
+	protected void init() {
+		super.init();
+
 		setExecutor(DEFAULT_EXECUTOR);
 		TimerTask checkTimeouts = new TimerTask() {
 
@@ -134,23 +125,11 @@ public class Jaxmpp extends JaxmppCore {
 		};
 		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
 
-		this.connectorWrapper = new ConnectorWrapper(observable);
 		this.connector = this.connectorWrapper;
-		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
-		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
-		this.connector.addListener(Connector.Error, this.streamErrorListener);
 
-		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
+		this.processor = new Processor(this.modulesManager, context);
 
 		modulesInit();
-
-		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
-		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-
-		StreamManagementModule sm = this.modulesManager.getModule(StreamManagementModule.class);
-		if (sm != null)
-			sm.addListener(StreamManagementModule.StreamResumed, this.streamResumedListener);
-
 	}
 
 	protected void checkTimeouts() throws JaxmppException {
@@ -160,10 +139,10 @@ public class Jaxmpp extends JaxmppCore {
 	protected Connector createConnector() throws JaxmppException {
 		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using SocketConnector");
-			return new SocketConnector(observable, this.sessionObject);
+			return new SocketConnector(context);
 		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using BOSHConnector");
-			return new BoshConnector(observable, this.sessionObject);
+			return new BoshConnector(context);
 		} else
 			throw new JaxmppException("Unknown connector type");
 	}
@@ -212,28 +191,29 @@ public class Jaxmpp extends JaxmppCore {
 		return executor;
 	}
 
-	public FileTransferManager getFileTransferManager() {
-		return fileTransferManager;
-	}
+//	public FileTransferManager getFileTransferManager() {
+//		return fileTransferManager;
+//	}
 
-	public void initFileTransferManager(boolean experimental) throws JaxmppException {
-		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-		if (capsModule != null && capsModule.getCache() == null) {
-			capsModule.setCache(new J2SECapabiliesCache());
-		}
-
-		fileTransferManager = new FileTransferManager();
-		fileTransferManager.setObservable(observable);
-		fileTransferManager.setJaxmpp(this);
-
-		getModulesManager().register(new FileTransferModule(sessionObject));
-		getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
-		if (experimental) {
-			getModulesManager().register(new JingleModule(sessionObject));
-			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-		}
-		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-	}
+	// public void initFileTransferManager(boolean experimental) throws
+	// JaxmppException {
+	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+	// if (capsModule != null && capsModule.getCache() == null) {
+	// capsModule.setCache(new J2SECapabiliesCache());
+	// }
+	//
+	// fileTransferManager = new FileTransferManager();
+	// fileTransferManager.setContext(context);
+	// fileTransferManager.setJaxmpp(this);
+	//
+	// getModulesManager().register(new FileTransferModule(sessionObject));
+	// getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
+	// if (experimental) {
+	// getModulesManager().register(new JingleModule(sessionObject));
+	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+	// }
+	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	// }
 
 	@Override
 	/**
@@ -309,9 +289,8 @@ public class Jaxmpp extends JaxmppCore {
 	protected void modulesInit() {
 		super.modulesInit();
 
-		this.modulesManager.register(new CapabilitiesModule(sessionObject, writer,
-				this.modulesManager.getModule(DiscoInfoModule.class), this.modulesManager.getModule(PresenceModule.class),
-				this.modulesManager));
+		this.modulesManager.register(new CapabilitiesModule(context, this.modulesManager.getModule(DiscoveryModule.class),
+				this.modulesManager.getModule(PresenceModule.class), this.modulesManager));
 
 		SaslModule saslModule = this.modulesManager.getModule(SaslModule.class);
 		saslModule.addMechanism(new ExternalMechanism(), true);
@@ -330,47 +309,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		observable.fireEvent(event);
-	}
-
-	@Override
-	protected void onResourceBinded(ResourceBindEvent be) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
-		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
-		observable.fireEvent(event);
-	}
-
-	@Override
-	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
-		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		observable.fireEvent(event);
-	}
-
-	@Override
-	protected void onStreamResumed(StreamResumedEvent be) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
-		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
-		observable.fireEvent(event);
-	}
-
-	@Override
-	protected void onStreamTerminated(ConnectorEvent be) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
-			Jaxmpp.this.notify();
-		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		observable.fireEvent(event);
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	/**
@@ -385,6 +324,41 @@ public class Jaxmpp extends JaxmppCore {
 			this.executor = DEFAULT_EXECUTOR;
 		else
 			this.executor = executor;
+	}
+
+	@Override
+	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
+		synchronized (Jaxmpp.this) {
+			Jaxmpp.this.notify();
+		}
+		eventBus.fire(new ConnectedEvent(sessionObject));
+	}
+
+	@Override
+	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
+		synchronized (Jaxmpp.this) {
+			Jaxmpp.this.notify();
+		}
+
+		eventBus.fire(new DisconnectedEvent(sessionObject));
+	}
+
+	@Override
+	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
+		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
+			Jaxmpp.this.notify();
+		}
+		eventBus.fire(new ConnectedEvent(sessionObject));
+	}
+
+	@Override
+	protected void onStreamTerminated() throws JaxmppException {
+		synchronized (Jaxmpp.this) {
+			// (new Exception("DEBUG")).printStackTrace();
+			Jaxmpp.this.notify();
+		}
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 }

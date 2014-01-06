@@ -20,11 +20,10 @@ package tigase.jaxmpp.j2se.connectors.bosh;
 import java.net.URL;
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.xml.DomBuilderHandler;
@@ -39,13 +38,13 @@ public class BoshConnector extends AbstractBoshConnector {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
-	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
-		super(parentObservable, sessionObject);
+	public BoshConnector(Context context) {
+		super(context);
 	}
-	
+
 	@Override
 	protected void processSendData(final Element element) throws XMLException, JaxmppException {
-		BoshRequest worker = new BoshWorker(domHandler, parser, sessionObject, element) {
+		BoshRequest worker = new BoshWorker(domHandler, parser, context.getSessionObject(), element) {
 
 			@Override
 			protected void onError(int responseCode, String responseData, Element response, Throwable caught)
@@ -76,11 +75,11 @@ public class BoshConnector extends AbstractBoshConnector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		try {
-			String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+			String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 			if (u == null)
 				throw new JaxmppException("BOSH service URL not defined!");
 			URL url = new URL(u);
-			sessionObject.setProperty(URL_KEY, url);
+			context.getSessionObject().setProperty(URL_KEY, url);
 			super.start();
 		} catch (JaxmppException e) {
 			throw e;

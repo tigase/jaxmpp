@@ -53,25 +53,30 @@ import javax.net.ssl.X509TrustManager;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.Connector.EncryptionEstablishedHandler.EncryptionEstablishedEvent;
+import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
+import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
+import tigase.jaxmpp.core.client.Connector.StanzaSendingHandler.StanzaSendingEvent;
+import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.StreamError;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.observer.BaseEvent;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
@@ -171,16 +176,6 @@ public class SocketConnector implements Connector {
 
 	}
 
-	public static class SocketConnectorEvent extends ConnectorEvent {
-
-		private static final long serialVersionUID = 1L;
-
-		public SocketConnectorEvent(EventType type, SessionObject sessionObject) {
-			super(type, sessionObject);
-		}
-
-	}
-
 	private class Worker extends Thread {
 
 		private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
@@ -277,7 +272,23 @@ public class SocketConnector implements Connector {
 	/**
 	 * see-other-host
 	 */
-	public final static EventType HostChanged = new EventType();
+	public interface HostChangedHandler extends EventHandler {
+
+		public static class HostChangedEvent extends JaxmppEvent<HostChangedHandler> {
+
+			public HostChangedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(HostChangedHandler handler) {
+				handler.onHostChanged(sessionObject);
+			}
+
+		}
+
+		void onHostChanged(SessionObject sessionObject);
+	}
 
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
 
@@ -345,15 +356,11 @@ public class SocketConnector implements Connector {
 
 	private final Logger log;
 
-	protected Observable observable;
-
 	private TimerTask pingTask;
 
 	private boolean preventAgainstFireErrors = false;
 
 	private volatile Reader reader;
-
-	private SessionObject sessionObject;
 
 	private Socket socket;
 
@@ -368,70 +375,55 @@ public class SocketConnector implements Connector {
 
 	private OutputStream writer;
 
-	public SocketConnector(Observable parentObservable, SessionObject sessionObject2) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	private Context context;
+
+	public SocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject2;
-	}
-
-	@Override
-	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	public void addListener(Listener<? extends BaseEvent> listener) {
-		observable.addListener(listener);
+		this.context = context;
 	}
 
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
-		if (sessionObject.getProperty(InBandRegistrationModule.IN_BAND_REGISTRATION_MODE_KEY) == Boolean.TRUE) {
+		if (context.getSessionObject().getProperty(InBandRegistrationModule.IN_BAND_REGISTRATION_MODE_KEY) == Boolean.TRUE) {
 			log.info("Using XEP-0077 mode!!!!");
-			return new SocketInBandRegistrationXmppSessionLogic(this, modulesManager, sessionObject, writer);
+			return new SocketInBandRegistrationXmppSessionLogic(this, modulesManager, context);
 		} else
-			return new SocketXmppSessionLogic(this, modulesManager, sessionObject, writer);
+			return new SocketXmppSessionLogic(this, modulesManager, context);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
-		ConnectorEvent event = new SocketConnectorEvent(Connected, sessionObject);
-		this.observable.fireEvent(event.getType(), event);
+
+		context.getEventBus().fire(new ConnectedEvent(sessionObject));
 	}
 
 	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(Error, sessionObject);
-		event.setStanza(response);
-		event.setCaught(caught);
-
+		StreamError streamError = null;
 		if (response != null) {
 			List<Element> es = response.getChildrenNS("urn:ietf:params:xml:ns:xmpp-streams");
 			if (es != null)
 				for (Element element : es) {
 					String n = element.getName();
-					StreamError err = StreamError.getByElementName(n);
-					event.setStreamError(err);
-					event.setStreamErrorElement(element);
+					streamError = StreamError.getByElementName(n);
+					break;
 				}
 		}
 
-		this.observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(new ErrorEvent(sessionObject, streamError, caught));
 	}
 
 	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(StanzaReceived, sessionObject);
-		event.setStanza(response);
-		this.observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(new StanzaReceivedEvent(sessionObject, response));
 	}
 
 	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new SocketConnectorEvent(StreamTerminated, sessionObject);
-		this.observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(new StreamTerminatedHandler.StreamTerminatedEvent(sessionObject));
 	}
 
 	private Entry getHostFromSessionObject() {
-		String serverHost = (String) sessionObject.getProperty(SERVER_HOST);
-		Integer port = (Integer) sessionObject.getProperty(SERVER_PORT);
+		String serverHost = (String) context.getSessionObject().getProperty(SERVER_HOST);
+		Integer port = (Integer) context.getSessionObject().getProperty(SERVER_PORT);
 		if (serverHost == null)
 			return null;
 		return new Entry(serverHost, port == null ? 5222 : port);
@@ -439,13 +431,8 @@ public class SocketConnector implements Connector {
 	}
 
 	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
-		KeyManager[] result = sessionObject.getProperty(KEY_MANAGERS_KEY);
+		KeyManager[] result = context.getSessionObject().getProperty(KEY_MANAGERS_KEY);
 		return result == null ? new KeyManager[0] : result;
-	}
-
-	@Override
-	public Observable getObservable() {
-		return observable;
 	}
 
 	/**
@@ -453,7 +440,7 @@ public class SocketConnector implements Connector {
 	 */
 	@Override
 	public State getState() {
-		State st = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		State st = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		return st == null ? State.disconnected : st;
 	}
 
@@ -464,17 +451,17 @@ public class SocketConnector implements Connector {
 	 */
 	@Override
 	public boolean isCompressed() {
-		return ((Boolean) sessionObject.getProperty(COMPRESSED_KEY)) == Boolean.TRUE;
+		return ((Boolean) context.getSessionObject().getProperty(COMPRESSED_KEY)) == Boolean.TRUE;
 	}
 
 	@Override
 	public boolean isSecure() {
-		return ((Boolean) sessionObject.getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
+		return ((Boolean) context.getSessionObject().getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
 	}
 
 	@Override
 	public void keepalive() throws JaxmppException {
-		if (sessionObject.getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
+		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
 			return;
 		if (getState() == State.connected)
 			send(new byte[] { 32 });
@@ -492,14 +479,14 @@ public class SocketConnector implements Connector {
 			}
 		}
 		stop();
-		fireOnError(response, caught, sessionObject);
+		fireOnError(response, caught, context.getSessionObject());
 	}
 
 	protected void onErrorInThread(Exception e) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
 		stop();
-		fireOnError(null, e, sessionObject);
+		fireOnError(null, e, context.getSessionObject());
 	}
 
 	protected void onResponse(final Element response) throws JaxmppException {
@@ -508,7 +495,7 @@ public class SocketConnector implements Connector {
 					&& response.getXMLNS().equals("http://etherx.jabber.org/streams")) {
 				onError(response, null);
 			} else {
-				fireOnStanzaReceived(response, sessionObject);
+				fireOnStanzaReceived(response, context.getSessionObject());
 			}
 		}
 	}
@@ -526,7 +513,7 @@ public class SocketConnector implements Connector {
 			log.fine("Stream terminated");
 
 		terminateAllWorkers();
-		fireOnTerminate(sessionObject);
+		fireOnTerminate(context.getSessionObject());
 
 	}
 
@@ -555,12 +542,12 @@ public class SocketConnector implements Connector {
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
-			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
-			TrustManager[] trustManagers = sessionObject.getProperty(TRUST_MANAGERS_KEY);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
 			final SSLSocketFactory factory;
 			if (trustManagers == null) {
-				if (sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
-					factory = sessionObject.getProperty(SSL_SOCKET_FACTORY_KEY);
+				if (context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
+					factory = context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY);
 				} else {
 					factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				}
@@ -573,9 +560,11 @@ public class SocketConnector implements Connector {
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
 					true);
 
-			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
+			// if
+			// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
+			// == null
 			// || !((Boolean)
-			// sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
 			// {
 			// s1.setSoTimeout(SOCKET_TIMEOUT);
 			// }
@@ -588,13 +577,8 @@ public class SocketConnector implements Connector {
 				@Override
 				public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 					log.info("TLS completed " + arg0);
-					sessionObject.setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
-					ConnectorEvent event = new SocketConnectorEvent(EncryptionEstablished, sessionObject);
-					try {
-						observable.fireEvent(EncryptionEstablished, event);
-					} catch (JaxmppException e) {
-						throw new RuntimeException(e);
-					}
+					context.getSessionObject().setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
+					context.getEventBus().fire(new EncryptionEstablishedEvent(context.getSessionObject()));
 				}
 			});
 			writer = null;
@@ -612,7 +596,7 @@ public class SocketConnector implements Connector {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
 			onError(null, e);
 		} finally {
-			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
 	}
 
@@ -625,7 +609,7 @@ public class SocketConnector implements Connector {
 	protected void proceedZLib() throws JaxmppException {
 		log.fine("Proceeding ZLIB");
 		try {
-			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 
 			writer = null;
 			reader = null;
@@ -659,7 +643,7 @@ public class SocketConnector implements Connector {
 			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
 			reader = new Reader(is);
 
-			sessionObject.setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
+			context.getSessionObject().setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
 			log.info("ZLIB compression started");
 
 			restartStream();
@@ -667,7 +651,7 @@ public class SocketConnector implements Connector {
 			log.log(Level.SEVERE, "Can't establish compressed connection", e);
 			onError(null, e);
 		} finally {
-			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
 	}
 
@@ -691,16 +675,16 @@ public class SocketConnector implements Connector {
 		try {
 			terminateAllWorkers();
 
-			Object x1 = this.sessionObject.getProperty(Jaxmpp.SYNCHRONIZED_MODE);
+			Object x1 = this.context.getSessionObject().getProperty(Jaxmpp.SYNCHRONIZED_MODE);
 
-			this.sessionObject.clear();
-			this.sessionObject.setProperty(SERVER_HOST, newHost);
+			this.context.getSessionObject().clear();
+			this.context.getSessionObject().setProperty(SERVER_HOST, newHost);
 			worker = null;
 			reader = null;
 			writer = null;
 
-			this.sessionObject.setProperty(RECONNECTING_KEY, Boolean.TRUE);
-			this.sessionObject.setProperty(Jaxmpp.SYNCHRONIZED_MODE, x1);
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
+			this.context.getSessionObject().setProperty(Jaxmpp.SYNCHRONIZED_MODE, x1);
 
 			log.finest("Waiting for workers termination");
 
@@ -711,28 +695,18 @@ public class SocketConnector implements Connector {
 	}
 
 	@Override
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	@Override
-	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener) {
-		observable.removeListener(eventType, listener);
-	}
-
-	@Override
 	public void restartStream() throws XMLException, JaxmppException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<stream:stream ");
 
-		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 		String to;
-		Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);
+		Boolean seeOtherHost = context.getSessionObject().getProperty(SEE_OTHER_HOST_KEY);
 		if (from != null && (seeOtherHost == null || seeOtherHost)) {
 			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");
 		} else {
-			to = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
+			to = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
 		}
 
 		if (to != null) {
@@ -772,9 +746,7 @@ public class SocketConnector implements Connector {
 						log.finest("Send: " + t);
 
 					try {
-						SocketConnectorEvent event = new SocketConnectorEvent(StanzaSending, sessionObject);
-						event.setStanza(stanza);
-						observable.fireEvent(event);
+						context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
 					} catch (Exception e) {
 					}
 					writer.write(t.getBytes());
@@ -790,23 +762,14 @@ public class SocketConnector implements Connector {
 		}
 	}
 
-	@Override
-	public void setObservable(Observable observable) {
-		if (observable == null)
-			this.observable = ObservableFactory.instance(null);
-		else
-			this.observable = observable;
-	}
-
 	protected void setStage(State state) throws JaxmppException {
-		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
-		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
+		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
-			ConnectorEvent e = new SocketConnectorEvent(StateChanged, sessionObject);
-			observable.fireEvent(e);
+			context.getEventBus().fire(new StateChangedEvent(context.getSessionObject(), s, state));
 			if (!preventAgainstFireErrors && state == State.disconnected) {
-				fireOnTerminate(sessionObject);
+				fireOnTerminate(context.getSessionObject());
 			}
 		}
 	}
@@ -823,15 +786,15 @@ public class SocketConnector implements Connector {
 		}
 		timer = new Timer(true);
 
-		if (sessionObject.getProperty(TRUST_MANAGERS_KEY) == null)
-			sessionObject.setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
+		if (context.getSessionObject().getProperty(TRUST_MANAGERS_KEY) == null)
+			context.getSessionObject().setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
 
 		setStage(State.connecting);
 
 		try {
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost == null) {
-				String x = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
+				String x = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
 				log.info("Resolving SRV recrd of domain '" + x + "'");
 				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
@@ -846,7 +809,7 @@ public class SocketConnector implements Connector {
 				}
 			}
 
-			sessionObject.setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
 			if (log.isLoggable(Level.FINER))
 				log.finer("Preparing connection to " + serverHost);
@@ -854,9 +817,11 @@ public class SocketConnector implements Connector {
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
 			log.info("Opening connection to " + x + ":" + serverHost.getPort());
 			socket = new Socket(x, serverHost.getPort());
-			// if (sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY) == null
+			// if
+			// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
+			// == null
 			// || ((Boolean)
-			// sessionObject.getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
 			// {
 			// socket.setSoTimeout(SOCKET_TIMEOUT);
 			// }
@@ -895,12 +860,12 @@ public class SocketConnector implements Connector {
 			if (log.isLoggable(Level.CONFIG))
 				log.config("Whitespace ping period is setted to " + delay + "ms");
 
-			if (sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == null
-					|| ((Boolean) sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
+					|| ((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
 				timer.schedule(pingTask, delay, delay);
 			}
 
-			fireOnConnected(sessionObject);
+			fireOnConnected(context.getSessionObject());
 		} catch (Exception e) {
 			stop();
 			onError(null, e);
@@ -998,10 +963,9 @@ public class SocketConnector implements Connector {
 		}
 		log.finest("Worker terminated");
 		try {
-			if (this.sessionObject.getProperty(RECONNECTING_KEY) == Boolean.TRUE) {
-				this.sessionObject.setProperty(RECONNECTING_KEY, null);
-				SocketConnectorEvent event = new SocketConnectorEvent(HostChanged, sessionObject);
-				observable.fireEvent(HostChanged, event);
+			if (this.context.getSessionObject().getProperty(RECONNECTING_KEY) == Boolean.TRUE) {
+				this.context.getSessionObject().setProperty(RECONNECTING_KEY, null);
+				context.getEventBus().fire(new HostChangedEvent(context.getSessionObject()));
 				log.finest("Restarting...");
 				start();
 			}

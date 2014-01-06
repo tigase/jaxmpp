@@ -126,21 +126,21 @@ public abstract class JaxmppCore {
 
 	protected Connector connector;
 
-	private Context context;
+	protected Context context;
 
-	protected final EventBus eventBus;
+	protected EventBus eventBus;
 
 	protected final Logger log;
 
-	protected final XmppModulesManager modulesManager;
+	protected XmppModulesManager modulesManager;
 
 	protected Processor processor;
 
 	protected XmppSessionLogic sessionLogic;
 
-	protected final AbstractSessionObject sessionObject;
+	protected AbstractSessionObject sessionObject;
 
-	protected final PacketWriter writer = new PacketWriter() {
+	protected PacketWriter writer = new PacketWriter() {
 
 		@Override
 		public void write(final Element stanza) throws JaxmppException {
@@ -177,10 +177,17 @@ public abstract class JaxmppCore {
 
 	};
 
-	public JaxmppCore(SessionObject sessionObject) {
-		this.eventBus = createEventBus();
-		this.sessionObject = (AbstractSessionObject) sessionObject;
-		this.log = Logger.getLogger(this.getClass().getName());
+	protected void init() {
+		if (this.eventBus == null)
+			throw new RuntimeException("EventBus cannot be null!");
+		if (this.sessionObject == null)
+			throw new RuntimeException("SessionObject cannot be null!");
+		if (this.writer == null)
+			throw new RuntimeException("PacketWriter cannot be null!");
+
+		if (this.sessionObject instanceof AbstractSessionObject) {
+			this.sessionObject.setEventBus(eventBus);
+		}
 
 		this.context = new Context() {
 
@@ -249,6 +256,11 @@ public abstract class JaxmppCore {
 				JaxmppCore.this.onUnacknowledged(elements);
 			}
 		});
+
+	}
+
+	public JaxmppCore() {
+		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public Chat createChat(JID jid) throws JaxmppException {

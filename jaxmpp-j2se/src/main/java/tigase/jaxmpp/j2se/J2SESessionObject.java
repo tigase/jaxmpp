@@ -3,6 +3,7 @@ package tigase.jaxmpp.j2se;
 import java.util.concurrent.ConcurrentHashMap;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class J2SESessionObject extends AbstractSessionObject {

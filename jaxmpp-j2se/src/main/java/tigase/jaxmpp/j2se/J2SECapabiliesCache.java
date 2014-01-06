@@ -22,40 +22,41 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Identity;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public class J2SECapabiliesCache implements CapabilitiesCache {
 
-        Map<String,Set<String>> features = new HashMap<String,Set<String>>();
-        
-        @Override
-        public Set<String> getFeatures(String node) {
-                return features.get(node);
-        }
+	Map<String, Set<String>> features = new HashMap<String, Set<String>>();
 
-        @Override
-        public Identity getIdentity(String node) {
-                throw new UnsupportedOperationException("Not supported yet.");
-        }
+	@Override
+	public Set<String> getFeatures(String node) {
+		return features.get(node);
+	}
 
-        @Override
-        public Set<String> getNodesWithFeature(String feature) {
-                throw new UnsupportedOperationException("Not supported yet.");
-        }
+	@Override
+	public Identity getIdentity(String node) {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 
-        @Override
-        public boolean isCached(String node) {
-                return features.containsKey(node);
-        }
+	@Override
+	public Set<String> getNodesWithFeature(String feature) {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 
-        @Override
-        public void store(String node, String name, String category, String type, Collection<String> features) {
-                this.features.put(node, new HashSet<String>(features));
-        }
-        
+	@Override
+	public boolean isCached(String node) {
+		return features.containsKey(node);
+	}
+
+	@Override
+	public void store(String node, String name, String category, String type, Collection<String> features) {
+		this.features.put(node, new HashSet<String>(features));
+	}
+
 }

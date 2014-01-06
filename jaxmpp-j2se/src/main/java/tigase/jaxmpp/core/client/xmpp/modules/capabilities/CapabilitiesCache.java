@@ -20,7 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 import java.util.Collection;
 import java.util.Set;
 
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule.Identity;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Identity;
 
 public interface CapabilitiesCache {
 

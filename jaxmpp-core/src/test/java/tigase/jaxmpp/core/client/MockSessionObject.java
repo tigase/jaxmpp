@@ -8,7 +8,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 public class MockSessionObject extends AbstractSessionObject {
 
 	public MockSessionObject(EventBus eventBus) {
-		super(eventBus);
+		super();
+		setEventBus(eventBus);
 		presence = new MockPresenceStore();
 		properties = new HashMap<String, Entry>();
 		responseManager = new ResponseManager();

@@ -13,6 +13,7 @@ import org.junit.Test;
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 
 public class J2SESessionObjectTest {
 
@@ -21,6 +22,7 @@ public class J2SESessionObjectTest {
 	@Before
 	public void setUp() throws Exception {
 		sessionObject = new J2SESessionObject();
+		sessionObject.setEventBus(new ThreadSafeEventBus());
 	}
 
 	@Test
