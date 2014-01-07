@@ -183,6 +183,10 @@ public class ResourceBinderModule implements XmppModule {
 		});
 	}
 
+	public JID getBindedJID() {
+		return getBindedJID(context.getSessionObject());
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return null;

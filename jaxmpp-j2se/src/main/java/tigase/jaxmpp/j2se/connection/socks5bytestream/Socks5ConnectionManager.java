@@ -47,6 +47,7 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionEndpoint;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
@@ -216,8 +217,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		try {
 			String sid = session.getData(SID_KEY);
 			String data = session.isIncoming() ? sid + session.getPeer().toString()
-					+ session.getSessionObject().getBindedJid().toString() : sid
-					+ session.getSessionObject().getBindedJid().toString() + session.getPeer();
+					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() : sid
+					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 			md.update(data.getBytes());
 			byte[] buff = md.digest();
@@ -229,8 +230,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				enc.append(ch);
 			} // end of for (b : digest)
 			if (log.isLoggable(Level.FINEST)) {
-				log.finest("for " + session.getSessionObject().getBindedJid().toString() + " generated " + data + " hash = "
-						+ enc.toString());
+				log.finest("for " + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + " generated "
+						+ data + " hash = " + enc.toString());
 			}
 			return enc.toString();
 		} catch (NoSuchAlgorithmException e) {
@@ -472,7 +473,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			throws JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
 		final DiscoveryModule discoItemsModule = jaxmpp.getModule(DiscoveryModule.class);
-		JID jid = jaxmpp.getSessionObject().getBindedJid();
+		JID jid = ResourceBinderModule.getBindedJID(jaxmpp.getSessionObject());
 		discoItemsModule.getItems(JID.jidInstance(jid.getDomain()), new DiscoveryModule.DiscoItemsAsyncCallback() {
 			@Override
 			public void onError(Stanza responseStanza, XMPPException.ErrorCondition error) throws JaxmppException {
@@ -577,7 +578,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 				registerSession(session, sid, this);
 			}
-			return streamhostsResolver.getLocalStreamHosts(session.getSessionObject().getBindedJid(), server.getPort());
+			return streamhostsResolver.getLocalStreamHosts(ResourceBinderModule.getBindedJID(session.getSessionObject()),
+					server.getPort());
 		} catch (Exception ex) {
 			throw new JaxmppException("problem in getting local streamhosts", ex);
 		}

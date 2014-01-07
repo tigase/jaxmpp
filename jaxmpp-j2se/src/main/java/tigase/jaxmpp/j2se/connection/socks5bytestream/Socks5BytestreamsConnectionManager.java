@@ -28,6 +28,7 @@ import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
@@ -136,7 +137,7 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 			@Override
 			public boolean onSuccess(Streamhost host) {
 				System.out.println("streamhost-used = " + host.getJid());
-				if (host.getJid().equals(ft.getSessionObject().getBindedJid())) {
+				if (host.getJid().equals(ResourceBinderModule.getBindedJID(ft.getSessionObject()))) {
 					System.out.println("streamhost-used = 'local'");
 					synchronized (ft) {
 						Socket socket = ft.getData("socket");

@@ -31,6 +31,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Candidate;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
@@ -169,7 +170,8 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 			String cid = UUID.randomUUID().toString();
 			JID jid = host.getJid();
 			transport.addCandidate(new Candidate(cid, host.getHost(), host.getPort(), jid, priority,
-					session.getSessionObject().getBindedJid().equals(jid) ? Candidate.Type.direct : Candidate.Type.proxy));
+					ResourceBinderModule.getBindedJID(session.getSessionObject()).equals(jid) ? Candidate.Type.direct
+							: Candidate.Type.proxy));
 		}
 
 		session.setData(SOCKS5_TRANSPORT_KEY, transport);
@@ -236,7 +238,8 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 		contentEl.setAttribute("name", "ex");
 		contentEl.addChild(transportEl);
 
-		jingleModule.transportInfo(session.getPeer(), jaxmpp.getSessionObject().getBindedJid(), session.getSid(), contentEl);
+		jingleModule.transportInfo(session.getPeer(), ResourceBinderModule.getBindedJID(jaxmpp.getSessionObject()),
+				session.getSid(), contentEl);
 	}
 
 	@Override

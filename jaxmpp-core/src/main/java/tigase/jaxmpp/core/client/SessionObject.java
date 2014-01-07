@@ -95,13 +95,6 @@ public interface SessionObject extends UserProperties {
 	void clear(Scope... scopes) throws JaxmppException;
 
 	/**
-	 * Returns users JID binded on server.
-	 * 
-	 * @return Jabber ID
-	 */
-	public JID getBindedJid();
-
-	/**
 	 * Returns property
 	 * 
 	 * @param key

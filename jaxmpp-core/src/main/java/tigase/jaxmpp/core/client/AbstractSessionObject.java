@@ -29,7 +29,6 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 
 /**
  * Default representation of {@linkplain SessionObject}
@@ -137,14 +136,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 		ClearedHandler.ClearedEvent event = new ClearedHandler.ClearedEvent(this, scopes);
 		eventBus.fire(event);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public JID getBindedJid() {
-		return getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 	}
 
 	public EventBus getEventBus() {
