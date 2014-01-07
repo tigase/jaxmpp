@@ -239,7 +239,7 @@ public abstract class JaxmppCore {
 	}
 
 	public RosterStore getRoster() {
-		return sessionObject.getRoster();
+		return RosterModule.getRosterStore(sessionObject);
 	}
 
 	public SessionObject getSessionObject() {

@@ -30,7 +30,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 /**
  * Default representation of {@linkplain SessionObject}
@@ -84,8 +83,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	protected ResponseManager responseManager;
 
-	protected RosterStore roster;
-
 	protected AbstractSessionObject() {
 	}
 
@@ -129,10 +126,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 			scopes = new HashSet<SessionObject.Scope>();
 			scopes.add(Scope.session);
 			scopes.add(Scope.stream);
-		}
-
-		if (scopes.contains(Scope.session)) {
-			roster.clear();
 		}
 
 		Iterator<java.util.Map.Entry<String, Entry>> iterator = this.properties.entrySet().iterator();
@@ -182,14 +175,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 */
 	public Runnable getResponseHandler(Element element, PacketWriter writer) throws JaxmppException {
 		return responseManager.getResponseHandler(element, writer, this);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public RosterStore getRoster() {
-		return roster;
 	}
 
 	/**

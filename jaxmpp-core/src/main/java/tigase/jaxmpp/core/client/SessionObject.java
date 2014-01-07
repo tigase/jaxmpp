@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 /**
  * Session object is for store state of connection, modules etc.
@@ -110,13 +109,6 @@ public interface SessionObject extends UserProperties {
 	 * @return property
 	 */
 	public <T> T getProperty(String key);
-
-	/**
-	 * Returns roster store
-	 * 
-	 * @return roster
-	 */
-	public RosterStore getRoster();
 
 	/**
 	 * Returns XMPP Stream features

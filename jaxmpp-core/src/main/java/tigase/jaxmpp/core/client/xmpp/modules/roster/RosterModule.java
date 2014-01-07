@@ -23,11 +23,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -196,6 +198,8 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:roster" }));
 
+	public static final String ROSTER_STORE_KEY = "RosterModule#ROSTER_STORE";
+
 	private static final Element createItem(final RosterItem item) throws XMLException {
 		Element result = new DefaultElement("item");
 		result.setAttribute("jid", item.getJid().toString());
@@ -218,17 +222,25 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		return rosterItem;
 	}
 
+	public static RosterStore getRosterStore(SessionObject sessionObject) {
+		return sessionObject.getProperty(ROSTER_STORE_KEY);
+	}
+
 	private final static Subscription getSubscription(String x) {
 		if (x == null)
 			return null;
 		return Subscription.valueOf(x);
 	}
 
+	public static void setRosterStore(SessionObject sessionObject, RosterStore rosterStore) {
+		sessionObject.setProperty(Scope.user, ROSTER_STORE_KEY, rosterStore);
+	}
+
 	private final RosterCacheProvider versionProvider;
 
 	public RosterModule(Context context) {
 		super(context);
-		context.getSessionObject().getRoster().setHandler(new RosterStore.Handler() {
+		getRosterStore().setHandler(new RosterStore.Handler() {
 
 			@Override
 			public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
@@ -251,6 +263,16 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 				RosterModule.this.update(item);
 			}
 		});
+		context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
+				new AbstractSessionObject.ClearedHandler() {
+
+					@Override
+					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+						if (scopes.contains(Scope.session)) {
+							getRosterStore().clear();
+						}
+					}
+				});
 		this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
 	}
 
@@ -314,6 +336,10 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		return null;
 	}
 
+	public RosterStore getRosterStore() {
+		return getRosterStore(context.getSessionObject());
+	}
+
 	public RosterCacheProvider getVersionProvider() {
 		return versionProvider;
 	}
@@ -331,7 +357,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 	private void loadFromCache() {
 		if (versionProvider != null) {
-			final RosterStore roster = context.getSessionObject().getRoster();
+			final RosterStore roster = getRosterStore();
 			Collection<RosterItem> items = versionProvider.loadCachedRoster(context.getSessionObject());
 			if (items != null) {
 				for (RosterItem rosterItem : items) {
@@ -360,13 +386,13 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 			groups.add(group.getValue());
 		}
 
-		RosterItem currentItem = context.getSessionObject().getRoster().get(jid);
+		RosterItem currentItem = getRosterStore().get(jid);
 		if (subscription == Subscription.remove && currentItem != null) {
 			// remove item
-			HashSet<String> groupsOld = new HashSet<String>(context.getSessionObject().getRoster().groups);
+			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().groups);
 			fill(currentItem, name, subscription, null, ask);
-			context.getSessionObject().getRoster().removeItem(jid);
-			Set<String> modifiedGroups = context.getSessionObject().getRoster().calculateModifiedGroups(groupsOld);
+			getRosterStore().removeItem(jid);
+			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
 			fireEvent(new ItemRemovedEvent(context.getSessionObject(), currentItem, modifiedGroups));
 			log.fine("Roster item " + jid + " removed");
 		} else if (currentItem == null) {
@@ -374,7 +400,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 			currentItem = new RosterItem(jid, context.getSessionObject());
 			currentItem.setData(RosterItem.ID_KEY, createId(jid));
 			fill(currentItem, name, subscription, groups, ask);
-			Set<String> modifiedGroups = context.getSessionObject().getRoster().addItem(currentItem);
+			Set<String> modifiedGroups = getRosterStore().addItem(currentItem);
 			fireEvent(new ItemAddedEvent(context.getSessionObject(), currentItem, modifiedGroups));
 			log.fine("Roster item " + jid + " added");
 		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
@@ -395,9 +421,9 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.subscribed, null));
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
-			HashSet<String> groupsOld = new HashSet<String>(context.getSessionObject().getRoster().groups);
+			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().groups);
 			fill(currentItem, name, subscription, groups, ask);
-			Set<String> modifiedGroups = context.getSessionObject().getRoster().calculateModifiedGroups(groupsOld);
+			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, null, modifiedGroups));
 			log.fine("Roster item " + jid + " updated");
 		}
@@ -407,7 +433,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	private void processRosterQuery(final Element query, boolean force) throws JaxmppException {
 		if (query != null) {
 			if (force)
-				context.getSessionObject().getRoster().removeAll();
+				getRosterStore().removeAll();
 
 			List<Element> items = query.getChildren("item");
 			String ver = query.getAttribute("ver");
@@ -468,7 +494,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		DefaultElement query = new DefaultElement("query", null, "jabber:iq:roster");
 		if (isRosterVersioningAvailable()) {
 			String x = versionProvider.getCachedVersion(context.getSessionObject());
-			if (context.getSessionObject().getRoster().getCount() == 0) {
+			if (getRosterStore().getCount() == 0) {
 				x = "";
 				versionProvider.updateReceivedVersion(context.getSessionObject(), x);
 			}

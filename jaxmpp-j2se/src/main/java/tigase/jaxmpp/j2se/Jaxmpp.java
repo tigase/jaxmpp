@@ -40,6 +40,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
@@ -168,9 +170,13 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void init() {
-		super.init();
+		if (PresenceModule.getPresenceStore(sessionObject) == null)
+			PresenceModule.setPresenceStore(sessionObject, new J2SEPresenceStore());
 
-		PresenceModule.setPresenceStore(context.getSessionObject(), new J2SEPresenceStore());
+		if (RosterModule.getRosterStore(sessionObject) == null)
+			RosterModule.setRosterStore(sessionObject, new RosterStore());
+
+		super.init();
 
 		setExecutor(DEFAULT_EXECUTOR);
 		TimerTask checkTimeouts = new TimerTask() {
