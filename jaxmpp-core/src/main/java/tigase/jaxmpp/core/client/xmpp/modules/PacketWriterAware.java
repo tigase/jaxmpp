@@ -7,7 +7,6 @@ import tigase.jaxmpp.core.client.PacketWriter;
  * be injected to this module.
  * 
  */
-@Deprecated
 public interface PacketWriterAware {
 
 	/**

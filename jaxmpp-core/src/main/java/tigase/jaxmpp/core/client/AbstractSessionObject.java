@@ -25,12 +25,13 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 
 /**
  * Default representation of {@linkplain SessionObject}
  * 
  */
-public abstract class AbstractSessionObject implements SessionObject {
+public abstract class AbstractSessionObject implements SessionObject, EventBusAware {
 
 	protected class Entry {
 		private Scope scope;
@@ -136,6 +137,7 @@ public abstract class AbstractSessionObject implements SessionObject {
 		eventBus.remove(ClearedHandler.ClearedEvent.class, handler);
 	}
 
+	@Override
 	public void setEventBus(EventBus eventBus) {
 		this.eventBus = eventBus;
 	}

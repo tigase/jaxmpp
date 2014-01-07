@@ -26,6 +26,7 @@ import java.util.Set;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 
@@ -120,6 +121,10 @@ public class XmppModulesManager {
 	public <T extends XmppModule> T register(T plugin) {
 		if (plugin instanceof ContextAware) {
 			((ContextAware) plugin).setContext(context);
+		}
+
+		if (plugin instanceof EventBusAware) {
+			((EventBusAware) plugin).setEventBus(context.getEventBus());
 		}
 
 		if (plugin instanceof PacketWriterAware) {

@@ -34,6 +34,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
@@ -253,9 +254,15 @@ public abstract class JaxmppCore {
 			throw new RuntimeException("SessionObject cannot be null!");
 		if (this.writer == null)
 			throw new RuntimeException("PacketWriter cannot be null!");
+		if (ResponseManager.getResponseManager(sessionObject) == null)
+			throw new RuntimeException("ResponseManager cannot be null!");
+		if (RosterModule.getRosterStore(sessionObject) == null)
+			throw new RuntimeException("RosterModule cannot be null!");
+		if (PresenceModule.getPresenceStore(sessionObject) == null)
+			throw new RuntimeException("PresenceModule cannot be null!");
 
-		if (this.sessionObject instanceof AbstractSessionObject) {
-			this.sessionObject.setEventBus(eventBus);
+		if (this.sessionObject instanceof EventBusAware) {
+			((EventBusAware) this.sessionObject).setEventBus(eventBus);
 		}
 
 		assert ResponseManager.getResponseManager(sessionObject) != null;
