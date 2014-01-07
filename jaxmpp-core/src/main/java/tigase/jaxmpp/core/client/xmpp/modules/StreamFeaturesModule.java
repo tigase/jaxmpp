@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -73,6 +74,16 @@ public class StreamFeaturesModule implements XmppModule {
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
 
+	private static final String STREAM_FEATURES_ELEMENT_KEY = "StreamFeaturesModule#STREAM_FEATURES_ELEMENT";
+
+	public static Element getStreamFeatures(SessionObject sessionObject) {
+		return sessionObject.getProperty(STREAM_FEATURES_ELEMENT_KEY);
+	}
+
+	static void setStreamFeatures(SessionObject sessionObject, Element element) {
+		sessionObject.setProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY, element);
+	}
+
 	private final Context context;
 
 	protected final Logger log;
@@ -96,9 +107,13 @@ public class StreamFeaturesModule implements XmppModule {
 		return null;
 	}
 
+	public Element getStreamFeatures() {
+		return getStreamFeatures(context.getSessionObject());
+	}
+
 	@Override
 	public void process(Element element) throws JaxmppException {
-		context.getSessionObject().setStreamFeatures(element);
+		setStreamFeatures(context.getSessionObject(), element);
 		context.getEventBus().fire(new StreamFeaturesReceivedEvent(context.getSessionObject(), element), this);
 	}
 

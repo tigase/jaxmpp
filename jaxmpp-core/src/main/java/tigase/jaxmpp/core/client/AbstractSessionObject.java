@@ -70,8 +70,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 		private Object value;
 	}
 
-	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
-
 	private EventBus eventBus;
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
@@ -172,14 +170,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Element getStreamFeatures() {
-		return getProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public BareJID getUserBareJid() {
 		return this.getProperty(USER_BARE_JID);
 	}
@@ -226,14 +216,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	@Override
 	public SessionObject setProperty(String key, Object value) {
 		return setProperty(Scope.session, key, value);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setStreamFeatures(Element element) {
-		setProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY, element);
 	}
 
 	/**

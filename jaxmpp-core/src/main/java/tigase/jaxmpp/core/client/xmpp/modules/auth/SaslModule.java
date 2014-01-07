@@ -39,6 +39,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.PlainMechanism;
 
@@ -190,7 +191,7 @@ public class SaslModule implements XmppModule {
 	public static final String SASL_MECHANISM = "jaxmpp#saslMechanism";
 
 	public static List<String> getAllowedSASLMechanisms(SessionObject sessionObject) throws XMLException {
-		final Element sf = sessionObject.getStreamFeatures();
+		final Element sf = StreamFeaturesModule.getStreamFeatures(sessionObject);
 		if (sf == null)
 			return null;
 		Element m = sf.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
@@ -257,7 +258,7 @@ public class SaslModule implements XmppModule {
 
 	protected Collection<String> getSupportedMechanisms() throws XMLException {
 		ArrayList<String> result = new ArrayList<String>();
-		Element x = this.context.getSessionObject().getStreamFeatures().getChildrenNS("mechanisms",
+		Element x = StreamFeaturesModule.getStreamFeatures(this.context.getSessionObject()).getChildrenNS("mechanisms",
 				"urn:ietf:params:xml:ns:xmpp-sasl");
 		if (x != null) {
 			List<Element> mms = x.getChildren("mechanism");

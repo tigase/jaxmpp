@@ -44,6 +44,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem.Subscription;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.ItemAddedHandler.ItemAddedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.ItemRemovedHandler.ItemRemovedEvent;
@@ -347,7 +348,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	private boolean isRosterVersioningAvailable() throws XMLException {
 		if (versionProvider == null)
 			return false;
-		Element features = context.getSessionObject().getStreamFeatures();
+		Element features = StreamFeaturesModule.getStreamFeatures(context.getSessionObject());
 		if (features == null)
 			return false;
 		if (features.getChildrenNS("ver", "urn:xmpp:features:rosterver") != null)

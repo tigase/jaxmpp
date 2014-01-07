@@ -92,7 +92,7 @@ public class SessionEstablishmentModule implements XmppModule {
 	public static final String SESSION_ESTABLISHED = "jaxmpp#sessionEstablished";
 
 	public static boolean isSessionEstablishingAvailable(final SessionObject sessionObject) throws XMLException {
-		final Element features = sessionObject.getStreamFeatures();
+		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
 		return features != null && features.getChildrenNS("session", "urn:ietf:params:xml:ns:xmpp-session") != null;
 	}

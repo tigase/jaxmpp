@@ -34,6 +34,7 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -138,7 +139,7 @@ public class AuthModule implements XmppModule {
 	public static final String FORCE_NON_SASL = "jaxmpp#forceNonSASL";
 
 	public static boolean isAuthAvailable(final SessionObject sessionObject) throws XMLException {
-		final Element features = sessionObject.getStreamFeatures();
+		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
 		boolean saslSupported = features != null
 				&& features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
@@ -260,7 +261,7 @@ public class AuthModule implements XmppModule {
 
 		final Boolean forceNonSasl = context.getSessionObject().getProperty(FORCE_NON_SASL);
 
-		final Element features = context.getSessionObject().getStreamFeatures();
+		final Element features = StreamFeaturesModule.getStreamFeatures(context.getSessionObject());
 		boolean saslSupported = saslModule != null && (forceNonSasl == null || !forceNonSasl.booleanValue())
 				&& features != null && features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
 		boolean nonSaslSupported = nonSaslModule != null

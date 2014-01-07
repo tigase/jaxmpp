@@ -30,6 +30,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.NotSupportedErrorHandler.NotSupportedErrorEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.ReceivedErrorHandler.ReceivedErrorEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.ReceivedRequestedFieldsHandler.ReceivedRequestedFieldsEvent;
@@ -153,7 +154,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	}
 
 	public static boolean isRegistrationAvailable(SessionObject sessionObject) throws JaxmppException {
-		final Element features = sessionObject.getStreamFeatures();
+		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
 		boolean registrationSupported = features != null
 				&& features.getChildrenNS("register", "http://jabber.org/features/iq-register") != null;

@@ -25,6 +25,7 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementEnabledHandler.StreamManagementEnabledEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler.StreamResumedEvent;
@@ -242,7 +243,7 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	public static boolean isStreamManagementAvailable(SessionObject sessionObject) throws JaxmppException {
-		final Element features = sessionObject.getStreamFeatures();
+		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
 		boolean supported = features != null && features.getChildrenNS("sm", XMLNS) != null;
 

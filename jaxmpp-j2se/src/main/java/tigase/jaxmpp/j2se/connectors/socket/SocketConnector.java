@@ -73,6 +73,7 @@ import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
@@ -115,6 +116,27 @@ public class SocketConnector implements Connector {
 			return hostname + ":" + port;
 		}
 
+	}
+
+	/**
+	 * see-other-host
+	 */
+	public interface HostChangedHandler extends EventHandler {
+
+		public static class HostChangedEvent extends JaxmppEvent<HostChangedHandler> {
+
+			public HostChangedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(HostChangedHandler handler) {
+				handler.onHostChanged(sessionObject);
+			}
+
+		}
+
+		void onHostChanged(SessionObject sessionObject);
 	}
 
 	/**
@@ -269,27 +291,6 @@ public class SocketConnector implements Connector {
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
 
-	/**
-	 * see-other-host
-	 */
-	public interface HostChangedHandler extends EventHandler {
-
-		public static class HostChangedEvent extends JaxmppEvent<HostChangedHandler> {
-
-			public HostChangedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(HostChangedHandler handler) {
-				handler.onHostChanged(sessionObject);
-			}
-
-		}
-
-		void onHostChanged(SessionObject sessionObject);
-	}
-
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
 
 	private final static String RECONNECTING_KEY = "s:reconnecting";
@@ -305,7 +306,7 @@ public class SocketConnector implements Connector {
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
 
 	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
-		final Element sf = sessionObject.getStreamFeatures();
+		final Element sf = StreamFeaturesModule.getStreamFeatures(sessionObject);
 		if (sf == null)
 			return false;
 		Element m = sf.getChildrenNS("starttls", "urn:ietf:params:xml:ns:xmpp-tls");
@@ -321,7 +322,7 @@ public class SocketConnector implements Connector {
 	 * @throws XMLException
 	 */
 	public static boolean isZLibAvailable(SessionObject sessionObject) throws XMLException {
-		final Element sf = sessionObject.getStreamFeatures();
+		final Element sf = StreamFeaturesModule.getStreamFeatures(sessionObject);
 		if (sf == null)
 			return false;
 		Element m = sf.getChildrenNS("compression", "http://jabber.org/features/compress");
@@ -335,6 +336,8 @@ public class SocketConnector implements Connector {
 
 		return false;
 	}
+
+	private Context context;
 
 	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
@@ -374,8 +377,6 @@ public class SocketConnector implements Connector {
 	private Worker worker;
 
 	private OutputStream writer;
-
-	private Context context;
 
 	public SocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());

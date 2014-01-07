@@ -18,7 +18,6 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
 
 /**
  * Session object is for store state of connection, modules etc.
@@ -104,13 +103,6 @@ public interface SessionObject extends UserProperties {
 	public <T> T getProperty(String key);
 
 	/**
-	 * Returns XMPP Stream features
-	 * 
-	 * @return element with features
-	 */
-	public Element getStreamFeatures();
-
-	/**
 	 * Returns users JID
 	 * 
 	 * @return
@@ -141,13 +133,5 @@ public interface SessionObject extends UserProperties {
 	 * @return instance of <code>this</code> {@linkplain SessionObject}
 	 */
 	public SessionObject setProperty(String key, Object value);
-
-	/**
-	 * Set XMPP Stream features
-	 * 
-	 * @param element
-	 *            element contains features
-	 */
-	public void setStreamFeatures(Element element);
 
 }
