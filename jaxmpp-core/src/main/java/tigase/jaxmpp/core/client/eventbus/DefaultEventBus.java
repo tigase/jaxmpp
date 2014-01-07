@@ -70,10 +70,10 @@ public class DefaultEventBus extends EventBus {
 				handlers.put(source == null ? NULL_SOURCE : source, hdlrs);
 			}
 
-			List<EventHandler> lst = hdlrs.get(type);
+			List<EventHandler> lst = hdlrs.get(type == null ? NULL_TYPE : type);
 			if (lst == null) {
 				lst = createHandlersArray();
-				hdlrs.put(type, lst);
+				hdlrs.put(type == null ? NULL_TYPE : type, lst);
 			}
 			lst.add(handler);
 		}
@@ -139,7 +139,7 @@ public class DefaultEventBus extends EventBus {
 		if (hdlrs == null) {
 			return Collections.emptyList();
 		} else {
-			final List<EventHandler> lst = hdlrs.get(type);
+			final List<EventHandler> lst = hdlrs.get(type == null ? NULL_TYPE : type);
 			if (lst != null) {
 				return lst;
 			} else
@@ -148,6 +148,15 @@ public class DefaultEventBus extends EventBus {
 	}
 
 	private final static Object NULL_SOURCE = new Object();
+
+	private final static class N extends Event<EventHandler> {
+
+		@Override
+		protected void dispatch(EventHandler handler) throws Exception {
+		}
+	}
+
+	private final static Class<? extends Event<?>> NULL_TYPE = N.class;
 
 	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
 		return handlers.get(source == null ? NULL_SOURCE : source);
@@ -167,11 +176,11 @@ public class DefaultEventBus extends EventBus {
 		synchronized (this.handlers) {
 			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
 			if (hdlrs != null) {
-				List<EventHandler> lst = hdlrs.get(type);
+				List<EventHandler> lst = hdlrs.get(type == null ? NULL_TYPE : type);
 				if (lst != null) {
 					lst.remove(handler);
 					if (lst.isEmpty()) {
-						hdlrs.remove(type);
+						hdlrs.remove(type == null ? NULL_TYPE : type);
 					}
 					if (hdlrs.isEmpty()) {
 						handlers.remove(source == null ? NULL_SOURCE : source);
