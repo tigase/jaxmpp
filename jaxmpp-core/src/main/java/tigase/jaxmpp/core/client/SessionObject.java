@@ -17,6 +17,10 @@
  */
 package tigase.jaxmpp.core.client;
 
+import java.util.Set;
+
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 /**
@@ -29,6 +33,35 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  * 
  */
 public interface SessionObject extends UserProperties {
+
+	public interface ClearedHandler extends EventHandler {
+
+		public static class ClearedEvent extends JaxmppEvent<ClearedHandler> {
+
+			private Set<Scope> scopes;
+
+			public ClearedEvent(SessionObject sessionObject, Set<Scope> scopes) {
+				super(sessionObject);
+				this.scopes = scopes;
+			}
+
+			@Override
+			protected void dispatch(ClearedHandler handler) throws JaxmppException {
+				handler.onCleared(sessionObject, scopes);
+			}
+
+			public Set<Scope> getScopes() {
+				return scopes;
+			}
+
+			public void setScopes(Set<Scope> scopes) {
+				this.scopes = scopes;
+			}
+
+		}
+
+		void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException;
+	}
 
 	public static enum Scope {
 		session,
