@@ -27,8 +27,6 @@ import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Default representation of {@linkplain SessionObject}
@@ -78,21 +76,11 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	protected Map<String, Entry> properties;
 
-	protected ResponseManager responseManager;
-
 	protected AbstractSessionObject() {
 	}
 
 	public void addClearedHandler(ClearedHandler handler) {
 		eventBus.addHandler(ClearedHandler.ClearedEvent.class, handler);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void checkHandlersTimeout() throws JaxmppException {
-		this.responseManager.checkTimeouts();
 	}
 
 	/**
@@ -162,13 +150,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	/**
 	 * {@inheritDoc}
 	 */
-	public Runnable getResponseHandler(Element element, PacketWriter writer) throws JaxmppException {
-		return responseManager.getResponseHandler(element, writer, this);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public BareJID getUserBareJid() {
 		return this.getProperty(USER_BARE_JID);
@@ -180,10 +161,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	@Override
 	public <T> T getUserProperty(String key) {
 		return getProperty(Scope.user, key);
-	}
-
-	public String registerResponseHandler(Element stanza, Long timeout, AsyncCallback callback) throws XMLException {
-		return responseManager.registerResponseHandler(stanza, timeout, callback);
 	}
 
 	public void removeClearedHandler(ClearedHandler handler) {

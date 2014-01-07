@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -54,6 +55,26 @@ public class ResponseManager {
 	}
 
 	protected static final long DEFAULT_TIMEOUT = 1000 * 60;
+
+	public static final String RESPONSE_MANAGER_KEY = "ResponseManager#RESPONSE_MANAGER";
+
+	public static Runnable getResponseHandler(SessionObject sessionObject, Element element, PacketWriter writer)
+			throws JaxmppException {
+		return getResponseManager(sessionObject).getResponseHandler(element, writer, sessionObject);
+	}
+
+	public static final ResponseManager getResponseManager(SessionObject sessionObject) {
+		return sessionObject.getProperty(RESPONSE_MANAGER_KEY);
+	}
+
+	public static String registerResponseHandler(SessionObject sessionObject, Element stanza, Long timeout,
+			AsyncCallback callback) throws XMLException {
+		return getResponseManager(sessionObject).registerResponseHandler(stanza, timeout, callback);
+	}
+
+	public static final void setResponseManager(SessionObject sessionObject, ResponseManager responseManager) {
+		sessionObject.setProperty(Scope.user, RESPONSE_MANAGER_KEY, responseManager);
+	}
 
 	private final Map<String, Entry> handlers = new HashMap<String, Entry>();
 

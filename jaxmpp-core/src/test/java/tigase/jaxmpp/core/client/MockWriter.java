@@ -45,13 +45,13 @@ public class MockWriter implements PacketWriter {
 
 	@Override
 	public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-		sessionObject.registerResponseHandler(stanza, null, asyncCallback);
+		ResponseManager.registerResponseHandler(sessionObject, stanza, null, asyncCallback);
 		write(stanza);
 	}
 
 	@Override
 	public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-		sessionObject.registerResponseHandler(stanza, null, asyncCallback);
+		ResponseManager.registerResponseHandler(sessionObject, stanza, timeout, asyncCallback);
 		write(stanza);
 	}
 

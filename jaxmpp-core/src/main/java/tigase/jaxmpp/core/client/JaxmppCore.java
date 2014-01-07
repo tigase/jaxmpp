@@ -165,13 +165,13 @@ public abstract class JaxmppCore {
 
 		@Override
 		public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-			sessionObject.registerResponseHandler(stanza, null, asyncCallback);
+			ResponseManager.registerResponseHandler(sessionObject, stanza, null, asyncCallback);
 			writer.write(stanza);
 		}
 
 		@Override
 		public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-			sessionObject.registerResponseHandler(stanza, timeout, asyncCallback);
+			ResponseManager.registerResponseHandler(sessionObject, stanza, timeout, asyncCallback);
 			writer.write(stanza);
 		}
 
@@ -257,6 +257,10 @@ public abstract class JaxmppCore {
 		if (this.sessionObject instanceof AbstractSessionObject) {
 			this.sessionObject.setEventBus(eventBus);
 		}
+
+		assert ResponseManager.getResponseManager(sessionObject) != null;
+		assert RosterModule.getRosterStore(sessionObject) != null;
+		assert PresenceModule.getPresenceStore(sessionObject) != null;
 
 		this.context = new Context() {
 

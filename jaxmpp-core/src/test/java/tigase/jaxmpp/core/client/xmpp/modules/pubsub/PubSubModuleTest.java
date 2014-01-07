@@ -23,9 +23,9 @@ import java.util.Date;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.AbstractJaxmppTest;
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.ResponseManager;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -58,7 +58,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 	}
 
 	private Runnable getResponseHandler(Element element) throws JaxmppException {
-		return ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element, context.getWriter());
+		return ResponseManager.getResponseHandler(context.getSessionObject(), element, context.getWriter());
 	}
 
 	@Override

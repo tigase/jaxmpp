@@ -29,6 +29,7 @@ import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.ResponseManager;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
@@ -110,7 +111,7 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	protected void checkTimeouts() throws JaxmppException {
-		sessionObject.checkHandlersTimeout();
+		ResponseManager.getResponseManager(sessionObject).checkTimeouts();
 	}
 
 	protected Connector createConnector() throws JaxmppException {
@@ -175,6 +176,9 @@ public class Jaxmpp extends JaxmppCore {
 
 		if (RosterModule.getRosterStore(sessionObject) == null)
 			RosterModule.setRosterStore(sessionObject, new RosterStore());
+
+		if (ResponseManager.getResponseManager(sessionObject) == null)
+			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
 
 		super.init();
 

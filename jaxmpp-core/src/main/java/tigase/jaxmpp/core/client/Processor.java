@@ -108,9 +108,7 @@ public class Processor {
 	public Runnable process(final Element receivedElement) {
 		try {
 			final Element element = Stanza.canBeConverted(receivedElement) ? Stanza.create(receivedElement) : receivedElement;
-
-			Runnable result = ((AbstractSessionObject) context.getSessionObject()).getResponseHandler(element,
-					context.getWriter());
+			Runnable result = ResponseManager.getResponseHandler(context.getSessionObject(), element, context.getWriter());
 			if (result != null)
 				return result;
 

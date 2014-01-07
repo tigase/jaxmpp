@@ -13,9 +13,10 @@ public class MockSessionObject extends AbstractSessionObject {
 		super();
 		setEventBus(eventBus);
 		properties = new HashMap<String, Entry>();
-		responseManager = new ResponseManager();
 
 		PresenceModule.setPresenceStore(this, new MockPresenceStore());
 		RosterModule.setRosterStore(this, new RosterStore());
+		ResponseManager.setResponseManager(this, new ResponseManager());
 	}
+
 }

@@ -8,7 +8,6 @@ public class J2SESessionObject extends AbstractSessionObject {
 
 	public J2SESessionObject() {
 		properties = new ConcurrentHashMap<String, Entry>();
-		responseManager = new ThreadSafeResponseManager();
 	}
 
 }

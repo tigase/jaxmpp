@@ -70,13 +70,6 @@ public interface SessionObject extends UserProperties {
 	public static final String USER_BARE_JID = "userBareJid";
 
 	/**
-	 * Method for process <code><iq/></code> stanzas without response.
-	 * 
-	 * @throws JaxmppException
-	 */
-	public void checkHandlersTimeout() throws JaxmppException;
-
-	/**
 	 * Reset state. Clears all properties stored by modules, roster and presence
 	 * store. Users properties are keeped.
 	 * 
