@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 /**
@@ -102,13 +101,6 @@ public interface SessionObject extends UserProperties {
 	 * @return Jabber ID
 	 */
 	public JID getBindedJid();
-
-	/**
-	 * Returns Store of known presences.
-	 * 
-	 * @return presence store
-	 */
-	public PresenceStore getPresence();
 
 	/**
 	 * Returns property

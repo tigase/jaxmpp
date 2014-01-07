@@ -30,7 +30,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 /**
@@ -75,11 +74,11 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 	private static final String STREAM_FEATURES_ELEMENT_KEY = "jaxmpp:internal:STREAM_FEATURES_ELEMENT";
 
-	private  EventBus eventBus;
+	private EventBus eventBus;
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-	protected PresenceStore presence;
+	// protected PresenceStore presence;
 
 	protected Map<String, Entry> properties;
 
@@ -134,7 +133,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 
 		if (scopes.contains(Scope.session)) {
 			roster.clear();
-			presence.clear();
 		}
 
 		Iterator<java.util.Map.Entry<String, Entry>> iterator = this.properties.entrySet().iterator();
@@ -156,12 +154,8 @@ public abstract class AbstractSessionObject implements SessionObject {
 		return getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public PresenceStore getPresence() {
-		return presence;
+	public EventBus getEventBus() {
+		return eventBus;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -230,6 +224,10 @@ public abstract class AbstractSessionObject implements SessionObject {
 		eventBus.remove(ClearedHandler.ClearedEvent.class, handler);
 	}
 
+	public void setEventBus(EventBus eventBus) {
+		this.eventBus = eventBus;
+	}
+
 	@Override
 	public SessionObject setProperty(Scope scope, String key, Object value) {
 		if (value == null) {
@@ -268,14 +266,6 @@ public abstract class AbstractSessionObject implements SessionObject {
 	@Override
 	public UserProperties setUserProperty(String key, Object value) {
 		return setProperty(Scope.user, key, value);
-	}
-
-	public EventBus getEventBus() {
-		return eventBus;
-	}
-
-	public void setEventBus(EventBus eventBus) {
-		this.eventBus = eventBus;
 	}
 
 }

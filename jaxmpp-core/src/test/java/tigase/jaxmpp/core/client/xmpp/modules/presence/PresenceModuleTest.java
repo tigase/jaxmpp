@@ -8,7 +8,6 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.AbstractJaxmppTest;
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -19,7 +18,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public class PresenceModuleTest extends AbstractJaxmppTest {
 
 	private PresenceStore getPresence() {
-		return ((AbstractSessionObject) context.getSessionObject()).getPresence();
+		return PresenceModule.getPresenceStore(context.getSessionObject());
 	}
 
 	@Test

@@ -73,17 +73,17 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
-	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
+	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
-	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
-
-	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
+	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";;
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
 	static {
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
+
+	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
 
 	private Executor executor;
 
@@ -105,31 +105,6 @@ public class Jaxmpp extends JaxmppCore {
 		this.eventBus = new ThreadSafeEventBus();
 		this.sessionObject = (AbstractSessionObject) sessionObject;
 		init();
-	}
-
-	@Override
-	protected void init() {
-		super.init();
-
-		setExecutor(DEFAULT_EXECUTOR);
-		TimerTask checkTimeouts = new TimerTask() {
-
-			@Override
-			public void run() {
-				try {
-					checkTimeouts();
-				} catch (JaxmppException e) {
-					e.printStackTrace();
-				}
-			}
-		};
-		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
-
-		this.connector = this.connectorWrapper;
-
-		this.processor = new Processor(this.modulesManager, context);
-
-		modulesInit();
 	}
 
 	protected void checkTimeouts() throws JaxmppException {
@@ -191,9 +166,36 @@ public class Jaxmpp extends JaxmppCore {
 		return executor;
 	}
 
-//	public FileTransferManager getFileTransferManager() {
-//		return fileTransferManager;
-//	}
+	@Override
+	protected void init() {
+		super.init();
+
+		PresenceModule.setPresenceStore(context.getSessionObject(), new J2SEPresenceStore());
+
+		setExecutor(DEFAULT_EXECUTOR);
+		TimerTask checkTimeouts = new TimerTask() {
+
+			@Override
+			public void run() {
+				try {
+					checkTimeouts();
+				} catch (JaxmppException e) {
+					e.printStackTrace();
+				}
+			}
+		};
+		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
+
+		this.connector = this.connectorWrapper;
+
+		this.processor = new Processor(this.modulesManager, context);
+
+		modulesInit();
+	}
+
+	// public FileTransferManager getFileTransferManager() {
+	// return fileTransferManager;
+	// }
 
 	// public void initFileTransferManager(boolean experimental) throws
 	// JaxmppException {
@@ -312,20 +314,6 @@ public class Jaxmpp extends JaxmppCore {
 		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
-	/**
-	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
-	 * modules.
-	 * 
-	 * @param executor
-	 *            executor
-	 */
-	public void setExecutor(Executor executor) {
-		if (executor == null)
-			this.executor = DEFAULT_EXECUTOR;
-		else
-			this.executor = executor;
-	}
-
 	@Override
 	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
@@ -359,6 +347,20 @@ public class Jaxmpp extends JaxmppCore {
 			Jaxmpp.this.notify();
 		}
 		eventBus.fire(new DisconnectedEvent(sessionObject));
+	}
+
+	/**
+	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
+	 * modules.
+	 * 
+	 * @param executor
+	 *            executor
+	 */
+	public void setExecutor(Executor executor) {
+		if (executor == null)
+			this.executor = DEFAULT_EXECUTOR;
+		else
+			this.executor = executor;
 	}
 
 }

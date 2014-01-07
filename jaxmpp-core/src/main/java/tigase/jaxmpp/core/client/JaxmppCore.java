@@ -177,6 +177,75 @@ public abstract class JaxmppCore {
 
 	};
 
+	public JaxmppCore() {
+		this.log = Logger.getLogger(this.getClass().getName());
+	}
+
+	public Chat createChat(JID jid) throws JaxmppException {
+		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	}
+
+	protected EventBus createEventBus() {
+		return new DefaultEventBus();
+	}
+
+	public abstract void disconnect() throws JaxmppException;
+
+	public abstract void execute(Runnable runnable);
+
+	/**
+	 * Returns configurator.
+	 * 
+	 * This wrapper for SessionObject.
+	 * 
+	 * @return configuration
+	 */
+	public abstract <T extends ConnectionConfiguration> T getConnectionConfiguration();
+
+	public Connector getConnector() {
+		return connector;
+	}
+
+	public Context getContext() {
+		return context;
+	}
+
+	public EventBus getEventBus() {
+		return eventBus;
+	}
+
+	/**
+	 * Return module implementation by module class. This method calls
+	 * {@linkplain XmppModulesManager#getModule(Class)}.
+	 * 
+	 * @param moduleClass
+	 *            module class
+	 * @return module implementation
+	 */
+	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
+		return modulesManager.getModule(moduleClass);
+	}
+
+	public XmppModulesManager getModulesManager() {
+		return modulesManager;
+	}
+
+	public PresenceStore getPresence() {
+		return PresenceModule.getPresenceStore(sessionObject);
+	}
+
+	public UserProperties getProperties() {
+		return sessionObject;
+	}
+
+	public RosterStore getRoster() {
+		return sessionObject.getRoster();
+	}
+
+	public SessionObject getSessionObject() {
+		return sessionObject;
+	}
+
 	protected void init() {
 		if (this.eventBus == null)
 			throw new RuntimeException("EventBus cannot be null!");
@@ -257,75 +326,6 @@ public abstract class JaxmppCore {
 			}
 		});
 
-	}
-
-	public JaxmppCore() {
-		this.log = Logger.getLogger(this.getClass().getName());
-	}
-
-	public Chat createChat(JID jid) throws JaxmppException {
-		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
-	}
-
-	protected EventBus createEventBus() {
-		return new DefaultEventBus();
-	}
-
-	public abstract void disconnect() throws JaxmppException;
-
-	public abstract void execute(Runnable runnable);
-
-	/**
-	 * Returns configurator.
-	 * 
-	 * This wrapper for SessionObject.
-	 * 
-	 * @return configuration
-	 */
-	public abstract <T extends ConnectionConfiguration> T getConnectionConfiguration();
-
-	public Connector getConnector() {
-		return connector;
-	}
-
-	public Context getContext() {
-		return context;
-	}
-
-	public EventBus getEventBus() {
-		return eventBus;
-	}
-
-	/**
-	 * Return module implementation by module class. This method calls
-	 * {@linkplain XmppModulesManager#getModule(Class)}.
-	 * 
-	 * @param moduleClass
-	 *            module class
-	 * @return module implementation
-	 */
-	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
-		return modulesManager.getModule(moduleClass);
-	}
-
-	public XmppModulesManager getModulesManager() {
-		return modulesManager;
-	}
-
-	public PresenceStore getPresence() {
-		return this.sessionObject.getPresence();
-	}
-
-	public UserProperties getProperties() {
-		return sessionObject;
-	}
-
-	public RosterStore getRoster() {
-		return sessionObject.getRoster();
-	}
-
-	public SessionObject getSessionObject() {
-		return sessionObject;
 	}
 
 	public boolean isConnected() {

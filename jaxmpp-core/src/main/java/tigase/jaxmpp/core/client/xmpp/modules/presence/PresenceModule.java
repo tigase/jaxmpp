@@ -17,10 +17,14 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.presence;
 
+import java.util.Set;
+
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -376,9 +380,24 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
+	public static final String PRESENCE_STORE_KEY = "PresenceModule#PRESENCE_STORE";
+
+	public static PresenceStore getPresenceStore(SessionObject sessionObject) {
+		return sessionObject.getProperty(PRESENCE_STORE_KEY);
+	}
+
+	public static void setPresenceStore(SessionObject sessionObject, PresenceStore presenceStore) {
+		sessionObject.setProperty(Scope.user, PRESENCE_STORE_KEY, presenceStore);
+	}
+
 	public PresenceModule(Context context) {
 		super(context);
-		this.context.getSessionObject().getPresence().setHandler(new Handler() {
+		PresenceStore presenceStore = getPresenceStore();
+
+		if (presenceStore == null)
+			throw new RuntimeException("PresenceStore is not created!");
+
+		presenceStore.setHandler(new Handler() {
 
 			@Override
 			public void onOffline(Presence i) throws JaxmppException {
@@ -390,6 +409,16 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 				PresenceModule.this.setPresence(show, status, priority);
 			}
 		});
+		context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
+				new AbstractSessionObject.ClearedHandler() {
+
+					@Override
+					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+						if (scopes.contains(Scope.session)) {
+							getPresenceStore().clear();
+						}
+					}
+				});
 	}
 
 	public void addBeforePresenceSendHandler(BeforePresenceSendHandler handler) {
@@ -430,8 +459,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		return null;
 	}
 
-	public PresenceStore getPresence() {
-		return this.context.getSessionObject().getPresence();
+	public PresenceStore getPresenceStore() {
+		return getPresenceStore(context.getSessionObject());
 	}
 
 	@Override
@@ -441,9 +470,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> {
 		if (fromJid == null)
 			return;
 
-		boolean availableOld = context.getSessionObject().getPresence().isAvailable(fromJid.getBareJid());
-		context.getSessionObject().getPresence().update(presence);
-		boolean availableNow = context.getSessionObject().getPresence().isAvailable(fromJid.getBareJid());
+		boolean availableOld = getPresenceStore().isAvailable(fromJid.getBareJid());
+		getPresenceStore().update(presence);
+		boolean availableNow = getPresenceStore().isAvailable(fromJid.getBareJid());
 
 		final StanzaType type = presence.getType();
 
