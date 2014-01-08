@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
+import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -20,6 +21,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testReset1() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "u", "value1");
 		sessionObject.setProperty(Scope.session, "se", "value2");
@@ -44,6 +46,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testReset1_1() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "u", "value1");
 		sessionObject.setProperty(Scope.session, "se", "value2");
@@ -68,6 +71,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testReset1_2() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "u", "value1");
 		sessionObject.setProperty(Scope.session, "se", "value2");
@@ -92,6 +96,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testReset2() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "u", "value1");
 		sessionObject.setProperty(Scope.session, "se", "value2");
@@ -116,6 +121,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testReset3() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "u", "value1");
 		sessionObject.setProperty(Scope.session, "se", "value2");
@@ -139,6 +145,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testSetPropertyScopeStringObject() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "default-key1", "value1");
 
@@ -151,6 +158,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testSetPropertyScopeStringObject_1() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty(Scope.user, "default-key1", "value1");
 		sessionObject.setProperty(Scope.session, "default-key1", "value1");
@@ -164,6 +172,7 @@ public class GwtSessionObjectTest extends GWTTestCase {
 	@Test
 	public void testSetPropertyStringObject() {
 		AbstractSessionObject sessionObject = new GwtSessionObject();
+		sessionObject.setEventBus(new DefaultEventBus());
 
 		sessionObject.setProperty("default-key1", "value1");
 		sessionObject.setProperty("default-key2", "value2");

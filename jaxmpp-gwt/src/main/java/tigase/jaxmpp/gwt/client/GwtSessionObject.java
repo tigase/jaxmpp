@@ -21,8 +21,6 @@ import java.util.HashMap;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.ResponseManager;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
@@ -73,10 +71,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 	}
 
 	public GwtSessionObject() {
-		presence = new GWTPresenceStore();
 		properties = new HashMap<String, Entry>();
-		responseManager = new ResponseManager();
-		roster = new RosterStore();
 	}
 
 	private CharSequence makeEntry(String jsonKey, String propsKey) {

@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
@@ -32,10 +33,6 @@ import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshXmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
-import tigase.jaxmpp.core.client.observer.Listener;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.gwt.client.xml.GwtElement;
@@ -49,19 +46,17 @@ import com.google.gwt.xml.client.XMLParser;
  */
 public class WebSocketConnector implements Connector {
 
+	private final Context context;
 	protected final Logger log;
-	private Observable observable;
 	private Timer pingTimer = null;
-	private final SessionObject sessionObject;
 	private WebSocket socket = null;
 
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 	private final WebSocketCallback socketCallback;
 
-	public WebSocketConnector(Observable parentObservable, SessionObject sessionObject) {
-		this.observable = ObservableFactory.instance(parentObservable);
+	public WebSocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());
-		this.sessionObject = sessionObject;
+		this.context = context;
 
 		socketCallback = new WebSocketCallback() {
 			@Override
@@ -114,12 +109,12 @@ public class WebSocketConnector implements Connector {
 						log.config("Whitespace ping period is setted to " + delay + "ms");
 					}
 
-					if (WebSocketConnector.this.sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == null
-							|| ((Boolean) WebSocketConnector.this.sessionObject.getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+					if (WebSocketConnector.this.context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
+							|| ((Boolean) WebSocketConnector.this.context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
 						pingTimer.scheduleRepeating(delay);
 					}
 
-					fireOnConnected(WebSocketConnector.this.sessionObject);
+					fireOnConnected(WebSocketConnector.this.context.getSessionObject());
 
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
@@ -129,65 +124,46 @@ public class WebSocketConnector implements Connector {
 	}
 
 	@Override
-	public void addListener(EventType eventType, Listener<? extends ConnectorEvent> listener) {
-		observable.addListener(eventType, listener);
-	}
-
-	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
-		return new BoshXmppSessionLogic(this, modulesManager, sessionObject, writer);
+		return new BoshXmppSessionLogic(context, this, modulesManager);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected) {
 			return;
 		}
-		ConnectorEvent event = new ConnectorEvent(Connected, sessionObject);
-		this.observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(new ConnectedHandler.ConnectedEvent(sessionObject));
 	}
 
 	protected void fireOnError(Element response, Throwable caught, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new ConnectorEvent(Error, sessionObject);
-		event.setStanza(response);
-		event.setCaught(caught);
+		StreamError condition = null;
 
 		if (response != null) {
 			List<Element> es = response.getChildrenNS("urn:ietf:params:xml:ns:xmpp-streams");
 			if (es != null) {
 				for (Element element : es) {
 					String n = element.getName();
-					StreamError err = StreamError.getByElementName(n);
-					event.setStreamError(err);
-					event.setStreamErrorElement(element);
+					condition = StreamError.getByElementName(n);
 				}
 			}
 		}
 
-		this.observable.fireEvent(event.getType(), event);
+		context.getEventBus().fire(new ErrorHandler.ErrorEvent(sessionObject, condition, caught));
 	}
 
 	private void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new ConnectorEvent(StanzaReceived, sessionObject);
-		if (response != null) {
-			event.setStanza(response);
-		}
-		this.observable.fireEvent(event.getType(), event);
-
+		StanzaReceivedHandler.StanzaReceivedEvent event = new StanzaReceivedHandler.StanzaReceivedEvent(sessionObject, response);
+		context.getEventBus().fire(event);
 	}
 
 	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
-		ConnectorEvent event = new ConnectorEvent(StreamTerminated, sessionObject);
-		this.observable.fireEvent(event.getType(), event);
-	}
-
-	@Override
-	public Observable getObservable() {
-		return observable;
+		StreamTerminatedHandler.StreamTerminatedEvent event = new StreamTerminatedHandler.StreamTerminatedEvent(sessionObject);
+		context.getEventBus().fire(event);
 	}
 
 	@Override
 	public State getState() {
-		return this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
+		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 	}
 
 	@Override
@@ -202,7 +178,7 @@ public class WebSocketConnector implements Connector {
 
 	@Override
 	public void keepalive() throws JaxmppException {
-		if (sessionObject.getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
+		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
 			return;
 		if (getState() == State.connected)
 			send(" ");
@@ -211,7 +187,7 @@ public class WebSocketConnector implements Connector {
 	protected void onError(Element elem, Throwable ex) {
 		try {
 			stop();
-			fireOnError(null, ex, WebSocketConnector.this.sessionObject);
+			fireOnError(null, ex, WebSocketConnector.this.context.getSessionObject());
 		} catch (JaxmppException ex1) {
 			log.log(Level.SEVERE, null, ex1);
 		}
@@ -253,7 +229,7 @@ public class WebSocketConnector implements Connector {
 						continue;
 					}
 
-					fireOnStanzaReceived(child, sessionObject);
+					fireOnStanzaReceived(child, context.getSessionObject());
 				}
 			}
 			return;
@@ -262,18 +238,8 @@ public class WebSocketConnector implements Connector {
 				&& response.getXMLNS().equals("http://etherx.jabber.org/streams")) {
 			onError(response, null);
 		} else {
-			fireOnStanzaReceived(response, sessionObject);
+			fireOnStanzaReceived(response, context.getSessionObject());
 		}
-	}
-
-	@Override
-	public void removeAllListeners() {
-		observable.removeAllListeners();
-	}
-
-	@Override
-	public void removeListener(EventType eventType, Listener<ConnectorEvent> listener) {
-		observable.removeListener(eventType, listener);
 	}
 
 	@Override
@@ -281,14 +247,14 @@ public class WebSocketConnector implements Connector {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<stream:stream ");
 
-		final BareJID from = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 		String to;
-		Boolean seeOtherHost = sessionObject.getProperty(SEE_OTHER_HOST_KEY);
+		Boolean seeOtherHost = context.getSessionObject().getProperty(SEE_OTHER_HOST_KEY);
 		if (from != null && (seeOtherHost == null || seeOtherHost)) {
 			to = from.getDomain();
 			sb.append("from='").append(from.toString()).append("' ");
 		} else {
-			to = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
+			to = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
 		}
 
 		if (to != null) {
@@ -321,25 +287,17 @@ public class WebSocketConnector implements Connector {
 		}
 	}
 
-	@Override
-	public void setObservable(Observable observable) {
-		if (observable == null) {
-			this.observable = ObservableFactory.instance(null);
-		} else {
-			this.observable = observable;
-		}
-	}
-
 	protected void setStage(State state) throws JaxmppException {
-		State s = this.sessionObject.getProperty(CONNECTOR_STAGE_KEY);
-		this.sessionObject.setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
+		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
-			ConnectorEvent e = new ConnectorEvent(StateChanged, sessionObject);
-			observable.fireEvent(e);
+			StateChangedHandler.StateChangedEvent e = new StateChangedHandler.StateChangedEvent(context.getSessionObject(), s,
+					state);
+			context.getEventBus().fire(e);
 			if (state == State.disconnected) {
 				setStage(State.disconnected);
-				fireOnTerminate(sessionObject);
+				fireOnTerminate(context.getSessionObject());
 			}
 
 			if (state == State.disconnecting) {
@@ -354,7 +312,7 @@ public class WebSocketConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		String url = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+		String url = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		setStage(State.connecting);
 		socket = new WebSocket(url, "xmpp", socketCallback);
 	}

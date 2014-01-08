@@ -20,31 +20,34 @@ package tigase.jaxmpp.gwt.client;
 import java.util.Date;
 import java.util.logging.Level;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
+import tigase.jaxmpp.core.client.ResponseManager;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
+import tigase.jaxmpp.core.client.connector.StreamError;
+import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoInfoModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
-import tigase.jaxmpp.gwt.client.GwtSessionObject.RestoringSessionException;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
@@ -53,17 +56,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.json.client.JSONParser;
-import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Cookies;
 
 public class Jaxmpp extends JaxmppCore {
 
-	public static EventType BeforeSessionResoting = new EventType();
-
 	private final static String COOKIE_RID_KEY = "jaxmpp-rid";
 
-	private final ConnectorWrapper connectorWrapper;
+	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();;
 
 	private Object lastRid;
 
@@ -97,47 +96,22 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public Jaxmpp() {
-		this(new GwtSessionObject());
+		super();
+		this.eventBus = new DefaultEventBus();
+		this.sessionObject = new GwtSessionObject();
+		init();
 	}
 
 	public Jaxmpp(SessionObject sessionObject) {
-		super(sessionObject);
-		this.timeoutChecker = new RepeatingCommand() {
+		super();
+		this.eventBus = new DefaultEventBus();
+		this.sessionObject = (AbstractSessionObject) sessionObject;
+		init();
 
-			@Override
-			public boolean execute() {
-				try {
-					checkTimeouts();
-				} catch (Exception e) {
-				}
-				return true;
-			}
-		};
-		Scheduler.get().scheduleFixedDelay(timeoutChecker, 1000 * 31);
-
-		this.connectorWrapper = new ConnectorWrapper(observable);
-		this.connector = this.connectorWrapper;
-
-		this.connector.addListener(Connector.StanzaReceived, this.stanzaReceivedListener);
-		this.connector.addListener(Connector.StreamTerminated, this.streamTerminateListener);
-		this.connector.addListener(Connector.Error, this.streamErrorListener);
-
-		this.processor = new Processor(this.modulesManager, this.sessionObject, this.writer);
-
-		sessionObject.setProperty(DiscoInfoModule.IDENTITY_TYPE_KEY, "web");
-
-		modulesInit();
-
-		ResourceBinderModule r = this.modulesManager.getModule(ResourceBinderModule.class);
-		r.addListener(ResourceBinderModule.ResourceBindSuccess, resourceBindListener);
-
-		StreamManagementModule sm = this.modulesManager.getModule(StreamManagementModule.class);
-		if (sm != null)
-			sm.addListener(StreamManagementModule.StreamResumed, this.streamResumedListener);
 	}
 
 	protected void checkTimeouts() throws JaxmppException {
-		sessionObject.checkHandlersTimeout();
+		ResponseManager.getResponseManager(sessionObject).checkTimeouts();
 		if (isConnected()) {
 			Object r = sessionObject.getProperty(AbstractBoshConnector.RID_KEY);
 			if (lastRid != null && lastRid.equals(r)) {
@@ -188,10 +162,10 @@ public class Jaxmpp extends JaxmppCore {
 			if (!WebSocket.isSupported()) {
 				throw new RuntimeException("WebSocket protocol is not supported by browser");
 			}
-			return new WebSocketConnector(this.observable, this.sessionObject);
+			return new WebSocketConnector(context);
 		}
 
-		return new BoshConnector(observable, this.sessionObject);
+		return new BoshConnector(context);
 	}
 
 	@Override
@@ -226,6 +200,41 @@ public class Jaxmpp extends JaxmppCore {
 
 	public PacketWriter getWriter() {
 		return writer;
+	}
+
+	@Override
+	protected void init() {
+		if (PresenceModule.getPresenceStore(sessionObject) == null)
+			PresenceModule.setPresenceStore(sessionObject, new GWTPresenceStore());
+
+		if (RosterModule.getRosterStore(sessionObject) == null)
+			RosterModule.setRosterStore(sessionObject, new RosterStore());
+
+		if (ResponseManager.getResponseManager(sessionObject) == null)
+			ResponseManager.setResponseManager(sessionObject, new ResponseManager());
+
+		super.init();
+
+		this.timeoutChecker = new RepeatingCommand() {
+
+			@Override
+			public boolean execute() {
+				try {
+					checkTimeouts();
+				} catch (Exception e) {
+				}
+				return true;
+			}
+		};
+		Scheduler.get().scheduleFixedDelay(timeoutChecker, 1000 * 31);
+
+		this.connector = this.connectorWrapper;
+
+		this.processor = new Processor(this.modulesManager, context);
+
+		sessionObject.setProperty(DiscoveryModule.IDENTITY_TYPE_KEY, "web");
+
+		modulesInit();
 	}
 
 	private void intLogin() throws JaxmppException {
@@ -271,64 +280,28 @@ public class Jaxmpp extends JaxmppCore {
 		} catch (Exception e1) {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		event.setCaught(e);
-		observable.fireEvent(event);
+
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
-	protected void onResourceBinded(ResourceBindEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
-		observable.fireEvent(event);
+	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
+		eventBus.fire(new ConnectedEvent(sessionObject));
 	}
 
 	@Override
-	protected void onStreamError(ConnectorEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		event.setCaught(be.getCaught());
-		observable.fireEvent(event);
+	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
-	protected void onStreamResumed(StreamResumedEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Connected, sessionObject);
-		observable.fireEvent(event);
+	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
+		eventBus.fire(new ConnectedEvent(sessionObject));
 	}
 
 	@Override
-	protected void onStreamTerminated(ConnectorEvent be) throws JaxmppException {
-		JaxmppEvent event = new JaxmppEvent(Disconnected, sessionObject);
-		event.setCaught(be.getCaught());
-		observable.fireEvent(event);
-	}
-
-	public void restoreSession() throws JaxmppException {
-		try {
-			String s = Cookies.getCookie(COOKIE_RID_KEY);
-			if (s != null) {
-				JSONValue x = JSONParser.parseStrict(s);
-				((GwtSessionObject) sessionObject).restore(x);
-				sessionObject.setProperty(Connector.CONNECTOR_STAGE_KEY, Connector.State.connected);
-
-				Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-					@Override
-					public void execute() {
-						try {
-							observable.fireEvent(BeforeSessionResoting, new JaxmppEvent(BeforeSessionResoting, sessionObject));
-							intLogin();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				});
-
-			}
-		} catch (RestoringSessionException e) {
-			e.printStackTrace();
-		} finally {
-			Cookies.removeCookie(COOKIE_RID_KEY);
-		}
+	protected void onStreamTerminated() throws JaxmppException {
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	public void storeSession() {

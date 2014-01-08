@@ -19,10 +19,9 @@ package tigase.jaxmpp.gwt.client.connectors;
 
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -31,14 +30,14 @@ import com.google.gwt.http.client.RequestBuilder;
 
 public class BoshConnector extends AbstractBoshConnector {
 
+	private BoshWorker currentWorker = null;
+
 	private final RequestBuilder requestBuilder;
 
-        private BoshWorker currentWorker = null;
-        
-	public BoshConnector(Observable parentObservable, SessionObject sessionObject) {
-		super(parentObservable, sessionObject);
+	public BoshConnector(Context context) {
+		super(context);
 
-		String u = sessionObject.getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+		String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 
 		requestBuilder = new RequestBuilder(RequestBuilder.POST, u);
 		// in Chrome following line causes error (Connection: close is not
@@ -47,12 +46,23 @@ public class BoshConnector extends AbstractBoshConnector {
 	}
 
 	@Override
+	protected Element prepareBody(Element payload) throws XMLException {
+		// trying to reuse BoshWorker if data is not sent yet
+		if (currentWorker != null) {
+			currentWorker.appendToBody(payload);
+			return null;
+		}
+
+		return super.prepareBody(payload);
+	}
+
+	@Override
 	protected void processSendData(Element element) throws XMLException, JaxmppException {
-                if (element == null) {
-                        return;
-                }
-                
-		BoshWorker worker = new BoshWorker(this, requestBuilder, sessionObject, element) {
+		if (element == null) {
+			return;
+		}
+
+		BoshWorker worker = new BoshWorker(this, requestBuilder, context.getSessionObject(), element) {
 
 			@Override
 			protected void onError(int responseCode, String responseData, Element response, Throwable caught)
@@ -74,9 +84,9 @@ public class BoshConnector extends AbstractBoshConnector {
 
 		addToRequests(worker);
 
-		BoshConnectorEvent event = new BoshConnectorEvent(StanzaSending, sessionObject);
-		event.setBody(element);
-		observable.fireEvent(event);
+		BoshPacketSendingHandler.BoshPacketSendingEvent event = new BoshPacketSendingHandler.BoshPacketSendingEvent(
+				context.getSessionObject(), element);
+		context.getEventBus().fire(event, this);
 
 		if (log.isLoggable(Level.FINEST))
 			log.finest("Send: " + element.getAsString());
@@ -84,23 +94,12 @@ public class BoshConnector extends AbstractBoshConnector {
 		Scheduler.get().scheduleDeferred(worker);
 	}
 
-        @Override
-        protected Element prepareBody(Element payload) throws XMLException {
-                // trying to reuse BoshWorker if data is not sent yet
-                if (currentWorker != null) {
-                        currentWorker.appendToBody(payload);
-                        return null;
-                }
-                
-                return super.prepareBody(payload);
-        }
-        
-        /**
-         * Keep handle to current BoshWorker instance until stanza is sent
-         * 
-         * @param worker 
-         */
-        protected void setCurrentWorker(BoshWorker worker) {
-                this.currentWorker = worker;
-        }
+	/**
+	 * Keep handle to current BoshWorker instance until stanza is sent
+	 * 
+	 * @param worker
+	 */
+	protected void setCurrentWorker(BoshWorker worker) {
+		this.currentWorker = worker;
+	}
 }

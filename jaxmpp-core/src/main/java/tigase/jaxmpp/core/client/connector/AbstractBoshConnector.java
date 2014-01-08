@@ -29,6 +29,7 @@ import tigase.jaxmpp.core.client.Connector.BodyReceivedHandler.BodyReceivedvent;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
+import tigase.jaxmpp.core.client.Connector.StanzaSendingHandler.StanzaSendingEvent;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler.StreamTerminatedEvent;
 import tigase.jaxmpp.core.client.Context;
@@ -37,12 +38,43 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public abstract class AbstractBoshConnector implements Connector {
+
+	public interface BoshPacketSendingHandler extends EventHandler {
+
+		public static class BoshPacketSendingEvent extends JaxmppEvent<BoshPacketSendingHandler> {
+
+			private Element element;
+
+			public BoshPacketSendingEvent(SessionObject sessionObject, Element element) {
+				super(sessionObject);
+				this.element = element;
+			}
+
+			@Override
+			protected void dispatch(BoshPacketSendingHandler handler) throws JaxmppException {
+				handler.onBoshPacketSending(sessionObject, element);
+			}
+
+			public Element getElement() {
+				return element;
+			}
+
+			public void setElement(Element stanza) {
+				this.element = stanza;
+			}
+
+		}
+
+		void onBoshPacketSending(SessionObject sessionObject, Element packet) throws JaxmppException;
+	}
 
 	public static final String AUTHID_KEY = "BOSH#AUTHID_KEY";
 
@@ -323,6 +355,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		if (getState() == State.connected) {
 			if (stanza != null) {
 				final Element body = prepareBody(stanza);
+				context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
 				processSendData(body);
 			}
 		} else
