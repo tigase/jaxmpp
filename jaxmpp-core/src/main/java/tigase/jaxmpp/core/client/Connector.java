@@ -17,8 +17,6 @@
  */
 package tigase.jaxmpp.core.client;
 
-import javax.net.ssl.TrustManager;
-
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -213,7 +211,7 @@ public interface Connector {
 	 * <p>
 	 * Filled fields:
 	 * <ul>
-	 * <li>{@link ConnectorEvent#getStanza() stanza} : received stanza</li>
+	 * <li>{@link ConnectorEvent#getElement() stanza} : received stanza</li>
 	 * </ul>
 	 * </p>
 	 */
