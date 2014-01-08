@@ -41,6 +41,12 @@ public class GwtElementTest extends GWTTestCase {
 		assertEquals("x@y.z", x.getAttribute("to"));
 	}
 
+	public void test02() throws Exception {
+		GwtElement x = GwtElement.parse("<query>73</query>");
+
+		assertEquals("73", x.getValue());
+	}
+
 	public void testGetAttribute() throws XMLException {
 		final Element element = createElement();
 

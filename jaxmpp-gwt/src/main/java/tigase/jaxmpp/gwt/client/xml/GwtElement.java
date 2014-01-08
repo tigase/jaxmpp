@@ -194,9 +194,13 @@ public class GwtElement implements Element {
 
 	@Override
 	public String getValue() throws XMLException {
-		Node x = xmlElement.getFirstChild();
-		if (x != null) {
-			return x.getNodeValue();
+		NodeList nodes = xmlElement.getChildNodes();
+		if (nodes != null) {
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < nodes.getLength(); i++) {
+				sb.append(nodes.item(i).getNodeValue());
+			}
+			return sb.toString();
 		}
 		return null;
 	}
