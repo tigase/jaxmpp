@@ -27,20 +27,40 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
 
 public class BoshConnector extends AbstractBoshConnector {
 
-	private BoshWorker currentWorker = null;
+	/** 
+	 * property used to disable usage of <bosh/> host attribute to redirect 
+	 * next requests to other hostname 
+	 */
+	public static final String BOSH_IGNORE_SERVER_HOST = "BOSH#IGNORE_SERVER_HOST";
+			
+	private static final String HOST_ATTR = "host";
+	
+	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 
-	private final RequestBuilder requestBuilder;
+	private String host = null;
+	private RequestBuilder requestBuilder;
 
+    private BoshWorker currentWorker = null;
+        
 	public BoshConnector(Context context) {
 		super(context);
 
 		String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 
+		Boolean ignoreServerHost = context.getSessionObject().getProperty(BOSH_IGNORE_SERVER_HOST);
+		if (ignoreServerHost == null || !ignoreServerHost) {
+			// if we support change of destination by host attribute sent by server
+			// then parse url to get current hostname
+			MatchResult result = URL_PARSER.exec(u);
+			host = result.getGroup(2);
+		}
 		requestBuilder = new RequestBuilder(RequestBuilder.POST, u);
 		// in Chrome following line causes error (Connection: close is not
 		// allowed in new spec)
@@ -58,6 +78,25 @@ public class BoshConnector extends AbstractBoshConnector {
 		return super.prepareBody(payload);
 	}
 
+	protected void onResponse(BoshRequest request, int responseCode, String responseData, Element response) throws JaxmppException {
+		if (response != null && this.host != null) {
+			String host = response.getAttribute(HOST_ATTR);
+			if (host != null && !this.host.equals(host)) {
+				// if host of current request does not match host sent as attribute
+				// from server, then we need to recreate request builder to use
+				// new host for next request
+				this.host = host;
+				
+				MatchResult result = URL_PARSER.exec(requestBuilder.getUrl());
+				String url = result.getGroup(1) + "://" + host 
+						+ (result.getGroup(3) != null ? result.getGroup(3) : "") 
+						+ result.getGroup(4);
+				requestBuilder = new RequestBuilder(RequestBuilder.POST, url.toString());
+			}
+		}
+		super.onResponse(request, responseCode, responseData, response);
+	}
+	
 	@Override
 	protected void processSendData(Element element) throws XMLException, JaxmppException {
 		if (element == null) {
