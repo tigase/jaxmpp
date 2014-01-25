@@ -62,7 +62,7 @@ import tigase.jaxmpp.j2se.connection.ConnectionManager;
  * @author andrzej
  */
 public abstract class Socks5ConnectionManager implements ConnectionManager {
-
+	
 	private class IncomingConnectionHandlerThread extends Thread {
 
 		private final SocketChannel socketChannel;
@@ -549,7 +549,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
 			context.getEventBus().fire(
-					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket));
+					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket), this);
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionEstablished event", ex);
 		}
@@ -558,7 +558,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnFailure(ConnectionSession session) {
 		try {
 			unregisterSession(session);
-			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session));
+			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session), this);
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}

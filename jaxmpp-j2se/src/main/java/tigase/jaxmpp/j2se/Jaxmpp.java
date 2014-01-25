@@ -40,14 +40,20 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
+import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
+import tigase.jaxmpp.j2se.filetransfer.JingleFileTransferNegotiator;
+import tigase.jaxmpp.j2se.filetransfer.Socks5FileTransferNegotiator;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 
 /**
@@ -90,7 +96,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	private Executor executor;
 
-	// private FileTransferManager fileTransferManager;
+	private FileTransferManager fileTransferManager;
 
 	private TimerTask loginTimeoutTask;
 
@@ -175,6 +181,30 @@ public class Jaxmpp extends JaxmppCore {
 		return executor;
 	}
 
+	public FileTransferManager getFileTransferManager() {
+		return fileTransferManager;
+	}
+
+	public void initFileTransferManager(boolean experimental) throws JaxmppException {
+		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+		if (capsModule != null && capsModule.getCache() == null) {
+			capsModule.setCache(new J2SECapabiliesCache());
+		}
+
+		fileTransferManager = new FileTransferManager();
+		fileTransferManager.setContext(getContext());
+		fileTransferManager.setJaxmpp(this);
+
+		getModulesManager().register(new FileTransferModule(getContext()));
+		getModulesManager().register(new Socks5BytestreamsModule(getContext()));
+
+		if (experimental) {
+			getModulesManager().register(new JingleModule(getContext()));
+			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+		}
+		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	}
+		
 	@Override
 	protected void init() {
 		if (PresenceModule.getPresenceStore(sessionObject) == null)

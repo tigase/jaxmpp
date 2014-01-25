@@ -17,16 +17,11 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import java.net.Socket;
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferRequestEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.observer.Observable;
-import tigase.jaxmpp.core.client.observer.ObservableFactory;
-import static tigase.jaxmpp.j2se.filetransfer.FileTransferNegotiator.NEGOTIATION_FAILURE;
+import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.SessionObject;
 
 /**
  *
@@ -36,52 +31,35 @@ public abstract class FileTransferNegotiatorAbstract implements FileTransferNego
 
         private final Logger log;
         protected FileTransferManager ftManager = null;
-        protected Observable observable = null;
+		protected Context context = null;
 
         public FileTransferNegotiatorAbstract() {
                 log = Logger.getLogger(this.getClass().getCanonicalName());
         }
 
         @Override
-        public void setObservable(Observable observableParent) {
-                observable = ObservableFactory.instance(observableParent);
+        public void setContext(Context context) {
+                this.context = context;
         }
 
-        protected void fireOnRequest(FileTransferEvent event) {
-                try {
-						((tigase.jaxmpp.j2se.filetransfer.FileTransfer) event.getFileTransfer()).setNegotiator(this);
-						observable.fireEvent(NEGOTIATION_REQUEST, new FileTransferEvent(NEGOTIATION_REQUEST, event.getSessionObject(), event.getFileTransfer()));
-                } catch (JaxmppException ex1) {
-                        log.log(Level.SEVERE, "Exception sending event", ex1);
-                }
-
-        }
-
+		protected void fireOnRequest(SessionObject sessionObject, tigase.jaxmpp.j2se.filetransfer.FileTransfer fileTransfer) {
+			fileTransfer.setNegotiator(this);
+			context.getEventBus().fire(new FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent(fileTransfer.getSessionObject(), fileTransfer));
+		}
+		
 		protected void fireOnSuccess(FileTransfer ft) {
-                try {
-                        log.log(Level.WARNING, "firing file transfer negotiation success");
-                        observable.fireEvent(NEGOTIATION_SUCCESS, new FileTransferEvent(NEGOTIATION_SUCCESS, ft.getSessionObject(), ft));
-                } catch (JaxmppException ex1) {
-                        log.log(Level.SEVERE, "Exception sending event", ex1);
-                }			
+			log.log(Level.FINER, "firing file transfer negotiation success");
+			context.getEventBus().fire(new FileTransferNegotiator.NegotiationSuccessHandler.FileTransferNegotiationSuccessEvent(ft.getSessionObject(), ft));
 		}
 		
         protected void fireOnFailure(FileTransfer ft, Throwable ex) {
-                try {
-                        log.log(Level.WARNING, "firing file transfer negotiation error", ex);
-                        observable.fireEvent(NEGOTIATION_FAILURE, new FileTransferEvent(NEGOTIATION_FAILURE, ft.getSessionObject(), ft));
-                } catch (JaxmppException ex1) {
-                        log.log(Level.SEVERE, "Exception sending event", ex1);
-                }
+			log.log(Level.FINER, "firing file transfer negotiation error", ex);
+			context.getEventBus().fire(new FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent(ft.getSessionObject(), ft));
         }
 
         protected void fireOnReject(FileTransfer ft) {
-                try {
-                        log.log(Level.WARNING, "firing file transfer rejected {0}", ft.toString());
-                        observable.fireEvent(NEGOTIATION_REJECTED, new FileTransferEvent(NEGOTIATION_REJECTED, ft.getSessionObject(), ft));
-                } catch (JaxmppException ex1) {
-                        log.log(Level.SEVERE, "Exception sending event", ex1);
-                }
-        }
+			log.log(Level.FINER, "firing file transfer rejected {0}", ft.toString());
+			context.getEventBus().fire(new FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent(ft.getSessionObject(), ft));
+		}
         
 }

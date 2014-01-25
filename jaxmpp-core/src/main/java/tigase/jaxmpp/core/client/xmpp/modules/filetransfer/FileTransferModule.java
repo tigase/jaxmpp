@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
@@ -103,8 +102,6 @@ public class FileTransferModule implements XmppModule {
 
 	private Context context;
 
-	private PacketWriter writer;
-
 	public FileTransferModule(Context context) {
 		this.context = context;
 	}
@@ -132,7 +129,7 @@ public class FileTransferModule implements XmppModule {
 		Element value = new DefaultElement("value", streamMethod, null);
 		field.addChild(value);
 
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
 
 	public void addFileTransferRequestHandler(FileTransferRequestHandler handler) {
@@ -245,7 +242,7 @@ public class FileTransferModule implements XmppModule {
 			error.addChild(err);
 		}
 		result.addChild(error);
-		writer.write(result);
+		context.getWriter().write(result);
 	}
 
 	private void returnErrorBadRequest(IQ iq) throws JaxmppException {
@@ -299,7 +296,7 @@ public class FileTransferModule implements XmppModule {
 			option.addChild(value);
 		}
 
-		writer.write(iq, (long) (10 * 60 * 1000), callback);
+		context.getWriter().write(iq, (long) (10 * 60 * 1000), callback);
 	}
 
 }

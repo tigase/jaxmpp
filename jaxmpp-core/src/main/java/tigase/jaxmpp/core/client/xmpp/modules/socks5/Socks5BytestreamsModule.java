@@ -23,7 +23,6 @@ import java.util.List;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
@@ -117,8 +116,6 @@ public class Socks5BytestreamsModule implements XmppModule {
 
 	private final Context context;
 
-	private PacketWriter writer;
-
 	public Socks5BytestreamsModule(Context context) {
 		this.context = context;
 	}
@@ -191,7 +188,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 		Element activate = new DefaultElement("activate", jid.toString(), null);
 		query.addChild(activate);
 
-		writer.write(iq, callback);
+		context.getWriter().write(iq, callback);
 	}
 
 	public void requestStreamhosts(JID host, StreamhostsCallback callback) throws XMLException, JaxmppException {
@@ -202,7 +199,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 		Element query = new DefaultElement("query", null, XMLNS_BS);
 		iq.addChild(query);
 
-		writer.write(iq, callback);
+		context.getWriter().write(iq, callback);
 	}
 
 	public void sendStreamhosts(JID recipient, String sid, List<Streamhost> hosts, AsyncCallback callback) throws XMLException,
@@ -223,7 +220,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 			query.addChild(streamhost);
 		}
 
-		writer.write(iq, (long) (3 * 60 * 1000), callback);
+		context.getWriter().write(iq, (long) (3 * 60 * 1000), callback);
 	}
 
 	public void sendStreamhostUsed(JID to, String id, String sid, Streamhost streamhost) throws XMLException, JaxmppException {
@@ -241,7 +238,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 		query.addChild(streamhostUsed);
 
 		// session.registerResponseHandler(iq, callback);
-		writer.write(iq);
+		context.getWriter().write(iq);
 	}
 
 }

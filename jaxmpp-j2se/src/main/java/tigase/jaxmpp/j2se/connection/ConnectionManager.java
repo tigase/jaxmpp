@@ -36,7 +36,7 @@ public interface ConnectionManager extends ContextAware {
 	public interface ConnectionClosedHandler extends EventHandler {
 
 		public static class ConnectionClosedEvent extends JaxmppEvent<ConnectionClosedHandler> {
-
+			
 			public ConnectionClosedEvent(SessionObject sessionObject) {
 				super(sessionObject);
 			}

@@ -246,7 +246,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	public void setContext(Context context) {
 		super.setContext(context);
 		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				connectionEstablishedHandler);
+				this, connectionEstablishedHandler);
 	}
 
 }
