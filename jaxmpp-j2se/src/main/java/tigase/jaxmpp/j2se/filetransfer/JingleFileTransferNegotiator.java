@@ -55,38 +55,31 @@ import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5BytestreamsConnectio
  * @author andrzej
  */
 public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract implements ConnectionSessionHandler,
-		JingleModule.JingleSessionAcceptHandler, JingleModule.JingleSessionInitiationHandler, 
+		JingleModule.JingleSessionAcceptHandler, JingleModule.JingleSessionInitiationHandler,
 		JingleModule.JingleSessionTerminateHandler, ConnectionManager.ConnectionEstablishedHandler {
 
 	private static final Logger log = Logger.getLogger(JingleFileTransferNegotiator.class.getCanonicalName());
-	
 	public static final String JINGLE_FT_XMLNS = "urn:xmpp:jingle:apps:file-transfer:3";
-
 	private static final String TRANSPORTS_KEY = "transports-key";
-	
 	private static DateTimeFormat dateTimeFormat = new DateTimeFormat();
-	
-    private final JingleSocks5BytestreamsConnectionManager connectionManager = new JingleSocks5BytestreamsConnectionManager(this);
-				
+	private final JingleSocks5BytestreamsConnectionManager connectionManager = new JingleSocks5BytestreamsConnectionManager(this);
 	private final Timer timer = new Timer();
-	
-	private static final String[] FEATURES = { JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS };
+	private static final String[] FEATURES = {JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS};
 	private static final long TIMEOUT = 5 * 60 * 1000;
-	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String,FileTransfer>());
-	
+	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String, FileTransfer>());
+
 	@Override
 	public void setContext(Context context) {
 		super.setContext(context);
 		connectionManager.setContext(context);
-		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.
-				ConnectionEstablishedEvent.class, connectionManager, this);
+		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, connectionManager, this);
 	}
-	
+
 	@Override
 	public String[] getFeatures() {
 		return FEATURES;
 	}
-	
+
 	@Override
 	public boolean isSupported(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) {
 		Presence p = jaxmpp.getPresence().getPresence(ft.getPeer());
@@ -103,16 +96,15 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 					featuresStr += "\n" + feature;
 				}
 			}
-			
-			return (features != null && features.contains(JingleModule.JINGLE_XMLNS) 
-					&& features.contains(JINGLE_FT_XMLNS) 
+
+			return (features != null && features.contains(JingleModule.JINGLE_XMLNS)
+					&& features.contains(JINGLE_FT_XMLNS)
 					&& features.contains(JingleSocks5BytestreamsConnectionManager.XMLNS));
 		} catch (XMLException ex) {
 			return false;
 		}
 	}
-	
-	
+
 	@Override
 	public void sendFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) throws JaxmppException {
 		JingleModule jingleModule = jaxmpp.getModule(JingleModule.class);
@@ -126,7 +118,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		description.addChild(offer);
 
 		connectionManager.initConnection(jaxmpp, ft, null);
-		
+
 		Element file = new DefaultElement("file");
 		file.addChild(new DefaultElement("name", file.getName(), null));
 		file.addChild(new DefaultElement("size", String.valueOf(ft.getFileSize()), null));
@@ -135,15 +127,15 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		}
 		offer.addChild(file);
 
-		List<Transport> transports = getTransports(jaxmpp, (FileTransfer) ft);		
+		List<Transport> transports = getTransports(jaxmpp, (FileTransfer) ft);
 		sessions.put(sid, (FileTransfer) ft);
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				sessions.remove(sid);
-			}			
+			}
 		}, TIMEOUT);
-		
+
 		jingleModule.initiateSession(ft.getPeer(), sid, "ex", description, transports);
 	}
 
@@ -155,12 +147,12 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 			@Override
 			public void run() {
 				sessions.remove(sid);
-			}			
+			}
 		}, TIMEOUT);
-		
+
 		JingleModule jingleModule = jaxmpp.getModule(JingleModule.class);
 		jingleModule.acceptSession(ft.getPeer(), sid, "ex", new DefaultElement("description", null, JINGLE_FT_XMLNS), null);
-		
+
 		connectionManager.connectTcp(jaxmpp, ft);
 	}
 
@@ -184,7 +176,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		jaxmpp.getEventBus().remove(JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent.class, this);
 		jaxmpp.getEventBus().remove(JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent.class, this);
 	}
-	
+
 	protected List<Transport> getTransports(JaxmppCore jaxmpp, FileTransfer ft) throws XMLException, JaxmppException {
 		List<Transport> transports = ft.getData(TRANSPORTS_KEY);
 		if (transports == null) {
@@ -194,13 +186,13 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 			if (transport != null) {
 				transports.add(transport);
 			}
-			
+
 			ft.setData(TRANSPORTS_KEY, transports);
 		}
-		
+
 		return transports;
 	}
-	
+
 	@Override
 	public ConnectionSession getSession(String sid) {
 		return sessions.get(sid);
@@ -263,8 +255,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 			ft.setData(TRANSPORTS_KEY, transports);
 
 			fireOnRequest(sessionObject, ft);
-		}
-		catch (JaxmppException ex) {
+		} catch (JaxmppException ex) {
 			log.log(Level.SEVERE, "Exception during processing JingleSessionInitiation", ex);
 			handled.setValue(false);
 		}

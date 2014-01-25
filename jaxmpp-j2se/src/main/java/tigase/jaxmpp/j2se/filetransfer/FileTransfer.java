@@ -29,48 +29,46 @@ import tigase.jaxmpp.core.client.SessionObject;
 
 public class FileTransfer extends tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer {
 
-        private static final Logger log = Logger.getLogger(FileTransfer.class.getCanonicalName());
+	private static final Logger log = Logger.getLogger(FileTransfer.class.getCanonicalName());
+	private File file;
+	private InputStream inputStream;
+	private FileTransferNegotiator negotiator;
 
-		private File file;
-		private InputStream inputStream;
-		
-		private FileTransferNegotiator negotiator;
-				
-        protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
-                super(sessionObject, peer, sid);
-        }
-        
-		@Override
-        protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
-				super.setFileInfo(filename, fileSize, lastModified, mimeType);
-        }
-        
-        public void setFile(File file) {
-				this.file = file;
-		}
-		
-		public File getFile() {
-				return file;
-		}
-		
-		public void setInputStream(InputStream inputStream) {
-				this.inputStream = inputStream;
-		}
-		
-		public InputStream getInputStream() {
-				return inputStream;
-		}
+	protected FileTransfer(SessionObject sessionObject, JID peer, String sid) {
+		super(sessionObject, peer, sid);
+	}
 
-		protected void setNegotiator(FileTransferNegotiator negotiator) {
-			this.negotiator = negotiator;
-		}
-		
-		protected FileTransferNegotiator getNegotiator() {
-			return negotiator;
-		}
+	@Override
+	protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
+		super.setFileInfo(filename, fileSize, lastModified, mimeType);
+	}
 
-		@Override
-		protected void transferredBytes(long count) {
-			super.transferredBytes(count);
-		}
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	public File getFile() {
+		return file;
+	}
+
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
+	}
+
+	public InputStream getInputStream() {
+		return inputStream;
+	}
+
+	protected void setNegotiator(FileTransferNegotiator negotiator) {
+		this.negotiator = negotiator;
+	}
+
+	protected FileTransferNegotiator getNegotiator() {
+		return negotiator;
+	}
+
+	@Override
+	protected void transferredBytes(long count) {
+		super.transferredBytes(count);
+	}
 }

@@ -57,20 +57,18 @@ import tigase.jaxmpp.j2se.Jaxmpp;
  *
  * @author andrzej
  */
-public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler, 
+public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler,
 		FileTransferNegotiator.NegotiationRejectHandler, FileTransferNegotiator.NegotiationRequestHandler,
 		ConnectionManager.ConnectionEstablishedHandler {
 
-		static {
-                UniversalFactory.setSpi(StreamhostsResolver.class.getCanonicalName(), new UniversalFactory.FactorySpi<J2SEStreamhostsResolver>() {
-
-                        @Override
-                        public J2SEStreamhostsResolver create() {
-                                return new J2SEStreamhostsResolver();
-                        }
-                        
-                });			
-		}
+	static {
+		UniversalFactory.setSpi(StreamhostsResolver.class.getCanonicalName(), new UniversalFactory.FactorySpi<J2SEStreamhostsResolver>() {
+			@Override
+			public J2SEStreamhostsResolver create() {
+				return new J2SEStreamhostsResolver();
+			}
+		});
+	}
 
 	@Override
 	public void onFileTransferNegotiationFailure(SessionObject sessionObject, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) throws JaxmppException {
@@ -110,12 +108,12 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 			// this should not happen
 			throw new JaxmppException("SOCKET IS NULL");
 		}
-		
+
 		if (!(connectionSession instanceof FileTransfer)) {
 			// we ignore this as it may be handled by other handler
 			return;
 		}
-		
+
 		FileTransfer fileTransfer = (FileTransfer) connectionSession;
 		if (fileTransfer.isIncoming()) {
 			startReceiving(fileTransfer, socket);
@@ -125,319 +123,305 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	}
 
 	public interface FileTransferFailureHandler extends EventHandler {
-		
+
 		public static class FileTransferFailureEvent extends JaxmppEvent<FileTransferFailureHandler> {
 
 			private FileTransfer fileTransfer;
-			
+
 			public FileTransferFailureEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
 				super(sessionObject);
 				this.fileTransfer = fileTransfer;
 			}
-			
+
 			@Override
 			protected void dispatch(FileTransferFailureHandler handler) throws Exception {
 				handler.onFileTransferFailure(sessionObject, fileTransfer);
 			}
-			
-		}		
-		
+		}
+
 		void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer);
-		
-	}	
-		
+	}
+
 	public interface FileTransferProgressHandler extends EventHandler {
-		
+
 		public static class FileTransferProgressEvent extends JaxmppEvent<FileTransferProgressHandler> {
 
 			private FileTransfer fileTransfer;
-			
+
 			public FileTransferProgressEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
 				super(sessionObject);
 				this.fileTransfer = fileTransfer;
 			}
-			
+
 			@Override
 			protected void dispatch(FileTransferProgressHandler handler) throws Exception {
 				handler.onFileTransferProgress(sessionObject, fileTransfer);
 			}
-			
-		}		
-		
+		}
+
 		void onFileTransferProgress(SessionObject sessionObject, FileTransfer fileTransfer);
-		
-	}	
-	
+	}
+
 	public interface FileTransferRejectedHandler extends EventHandler {
-		
+
 		public static class FileTransferRejectedEvent extends JaxmppEvent<FileTransferRejectedHandler> {
 
 			private FileTransfer fileTransfer;
-			
+
 			public FileTransferRejectedEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
 				super(sessionObject);
 				this.fileTransfer = fileTransfer;
 			}
-			
+
 			@Override
 			protected void dispatch(FileTransferRejectedHandler handler) throws Exception {
 				handler.onFileTransferRejected(sessionObject, fileTransfer);
 			}
-			
-		}		
-		
+		}
+
 		void onFileTransferRejected(SessionObject sessionObject, FileTransfer fileTransfer);
-		
-	}	
+	}
 
 	public interface FileTransferRequestHandler extends EventHandler {
-		
+
 		public static class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
 
 			private FileTransfer fileTransfer;
-			
+
 			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
 				super(sessionObject);
 				this.fileTransfer = fileTransfer;
 			}
-			
+
 			@Override
 			protected void dispatch(FileTransferRequestHandler handler) throws Exception {
 				handler.onFileTransferRequest(sessionObject, fileTransfer);
 			}
-			
-		}		
-		
+		}
+
 		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer);
-		
-	}	
-	
+	}
+
 	public interface FileTransferSuccessHandler extends EventHandler {
-		
+
 		public static class FileTransferSuccessEvent extends JaxmppEvent<FileTransferSuccessHandler> {
 
 			private FileTransfer fileTransfer;
-			
+
 			public FileTransferSuccessEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
 				super(sessionObject);
 				this.fileTransfer = fileTransfer;
 			}
-			
+
 			@Override
 			protected void dispatch(FileTransferSuccessHandler handler) throws Exception {
 				handler.onFileTransferSuccess(sessionObject, fileTransfer);
 			}
-			
-		}		
-		
+		}
+
 		void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
-		
-	}		
-			
-        private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
+	}
+	private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
+	private Jaxmpp jaxmpp = null;
+	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
+	protected Context context = null;
 
-		private Jaxmpp jaxmpp = null;
-		
-        private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
+	public void setJaxmpp(Jaxmpp jaxmpp) {
+		this.jaxmpp = jaxmpp;
 
-        protected Context context = null;
+		DiscoveryModule discoveryModule = jaxmpp.getModule(DiscoveryModule.class);
+		if (discoveryModule != null) {
+			discoveryModule.setNodeCallback(null, new DiscoveryModule.DefaultNodeDetailsCallback(discoveryModule) {
+				@Override
+				public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) {
+					HashSet<String> features = new HashSet<String>();
+					String[] defaultFeatures = super.getFeatures(sessionObject, requestStanza, node);
 
-		public void setJaxmpp(Jaxmpp jaxmpp) {
-				this.jaxmpp = jaxmpp;
-				
-				DiscoveryModule discoveryModule = jaxmpp.getModule(DiscoveryModule.class);
-				if (discoveryModule != null) {
-					discoveryModule.setNodeCallback(null, new DiscoveryModule.DefaultNodeDetailsCallback(discoveryModule) {
-			
-						@Override
-						public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) {
-							HashSet<String> features = new HashSet<String>();
-							String[] defaultFeatures = super.getFeatures(sessionObject, requestStanza, node);
-							
-							if (defaultFeatures == null) {
-								features.addAll(Arrays.asList(defaultFeatures));
-							}
-							
-							for (FileTransferNegotiator negotiator : negotiators) {
-								String[] negFeatures = negotiator.getFeatures();
-								if (negFeatures != null) {
-									for (String negFeature : negFeatures) {
-										features.add(negFeature);
-									}
-								}
-							}							
-
-							return features.toArray(new String[features.size()]);
-						}
-						
-					});
-				}
-		}
-		
-        @Override
-        public void setContext(Context context) {
-			this.context = context;
-			this.context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
-			this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent.class, this);
-			this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent.class, this);
-			this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent.class, this);
-        }
-                        
-        public void addNegotiator(FileTransferNegotiator negotiator) {
-                negotiator.setContext(context);
-				negotiator.registerListeners(jaxmpp);
-                negotiators.add(negotiator);                
-        }
-        
-        public void removeNegotiator(FileTransferNegotiator negotiator) {
-                negotiators.remove(negotiator);
-                negotiator.unregisterListeners(jaxmpp);
-                negotiator.setContext(context);
-        }
-
-        public FileTransfer sendFile(JID peer, File file) throws JaxmppException {
-                FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
-                ft.setIncoming(false);
-                ft.setFileInfo(file.getName(), file.length(), new Date(file.lastModified()), null);
-                ft.setFile(file);
-				
-                return sendFile(ft);
-        }
-        		
-        public FileTransfer sendFile(JID peer, String filename, long fileSize, InputStream is, Date lastModified) throws JaxmppException {
-                FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
-                ft.setIncoming(false);
-                ft.setFileInfo(filename, fileSize, lastModified, null);
-                ft.setInputStream(is);
-       
-                return sendFile(ft);
-        }
-
-		private FileTransfer sendFile(FileTransfer ft) throws JaxmppException {
-				boolean send = false;
-				for (FileTransferNegotiator negotiator : negotiators) {
-					if (negotiator.isSupported(jaxmpp, ft)) {
-						ft.setNegotiator(negotiator);
-						negotiator.sendFile(jaxmpp, ft);
-						send = true;
-						break;
+					if (defaultFeatures == null) {
+						features.addAll(Arrays.asList(defaultFeatures));
 					}
+
+					for (FileTransferNegotiator negotiator : negotiators) {
+						String[] negFeatures = negotiator.getFeatures();
+						if (negFeatures != null) {
+							for (String negFeature : negFeatures) {
+								features.add(negFeature);
+							}
+						}
+					}
+
+					return features.toArray(new String[features.size()]);
 				}
-                
-				if (!send) {
-					throw new JaxmppException("No file transfer methods supported by recipient = " + ft.getPeer().toString());
-				}
-				
-				return ft;
+			});
 		}
-		
-		public void acceptFile(FileTransfer ft) throws JaxmppException {
-                ft.setIncoming(true);
+	}
 
-				ft.getNegotiator().acceptFile(jaxmpp, ft);
-        }
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+		this.context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
+		this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent.class, this);
+		this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent.class, this);
+		this.context.getEventBus().addHandler(FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent.class, this);
+	}
 
-        public void rejectFile(FileTransfer ft) throws JaxmppException {
-                ft.setIncoming(true);
-                
-				ft.getNegotiator().rejectFile(jaxmpp, ft);
-        }
+	public void addNegotiator(FileTransferNegotiator negotiator) {
+		negotiator.setContext(context);
+		negotiator.registerListeners(jaxmpp);
+		negotiators.add(negotiator);
+	}
 
-        protected static String getCapsNode(Presence presence) throws XMLException {
-                if (presence == null) return null;
-		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
-		if (c == null)
+	public void removeNegotiator(FileTransferNegotiator negotiator) {
+		negotiators.remove(negotiator);
+		negotiator.unregisterListeners(jaxmpp);
+		negotiator.setContext(context);
+	}
+
+	public FileTransfer sendFile(JID peer, File file) throws JaxmppException {
+		FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
+		ft.setIncoming(false);
+		ft.setFileInfo(file.getName(), file.length(), new Date(file.lastModified()), null);
+		ft.setFile(file);
+
+		return sendFile(ft);
+	}
+
+	public FileTransfer sendFile(JID peer, String filename, long fileSize, InputStream is, Date lastModified) throws JaxmppException {
+		FileTransfer ft = new FileTransfer(jaxmpp.getSessionObject(), peer, generateSid());
+		ft.setIncoming(false);
+		ft.setFileInfo(filename, fileSize, lastModified, null);
+		ft.setInputStream(is);
+
+		return sendFile(ft);
+	}
+
+	private FileTransfer sendFile(FileTransfer ft) throws JaxmppException {
+		boolean send = false;
+		for (FileTransferNegotiator negotiator : negotiators) {
+			if (negotiator.isSupported(jaxmpp, ft)) {
+				ft.setNegotiator(negotiator);
+				negotiator.sendFile(jaxmpp, ft);
+				send = true;
+				break;
+			}
+		}
+
+		if (!send) {
+			throw new JaxmppException("No file transfer methods supported by recipient = " + ft.getPeer().toString());
+		}
+
+		return ft;
+	}
+
+	public void acceptFile(FileTransfer ft) throws JaxmppException {
+		ft.setIncoming(true);
+
+		ft.getNegotiator().acceptFile(jaxmpp, ft);
+	}
+
+	public void rejectFile(FileTransfer ft) throws JaxmppException {
+		ft.setIncoming(true);
+
+		ft.getNegotiator().rejectFile(jaxmpp, ft);
+	}
+
+	protected static String getCapsNode(Presence presence) throws XMLException {
+		if (presence == null) {
 			return null;
-        
+		}
+		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
+		if (c == null) {
+			return null;
+		}
+
 		String node = c.getAttribute("node");
 		String ver = c.getAttribute("ver");
-		if (node == null || ver == null)
+		if (node == null || ver == null) {
 			return null;
-		
+		}
+
 		return node + "#" + ver;
-        }
-        
-        private String generateSid() {
-                return UUID.randomUUID().toString();
-        }
-        
-        private void startSending(final FileTransfer fileTransfer, final Socket socket) {
-                new Thread() {
-                        @Override
-                        public void run() {
-                                try {
-                                        InputStream fis = fileTransfer.getInputStream();
-										if (fis == null) {
-	                                        File f = fileTransfer.getFile();
-											fis = new BufferedInputStream(new FileInputStream(f));
-										}
-                                        transferData(fileTransfer, fis, socket.getOutputStream());
-                                        fis.close();
+	}
 
-                                        socket.close();
-										fireOnSuccess(fileTransfer);
-                                }
-                                catch (IOException ex) {
-                                        log.log(Level.SEVERE, "exception transfering data", ex);
-                                }
-                        }
-                }.start();
-        }
+	private String generateSid() {
+		return UUID.randomUUID().toString();
+	}
 
-        private void startReceiving(final FileTransfer fileTransfer, final Socket socket) {
-                new Thread() {
-                        @Override
-                        public void run() {
-                                try {
+	private void startSending(final FileTransfer fileTransfer, final Socket socket) {
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					InputStream fis = fileTransfer.getInputStream();
+					if (fis == null) {
+						File f = fileTransfer.getFile();
+						fis = new BufferedInputStream(new FileInputStream(f));
+					}
+					transferData(fileTransfer, fis, socket.getOutputStream());
+					fis.close();
+
+					socket.close();
+					fireOnSuccess(fileTransfer);
+				} catch (IOException ex) {
+					log.log(Level.SEVERE, "exception transfering data", ex);
+				}
+			}
+		}.start();
+	}
+
+	private void startReceiving(final FileTransfer fileTransfer, final Socket socket) {
+		new Thread() {
+			@Override
+			public void run() {
+				try {
 //                                        try {
 //                                                Thread.sleep(1000);
 //                                        } catch (Exception ex) {}
-                                        File f = fileTransfer.getFile();
-                                        FileOutputStream fos = new FileOutputStream(f);
+					File f = fileTransfer.getFile();
+					FileOutputStream fos = new FileOutputStream(f);
 //                                        transferData(socket.getChannel(), fos.getChannel());
-										transferData(fileTransfer, socket.getInputStream(), new BufferedOutputStream(fos));
-                                        fos.close();
+					transferData(fileTransfer, socket.getInputStream(), new BufferedOutputStream(fos));
+					fos.close();
 //                                        try {
 //                                                Thread.sleep(1000);
 //                                        } catch (Exception ex) {}
-                                        socket.close();
-										fireOnSuccess(fileTransfer);
-                                }
-                                catch (IOException ex) {
-                                        log.log(Level.SEVERE, "exception transfering data", ex);
-                                }
-                        }
-                }.start();
-        }
-                
-        private void transferData(FileTransfer ft, InputStream in, OutputStream out) throws IOException {
-				byte[] data = new byte[16 * 1024];
-				
-                int read;
+					socket.close();
+					fireOnSuccess(fileTransfer);
+				} catch (IOException ex) {
+					log.log(Level.SEVERE, "exception transfering data", ex);
+				}
+			}
+		}.start();
+	}
 
-				while ((read = in.read(data)) > -1) {
-						out.write(data, 0, read);                                                
-						
-                        ft.transferredBytes(read);
-                        
-                        if (log.isLoggable(Level.FINEST)) {
-                                log.log(Level.FINEST, "transferred bytes = {0}", ft.getTransferredBytes());
-                        }
-						
-						// maybe we should not send this event every time?
-						fireOnProgress(ft);
-                }
-        }
-		
-		private void fireOnFailure(final FileTransfer ft) {
-			context.getEventBus().fire(new FileTransferFailureHandler.FileTransferFailureEvent(ft.getSessionObject(), ft));
-		}
+	private void transferData(FileTransfer ft, InputStream in, OutputStream out) throws IOException {
+		byte[] data = new byte[16 * 1024];
 
-		private void fireOnSuccess(final FileTransfer ft) {
-			context.getEventBus().fire(new FileTransferSuccessHandler.FileTransferSuccessEvent(ft.getSessionObject(), ft));
-		}
+		int read;
 
-		private void fireOnProgress(final FileTransfer ft) {
-			context.getEventBus().fire(new FileTransferProgressHandler.FileTransferProgressEvent(ft.getSessionObject(), ft));
+		while ((read = in.read(data)) > -1) {
+			out.write(data, 0, read);
+
+			ft.transferredBytes(read);
+
+			if (log.isLoggable(Level.FINEST)) {
+				log.log(Level.FINEST, "transferred bytes = {0}", ft.getTransferredBytes());
+			}
+
+			// maybe we should not send this event every time?
+			fireOnProgress(ft);
 		}
+	}
+
+	private void fireOnFailure(final FileTransfer ft) {
+		context.getEventBus().fire(new FileTransferFailureHandler.FileTransferFailureEvent(ft.getSessionObject(), ft));
+	}
+
+	private void fireOnSuccess(final FileTransfer ft) {
+		context.getEventBus().fire(new FileTransferSuccessHandler.FileTransferSuccessEvent(ft.getSessionObject(), ft));
+	}
+
+	private void fireOnProgress(final FileTransfer ft) {
+		context.getEventBus().fire(new FileTransferProgressHandler.FileTransferProgressEvent(ft.getSessionObject(), ft));
+	}
 }
