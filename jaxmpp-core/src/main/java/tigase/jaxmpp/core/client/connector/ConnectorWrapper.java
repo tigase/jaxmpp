@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,6 +25,9 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Class for wrapping {@linkplain Connector Connector}.
+ */
 public class ConnectorWrapper implements Connector {
 
 	private Connector connector;
@@ -37,6 +40,11 @@ public class ConnectorWrapper implements Connector {
 		return connector.createSessionLogic(modulesManager, writer);
 	}
 
+	/**
+	 * Returns wrapped connector.
+	 * 
+	 * @return wrapped connector.
+	 */
 	public Connector getConnector() {
 		return connector;
 	}
@@ -46,11 +54,6 @@ public class ConnectorWrapper implements Connector {
 		return connector == null ? State.disconnected : connector.getState();
 	}
 
-	/**
-	 * Returns true when stream is compressed
-	 * 
-	 * @return
-	 */
 	@Override
 	public boolean isCompressed() {
 		return connector.isCompressed();
@@ -76,6 +79,12 @@ public class ConnectorWrapper implements Connector {
 		connector.send(stanza);
 	}
 
+	/**
+	 * Sets connector to be wrapped.
+	 * 
+	 * @param connector
+	 *            connector.
+	 */
 	public void setConnector(Connector connector) {
 		this.connector = connector;
 	}

@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,112 +22,20 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Main Connector interface.
- * 
- * <dl>
- * <dt><b>Events:</b></dt>
- * 
- * <dd><b>{@link Connector#Connected Connected}</b> : {@link ConnectorEvent
- * ConnectorEvent} ()<br>
- * <div>Fires after creates XMPP Stream</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link Connector#EncryptionEstablished EncryptionEstablished}</b> :
- * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after encrypted connection is established.</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link Connector#Error Error}</b> : {@link ConnectorEvent
- * ConnectorEvent} (caught)<br>
- * <div>Fires on XMPP Stream error</div>
- * <ul>
- * <li>caught : exception</li>
- * </ul>
- * </dd>
- * 
- * <dd><b>{@link Connector#StateChanged StateChanged}</b> :
- * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after connection state is changed</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link Connector#StanzaReceived StanzaReceived}</b> :
- * {@link ConnectorEvent ConnectorEvent} (stanza)<br>
- * <div>Fires after next stanza is received</div>
- * <ul>
- * <li>stanza : received stanza</li>
- * </ul>
- * </dd>
- * 
- * <dd><b>{@link Connector#StreamTerminated StreamTerminated}</b> :
- * {@link ConnectorEvent ConnectorEvent} ()<br>
- * <div>Fires after XMPP Stream is terminated</div>
- * <ul>
- * </ul></dd>
- * 
- * 
- * <br/>
- * <dt><b>Properties:</b></dt>
- * 
- * <dd><b>{@link Connector#TRUST_MANAGERS_KEY TRUST_MANAGER}</b>: Custom
- * {@link TrustManager TrustManager} instead of dummy (accespts all
- * certificates) builded in.</dd>
- * 
- * 
- * </dl>
- * 
  */
 public interface Connector {
 
-	public interface BodyReceivedHandler extends EventHandler {
-
-		public static class BodyReceivedvent extends JaxmppEvent<BodyReceivedHandler> {
-
-			private String receivedData;
-
-			private Element response;
-
-			private int responseCode;
-
-			public BodyReceivedvent(SessionObject sessionObject, int responseCode, Element response, String responseData) {
-				super(sessionObject);
-				this.responseCode = responseCode;
-				this.response = response;
-				this.receivedData = responseData;
-			}
-
-			@Override
-			protected void dispatch(BodyReceivedHandler handler) {
-				handler.onBodyReceived(sessionObject, responseCode, response);
-			}
-
-			public String getReceivedData() {
-				return receivedData;
-			}
-
-			public Element getResponse() {
-				return response;
-			}
-
-			public int getResponseCode() {
-				return responseCode;
-			}
-
-		}
-
-		void onBodyReceived(SessionObject sessionObject, int responseCode, Element response);
-	}
-
 	/**
-	 * Event fires after creates XMPP Stream
+	 * Implemented by handlers of {@linkplain ConnectedEvent ConnectedEvent}.
 	 */
 	public interface ConnectedHandler extends EventHandler {
 
+		/**
+		 * Fired after creates XMPP Stream
+		 */
 		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
 
 			public ConnectedEvent(SessionObject sessionObject) {
@@ -141,14 +49,24 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
 		void onConnected(SessionObject sessionObject);
 	}
 
 	/**
-	 * Event fires after encrypted connection is established.
+	 * Implemented by handlers of {@linkplain EncryptionEstablishedEvent
+	 * EncryptionEstablishedEvent}.
 	 */
 	public interface EncryptionEstablishedHandler extends EventHandler {
 
+		/**
+		 * Fired after encrypted connection is established.
+		 */
 		public static class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
 
 			public EncryptionEstablishedEvent(SessionObject sessionObject) {
@@ -162,20 +80,24 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain EncryptionEstablishedEvent
+		 * EncryptionEstablishedEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
 		void onEncryptionEstablished(SessionObject sessionObject);
 	}
 
 	/**
-	 * Event fires on XMPP Stream error.
-	 * <p>
-	 * Filled fields:
-	 * <ul>
-	 * <li>caught : exception</li>
-	 * </ul>
-	 * </p>
+	 * Implemented by handlers of {@linkplain ErrorEvent ErrorEvent}.
 	 */
 	public interface ErrorHandler extends EventHandler {
 
+		/**
+		 * Fired on connection error.
+		 */
 		public static class ErrorEvent extends JaxmppEvent<ErrorHandler> {
 
 			private Throwable caught;
@@ -203,20 +125,30 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain ErrorEvent ErrorEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param condition
+		 *            XMPP error condition. <code>null</code> if error is not
+		 *            caused by stream.
+		 * @param caught
+		 *            exception. <cude>null</code> if error was caused by
+		 *            stream.
+		 */
 		void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException;
 	}
 
 	/**
-	 * Event fires after creates XMPP Stream.
-	 * <p>
-	 * Filled fields:
-	 * <ul>
-	 * <li>{@link ConnectorEvent#getElement() stanza} : received stanza</li>
-	 * </ul>
-	 * </p>
+	 * Implemented by handlers of {@linkplain StanzaReceivedEvent
+	 * StanzaReceivedEvent}.
 	 */
 	public interface StanzaReceivedHandler extends EventHandler {
 
+		/**
+		 * Fired when stanza is received.
+		 */
 		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
 
 			private Element stanza;
@@ -237,11 +169,27 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain StanzaReceivedEvent StanzaReceivedEvent} is
+		 * fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param stanza
+		 *            received stanza.
+		 */
 		void onStanzaReceived(SessionObject sessionObject, Element stanza);
 	}
 
+	/**
+	 * Implemented by handlers of {@linkplain StanzaSendingEvent
+	 * StanzaSendingEvent}.
+	 */
 	public interface StanzaSendingHandler extends EventHandler {
 
+		/**
+		 * Fired when stanza is sending.
+		 */
 		public static class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
 
 			private Element stanza;
@@ -266,24 +214,52 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain StanzaSendingEvent StanzaSendingEvent} is
+		 * fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param stanza
+		 *            stanza to be sent.
+		 */
 		void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException;
 	}
 
 	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
 	// "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
 
+	/**
+	 * States of Connector.
+	 */
 	public static enum State {
+		/**
+		 * Connection is established.
+		 */
 		connected,
+		/**
+		 * Connector started establishing connection.
+		 */
 		connecting,
+		/**
+		 * Connector is disconnected.
+		 */
 		disconnected,
+		/**
+		 * Connector is closing connection and stopping workers.
+		 */
 		disconnecting
 	}
 
 	/**
-	 * Event fires after connection state is changed.
+	 * Implemented by handlers of {@linkplain StateChangedEvent
+	 * StateChangedEvent}.
 	 */
 	public interface StateChangedHandler extends EventHandler {
 
+		/**
+		 * Fired after connection state is changed.
+		 */
 		public static class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
 
 			private State newState;
@@ -311,14 +287,29 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain StateChangedEvent StateChangedEvent} is
+		 * fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param oldState
+		 *            previous connector state.
+		 * @param newState
+		 *            new connector state.
+		 */
 		void onStateChanged(SessionObject sessionObject, State oldState, State newState) throws JaxmppException;
 	}
 
 	/**
-	 * Event fires after XMPP Stream is terminated.
+	 * Implemented by handlers of {@linkplain StreamTerminatedEvent
+	 * StreamTerminatedEvent}.
 	 */
 	public interface StreamTerminatedHandler extends EventHandler {
 
+		/**
+		 * Fired after XMPP Stream is terminated.
+		 */
 		public static class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
 
 			public StreamTerminatedEvent(SessionObject sessionObject) {
@@ -332,28 +323,58 @@ public interface Connector {
 
 		}
 
+		/**
+		 * Called when when {@linkplain StreamTerminatedEvent
+		 * StreamTerminatedEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
 		void onStreamTerminated(SessionObject sessionObject) throws JaxmppException;
 	}
 
 	/**
-	 * Key set to true to determine if connection is already compressed
+	 * Name of property that specify if connection is already compressed. <br/>
+	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String COMPRESSED_KEY = "CONNECTOR#COMPRESSED_KEY";
 
+	/**
+	 * Name of property that specify current state of connector. <br/>
+	 * Type: {@linkplain State State}.
+	 */
 	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
 
+	/**
+	 * Name of property that allows disable keep alive feature. Keep alive is
+	 * turned on by default. <br/>
+	 * Type: {@linkplain Boolean Boolean}.
+	 */
 	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
 
+	/**
+	 * Name of property that specify if connection is encrypted. <br/>
+	 * Type: {@linkplain Boolean Boolean}.
+	 */
 	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
 
+	/**
+	 * <br/>
+	 * Type: {@linkplain Boolean Boolean}.
+	 */
 	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
 
+	/**
+	 * <br/>
+	 * Type: {@linkplain Boolean Boolean}.
+	 */
 	public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
 
 	/**
-	 * Key for define {@linkplain SessionObject#setUserProperty(String, Object)
-	 * property}. Custom array of {@link TrustManager TrustManagers[]} instead
-	 * of dummy (accepts all certificates) builded in.
+	 * Name of property to define
+	 * {@linkplain SessionObject#setUserProperty(String, Object) property}.
+	 * Custom array of {@link TrustManager TrustManagers[]} instead of dummy
+	 * (accepts all certificates) builded in.
 	 */
 	public static final String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
 
@@ -369,27 +390,63 @@ public interface Connector {
 	 */
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
+	/**
+	 * Returns current {@linkplain State State} of connector.
+	 * 
+	 * @return {@linkplain State State} of connector.
+	 */
 	public State getState();
 
+	/**
+	 * Returns XML Stream compression state.
+	 * 
+	 * @return <code>true> if XML Stream is compressed.
+	 */
 	boolean isCompressed();
 
+	/**
+	 * Returns connection security state.
+	 * 
+	 * @return <code>true> if connection is secured and encrypted.
+	 */
 	boolean isSecure();
 
 	/**
 	 * Whitespace ping.
-	 * 
-	 * @throws JaxmppException
 	 */
 	public void keepalive() throws JaxmppException;
 
-	public void restartStream() throws XMLException, JaxmppException;
+	/**
+	 * Sends new XML Stream header.
+	 */
+	public void restartStream() throws JaxmppException;
 
-	public void send(final Element stanza) throws XMLException, JaxmppException;
+	/**
+	 * Sends given XML Element to server.
+	 * 
+	 * @param stanza
+	 *            XML element to send.
+	 */
+	public void send(final Element stanza) throws JaxmppException;
 
-	public void start() throws XMLException, JaxmppException;
+	/**
+	 * Starts connector. If connector is properly configured it will tries to
+	 * establsh connection with server.
+	 */
+	public void start() throws JaxmppException;
 
-	public void stop() throws XMLException, JaxmppException;
+	/**
+	 * Stops connector and closes connections.
+	 */
+	public void stop() throws JaxmppException;
 
-	public void stop(boolean terminate) throws XMLException, JaxmppException;
+	/**
+	 * Stops connector.
+	 * 
+	 * @param terminate
+	 *            if
+	 *            <code>true<code> then connection will be terminated immediatelly and connector will be stopped.
+	 */
+	public void stop(boolean terminate) throws JaxmppException;
 
 }

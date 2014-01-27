@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.BodyReceivedHandler.BodyReceivedvent;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
@@ -38,6 +37,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector.BoshPacketReceivedHandler.BoshPacketReceivedEvent;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -45,10 +45,77 @@ import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Abstract class for implementing BOSH connector.
+ */
 public abstract class AbstractBoshConnector implements Connector {
 
+	/**
+	 * Implemented by handlers of {@linkplain BoshPacketReceivedEvent
+	 * BoshPacketReceivedEvent}.
+	 */
+	public interface BoshPacketReceivedHandler extends EventHandler {
+
+		/**
+		 * Fired BOSH packet is received.
+		 */
+		public static class BoshPacketReceivedEvent extends JaxmppEvent<BoshPacketReceivedHandler> {
+
+			private String receivedData;
+
+			private Element response;
+
+			private int responseCode;
+
+			public BoshPacketReceivedEvent(SessionObject sessionObject, int responseCode, Element response, String responseData) {
+				super(sessionObject);
+				this.responseCode = responseCode;
+				this.response = response;
+				this.receivedData = responseData;
+			}
+
+			@Override
+			protected void dispatch(BoshPacketReceivedHandler handler) {
+				handler.onBoshPacketReceived(sessionObject, responseCode, response);
+			}
+
+			public String getReceivedData() {
+				return receivedData;
+			}
+
+			public Element getResponse() {
+				return response;
+			}
+
+			public int getResponseCode() {
+				return responseCode;
+			}
+
+		}
+
+		/**
+		 * Called when {@linkplain BoshPacketReceivedEvent
+		 * BoshPacketReceivedEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param responseCode
+		 *            HTTP response code.
+		 * @param response
+		 *            received BOSH packet.
+		 */
+		void onBoshPacketReceived(SessionObject sessionObject, int responseCode, Element response);
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain BoshPacketSendingEvent
+	 * BoshPacketSendingEvent}.
+	 */
 	public interface BoshPacketSendingHandler extends EventHandler {
 
+		/**
+		 * Fired when BOSH packet is sending.
+		 */
 		public static class BoshPacketSendingEvent extends JaxmppEvent<BoshPacketSendingHandler> {
 
 			private Element element;
@@ -73,24 +140,40 @@ public abstract class AbstractBoshConnector implements Connector {
 
 		}
 
+		/**
+		 * Called when {@linkplain BoshPacketSendingEvent
+		 * BoshPacketSendingEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param packet
+		 *            sending BOSH packet.
+		 */
 		void onBoshPacketSending(SessionObject sessionObject, Element packet) throws JaxmppException;
 	}
 
-	public static final String AUTHID_KEY = "BOSH#AUTHID_KEY";
-
 	/**
-	 * @deprecated use {@linkplain BOSH_SERVICE_URL_KEY
-	 *             AbstractBoshConnector#BOSH_SERVICE_URL_KEY}
+	 * Name of property that specify BOSH service URL.<br/>
+	 * Type: {@linkplain String String}.
 	 */
-	@Deprecated
-	public static final String BOSH_SERVICE_URL = "BOSH_SERVICE_URL_KEY";
-
 	public static final String BOSH_SERVICE_URL_KEY = "BOSH_SERVICE_URL_KEY";
 
+	/**
+	 * Name of property that specify longest time that client will wait for
+	 * response.<br/>
+	 * Type: {@linkplain String String}.
+	 */
 	private static final String DEFAULT_TIMEOUT_KEY = "BOSH#DEFAULT_TIMEOUT_KEY";
 
+	/**
+	 * Type: {@linkplain Long Long}.
+	 */
 	public final static String RID_KEY = "BOSH#RID_KEY";
 
+	/**
+	 * Name of property that specify BOSH Session ID.<br/>
+	 * Type: {@linkplain String String}.
+	 */
 	public static final String SID_KEY = "BOSH#SID_KEY";
 
 	protected final Context context;
@@ -142,7 +225,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			throws JaxmppException {
 		try {
 			{
-				BodyReceivedvent event = new BodyReceivedvent(sessionObject, responseCode, response, responseData);
+				BoshPacketReceivedEvent event = new BoshPacketReceivedEvent(sessionObject, responseCode, response, responseData);
 				context.getEventBus().fire(event, this);
 
 			}
@@ -176,11 +259,6 @@ public abstract class AbstractBoshConnector implements Connector {
 		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 	}
 
-	/**
-	 * Returns true when stream is compressed
-	 * 
-	 * @return
-	 */
 	@Override
 	public boolean isCompressed() {
 		return false;

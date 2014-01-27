@@ -1,12 +1,34 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2014 Tigase, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client.eventbus;
 
-import java.util.Set;
+import java.util.Collection;
 
+/**
+ * Exception collects all exceptions throwed by handlers or listeners during
+ * firing event. This exception is usually throwed after calling all listeners
+ * and handlers.
+ */
 public class EventBusException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
-	protected static String createMessage(Set<Throwable> causes) {
+	protected static String createMessage(Collection<Throwable> causes) {
 		if (causes.isEmpty()) {
 			return null;
 		}
@@ -33,21 +55,26 @@ public class EventBusException extends RuntimeException {
 		return b.toString();
 	}
 
-	protected static Throwable createThrowable(Set<Throwable> causes) {
+	protected static Throwable createThrowable(Collection<Throwable> causes) {
 		if (causes.isEmpty()) {
 			return null;
 		}
 		return causes.iterator().next();
 	}
 
-	private final Set<Throwable> causes;
+	private final Collection<Throwable> causes;
 
-	public EventBusException(Set<Throwable> causes) {
+	public EventBusException(Collection<Throwable> causes) {
 		super(createMessage(causes), createThrowable(causes));
 		this.causes = causes;
 	}
 
-	public Set<Throwable> getCauses() {
+	/**
+	 * Returns collection of all Exceptions throwed by handlers or listeners.
+	 * 
+	 * @return collection of Exceptions.
+	 */
+	public Collection<Throwable> getCauses() {
 		return causes;
 	}
 

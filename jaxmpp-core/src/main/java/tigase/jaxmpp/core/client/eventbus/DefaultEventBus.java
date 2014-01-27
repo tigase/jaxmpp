@@ -1,3 +1,20 @@
+/*
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2014 Tigase, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 package tigase.jaxmpp.core.client.eventbus;
 
 import java.util.ArrayList;
@@ -13,7 +30,21 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Basic implementation of {@link EventBus}.
+ */
 public class DefaultEventBus extends EventBus {
+
+	private final static class N extends Event<EventHandler> {
+
+		@Override
+		protected void dispatch(EventHandler handler) throws Exception {
+		}
+	}
+
+	private final static Object NULL_SOURCE = new Object();
+
+	private final static Class<? extends Event<?>> NULL_TYPE = N.class;
 
 	protected final Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> handlers;
 
@@ -134,6 +165,10 @@ public class DefaultEventBus extends EventBus {
 		doFire((Event<EventHandler>) event, source);
 	}
 
+	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
+		return handlers.get(source == null ? NULL_SOURCE : source);
+	}
+
 	protected Collection<EventHandler> getHandlersList(Class<? extends Event<?>> type, Object source) {
 		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
 		if (hdlrs == null) {
@@ -145,21 +180,6 @@ public class DefaultEventBus extends EventBus {
 			} else
 				return Collections.emptyList();
 		}
-	}
-
-	private final static Object NULL_SOURCE = new Object();
-
-	private final static class N extends Event<EventHandler> {
-
-		@Override
-		protected void dispatch(EventHandler handler) throws Exception {
-		}
-	}
-
-	private final static Class<? extends Event<?>> NULL_TYPE = N.class;
-
-	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
-		return handlers.get(source == null ? NULL_SOURCE : source);
 	}
 
 	public boolean isThrowingExceptionOn() {
