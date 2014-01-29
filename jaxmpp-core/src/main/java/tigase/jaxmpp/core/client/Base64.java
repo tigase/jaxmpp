@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,13 +20,7 @@ package tigase.jaxmpp.core.client;
 import java.util.Arrays;
 
 /**
- * Describe class Base64 here.
- * 
- * 
- * Created: Thu Dec 14 18:28:08 2006
- * 
- * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
- * @version $Rev: 619 $
+ * Base64 encoder/decoder.
  */
 public class Base64 {
 	private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();

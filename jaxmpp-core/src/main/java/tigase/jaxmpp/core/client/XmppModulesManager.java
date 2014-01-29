@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,8 +33,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 /**
  * XMPP Modules Manager. This manager finds correct module to handle given
  * incoming stanza.
- * 
- * @author bmalkow
  */
 public class XmppModulesManager {
 

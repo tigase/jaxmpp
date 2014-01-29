@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -98,9 +98,9 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 	@Override
 	public void setRequired(boolean value) throws XMLException {
 		Element b = getFirstChild("required");
-		if (value == false && b != null)
+		if (!value && b != null)
 			removeChild(b);
-		else if (value == true && b == null) {
+		else if (value && b == null) {
 			b = new DefaultElement("required");
 			addChild(b);
 		}

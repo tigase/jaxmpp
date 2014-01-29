@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,10 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
+/**
+ * Wrapper for <code>urn:xmpp:delay</code> elements. See <a
+ * href='http://xmpp.org/extensions/xep-0203.html'>XEP-203</a> for details.
+ */
 public class XmppDelay extends ElementWrapper {
 
 	public static XmppDelay extract(Stanza stanza) throws XMLException {

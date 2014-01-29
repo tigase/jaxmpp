@@ -58,13 +58,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 	}
 
 	private Runnable getResponseHandler(Element element) throws JaxmppException {
-		return ResponseManager.getResponseHandler(context.getSessionObject(), element, context.getWriter());
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		// TODO Auto-generated method stub
-		super.setUp();
+		return ResponseManager.getResponseHandler(context, element);
 	}
 
 	@Test

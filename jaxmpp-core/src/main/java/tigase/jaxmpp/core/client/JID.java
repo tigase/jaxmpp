@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -112,18 +112,21 @@ public class JID implements Comparable<JID> {
 		return $toString.compareTo(o.$toString);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public boolean equals(Object b) {
-		boolean result = false;
-		if (b instanceof JID) {
-			JID jid = (JID) b;
-			result = bareJid.equals(jid.bareJid)
-					&& ((resource == jid.resource) || ((resource != null) && resource.equals(jid.resource)));
-		}
-		return result;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof JID))
+			return false;
+		JID other = (JID) obj;
+		if ($toString == null) {
+			if (other.$toString != null)
+				return false;
+		} else if (!$toString.equals(other.$toString))
+			return false;
+		return true;
 	}
 
 	/**
@@ -165,7 +168,10 @@ public class JID implements Comparable<JID> {
 
 	@Override
 	public int hashCode() {
-		return $toString.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (($toString == null) ? 0 : $toString.hashCode());
+		return result;
 	}
 
 	@Override

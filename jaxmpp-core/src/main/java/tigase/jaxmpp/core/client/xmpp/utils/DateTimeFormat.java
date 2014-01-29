@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,11 @@ package tigase.jaxmpp.core.client.xmpp.utils;
 
 import java.util.Date;
 
+/**
+ * Date time formatter, implements <a
+ * href='http://xmpp.org/extensions/xep-0082.html'>XMPP Date and Time
+ * Profiles</a>.
+ */
 public class DateTimeFormat {
 
 	public static interface DateTimeFormatProvider {

@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,9 @@ package tigase.jaxmpp.core.client;
 
 import java.util.HashMap;
 
+/**
+ * Small class for storing all types of additional data.
+ */
 public class DataHolder {
 
 	private final HashMap<String, Object> data = new HashMap<String, Object>();

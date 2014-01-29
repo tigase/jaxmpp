@@ -62,7 +62,7 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 				}
 			});
 
-			Runnable r = rm.getResponseHandler(er, context.getWriter(), null);
+			Runnable r = rm.getResponseHandler(er, context);
 
 			r.run();
 
@@ -117,7 +117,7 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 				}
 			});
 
-			Runnable r = rm.getResponseHandler(er, context.getWriter(), null);
+			Runnable r = rm.getResponseHandler(er, context);
 
 			r.run();
 

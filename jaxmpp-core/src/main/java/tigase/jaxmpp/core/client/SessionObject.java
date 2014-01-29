@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client;
 
 import java.util.Set;
 
+import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -34,8 +35,14 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  */
 public interface SessionObject extends UserProperties {
 
+	/**
+	 * Implemented by handlers of {@linkplain ClearedEvent}.
+	 */
 	public interface ClearedHandler extends EventHandler {
 
+		/**
+		 * Fired when properties from {@link SessionObject} are cleared.
+		 */
 		public static class ClearedEvent extends JaxmppEvent<ClearedHandler> {
 
 			private Set<Scope> scopes;
@@ -60,6 +67,14 @@ public interface SessionObject extends UserProperties {
 
 		}
 
+		/**
+		 * Called when {@link ClearedEvent} if fired.
+		 * 
+		 * @param sessionObject
+		 *            cleared session object.
+		 * @param scopes
+		 *            set cleared {@link Scope scopes}.
+		 */
 		void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException;
 	}
 

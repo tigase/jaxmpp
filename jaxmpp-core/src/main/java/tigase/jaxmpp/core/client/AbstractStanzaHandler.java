@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,40 +19,36 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
+/**
+ * Abstract class for handling incoming XMPP Stanzas.
+ */
 public abstract class AbstractStanzaHandler implements Runnable {
+
+	private final Context context;
 
 	protected final Element element;
 
-	protected final SessionObject sessionObject;
-
-	protected final PacketWriter writer;
-
-	public AbstractStanzaHandler(Element element, PacketWriter writer, SessionObject sessionObject) {
+	public AbstractStanzaHandler(Element element, Context context) {
 		super();
-		this.writer = writer;
 		this.element = element;
-		this.sessionObject = sessionObject;
+		this.context = context;
 	}
 
-	protected abstract void process() throws XMLException, XMPPException, JaxmppException;
+	protected abstract void process() throws JaxmppException;
 
 	@Override
 	public void run() {
 		try {
-			try {
-				process();
-				// }catch(XMPPException e){
-			} catch (Exception e) {
-				e.printStackTrace();
-				Element errorResult = Processor.createError(element, e);
-				if (errorResult != null)
-					writer.write(errorResult);
-			}
-		} catch (JaxmppException e) {
-			throw new RuntimeException(e);
-			// TODO: handle exception
+			process();
+		} catch (Exception e) {
+			Element errorResult = Processor.createError(element, e);
+			if (errorResult != null)
+				try {
+					context.getWriter().write(errorResult);
+				} catch (JaxmppException e1) {
+					throw new RuntimeException("Can't send error stanza", e1);
+				}
 		}
 	}
 }

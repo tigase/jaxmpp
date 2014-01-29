@@ -58,7 +58,7 @@ public class TPath {
 			String l = tkns[i];
 			if (i == 0) {
 				name = l;
-			} else if (l.startsWith("@")) {
+			} else if (l.charAt(0) == '@') {
 				String[] x = l.split("=");
 				// XXX
 				String pName = x[0].substring(1);

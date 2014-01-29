@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -38,8 +39,8 @@ public class Processor {
 
 		protected final Logger log = Logger.getLogger(this.getClass().getName());
 
-		public FeatureNotImplementedResponse(Element element, PacketWriter writer, SessionObject sessionObject) {
-			super(element, writer, sessionObject);
+		public FeatureNotImplementedResponse(Element element, Context context) {
+			super(element, context);
 		}
 
 		@Override
@@ -98,7 +99,8 @@ public class Processor {
 	}
 
 	/**
-	 * Process received stanza.
+	 * Produces {@link Runnable} that must be run to fully process received
+	 * stanza.
 	 * 
 	 * @param element
 	 *            received stanza
@@ -107,7 +109,7 @@ public class Processor {
 	public Runnable process(final Element receivedElement) {
 		try {
 			final Element element = Stanza.canBeConverted(receivedElement) ? Stanza.create(receivedElement) : receivedElement;
-			Runnable result = ResponseManager.getResponseHandler(context.getSessionObject(), element, context.getWriter());
+			Runnable result = ResponseManager.getResponseHandler(context, element);
 			if (result != null)
 				return result;
 
@@ -118,9 +120,9 @@ public class Processor {
 			final List<XmppModule> modules = xmppModulesManages.findModules(element);
 
 			if (modules == null)
-				result = new FeatureNotImplementedResponse(element, context.getWriter(), context.getSessionObject());
+				result = new FeatureNotImplementedResponse(element, context);
 			else {
-				result = new AbstractStanzaHandler(element, context.getWriter(), context.getSessionObject()) {
+				result = new AbstractStanzaHandler(element, context) {
 
 					@Override
 					protected void process() throws XMLException, XMPPException, JaxmppException {

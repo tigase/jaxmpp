@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 /**
- * Class for keeping many instances of {@linkplain JaxmppCore}
+ * Class for keeping many instances of {@linkplain JaxmppCore}.
  * 
  */
 public class MultiJaxmpp {
@@ -75,22 +75,41 @@ public class MultiJaxmpp {
 		}
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class,
+	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 */
 	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
 		eventBus.addHandler(type, handler);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class,
+	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 */
 	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler) {
 		eventBus.addHandler(type, source, handler);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class,
+	 *      tigase.jaxmpp.core.client.eventbus.EventListener)
+	 */
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
 		eventBus.addListener(type, listener);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class,
+	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventListener)
+	 */
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source, EventListener listener) {
 		eventBus.addListener(type, source, listener);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(tigase.jaxmpp.core.client.eventbus.EventListener)
+	 */
 	public <H extends EventHandler> void addListener(EventListener listener) {
 		eventBus.addListener(listener);
 	}
@@ -141,14 +160,25 @@ public class MultiJaxmpp {
 		return Collections.unmodifiableList(chats);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
+	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 */
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
 		eventBus.remove(type, handler);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
+	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 */
 	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		eventBus.remove(type, source, handler);
 	}
 
+	/**
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 */
 	public void remove(EventHandler handler) {
 		eventBus.remove(handler);
 	}
