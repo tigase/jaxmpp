@@ -37,7 +37,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector.BoshPacketReceivedHandler.BoshPacketReceivedEvent;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -225,7 +224,8 @@ public abstract class AbstractBoshConnector implements Connector {
 			throws JaxmppException {
 		try {
 			{
-				BoshPacketReceivedEvent event = new BoshPacketReceivedEvent(sessionObject, responseCode, response, responseData);
+				BoshPacketReceivedHandler.BoshPacketReceivedEvent event = 
+						new BoshPacketReceivedHandler.BoshPacketReceivedEvent(sessionObject, responseCode, response, responseData);
 				context.getEventBus().fire(event, this);
 
 			}
