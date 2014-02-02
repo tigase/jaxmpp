@@ -32,7 +32,7 @@ public class AnonymousMechanism implements SaslMechanism {
 
 	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
-		return false;
+		return true;
 	}
 
 	@Override
