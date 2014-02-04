@@ -28,6 +28,7 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -42,6 +43,7 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.RetrieveItemsAsyncCallback.Item;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -256,16 +258,26 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 			private final String id;
 
+			private final String nodeName;
+
 			private final Element payload;
 
-			Item(String id, Element payload) {
+			Item(String nodeName, String id, Element payload) {
 				super();
 				this.id = id;
+				this.nodeName = nodeName;
 				this.payload = payload;
 			}
 
 			public String getId() {
 				return id;
+			}
+
+			/**
+			 * @return the nodeName
+			 */
+			public String getNodeName() {
+				return nodeName;
 			}
 
 			public Element getPayload() {
@@ -296,7 +308,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 					final String itemId = item.getAttribute("id");
 					final Element payload = item.getFirstChild();
 
-					Item it = new Item(itemId, payload);
+					Item it = new Item(nodeName, itemId, payload);
 					result.add(it);
 				}
 
@@ -322,6 +334,12 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 			onRetrieve((IQ) responseStanza, nodeName, result, count, firstIndex, first, last);
 		}
+
+	}
+
+	public static abstract class RetrieveMultiItemsAsyncCallback extends PubSubAsyncCallback {
+
+		protected abstract void onRetrieve(Collection<Item> items);
 
 	}
 
@@ -1221,6 +1239,107 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	}
 
 	/**
+	 * Gets published item from node.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param nodeName
+	 *            name of node
+	 * @param itemId
+	 *            ID of item to pe retrieve.
+	 * @param callback
+	 *            request callback
+	 */
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
+			throws JaxmppException {
+		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
+	}
+
+	/**
+	 * Gets published item(s) from all subscribed noded.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param max
+	 *            maximum amount of items to be retrieve from single node.
+	 * @param callback
+	 *            request callback.
+	 */
+	public void retrieveItems(BareJID pubSubJID, final Integer max, final RetrieveMultiItemsAsyncCallback callback)
+			throws JaxmppException {
+
+		final SubscriptionsRetrieveAsyncCallback subscriptionsCallback = new SubscriptionsRetrieveAsyncCallback() {
+
+			private final long[] counter = new long[] { 0l, 0l, 0l };
+
+			private final boolean[] finished = new boolean[] { false };
+
+			private final ArrayList<Item> resultItems = new ArrayList<Item>();
+
+			private void checkAndCallSuccess() {
+				if (counter[0] <= 0)
+					callback.onRetrieve(resultItems);
+			}
+
+			@Override
+			protected void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition)
+					throws JaxmppException {
+				callback.onError(response, errorCondition);
+			}
+
+			@Override
+			protected void onRetrieve(IQ response, String node, Collection<SubscriptionElement> subscriptions) {
+				counter[0] = subscriptions.size();
+
+				try {
+					for (SubscriptionElement subscriptionElement : subscriptions) {
+						retrieveItems(subscriptionElement.getJID().getBareJid(), subscriptionElement.getNode(), max, null,
+								new RetrieveItemsAsyncCallback() {
+
+									@Override
+									protected void onEror(IQ response, ErrorCondition errorCondition,
+											PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
+										if (finished[0])
+											return;
+										--counter[0];
+										++counter[2];
+										checkAndCallSuccess();
+									}
+
+									@Override
+									protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
+										if (finished[0])
+											return;
+										--counter[0];
+										resultItems.addAll(items);
+										checkAndCallSuccess();
+									}
+
+									@Override
+									public void onTimeout() throws JaxmppException {
+										if (finished[0])
+											return;
+										--counter[0];
+										++counter[1];
+										checkAndCallSuccess();
+									}
+								});
+					}
+				} catch (JaxmppException e) {
+					log.log(Level.WARNING, "Problem on mass retrieving", e);
+				}
+			}
+
+			@Override
+			public void onTimeout() throws JaxmppException {
+				callback.onTimeout();
+			}
+		};
+
+		retrieveOwnSubscription(pubSubJID, null, subscriptionsCallback);
+	}
+
+	/**
 	 * Gets published item(s) from node.
 	 * 
 	 * @param pubSubJID
@@ -1258,23 +1377,6 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		}
 
 		writer.write(iq, callback);
-	}
-
-	/**
-	 * Gets published item from node.
-	 * 
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item to pe retrieve.
-	 * @param callback
-	 *            request callback
-	 */
-	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
-			throws JaxmppException {
-		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	/**
