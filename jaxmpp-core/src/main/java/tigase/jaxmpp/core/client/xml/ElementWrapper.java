@@ -228,7 +228,7 @@ public class ElementWrapper implements Element {
 		if (value == null && b != null)
 			removeChild(b);
 		else if (value != null && b == null) {
-			b = new DefaultElement(elemName);
+			b = ElementFactory.create(elemName);
 			addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {
@@ -241,7 +241,7 @@ public class ElementWrapper implements Element {
 		if (value == null && b != null)
 			removeChild(b);
 		else if (value != null && b == null) {
-			b = new DefaultElement(elemName, null, xmlns);
+			b = ElementFactory.create(elemName, null, xmlns);
 			addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {

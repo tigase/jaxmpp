@@ -27,8 +27,8 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.NotSupportedErrorHandler.NotSupportedErrorEvent;
@@ -207,14 +207,14 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		iq.setType(StanzaType.set);
 		iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
 
-		DefaultElement q = new DefaultElement("query", null, "jabber:iq:register");
+		Element q = ElementFactory.create("query", null, "jabber:iq:register");
 		iq.addChild(q);
 		if (username != null && username.length() > 0)
-			q.addChild(new DefaultElement("username", username, null));
+			q.addChild(ElementFactory.create("username", username, null));
 		if (password != null && password.length() > 0)
-			q.addChild(new DefaultElement("password", password, null));
+			q.addChild(ElementFactory.create("password", password, null));
 		if (email != null && email.length() > 0)
-			q.addChild(new DefaultElement("email", email, null));
+			q.addChild(ElementFactory.create("email", email, null));
 
 		write(iq, asyncCallback);
 
@@ -225,9 +225,9 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		iq.setType(StanzaType.set);
 		iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
 
-		DefaultElement q = new DefaultElement("query", null, "jabber:iq:register");
+		Element q = ElementFactory.create("query", null, "jabber:iq:register");
 		iq.addChild(q);
-		q.addChild(new DefaultElement("remove"));
+		q.addChild(ElementFactory.create("remove"));
 
 		write(iq, asyncCallback);
 	}
@@ -256,7 +256,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			iq.setType(StanzaType.get);
 			iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
 
-			iq.addChild(new DefaultElement("query", null, "jabber:iq:register"));
+			iq.addChild(ElementFactory.create("query", null, "jabber:iq:register"));
 
 			write(iq, new AsyncCallback() {
 

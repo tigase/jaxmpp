@@ -29,8 +29,8 @@ import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Candidate;
@@ -225,15 +225,15 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 
 		JingleModule jingleModule = jaxmpp.getModule(JingleModule.class);
 
-		Element candidateUsedEl = new DefaultElement("candidate-used");
+		Element candidateUsedEl = ElementFactory.create("candidate-used");
 		candidateUsedEl.setAttribute("cid", candidateUsed.getCid());
 
-		Element transportEl = new DefaultElement("transport");
+		Element transportEl = ElementFactory.create("transport");
 		transportEl.setAttribute("sid", transport.getSid());
 		transportEl.setXMLNS(XMLNS);
 		transportEl.addChild(candidateUsedEl);
 
-		Element contentEl = new DefaultElement("content");
+		Element contentEl = ElementFactory.create("content");
 		contentEl.setAttribute("initiator", "creator");
 		contentEl.setAttribute("name", "ex");
 		contentEl.addChild(transportEl);
@@ -245,8 +245,8 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	@Override
 	public void setContext(Context context) {
 		super.setContext(context);
-		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				this, connectionEstablishedHandler);
+		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this,
+				connectionEstablishedHandler);
 	}
 
 }

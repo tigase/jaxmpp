@@ -13,11 +13,12 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
@@ -108,7 +109,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 	public void disable(AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.addChild(new DefaultElement("disable", null, XMLNS_MC));
+		iq.addChild(ElementFactory.create("disable", null, XMLNS_MC));
 		write(iq, callback);
 	}
 
@@ -121,7 +122,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 	public void enable(AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.addChild(new DefaultElement("enable", null, XMLNS_MC));
+		iq.addChild(ElementFactory.create("enable", null, XMLNS_MC));
 		write(iq, callback);
 	}
 
@@ -151,7 +152,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 		final Element forwarded = carb.getChildrenNS("forwarded", XMLNS_SF);
 		List<Element> c = forwarded.getChildren("message");
 		for (Element element : c) {
-			Message encapsulatedMessage = new Message(element);
+			Message encapsulatedMessage = (Message) Stanza.create(element);
 
 			JID interlocutorJid = encapsulatedMessage.getFrom();
 			Chat chat = this.messageModule.getChatManager().process(encapsulatedMessage, interlocutorJid);
@@ -166,7 +167,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 		final Element forwarded = carb.getChildrenNS("forwarded", XMLNS_SF);
 		List<Element> c = forwarded.getChildren("message");
 		for (Element element : c) {
-			Message encapsulatedMessage = new Message(element);
+			Message encapsulatedMessage = (Message) Stanza.create(element);
 
 			JID interlocutorJid = encapsulatedMessage.getTo();
 			Chat chat = this.messageModule.getChatManager().process(encapsulatedMessage, interlocutorJid);

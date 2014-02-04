@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -50,7 +50,7 @@ public class Transport extends ElementWrapper {
 	}
 
 	public Transport(String xmlns, String sid, Mode mode) throws JaxmppException {
-		super(new DefaultElement("transport", null, xmlns));
+		super(ElementFactory.create("transport", null, xmlns));
 		setAttribute(SID_ATTR, sid);
 
 		if (mode != null) {

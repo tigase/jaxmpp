@@ -17,7 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.stanzas;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -71,8 +71,8 @@ public class Presence extends Stanza {
 	 * 
 	 * @return {@linkplain Presence}
 	 */
-	public static Presence create() throws XMLException {
-		return new Presence(new DefaultElement("presence"));
+	public static Presence create() throws JaxmppException {
+		return createPresence();
 	}
 
 	private String cacheNickname;
@@ -87,7 +87,7 @@ public class Presence extends Stanza {
 
 	private boolean cacheStatusSet = false;
 
-	public Presence(Element element) throws XMLException {
+	Presence(Element element) throws XMLException {
 		super(element);
 		if (!"presence".equals(element.getName()))
 			throw new RuntimeException("Wrong element name: " + element.getName());

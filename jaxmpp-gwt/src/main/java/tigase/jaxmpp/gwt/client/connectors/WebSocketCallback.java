@@ -18,29 +18,29 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public interface WebSocketCallback {
 
-        /**
-         * Method called when WebSocket opens connection
-         */
-        public void onOpen(WebSocket ws);
+	/**
+	 * Method called when WebSocket connection is closed
+	 */
+	public void onClose(WebSocket ws);
 
-        /**
-         * Method called when WebSocket receives message
-         */
-        public void onMessage(WebSocket ws, String message);
+	/**
+	 * Method called when WebSocket receives error
+	 */
+	public void onError(WebSocket ws);
 
-        /**
-         * Method called when WebSocket receives error
-         */
-        public void onError(WebSocket ws);
+	/**
+	 * Method called when WebSocket receives message
+	 */
+	public void onMessage(WebSocket ws, String message);
 
-        /**
-         * Method called when WebSocket connection is closed
-         */
-        public void onClose(WebSocket ws);
-        
+	/**
+	 * Method called when WebSocket opens connection
+	 */
+	public void onOpen(WebSocket ws);
+
 }

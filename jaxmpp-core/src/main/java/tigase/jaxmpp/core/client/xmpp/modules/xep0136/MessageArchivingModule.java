@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -28,8 +29,8 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 import tigase.jaxmpp.core.client.xmpp.modules.xep0136.ChatItem.Type;
@@ -39,27 +40,14 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 /**
- * MessageArchivingModule class implements support for XEP-0136 Message Archiving.
+ * MessageArchivingModule class implements support for XEP-0136 Message
+ * Archiving.
  */
 public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 
-	private static final String ARCHIVE_XMLNS = "urn:xmpp:archive";
-	private static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.xmlns(ARCHIVE_XMLNS));
-	private static final DateTimeFormat format = new DateTimeFormat();
-	private PacketWriter writer = null;
-
-	@Override
-	public void setPacketWriter(PacketWriter packetWriter) {
-		this.writer = packetWriter;
-	}
-
-	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
-		// nothing to do
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
 	public static abstract class CollectionAsyncCallback implements AsyncCallback {
+
+		protected abstract void onCollectionReceived(final ResultSet<Chat> vcard) throws XMLException;
 
 		@Override
 		public void onSuccess(final Stanza stanza) throws XMLException {
@@ -79,11 +67,25 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 			}
 			onCollectionReceived(rs);
 		}
-
-		protected abstract void onCollectionReceived(final ResultSet<Chat> vcard) throws XMLException;
 	}
 
 	public static abstract class ItemsAsyncCallback implements AsyncCallback {
+
+		private String getChildValue(Element packet, String name) throws XMLException {
+			List<Element> vlist = packet.getChildren(name);
+			if (vlist == null || vlist.isEmpty()) {
+				return null;
+			}
+
+			Element v = vlist.get(0);
+			if (v != null) {
+				return v.getValue();
+			} else {
+				return null;
+			}
+		}
+
+		protected abstract void onItemsReceived(final ChatResultSet chat) throws XMLException;
 
 		@Override
 		public void onSuccess(final Stanza iq) throws XMLException {
@@ -129,25 +131,11 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 
 			onItemsReceived(rs);
 		}
-
-		private String getChildValue(Element packet, String name) throws XMLException {
-			List<Element> vlist = packet.getChildren(name);
-			if (vlist == null || vlist.isEmpty()) {
-				return null;
-			}
-
-			Element v = vlist.get(0);
-			if (v != null) {
-				return v.getValue();
-			} else {
-				return null;
-			}
-		}
-
-		protected abstract void onItemsReceived(final ChatResultSet chat) throws XMLException;
 	}
 
 	public static abstract class SettingsAsyncCallback implements AsyncCallback {
+
+		public abstract void onSuccess(boolean autoArchive);
 
 		@Override
 		public void onSuccess(Stanza stanza) throws JaxmppException {
@@ -159,78 +147,17 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 			}
 			onSuccess(auto);
 		}
-
-		public abstract void onSuccess(boolean autoArchive);
 	}
+
+	private static final String ARCHIVE_XMLNS = "urn:xmpp:archive";
+
+	private static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.xmlns(ARCHIVE_XMLNS));
+
+	private static final DateTimeFormat format = new DateTimeFormat();
+
+	private PacketWriter writer = null;
 
 	public MessageArchivingModule() {
-	}
-
-	public void setAutoArchive(boolean enable) throws JaxmppException {
-		IQ iq = IQ.create();
-		iq.setType(StanzaType.get);
-
-		Element autoEl = new DefaultElement("auto", null, ARCHIVE_XMLNS);
-		autoEl.setAttribute("save", String.valueOf(enable));
-		iq.addChild(autoEl);
-
-		writer.write(iq);
-
-	}
-
-	public void getSettings(final SettingsAsyncCallback callback) throws XMLException, JaxmppException {
-		IQ iq = IQ.create();
-		iq.setType(StanzaType.get);
-
-		Element prefEl = new DefaultElement("pref", null, ARCHIVE_XMLNS);
-		iq.addChild(prefEl);
-
-		writer.write(iq, null, callback);
-	}
-
-	public void listCollections(final JID withJid, final Date startTime, final Date endTime, final String afterId, final CollectionAsyncCallback callback) throws XMLException, JaxmppException {
-		IQ iq = IQ.create();
-		iq.setType(StanzaType.get);
-
-		Element retrieve = new DefaultElement("list", null, ARCHIVE_XMLNS);
-		iq.addChild(retrieve);
-		retrieve.setAttribute("with", withJid.toString());
-		retrieve.setAttribute("start", format.format(startTime));
-
-		if (endTime != null) {
-			retrieve.setAttribute("end", format.format(endTime));
-		}
-
-		Element set = new DefaultElement("set", null, "http://jabber.org/protocol/rsm");
-		retrieve.addChild(set);
-
-		set.addChild(new DefaultElement("max", "100", null));
-
-		if (afterId != null) {
-			set.addChild(new DefaultElement("after", afterId, null));
-		}
-
-		writer.write(iq, null, callback);
-	}
-
-	public void retriveCollection(final JID withJid, final Date startTime, final Date endTime, String afterId, Integer maxCount, final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
-		IQ iq = IQ.create();
-		iq.setType(StanzaType.get);
-
-		Element retrieve = new DefaultElement("retrieve", null, ARCHIVE_XMLNS);
-		iq.addChild(retrieve);
-		retrieve.setAttribute("with", withJid.toString());
-		retrieve.setAttribute("start", format.format(startTime));
-
-		Element set = new DefaultElement("set", null, "http://jabber.org/protocol/rsm");
-
-		set.addChild(new DefaultElement("max", (maxCount != null ? Integer.toString(maxCount) : "100"), null));
-
-		if (afterId != null) {
-			set.addChild(new DefaultElement("after", afterId, null));
-		}
-
-		writer.write(iq, null, callback);
 	}
 
 	@Override
@@ -241,5 +168,85 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 	@Override
 	public String[] getFeatures() {
 		return null;
+	}
+
+	public void getSettings(final SettingsAsyncCallback callback) throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		Element prefEl = ElementFactory.create("pref", null, ARCHIVE_XMLNS);
+		iq.addChild(prefEl);
+
+		writer.write(iq, null, callback);
+	}
+
+	public void listCollections(final JID withJid, final Date startTime, final Date endTime, final String afterId,
+			final CollectionAsyncCallback callback) throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		Element retrieve = ElementFactory.create("list", null, ARCHIVE_XMLNS);
+		iq.addChild(retrieve);
+		retrieve.setAttribute("with", withJid.toString());
+		retrieve.setAttribute("start", format.format(startTime));
+
+		if (endTime != null) {
+			retrieve.setAttribute("end", format.format(endTime));
+		}
+
+		Element set = ElementFactory.create("set", null, "http://jabber.org/protocol/rsm");
+		retrieve.addChild(set);
+
+		set.addChild(ElementFactory.create("max", "100", null));
+
+		if (afterId != null) {
+			set.addChild(ElementFactory.create("after", afterId, null));
+		}
+
+		writer.write(iq, null, callback);
+	}
+
+	@Override
+	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+		// nothing to do
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
+
+	public void retriveCollection(final JID withJid, final Date startTime, final Date endTime, String afterId,
+			Integer maxCount, final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		Element retrieve = ElementFactory.create("retrieve", null, ARCHIVE_XMLNS);
+		iq.addChild(retrieve);
+		retrieve.setAttribute("with", withJid.toString());
+		retrieve.setAttribute("start", format.format(startTime));
+
+		Element set = ElementFactory.create("set", null, "http://jabber.org/protocol/rsm");
+
+		set.addChild(ElementFactory.create("max", (maxCount != null ? Integer.toString(maxCount) : "100"), null));
+
+		if (afterId != null) {
+			set.addChild(ElementFactory.create("after", afterId, null));
+		}
+
+		writer.write(iq, null, callback);
+	}
+
+	public void setAutoArchive(boolean enable) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+
+		Element autoEl = ElementFactory.create("auto", null, ARCHIVE_XMLNS);
+		autoEl.setAttribute("save", String.valueOf(enable));
+		iq.addChild(autoEl);
+
+		writer.write(iq);
+
+	}
+
+	@Override
+	public void setPacketWriter(PacketWriter packetWriter) {
+		this.writer = packetWriter;
 	}
 }

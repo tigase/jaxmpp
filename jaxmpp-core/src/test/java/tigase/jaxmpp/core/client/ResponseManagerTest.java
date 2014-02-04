@@ -19,8 +19,8 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
@@ -30,12 +30,12 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 
 	public void test01() {
 		try {
-			Element es = new DefaultElement("iq");
+			Element es = ElementFactory.create("iq");
 			es.setAttribute("id", "1");
 			es.setAttribute("type", "set");
 			es.setAttribute("to", "a@b.c");
 
-			Element er = new DefaultElement("iq");
+			Element er = ElementFactory.create("iq");
 			er.setAttribute("type", "result");
 			er.setAttribute("id", "1");
 			er.setAttribute("from", "a@b.c");
@@ -52,7 +52,7 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
 
-					Element es = new DefaultElement("response");
+					Element es = ElementFactory.create("response");
 					context.getWriter().write(es);
 				}
 
@@ -77,21 +77,21 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 
 	public void test02() {
 		try {
-			Element es = new DefaultElement("iq");
+			Element es = ElementFactory.create("iq");
 			es.setAttribute("id", "1");
 			es.setAttribute("type", "set");
 			es.setAttribute("to", "a@b.c");
 
-			Element er = new DefaultElement("iq");
+			Element er = ElementFactory.create("iq");
 			er.setAttribute("type", "error");
 			er.setAttribute("id", "1");
 			er.setAttribute("from", "a@b.c");
 
-			Element e1 = new DefaultElement("error");
+			Element e1 = ElementFactory.create("error");
 			e1.setAttribute("type", "wait");
 			er.addChild(e1);
 
-			Element e2 = new DefaultElement("internal-server-error", null, "urn:ietf:params:xml:ns:xmpp-stanzas");
+			Element e2 = ElementFactory.create("internal-server-error", null, "urn:ietf:params:xml:ns:xmpp-stanzas");
 			e1.addChild(e2);
 
 			rm.registerResponseHandler(es, null, new AsyncCallback() {
@@ -102,7 +102,7 @@ public class ResponseManagerTest extends AbstractJaxmppTest {
 					assertEquals("1", responseStanza.getAttribute("id"));
 					assertEquals("a@b.c", responseStanza.getAttribute("from"));
 
-					Element es = new DefaultElement("response");
+					Element es = ElementFactory.create("response");
 					context.getWriter().write(es);
 				}
 

@@ -19,8 +19,8 @@ package tigase.jaxmpp.core.client.xmpp.modules.jingle;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionEndpoint;
@@ -61,7 +61,7 @@ public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 	}
 
 	public Candidate(String cid, String host, Integer port, JID jid, Integer priority, Type type) throws JaxmppException {
-		super(new DefaultElement("candidate"));
+		super(ElementFactory.create("candidate"));
 		// this.cid = cid;
 		// this.host = host;
 		// this.port = port;
@@ -115,7 +115,7 @@ public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 	// }
 
 	// public Element toElement() throws JaxmppException {
-	// Element elem = new DefaultElement("candidate");
+	// Element elem = ElementFactory.create("candidate");
 	// elem.setAttribute(CID_ATTR, cid);
 	// elem.setAttribute(HOST_ATTR, host);
 	// elem.setAttribute(PORT_ATTR, String.valueOf(port));

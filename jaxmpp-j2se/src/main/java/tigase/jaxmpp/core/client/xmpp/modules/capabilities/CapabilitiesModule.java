@@ -32,8 +32,8 @@ import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
@@ -82,11 +82,11 @@ public class CapabilitiesModule implements XmppModule {
 
 	private CapabilitiesCache cache;
 
+	private final Context context;
+
 	private final DiscoveryModule discoveryModule;
 
 	private final XmppModulesManager modulesManager;
-
-	private final Context context;
 
 	private final NodeDetailsCallback nodeDetailsCallback;
 
@@ -187,7 +187,7 @@ public class CapabilitiesModule implements XmppModule {
 			return;
 
 		if (presence != null) {
-			final DefaultElement c = new DefaultElement("c", null, "http://jabber.org/protocol/caps");
+			final Element c = ElementFactory.create("c", null, "http://jabber.org/protocol/caps");
 			c.setAttribute("hash", "sha-1");
 			c.setAttribute("node", getNodeName());
 			c.setAttribute("ver", ver);

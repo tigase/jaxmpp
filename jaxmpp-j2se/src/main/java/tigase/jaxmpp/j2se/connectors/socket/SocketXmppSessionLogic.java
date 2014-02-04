@@ -65,11 +65,17 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		return ex;
 	}
 
+	private final AuthFailedHandler authFailedHandler;
+
 	private AuthModule authModule;
+
+	private final AuthSuccessHandler authSuccessHandler;
 
 	private final SocketConnector connector;
 
 	private final Connector.ErrorHandler connectorListener;
+
+	private final Context context;
 
 	private StreamFeaturesModule featuresModule;
 
@@ -79,25 +85,19 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private ResourceBindSuccessHandler resourceBindListener;
 
-	private final AuthSuccessHandler authSuccessHandler;
-
-	private final AuthFailedHandler authFailedHandler;
-
 	private final SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
-
-	private final SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
 
 	private SessionEstablishmentModule sessionEstablishmentModule;
 
+	private final SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
+
 	private SessionListener sessionListener;
+
+	private final StreamResumedHandler smResumedListener;
 
 	private final StreamFeaturesReceivedHandler streamFeaturesEventListener;
 
 	private StreamManagementModule streamManaegmentModule;
-
-	private final Context context;
-
-	private final StreamResumedHandler smResumedListener;
 
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, Context context) {
 		this.connector = connector;
@@ -168,14 +168,6 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		};
 	}
 
-	protected void processAuthSuccess() throws JaxmppException {
-		connector.restartStream();
-	}
-
-	protected void processAuthFailed(SaslError error) throws JaxmppException {
-		throw new JaxmppException("Unauthorized with condition=" + error);
-	}
-
 	@Override
 	public void beforeStart() throws JaxmppException {
 		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null
@@ -185,6 +177,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null)
 			context.getSessionObject().setProperty(SessionObject.DOMAIN_NAME,
 					((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain());
+	}
+
+	protected void processAuthFailed(SaslError error) throws JaxmppException {
+		throw new JaxmppException("Unauthorized with condition=" + error);
+	}
+
+	protected void processAuthSuccess() throws JaxmppException {
+		connector.restartStream();
 	}
 
 	protected void processConnectorErrors(StreamError condition, Throwable caught) throws JaxmppException {

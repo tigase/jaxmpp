@@ -27,8 +27,8 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -92,7 +92,7 @@ public class PingModule extends AbstractIQModule {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		iq.setTo(jid);
-		iq.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
+		iq.addChild(ElementFactory.create("ping", null, "urn:xmpp:ping"));
 
 		write(iq, asyncCallback);
 	}

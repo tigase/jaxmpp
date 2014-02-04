@@ -71,8 +71,8 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
@@ -938,7 +938,7 @@ public class SocketConnector implements Connector {
 		if (writer != null)
 			try {
 				log.fine("Start TLS");
-				DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
+				Element e = ElementFactory.create("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
 				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);
@@ -954,8 +954,8 @@ public class SocketConnector implements Connector {
 		if (writer != null)
 			try {
 				log.fine("Start ZLIB");
-				DefaultElement e = new DefaultElement("compress", null, "http://jabber.org/protocol/compress");
-				e.addChild(new DefaultElement("method", "zlib", null));
+				Element e = ElementFactory.create("compress", null, "http://jabber.org/protocol/compress");
+				e.addChild(ElementFactory.create("method", "zlib", null));
 				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);

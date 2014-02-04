@@ -19,8 +19,8 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 
 import java.util.List;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
@@ -48,10 +48,10 @@ public class ListSingleField extends AbstractField<String> {
 	 *            value of option
 	 */
 	public void addOption(String label, String value) throws XMLException {
-		DefaultElement o = new DefaultElement("option");
+		Element o = ElementFactory.create("option");
 		if (label != null)
 			o.setAttribute("label", label);
-		o.addChild(new DefaultElement("value", value, null));
+		o.addChild(ElementFactory.create("value", value, null));
 		addChild(o);
 	}
 

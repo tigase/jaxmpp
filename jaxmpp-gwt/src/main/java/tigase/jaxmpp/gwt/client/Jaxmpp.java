@@ -20,13 +20,11 @@ package tigase.jaxmpp.gwt.client;
 import java.util.Date;
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
-import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.ResponseManager;
@@ -105,7 +103,7 @@ public class Jaxmpp extends JaxmppCore {
 	public Jaxmpp(SessionObject sessionObject) {
 		super();
 		this.eventBus = new DefaultEventBus();
-		this.sessionObject = (AbstractSessionObject) sessionObject;
+		this.sessionObject = sessionObject;
 		init();
 
 	}

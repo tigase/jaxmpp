@@ -18,7 +18,6 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
 import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
@@ -38,6 +37,8 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 
 	private final SocketConnector connector;
 
+	private final Context context;
+
 	private StreamFeaturesModule featuresModule;
 
 	private final XmppModulesManager modulesManager;
@@ -54,8 +55,6 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 
 	private final StreamFeaturesReceivedHandler streamFeaturesEventHandler;
 
-	private final Context context;
-	
 	public SocketInBandRegistrationXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager,
 			Context context) {
 		this.connector = connector;

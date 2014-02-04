@@ -29,7 +29,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -145,7 +146,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 		log.fine("Try login with Non-SASL");
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		DefaultElement query = new DefaultElement("query", null, "jabber:iq:auth");
+		Element query = ElementFactory.create("query", null, "jabber:iq:auth");
 		iq.addChild(query);
 
 		CredentialsCallback callback = context.getSessionObject().getProperty(AuthModule.CREDENTIALS_CALLBACK);
@@ -153,9 +154,9 @@ public class NonSaslAuthModule extends AbstractIQModule {
 			callback = new AuthModule.DefaultCredentialsCallback(context.getSessionObject());
 		BareJID userJID = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 
-		query.addChild(new DefaultElement("username", userJID.getLocalpart(), null));
-		query.addChild(new DefaultElement("password", callback.getCredential(), null));
-		// query.addChild(new DefaultElement("resource", "x", null));
+		query.addChild(ElementFactory.create("username", userJID.getLocalpart(), null));
+		query.addChild(ElementFactory.create("password", callback.getCredential(), null));
+		// query.addChild(ElementFactory.create("resource", "x", null));
 
 		fireAuthStart(iq);
 

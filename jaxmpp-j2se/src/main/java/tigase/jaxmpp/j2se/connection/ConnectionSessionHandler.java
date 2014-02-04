@@ -20,11 +20,11 @@ package tigase.jaxmpp.j2se.connection;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public interface ConnectionSessionHandler {
-	
+
 	ConnectionSession getSession(String sid);
-	
+
 }

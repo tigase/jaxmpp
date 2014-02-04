@@ -17,7 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.stanzas;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
@@ -28,11 +28,11 @@ import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
  */
 public class Message extends Stanza {
 
-	public static final Message create() throws XMLException {
-		return new Message(new DefaultElement("message"));
+	public static final Message create() throws JaxmppException {
+		return createMessage();
 	}
 
-	public Message(Element element) throws XMLException {
+	Message(Element element) throws XMLException {
 		super(element);
 		if (!"message".equals(element.getName()))
 			throw new RuntimeException("Wrong element name: " + element.getName());

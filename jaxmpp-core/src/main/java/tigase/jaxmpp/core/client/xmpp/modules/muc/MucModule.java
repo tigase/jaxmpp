@@ -37,8 +37,8 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
@@ -1002,13 +1002,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			Message message = Message.create();
 			message.setTo(JID.jidInstance(invitation.getRoomJID()));
 
-			Element x = new DefaultElement("x", null, "http://jabber.org/protocol/muc#user");
+			Element x = ElementFactory.create("x", null, "http://jabber.org/protocol/muc#user");
 			message.addChild(x);
 
-			Element decline = new DefaultElement("decline");
+			Element decline = ElementFactory.create("decline");
 			x.addChild(decline);
 			if (reasonMsg != null) {
-				Element reason = new DefaultElement("reason", reasonMsg, null);
+				Element reason = ElementFactory.create("reason", reasonMsg, null);
 				decline.addChild(reason);
 			}
 			write(message);
@@ -1044,11 +1044,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		Message message = Message.create();
 		message.setTo(JID.jidInstance(room.getRoomJid()));
 
-		Element x = message.addChild(new DefaultElement("x", null, "http://jabber.org/protocol/muc#user"));
-		Element invite = x.addChild(new DefaultElement("invite"));
+		Element x = message.addChild(ElementFactory.create("x", null, "http://jabber.org/protocol/muc#user"));
+		Element invite = x.addChild(ElementFactory.create("invite"));
 		invite.setAttribute("to", inviteeJID.toString());
 		if (reason != null) {
-			invite.addChild(new DefaultElement("reason", reason, null));
+			invite.addChild(ElementFactory.create("reason", reason, null));
 		}
 
 		write(message);
@@ -1058,7 +1058,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		Message message = Message.create();
 		message.setTo(inviteeJID);
 
-		Element x = message.addChild(new DefaultElement("x", null, "jabber:x:conference"));
+		Element x = message.addChild(ElementFactory.create("x", null, "jabber:x:conference"));
 		x.setAttribute("jid", room.getRoomJid().toString());
 
 		if (room.getPassword() != null)

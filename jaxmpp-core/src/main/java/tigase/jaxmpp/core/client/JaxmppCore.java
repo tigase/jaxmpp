@@ -25,15 +25,14 @@ import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler;
 import tigase.jaxmpp.core.client.Connector.State;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler;
-import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
@@ -482,7 +481,7 @@ public abstract class JaxmppCore {
 	}
 
 	protected void onConnectorStopped() {
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		eventBus.fire(new DisconnectedHandler.DisconnectedEvent(sessionObject));
 	}
 
 	protected abstract void onException(JaxmppException e) throws JaxmppException;
@@ -517,9 +516,9 @@ public abstract class JaxmppCore {
 			e.setAttribute("to", from);
 			e.setAttribute("from", to);
 
-			Element error = new DefaultElement("error");
+			Element error = ElementFactory.create("error");
 			error.setAttribute("type", "wait");
-			error.addChild(new DefaultElement("recipient-unavailable", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
+			error.addChild(ElementFactory.create("recipient-unavailable", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
 
 			e.addChild(error);
 

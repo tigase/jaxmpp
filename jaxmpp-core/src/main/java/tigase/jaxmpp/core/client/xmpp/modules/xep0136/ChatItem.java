@@ -26,6 +26,7 @@ public class ChatItem {
 		FROM,
 		TO
 	}
+
 	private String body;
 	private Date date;
 	private final Type type;

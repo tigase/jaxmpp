@@ -20,8 +20,8 @@ package tigase.jaxmpp.core.client.xmpp.modules.vcard;
 import java.io.Serializable;
 import java.util.List;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class VCard implements Serializable {
@@ -30,15 +30,15 @@ public class VCard implements Serializable {
 
 	private static void add(Element vcard, String name, String value) throws XMLException {
 		if (value != null)
-			vcard.addChild(new DefaultElement(name, value, null));
+			vcard.addChild(ElementFactory.create(name, value, null));
 	}
 
 	private static void add(Element vcard, String name, String[] childNames, String[] values) throws XMLException {
-		Element x = new DefaultElement(name);
+		Element x = ElementFactory.create(name);
 		vcard.addChild(x);
 
 		for (int i = 0; i < childNames.length; i++) {
-			x.addChild(new DefaultElement(childNames[i], values[i], null));
+			x.addChild(ElementFactory.create(childNames[i], values[i], null));
 		}
 
 	}
@@ -335,7 +335,7 @@ public class VCard implements Serializable {
 	}
 
 	public Element makeElement() throws XMLException {
-		Element vcard = new DefaultElement("vCard", null, "vcard-temp");
+		Element vcard = ElementFactory.create("vCard", null, "vcard-temp");
 		add(vcard, "FN", this.fullName);
 		add(vcard, "N", new String[] { "FAMILY", "GIVEN", "MIDDLE" }, new String[] { this.nameFamily, this.nameGiven,
 				this.nameMiddle });

@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client;
 
 import java.util.Set;
 
-import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;

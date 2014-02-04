@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
@@ -51,7 +51,7 @@ public class JidMultiField extends AbstractField<JID[]> {
 	public void addFieldValue(JID... value) throws XMLException {
 		if (value != null)
 			for (JID string : value) {
-				addChild(new DefaultElement("value", string == null ? null : string.toString(), null));
+				addChild(ElementFactory.create("value", string == null ? null : string.toString(), null));
 			}
 	}
 
@@ -89,7 +89,7 @@ public class JidMultiField extends AbstractField<JID[]> {
 		clearValues();
 		if (value != null) {
 			for (JID string : value) {
-				addChild(new DefaultElement("value", string == null ? null : string.toString(), null));
+				addChild(ElementFactory.create("value", string == null ? null : string.toString(), null));
 			}
 		}
 	}

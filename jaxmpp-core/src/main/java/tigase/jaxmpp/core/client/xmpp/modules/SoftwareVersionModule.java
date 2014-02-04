@@ -28,8 +28,8 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -119,7 +119,7 @@ public class SoftwareVersionModule extends AbstractIQModule {
 		IQ pingIq = IQ.create();
 		pingIq.setTo(jid);
 		pingIq.setType(StanzaType.get);
-		pingIq.addChild(new DefaultElement("ping", null, "jabber:iq:version"));
+		pingIq.addChild(ElementFactory.create("ping", null, "jabber:iq:version"));
 
 		write(pingIq, callback);
 	}
@@ -149,17 +149,17 @@ public class SoftwareVersionModule extends AbstractIQModule {
 	@Override
 	protected void processGet(IQ element) throws XMPPException, XMLException, JaxmppException {
 		Element result = XmlTools.makeResult(element);
-		Element query = new DefaultElement("query", null, "jabber:iq:version");
+		Element query = ElementFactory.create("query", null, "jabber:iq:version");
 		result.addChild(query);
 
 		String name = context.getSessionObject().getProperty(NAME_KEY);
 		String version = context.getSessionObject().getProperty(VERSION_KEY);
 		String os = context.getSessionObject().getProperty(OS_KEY);
 
-		query.addChild(new DefaultElement("name", name == null ? DEFAULT_NAME_VAL : name, null));
-		query.addChild(new DefaultElement("version", version == null ? "0.0.0" : version, null));
+		query.addChild(ElementFactory.create("name", name == null ? DEFAULT_NAME_VAL : name, null));
+		query.addChild(ElementFactory.create("version", version == null ? "0.0.0" : version, null));
 		if (os != null)
-			query.addChild(new DefaultElement("os", os, null));
+			query.addChild(ElementFactory.create("os", os, null));
 
 		write(result);
 	}

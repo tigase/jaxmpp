@@ -1,13 +1,15 @@
 package tigase.jaxmpp.gwt.client;
 
 import junit.framework.Assert;
+
 import com.google.gwt.junit.client.GWTTestCase;
 
-import org.junit.Test;
-
-import tigase.jaxmpp.gwt.client.Jaxmpp;
-
 public class JaxmppTest extends GWTTestCase {
+
+	@Override
+	public String getModuleName() {
+		return "tigase.jaxmpp.gwt.JaxmppGWTJUnit";
+	}
 
 	public void test() {
 		try {
@@ -16,11 +18,6 @@ public class JaxmppTest extends GWTTestCase {
 			Assert.fail(e.getMessage());
 		}
 
-	}
-
-	@Override
-	public String getModuleName() {
-		return "tigase.jaxmpp.gwt.JaxmppGWTJUnit";
 	}
 
 }

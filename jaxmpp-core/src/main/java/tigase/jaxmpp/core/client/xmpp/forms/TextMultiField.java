@@ -20,8 +20,8 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import java.util.ArrayList;
 import java.util.List;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
@@ -47,7 +47,7 @@ public class TextMultiField extends AbstractField<String[]> {
 	public void addFieldValue(String... value) throws XMLException {
 		if (value != null)
 			for (String string : value) {
-				addChild(new DefaultElement("value", string, null));
+				addChild(ElementFactory.create("value", string, null));
 			}
 	}
 
@@ -84,7 +84,7 @@ public class TextMultiField extends AbstractField<String[]> {
 		clearValues();
 		if (value != null) {
 			for (String string : value) {
-				addChild(new DefaultElement("value", string, null));
+				addChild(ElementFactory.create("value", string, null));
 			}
 		}
 	}

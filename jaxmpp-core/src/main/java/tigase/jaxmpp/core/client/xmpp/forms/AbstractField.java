@@ -17,8 +17,8 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -101,7 +101,7 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 		if (!value && b != null)
 			removeChild(b);
 		else if (value && b == null) {
-			b = new DefaultElement("required");
+			b = ElementFactory.create("required");
 			addChild(b);
 		}
 	}

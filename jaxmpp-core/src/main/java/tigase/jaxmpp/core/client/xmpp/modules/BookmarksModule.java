@@ -25,8 +25,8 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -98,11 +98,11 @@ public class BookmarksModule extends AbstractIQModule {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 
-		Element query = new DefaultElement("query");
+		Element query = ElementFactory.create("query");
 		query.setXMLNS("jabber:iq:private");
 		iq.addChild(query);
 
-		Element storage = new DefaultElement("storage");
+		Element storage = ElementFactory.create("storage");
 		storage.setXMLNS(BOOKMARKS_XMLNS);
 		query.addChild(storage);
 
@@ -125,11 +125,11 @@ public class BookmarksModule extends AbstractIQModule {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
-		Element query = new DefaultElement("query");
+		Element query = ElementFactory.create("query");
 		query.setXMLNS("jabber:iq:private");
 		iq.addChild(query);
 
-		Element storage = new DefaultElement("storage");
+		Element storage = ElementFactory.create("storage");
 		storage.setXMLNS(BOOKMARKS_XMLNS);
 		query.addChild(storage);
 

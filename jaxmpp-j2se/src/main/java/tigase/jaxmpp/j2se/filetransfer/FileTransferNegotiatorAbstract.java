@@ -17,48 +17,57 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public abstract class FileTransferNegotiatorAbstract implements FileTransferNegotiator {
 
-	private final Logger log;
-	protected FileTransferManager ftManager = null;
 	protected Context context = null;
+	protected FileTransferManager ftManager = null;
+	private final Logger log;
 
 	public FileTransferNegotiatorAbstract() {
 		log = Logger.getLogger(this.getClass().getCanonicalName());
 	}
 
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-	}
-
-	protected void fireOnRequest(SessionObject sessionObject, tigase.jaxmpp.j2se.filetransfer.FileTransfer fileTransfer) {
-		fileTransfer.setNegotiator(this);
-		context.getEventBus().fire(new FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent(fileTransfer.getSessionObject(), fileTransfer));
-	}
-
-	protected void fireOnSuccess(FileTransfer ft) {
-		log.log(Level.FINER, "firing file transfer negotiation success");
-		context.getEventBus().fire(new FileTransferNegotiator.NegotiationSuccessHandler.FileTransferNegotiationSuccessEvent(ft.getSessionObject(), ft));
-	}
-
 	protected void fireOnFailure(FileTransfer ft, Throwable ex) {
 		log.log(Level.FINER, "firing file transfer negotiation error", ex);
-		context.getEventBus().fire(new FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent(ft.getSessionObject(), ft));
+		context.getEventBus().fire(
+				new FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent(ft.getSessionObject(),
+						ft));
 	}
 
 	protected void fireOnReject(FileTransfer ft) {
 		log.log(Level.FINER, "firing file transfer rejected {0}", ft.toString());
-		context.getEventBus().fire(new FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent(ft.getSessionObject(), ft));
+		context.getEventBus().fire(
+				new FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent(ft.getSessionObject(),
+						ft));
+	}
+
+	protected void fireOnRequest(SessionObject sessionObject, tigase.jaxmpp.j2se.filetransfer.FileTransfer fileTransfer) {
+		fileTransfer.setNegotiator(this);
+		context.getEventBus().fire(
+				new FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent(
+						fileTransfer.getSessionObject(), fileTransfer));
+	}
+
+	protected void fireOnSuccess(FileTransfer ft) {
+		log.log(Level.FINER, "firing file transfer negotiation success");
+		context.getEventBus().fire(
+				new FileTransferNegotiator.NegotiationSuccessHandler.FileTransferNegotiationSuccessEvent(ft.getSessionObject(),
+						ft));
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 }

@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
 import java.util.Date;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -41,6 +42,12 @@ public class Chat {
 		return withJid;
 	}
 
+	void process(Element chat, DateTimeFormat df1) throws XMLException {
+		setWithJid(JID.jidInstance(chat.getAttribute("with")));
+		setStart(df1.parse(chat.getAttribute("start")));
+		setSubject(chat.getAttribute("subject"));
+	}
+
 	public void setStart(Date start) {
 		this.start = start;
 	}
@@ -51,11 +58,5 @@ public class Chat {
 
 	public void setWithJid(JID withJid) {
 		this.withJid = withJid;
-	}
-
-	void process(Element chat, DateTimeFormat df1) throws XMLException {
-		setWithJid(JID.jidInstance(chat.getAttribute("with")));
-		setStart(df1.parse(chat.getAttribute("start")));
-		setSubject(chat.getAttribute("subject"));
 	}
 }

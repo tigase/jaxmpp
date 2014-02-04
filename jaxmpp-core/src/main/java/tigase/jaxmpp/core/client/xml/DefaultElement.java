@@ -30,11 +30,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
  */
 public class DefaultElement implements Element {
 
-	public final static Element create(final Element src) throws XMLException {
-		return create(src, -1);
-	}
-
-	public final static DefaultElement create(final Element src, int deep) throws XMLException {
+	final static DefaultElement create(final Element src, int deep) throws XMLException {
 		final DefaultElement result = new DefaultElement(src.getName(), src.getValue(), src.getXMLNS());
 		result.setAttributes(src.getAttributes());
 		if (deep != 0)
@@ -59,11 +55,11 @@ public class DefaultElement implements Element {
 
 	private String xmlns;
 
-	public DefaultElement(String name) {
+	protected DefaultElement(String name) {
 		this(name, null, null);
 	}
 
-	public DefaultElement(String name, String value, String xmlns) {
+	protected DefaultElement(String name, String value, String xmlns) {
 		this.name = name;
 		this.value = value;
 		this.xmlns = xmlns;
