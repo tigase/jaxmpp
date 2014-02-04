@@ -503,5 +503,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			w.terminate();
 		}
 		this.requests.clear();
+
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 }

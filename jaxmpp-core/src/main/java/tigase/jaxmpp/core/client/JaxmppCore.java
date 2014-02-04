@@ -25,6 +25,7 @@ import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler;
 import tigase.jaxmpp.core.client.Connector.State;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler;
+import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
@@ -397,6 +398,14 @@ public abstract class JaxmppCore {
 			}
 		});
 
+		eventBus.addHandler(Connector.DisconnectedHandler.DisconnectedEvent.class, new Connector.DisconnectedHandler() {
+
+			@Override
+			public void onDisconnected(SessionObject sessionObject) {
+				JaxmppCore.this.onConnectorStopped();
+			}
+		});
+
 	}
 
 	/**
@@ -470,6 +479,10 @@ public abstract class JaxmppCore {
 		this.modulesManager.register(new SessionEstablishmentModule(context));
 
 		this.modulesManager.init();
+	}
+
+	protected void onConnectorStopped() {
+		eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	protected abstract void onException(JaxmppException e) throws JaxmppException;

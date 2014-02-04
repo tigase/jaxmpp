@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
@@ -255,7 +254,7 @@ public class StreamManagementModule implements XmppModule {
 		return x != null && x;
 	}
 
-	public static void reset(AbstractSessionObject sessionObject) {
+	public static void reset(SessionObject sessionObject) {
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);

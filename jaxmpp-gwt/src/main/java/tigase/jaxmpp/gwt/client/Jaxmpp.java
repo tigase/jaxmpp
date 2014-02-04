@@ -281,7 +281,7 @@ public class Jaxmpp extends JaxmppCore {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
@@ -291,7 +291,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
@@ -301,7 +301,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	public void storeSession() {
