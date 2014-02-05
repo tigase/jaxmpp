@@ -39,6 +39,8 @@ import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xml.client.XMLParser;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler.SeeOtherHostEvent;
 
 /**
  * 
@@ -184,8 +186,23 @@ public class WebSocketConnector implements Connector {
 			send(" ");
 	}
 
-	protected void onError(Element elem, Throwable ex) {
+	protected void onError(Element response, Throwable ex) {		
 		try {
+			if (response != null) {
+				Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
+				if (seeOtherHost != null) {
+					String seeHost = seeOtherHost.getValue();
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Received see-other-host=" + seeHost);
+					}
+					MutableBoolean handled = new MutableBoolean();
+					WebSocketConnector.this.context.getEventBus().fire(
+							new SeeOtherHostEvent(WebSocketConnector.this.context.getSessionObject(), seeHost, handled));
+					if (handled.isValue()) {
+						return;
+					}
+				}
+			}
 			stop();
 			fireOnError(null, ex, WebSocketConnector.this.context.getSessionObject());
 		} catch (JaxmppException ex1) {

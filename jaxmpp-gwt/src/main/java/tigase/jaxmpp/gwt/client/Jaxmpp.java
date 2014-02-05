@@ -61,6 +61,8 @@ import com.google.gwt.user.client.Cookies;
 public class Jaxmpp extends JaxmppCore {
 
 	private final static String COOKIE_RID_KEY = "jaxmpp-rid";
+	
+	private final ConnectionManager connectionManager = new ConnectionManager();
 
 	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();;
 
@@ -215,6 +217,8 @@ public class Jaxmpp extends JaxmppCore {
 
 		super.init();
 
+		connectionManager.setContext(context);
+		
 		this.timeoutChecker = new RepeatingCommand() {
 
 			@Override
@@ -263,13 +267,29 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void login() throws JaxmppException {
+		login(null);
+	}
+	
+	protected void login(String boshUrl) throws JaxmppException {
 		if (this.isConnected()) {
 			this.connector.stop(true);
 		}
 
 		lastRid = null;
 		this.sessionObject.clear();
-		intLogin();
+
+		if (boshUrl != null) {
+			this.sessionObject.setProperty(BoshConnector.BOSH_SERVICE_URL_KEY, boshUrl);
+		}
+		
+		if (!connectionManager.initialize(this)) {
+			// we will login asynchronously as we need to do DNS resolution
+			// and so on, so we exit now
+			return;
+		}
+		
+		
+		intLogin();		
 	}
 
 	@Override

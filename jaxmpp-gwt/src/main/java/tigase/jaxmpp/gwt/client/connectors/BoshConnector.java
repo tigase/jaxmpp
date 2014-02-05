@@ -27,6 +27,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.RequestBuilder;
+import tigase.jaxmpp.core.client.connector.BoshRequest;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
 
 public class BoshConnector extends AbstractBoshConnector {
 
@@ -102,4 +104,25 @@ public class BoshConnector extends AbstractBoshConnector {
 	protected void setCurrentWorker(BoshWorker worker) {
 		this.currentWorker = worker;
 	}
+
+	@Override
+	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught) throws JaxmppException {
+		if (response != null) {
+			Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
+			if (seeOtherHost != null) {
+				String seeHost = seeOtherHost.getValue();
+				if (log.isLoggable(Level.FINE)) {
+					log.fine("Received see-other-host=" + seeHost);
+				}
+				MutableBoolean handled = new MutableBoolean();
+				context.getEventBus().fire(
+						new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+				if (handled.isValue()) {
+					return;
+				}
+			}
+		}
+		super.onError(request, responseCode, responseData, response, caught);
+	}
+	
 }
