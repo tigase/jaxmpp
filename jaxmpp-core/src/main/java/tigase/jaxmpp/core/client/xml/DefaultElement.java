@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,11 +30,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
  */
 public class DefaultElement implements Element {
 
-	public final static Element create(final Element src) throws XMLException {
-		return create(src, -1);
-	}
-
-	public final static DefaultElement create(final Element src, int deep) throws XMLException {
+	final static DefaultElement create(final Element src, int deep) throws XMLException {
 		final DefaultElement result = new DefaultElement(src.getName(), src.getValue(), src.getXMLNS());
 		result.setAttributes(src.getAttributes());
 		if (deep != 0)
@@ -59,11 +55,11 @@ public class DefaultElement implements Element {
 
 	private String xmlns;
 
-	public DefaultElement(String name) {
+	protected DefaultElement(String name) {
 		this(name, null, null);
 	}
 
-	public DefaultElement(String name, String value, String xmlns) {
+	protected DefaultElement(String name, String value, String xmlns) {
 		this.name = name;
 		this.value = value;
 		this.xmlns = xmlns;
@@ -84,6 +80,12 @@ public class DefaultElement implements Element {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Element))
+			return false;
 		if (obj instanceof Element)
 			return ElementComparator.equal((Element) obj, this);
 		else

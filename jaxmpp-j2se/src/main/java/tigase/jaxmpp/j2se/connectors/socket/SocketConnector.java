@@ -71,8 +71,8 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
@@ -154,6 +154,16 @@ public class SocketConnector implements Connector {
 		}
 
 		@Override
+		public void close() throws IOException {
+			outputStream.close();
+		}
+
+		@Override
+		public void flush() throws IOException {
+			outputStream.flush();
+		}
+
+		@Override
 		public void write(byte[] b) throws IOException {
 			outputStream.write(b);
 			outputStream.flush();
@@ -169,16 +179,6 @@ public class SocketConnector implements Connector {
 		public void write(int b) throws IOException {
 			outputStream.write(b);
 			outputStream.flush();
-		}
-
-		@Override
-		public void flush() throws IOException {
-			outputStream.flush();
-		}
-
-		@Override
-		public void close() throws IOException {
-			outputStream.close();
 		}
 
 	}
@@ -405,8 +405,6 @@ public class SocketConnector implements Connector {
 
 	private TimerTask pingTask;
 
-	private boolean preventAgainstFireErrors = false;
-
 	private volatile Reader reader;
 
 	private Socket socket;
@@ -518,19 +516,18 @@ public class SocketConnector implements Connector {
 			if (seeOtherHost != null) {
 				if (log.isLoggable(Level.FINE))
 					log.fine("Received see-other-host=" + seeOtherHost.getValue());
-				preventAgainstFireErrors = true;
 				reconnect(seeOtherHost.getValue());
 				return;
 			}
 		}
-		stop();
+		terminateAllWorkers();
 		fireOnError(response, caught, context.getSessionObject());
 	}
 
 	protected void onErrorInThread(Exception e) throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
-		stop();
+		terminateAllWorkers();
 		fireOnError(null, e, context.getSessionObject());
 	}
 
@@ -793,6 +790,7 @@ public class SocketConnector implements Connector {
 					if (log.isLoggable(Level.FINEST))
 						log.finest("Send: " + new String(buffer));
 					writer.write(buffer);
+					writer.flush();
 				} catch (IOException e) {
 					throw new JaxmppException(e);
 
@@ -815,7 +813,7 @@ public class SocketConnector implements Connector {
 					}
 					writer.write(t.getBytes());
 				} catch (IOException e) {
-					this.stop(true);
+					terminateAllWorkers();
 					throw new JaxmppException(e);
 				}
 		}
@@ -832,7 +830,7 @@ public class SocketConnector implements Connector {
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
 			context.getEventBus().fire(new StateChangedEvent(context.getSessionObject(), s, state));
-			if (!preventAgainstFireErrors && state == State.disconnected) {
+			if (state == State.disconnected) {
 				fireOnTerminate(context.getSessionObject());
 			}
 		}
@@ -840,7 +838,6 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		preventAgainstFireErrors = false;
 		log.fine("Start connector.");
 		if (timer != null) {
 			try {
@@ -931,7 +928,7 @@ public class SocketConnector implements Connector {
 
 			fireOnConnected(context.getSessionObject());
 		} catch (Exception e) {
-			stop();
+			terminateAllWorkers();
 			onError(null, e);
 			throw new JaxmppException(e);
 		}
@@ -941,7 +938,7 @@ public class SocketConnector implements Connector {
 		if (writer != null)
 			try {
 				log.fine("Start TLS");
-				DefaultElement e = new DefaultElement("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
+				Element e = ElementFactory.create("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
 				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);
@@ -957,8 +954,8 @@ public class SocketConnector implements Connector {
 		if (writer != null)
 			try {
 				log.fine("Start ZLIB");
-				DefaultElement e = new DefaultElement("compress", null, "http://jabber.org/protocol/compress");
-				e.addChild(new DefaultElement("method", "zlib", null));
+				Element e = ElementFactory.create("compress", null, "http://jabber.org/protocol/compress");
+				e.addChild(ElementFactory.create("method", "zlib", null));
 				send(e.getAsString().getBytes());
 			} catch (Exception e) {
 				throw new JaxmppException(e);
@@ -967,18 +964,17 @@ public class SocketConnector implements Connector {
 
 	@Override
 	public void stop() throws JaxmppException {
-		stop(false);
+		if (getState() == State.disconnected)
+			return;
+		terminateStream();
+		setStage(State.disconnecting);
+		terminateAllWorkers();
 	}
 
 	@Override
+	@Deprecated
 	public void stop(boolean terminate) throws JaxmppException {
-		if (getState() == State.disconnected)
-			return;
-		if (!terminate) {
-			terminateStream();
-		}
-		setStage(State.disconnecting);
-		terminateAllWorkers();
+
 	}
 
 	private void terminateAllWorkers() throws JaxmppException {
@@ -1016,6 +1012,7 @@ public class SocketConnector implements Connector {
 			String x = "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
 			send(x.getBytes());
+			System.out.println(x);
 		} else
 			log.fine("Stream terminate not sent, because of connection state==" + state);
 	}
@@ -1032,6 +1029,8 @@ public class SocketConnector implements Connector {
 				context.getEventBus().fire(new HostChangedEvent(context.getSessionObject()));
 				log.finest("Restarting...");
 				start();
+			} else {
+				context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

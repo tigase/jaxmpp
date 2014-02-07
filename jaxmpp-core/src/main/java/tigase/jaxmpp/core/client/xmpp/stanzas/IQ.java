@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@ package tigase.jaxmpp.core.client.xmpp.stanzas;
 
 import java.util.List;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -29,11 +29,11 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  */
 public class IQ extends Stanza {
 
-	public static final IQ create() throws XMLException {
-		return new IQ(new DefaultElement("iq"));
+	public static final IQ create() throws JaxmppException {
+		return Stanza.createIQ();
 	}
 
-	public IQ(Element element) throws XMLException {
+	IQ(Element element) throws XMLException {
 		super(element);
 		if (!"iq".equals(element.getName()))
 			throw new RuntimeException("Wrong element name: " + element.getName());

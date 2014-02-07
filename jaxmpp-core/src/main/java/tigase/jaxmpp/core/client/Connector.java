@@ -59,6 +59,35 @@ public interface Connector {
 	}
 
 	/**
+	 * Implemented by handlers of {@linkplain DisconnectedEvent}.
+	 */
+	public interface DisconnectedHandler extends EventHandler {
+
+		/**
+		 * Fired when Connector is permanently stopped.
+		 */
+		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
+
+			public DisconnectedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(DisconnectedHandler handler) throws Exception {
+				handler.onDisconnected(sessionObject);
+			}
+		}
+
+		/**
+		 * Called when {@linkplain DisconnectedEvent} is fired.
+		 * 
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onDisconnected(SessionObject sessionObject);
+	}
+
+	/**
 	 * Implemented by handlers of {@linkplain EncryptionEstablishedEvent
 	 * EncryptionEstablishedEvent}.
 	 */

@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,7 @@ import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -88,7 +89,19 @@ public abstract class Stanza extends ElementWrapper {
 		}
 	}
 
-	public Stanza(Element element) {
+	public static final IQ createIQ() throws JaxmppException {
+		return (IQ) create(ElementFactory.create("iq"));
+	}
+
+	public static final Message createMessage() throws JaxmppException {
+		return (Message) create(ElementFactory.create("message"));
+	}
+
+	public static final Presence createPresence() throws JaxmppException {
+		return (Presence) create(ElementFactory.create("presence"));
+	}
+
+	Stanza(Element element) {
 		super(element);
 	}
 

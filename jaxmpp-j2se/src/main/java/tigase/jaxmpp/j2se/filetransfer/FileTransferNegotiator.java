@@ -17,16 +17,16 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public interface FileTransferNegotiator extends ContextAware {
@@ -111,17 +111,17 @@ public interface FileTransferNegotiator extends ContextAware {
 		void onFileTransferNegotiationSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
 	}
 
+	void acceptFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
+
 	String[] getFeatures();
 
 	boolean isSupported(JaxmppCore jaxmpp, FileTransfer ft);
 
-	void sendFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
-
-	void acceptFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
+	void registerListeners(JaxmppCore jaxmpp);
 
 	void rejectFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
 
-	void registerListeners(JaxmppCore jaxmpp);
+	void sendFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
 
 	void unregisterListeners(JaxmppCore jaxmpp);
 }

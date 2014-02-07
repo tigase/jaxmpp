@@ -29,8 +29,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule.FileTransferRequestHandler.FileTransferRequestEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
@@ -107,26 +107,26 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	public void acceptStreamInitiation(FileTransfer ft, String id, String streamMethod) throws JaxmppException {
-		Element iq = new DefaultElement("iq");
+		Element iq = ElementFactory.create("iq");
 		iq.setAttribute("type", "result");
 		iq.setAttribute("to", ft.getPeer().toString());
 		iq.setAttribute("id", id);
 
-		Element si = new DefaultElement("si", null, XMLNS_SI);
+		Element si = ElementFactory.create("si", null, XMLNS_SI);
 		iq.addChild(si);
 
-		Element feature = new DefaultElement("feature", null, "http://jabber.org/protocol/feature-neg");
+		Element feature = ElementFactory.create("feature", null, "http://jabber.org/protocol/feature-neg");
 		si.addChild(feature);
 
-		Element x = new DefaultElement("x", null, "jabber:x:data");
+		Element x = ElementFactory.create("x", null, "jabber:x:data");
 		x.setAttribute("type", "submit");
 		feature.addChild(x);
 
-		Element field = new DefaultElement("field");
+		Element field = ElementFactory.create("field");
 		field.setAttribute("var", "stream-method");
 		x.addChild(field);
 
-		Element value = new DefaultElement("value", streamMethod, null);
+		Element value = ElementFactory.create("value", streamMethod, null);
 		field.addChild(value);
 
 		context.getWriter().write(iq);
@@ -230,15 +230,15 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	private void returnError(String to, String id, String type, String[] names, String[] xmlnss) throws JaxmppException {
-		Element result = new DefaultElement("iq");
+		Element result = ElementFactory.create("iq");
 		result.setAttribute("id", id);
 		result.setAttribute("to", to);
 		result.setAttribute("type", "error");
 
-		Element error = new DefaultElement("error");
+		Element error = ElementFactory.create("error");
 		error.setAttribute("type", type);
 		for (int i = 0; i < names.length; i++) {
-			Element err = new DefaultElement(names[i], null, xmlnss[i]);
+			Element err = ElementFactory.create(names[i], null, xmlnss[i]);
 			error.addChild(err);
 		}
 		result.addChild(error);
@@ -261,7 +261,7 @@ public class FileTransferModule implements XmppModule {
 		iq.setTo(ft.getPeer());
 		iq.setType(StanzaType.set);
 
-		Element si = new DefaultElement("si", null, XMLNS_SI);
+		Element si = ElementFactory.create("si", null, XMLNS_SI);
 		si.setAttribute("profile", XMLNS_SI_FILE);
 		String sid = ft.getSid();
 		si.setAttribute("id", sid);
@@ -275,24 +275,24 @@ public class FileTransferModule implements XmppModule {
 
 		iq.addChild(si);
 
-		Element file = new DefaultElement("file", null, XMLNS_SI_FILE);
+		Element file = ElementFactory.create("file", null, XMLNS_SI_FILE);
 		file.setAttribute("name", ft.getFilename());
 		file.setAttribute("size", String.valueOf(ft.getFileSize()));
 		si.addChild(file);
 
-		Element feature = new DefaultElement("feature", null, "http://jabber.org/protocol/feature-neg");
+		Element feature = ElementFactory.create("feature", null, "http://jabber.org/protocol/feature-neg");
 		si.addChild(feature);
-		Element x = new DefaultElement("x", null, "jabber:x:data");
+		Element x = ElementFactory.create("x", null, "jabber:x:data");
 		x.setAttribute("type", "form");
 		feature.addChild(x);
-		Element field = new DefaultElement("field");
+		Element field = ElementFactory.create("field");
 		field.setAttribute("var", "stream-method");
 		field.setAttribute("type", "list-single");
 		x.addChild(field);
 		for (String streamMethod : streamMethods) {
-			Element option = new DefaultElement("option");
+			Element option = ElementFactory.create("option");
 			field.addChild(option);
-			Element value = new DefaultElement("value", streamMethod, null);
+			Element value = ElementFactory.create("value", streamMethod, null);
 			option.addChild(value);
 		}
 

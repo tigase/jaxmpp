@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.stanzas;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
@@ -28,11 +28,11 @@ import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
  */
 public class Message extends Stanza {
 
-	public static final Message create() throws XMLException {
-		return new Message(new DefaultElement("message"));
+	public static final Message create() throws JaxmppException {
+		return createMessage();
 	}
 
-	public Message(Element element) throws XMLException {
+	Message(Element element) throws XMLException {
 		super(element);
 		if (!"message".equals(element.getName()))
 			throw new RuntimeException("Wrong element name: " + element.getName());

@@ -33,8 +33,8 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
@@ -201,7 +201,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 		iq.setType(StanzaType.set);
 		iq.setTo(toJID);
 
-		Element command = new DefaultElement("command", null, "http://jabber.org/protocol/commands");
+		Element command = ElementFactory.create("command", null, "http://jabber.org/protocol/commands");
 		command.setAttribute("node", node);
 		if (action != null)
 			command.setAttribute("action", action.name());
@@ -342,20 +342,20 @@ public class AdHocCommansModule extends AbstractIQModule {
 		}
 
 		final Element result = XmlTools.makeResult(element);
-		final Element commandResult = new DefaultElement("command", null, "http://jabber.org/protocol/commands");
+		final Element commandResult = ElementFactory.create("command", null, "http://jabber.org/protocol/commands");
 		commandResult.setAttribute("node", requestedNode);
 		commandResult.setAttribute("sessionid", request.getSessionId());
 		commandResult.setAttribute("status", state.name());
 		result.addChild(commandResult);
 
 		if (!response.getAvailableActions().isEmpty()) {
-			Element actions = new DefaultElement("actions");
+			Element actions = ElementFactory.create("actions");
 			commandResult.addChild(actions);
 			if (response.getDefaultAction() != null) {
 				actions.setAttribute("execute", response.getDefaultAction().name());
 			}
 			for (Action a : response.getAvailableActions()) {
-				actions.addChild(new DefaultElement(a.name()));
+				actions.addChild(ElementFactory.create(a.name()));
 			}
 		}
 

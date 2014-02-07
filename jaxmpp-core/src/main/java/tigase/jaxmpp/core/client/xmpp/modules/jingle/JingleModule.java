@@ -30,8 +30,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent;
@@ -40,6 +40,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionI
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleTransportInfoHandler.JingleTransportInfoEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class JingleModule implements XmppModule {
@@ -394,7 +395,7 @@ public class JingleModule implements XmppModule {
 		iq.setTo(jid);
 		iq.setType(StanzaType.set);
 
-		Element jingle = new DefaultElement("jingle");
+		Element jingle = ElementFactory.create("jingle");
 		jingle.setXMLNS(JINGLE_XMLNS);
 		jingle.setAttribute("action", "session-accept");
 		jingle.setAttribute("sid", sid);
@@ -406,7 +407,7 @@ public class JingleModule implements XmppModule {
 
 		iq.addChild(jingle);
 
-		Element content = new DefaultElement("content");
+		Element content = ElementFactory.create("content");
 		content.setXMLNS(JINGLE_XMLNS);
 		content.setAttribute("creator", "initiator");
 		content.setAttribute("name", name);
@@ -440,7 +441,7 @@ public class JingleModule implements XmppModule {
 		iq.setTo(jid);
 		iq.setType(StanzaType.set);
 
-		Element jingle = new DefaultElement("jingle");
+		Element jingle = ElementFactory.create("jingle");
 		jingle.setXMLNS(JINGLE_XMLNS);
 		jingle.setAttribute("action", "session-initiate");
 		jingle.setAttribute("sid", sid);
@@ -450,7 +451,7 @@ public class JingleModule implements XmppModule {
 
 		iq.addChild(jingle);
 
-		Element content = new DefaultElement("content");
+		Element content = ElementFactory.create("content");
 		content.setXMLNS(JINGLE_XMLNS);
 		content.setAttribute("creator", "initiator");
 		content.setAttribute("name", name);
@@ -468,7 +469,7 @@ public class JingleModule implements XmppModule {
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		if ("iq".equals(element.getName())) {
-			IQ iq = new IQ(element);
+			IQ iq = (IQ) Stanza.create(element);
 			processIq(iq);
 		}
 	}
@@ -541,7 +542,7 @@ public class JingleModule implements XmppModule {
 		iq.setTo(jid);
 		iq.setType(StanzaType.set);
 
-		Element jingle = new DefaultElement("jingle");
+		Element jingle = ElementFactory.create("jingle");
 		jingle.setXMLNS(JINGLE_XMLNS);
 		jingle.setAttribute("action", "session-terminate");
 		jingle.setAttribute("sid", sid);
@@ -550,10 +551,10 @@ public class JingleModule implements XmppModule {
 
 		iq.addChild(jingle);
 
-		Element reason = new DefaultElement("result");
+		Element reason = ElementFactory.create("result");
 		jingle.addChild(reason);
 
-		Element success = new DefaultElement("success");
+		Element success = ElementFactory.create("success");
 		reason.addChild(success);
 
 		context.getWriter().write(iq);
@@ -565,7 +566,7 @@ public class JingleModule implements XmppModule {
 		iq.setTo(recipient);
 		iq.setType(StanzaType.set);
 
-		Element jingle = new DefaultElement("jingle");
+		Element jingle = ElementFactory.create("jingle");
 		jingle.setXMLNS(JINGLE_XMLNS);
 		jingle.setAttribute("action", "transport-info");
 		jingle.setAttribute("sid", sid);

@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
@@ -51,7 +51,7 @@ public class JidMultiField extends AbstractField<JID[]> {
 	public void addFieldValue(JID... value) throws XMLException {
 		if (value != null)
 			for (JID string : value) {
-				addChild(new DefaultElement("value", string == null ? null : string.toString(), null));
+				addChild(ElementFactory.create("value", string == null ? null : string.toString(), null));
 			}
 	}
 
@@ -89,7 +89,7 @@ public class JidMultiField extends AbstractField<JID[]> {
 		clearValues();
 		if (value != null) {
 			for (JID string : value) {
-				addChild(new DefaultElement("value", string == null ? null : string.toString(), null));
+				addChild(ElementFactory.create("value", string == null ? null : string.toString(), null));
 			}
 		}
 	}

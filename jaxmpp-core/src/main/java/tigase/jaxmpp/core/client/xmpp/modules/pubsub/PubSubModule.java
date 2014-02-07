@@ -33,8 +33,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
@@ -62,8 +62,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	public static class AffiliationElement extends ElementWrapper {
 
-		public AffiliationElement() {
-			this(new DefaultElement("affiliation"));
+		public AffiliationElement() throws XMLException {
+			this(ElementFactory.create("affiliation"));
 		}
 
 		public AffiliationElement(Element affiliation) {
@@ -139,7 +139,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 				final Element x = configure.getChildrenNS("x", "jabber:x:data");
 
-				final JabberDataElement form = new JabberDataElement(DefaultElement.create(x));
+				final JabberDataElement form = new JabberDataElement(ElementFactory.create(x));
 
 				onReceiveConfiguration((IQ) responseStanza, node, form);
 			} catch (Exception e) {
@@ -352,8 +352,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	public static class SubscriptionElement extends ElementWrapper {
 
-		public SubscriptionElement() {
-			this(new DefaultElement("subscription"));
+		public SubscriptionElement() throws XMLException {
+			this(ElementFactory.create("subscription"));
 		}
 
 		public SubscriptionElement(Element subscription) {
@@ -434,7 +434,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 				final Element x = options.getChildrenNS("x", "jabber:x:data");
 
-				final JabberDataElement form = new JabberDataElement(DefaultElement.create(x));
+				final JabberDataElement form = new JabberDataElement(ElementFactory.create(x));
 
 				onReceiveConfiguration((IQ) responseStanza, node, jid == null ? null : JID.jidInstance(jid), form);
 			} catch (Exception e) {
@@ -517,10 +517,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_OWNER_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_OWNER_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element configure = new DefaultElement("configure");
+		final Element configure = ElementFactory.create("configure");
 		configure.setAttribute("node", nodeName);
 		pubsub.addChild(configure);
 
@@ -566,10 +566,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element options = new DefaultElement("options");
+		final Element options = ElementFactory.create("options");
 		options.setAttribute("node", nodeName);
 		options.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(options);
@@ -630,15 +630,15 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element create = new DefaultElement("create");
+		final Element create = ElementFactory.create("create");
 		create.setAttribute("node", nodeName);
 		pubsub.addChild(create);
 
 		if (nodeConfiguration != null) {
-			final Element configure = new DefaultElement("configure");
+			final Element configure = ElementFactory.create("configure");
 			configure.addChild(nodeConfiguration.createSubmitableElement(XDataType.submit));
 			pubsub.addChild(configure);
 		}
@@ -710,14 +710,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element retract = new DefaultElement("retract");
+		final Element retract = ElementFactory.create("retract");
 		retract.setAttribute("node", nodeName);
 		pubsub.addChild(retract);
 
-		Element item = new DefaultElement("item");
+		Element item = ElementFactory.create("item");
 		item.setAttribute("id", itemId);
 		retract.addChild(item);
 
@@ -755,10 +755,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub#owner");
+		final Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub#owner");
 		iq.addChild(pubsub);
 
-		final Element delete = new DefaultElement("delete");
+		final Element delete = ElementFactory.create("delete");
 		delete.setAttribute("node", nodeName);
 		pubsub.addChild(delete);
 
@@ -831,10 +831,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
 
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element def = new DefaultElement("default");
+		final Element def = ElementFactory.create("default");
 		def.setAttribute("node", nodeName);
 		pubsub.addChild(def);
 
@@ -877,14 +877,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
 
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_OWNER_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_OWNER_XMLNS);
 		iq.addChild(pubsub);
 
 		final Element configure;
 		if (nodeName == null) {
-			configure = new DefaultElement("default");
+			configure = ElementFactory.create("default");
 		} else {
-			configure = new DefaultElement("configure");
+			configure = ElementFactory.create("configure");
 			configure.setAttribute("node", nodeName);
 		}
 		pubsub.addChild(configure);
@@ -950,10 +950,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
 
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element options = new DefaultElement("options");
+		final Element options = ElementFactory.create("options");
 		options.setAttribute("node", nodeName);
 		options.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(options);
@@ -1028,14 +1028,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element publish = new DefaultElement("publish");
+		final Element publish = ElementFactory.create("publish");
 		publish.setAttribute("node", nodeName);
 		pubsub.addChild(publish);
 
-		final Element item = new DefaultElement("item");
+		final Element item = ElementFactory.create("item");
 		item.setAttribute("id", itemId);
 		publish.addChild(item);
 
@@ -1078,10 +1078,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_OWNER_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_OWNER_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element purge = new DefaultElement("purge");
+		final Element purge = ElementFactory.create("purge");
 		purge.setAttribute("node", nodeName);
 		pubsub.addChild(purge);
 
@@ -1142,10 +1142,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
-		final Element pubsub = new DefaultElement("pubsub", null, xmlns);
+		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
 		iq.addChild(pubsub);
 
-		final Element affiliations = new DefaultElement("affiliations");
+		final Element affiliations = ElementFactory.create("affiliations");
 		affiliations.setAttribute("node", nodeName);
 		pubsub.addChild(affiliations);
 
@@ -1216,10 +1216,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element items = new DefaultElement("items");
+		final Element items = ElementFactory.create("items");
 		items.setAttribute("node", nodeName);
 		if (maxItems != null) {
 			items.setAttribute("max_items", maxItems.toString());
@@ -1227,12 +1227,29 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		pubsub.addChild(items);
 
 		if (itemId != null) {
-			Element item = new DefaultElement("item");
+			Element item = ElementFactory.create("item");
 			item.setAttribute("id", itemId);
 			items.addChild(item);
 		}
 
 		write(iq, callback);
+	}
+
+	/**
+	 * Gets published item from node.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param nodeName
+	 *            name of node
+	 * @param itemId
+	 *            ID of item to pe retrieve.
+	 * @param callback
+	 *            request callback
+	 */
+	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
+			throws JaxmppException {
+		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	/**
@@ -1254,42 +1271,25 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element items = new DefaultElement("items");
+		final Element items = ElementFactory.create("items");
 		items.setAttribute("node", nodeName);
 		pubsub.addChild(items);
 
 		if (max != null || index != null) {
-			final Element rsm = new DefaultElement("set", null, "http://jabber.org/protocol/rsm");
+			final Element rsm = ElementFactory.create("set", null, "http://jabber.org/protocol/rsm");
 			if (max != null) {
-				rsm.addChild(new DefaultElement("max", Integer.toString(max), null));
+				rsm.addChild(ElementFactory.create("max", Integer.toString(max), null));
 			}
 			if (index != null) {
-				rsm.addChild(new DefaultElement("index", Integer.toString(index), null));
+				rsm.addChild(ElementFactory.create("index", Integer.toString(index), null));
 			}
 			pubsub.addChild(rsm);
 		}
 
 		write(iq, callback);
-	}
-
-	/**
-	 * Gets published item from node.
-	 * 
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item to pe retrieve.
-	 * @param callback
-	 *            request callback
-	 */
-	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
-			throws JaxmppException {
-		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
 	}
 
 	/**
@@ -1373,18 +1373,18 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
-		final Element pubsub = new DefaultElement("pubsub", null, xmlns);
+		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
 		iq.addChild(pubsub);
 
-		final Element subscriptions = new DefaultElement("subscriptions");
+		final Element subscriptions = ElementFactory.create("subscriptions");
 		subscriptions.setAttribute("node", nodeName);
 		pubsub.addChild(subscriptions);
 
 		if (filterExt != null) {
-			Element filter = new DefaultElement("filter", null, "tigase:pubsub:1");
+			Element filter = ElementFactory.create("filter", null, "tigase:pubsub:1");
 
 			if (filterExt.getJidContains() != null) {
-				Element f = new DefaultElement("jid", null, null);
+				Element f = ElementFactory.create("jid", null, null);
 				f.setAttribute("contains", filterExt.getJidContains());
 				filter.addChild(f);
 			}
@@ -1445,10 +1445,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
 
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_OWNER_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_OWNER_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element affiliations = new DefaultElement("affiliations");
+		final Element affiliations = ElementFactory.create("affiliations");
 		affiliations.setAttribute("node", nodeName);
 		pubsub.addChild(affiliations);
 
@@ -1523,10 +1523,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
 
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_OWNER_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_OWNER_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element subscriptions = new DefaultElement("subscriptions");
+		final Element subscriptions = ElementFactory.create("subscriptions");
 		subscriptions.setAttribute("node", nodeName);
 		pubsub.addChild(subscriptions);
 
@@ -1556,16 +1556,16 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element subscribe = new DefaultElement("subscribe");
+		final Element subscribe = ElementFactory.create("subscribe");
 		subscribe.setAttribute("node", nodeName);
 		subscribe.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(subscribe);
 
 		if (options != null) {
-			Element optionsElement = new DefaultElement("options");
+			Element optionsElement = ElementFactory.create("options");
 			optionsElement.setAttribute("jid", subscriberJID.toString());
 			optionsElement.setAttribute("node", nodeName);
 			optionsElement.addChild(options);
@@ -1629,14 +1629,14 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element unlock = new DefaultElement("unlock", null, QUEUEING_XMLNS);
+		final Element unlock = ElementFactory.create("unlock", null, QUEUEING_XMLNS);
 		unlock.setAttribute("node", nodeName);
 		pubsub.addChild(unlock);
 
-		Element item = new DefaultElement("item");
+		Element item = ElementFactory.create("item");
 		item.setAttribute("id", itemId);
 		unlock.addChild(item);
 
@@ -1679,10 +1679,10 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
-		final Element pubsub = new DefaultElement("pubsub", null, PUBSUB_XMLNS);
+		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
 
-		final Element unsubscribe = new DefaultElement("unsubscribe");
+		final Element unsubscribe = ElementFactory.create("unsubscribe");
 		unsubscribe.setAttribute("node", nodeName);
 		unsubscribe.setAttribute("jid", subscriberJID.toString());
 		pubsub.addChild(unsubscribe);

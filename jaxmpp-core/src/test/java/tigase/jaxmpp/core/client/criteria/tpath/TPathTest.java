@@ -26,9 +26,9 @@ import static org.junit.Assert.fail;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -38,24 +38,24 @@ public class TPathTest {
 
 	private final TPath tpath = new TPath();
 
-	public TPathTest() throws XMLException {
+	public TPathTest() throws JaxmppException {
 		this.iq = IQ.create();
 		iq.setTo(JID.jidInstance("a@b.c"));
 		iq.setType(StanzaType.set);
 		iq.setAttribute("from", "wojtas@wp.pl");
-		final Element pubsub = new DefaultElement("pubsub", null, "a:b");
+		final Element pubsub = ElementFactory.create("pubsub", null, "a:b");
 		iq.addChild(pubsub);
-		final Element publish = new DefaultElement("publish");
+		final Element publish = ElementFactory.create("publish");
 		publish.setAttribute("node", "123");
 		pubsub.addChild(publish);
-		Element item = new DefaultElement("item");
+		Element item = ElementFactory.create("item");
 		item.setValue("x");
 		item.setAttribute("id", "345");
 		publish.addChild(item);
-		item = new DefaultElement("item");
+		item = ElementFactory.create("item");
 		item.setAttribute("id", "456");
 		publish.addChild(item);
-		item = new DefaultElement("item");
+		item = ElementFactory.create("item");
 		item.setAttribute("id", "567");
 		publish.addChild(item);
 	}

@@ -17,13 +17,11 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.*;
-import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.logging.Logger;
-import tigase.jaxmpp.core.client.DataHolder;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 
@@ -38,33 +36,33 @@ public class FileTransfer extends tigase.jaxmpp.core.client.xmpp.modules.filetra
 		super(sessionObject, peer, sid);
 	}
 
-	@Override
-	protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
-		super.setFileInfo(filename, fileSize, lastModified, mimeType);
-	}
-
-	public void setFile(File file) {
-		this.file = file;
-	}
-
 	public File getFile() {
 		return file;
-	}
-
-	public void setInputStream(InputStream inputStream) {
-		this.inputStream = inputStream;
 	}
 
 	public InputStream getInputStream() {
 		return inputStream;
 	}
 
-	protected void setNegotiator(FileTransferNegotiator negotiator) {
-		this.negotiator = negotiator;
-	}
-
 	protected FileTransferNegotiator getNegotiator() {
 		return negotiator;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
+	}
+
+	@Override
+	protected void setFileInfo(String filename, long fileSize, Date lastModified, String mimeType) {
+		super.setFileInfo(filename, fileSize, lastModified, mimeType);
+	}
+
+	public void setInputStream(InputStream inputStream) {
+		this.inputStream = inputStream;
+	}
+
+	protected void setNegotiator(FileTransferNegotiator negotiator) {
+		this.negotiator = negotiator;
 	}
 
 	@Override

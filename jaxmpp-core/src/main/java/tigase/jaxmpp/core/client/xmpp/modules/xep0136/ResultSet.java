@@ -19,19 +19,32 @@ package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
- * ResultSet class is representing results from server returned by ResultSetManagement.
+ * ResultSet class is representing results from server returned by
+ * ResultSetManagement.
+ * 
  * @see http://xmpp.org/extensions/xep-0059.html
  */
 public class ResultSet<T> {
 
-	private String first;
-	private String last;
+	private static Element getFirstChild(Element parent, String name) throws XMLException {
+		List<Element> children = parent.getChildren(name);
+		if (children == null || children.isEmpty()) {
+			return null;
+		}
+
+		return children.get(0);
+	}
+
 	private int count = 0;
+	private String first;
 	private List<T> items = new ArrayList<T>();
+
+	private String last;
 
 	public int getCount() {
 		return count;
@@ -80,14 +93,5 @@ public class ResultSet<T> {
 
 	void setLast(String last) {
 		this.last = last;
-	}
-
-	private static Element getFirstChild(Element parent, String name) throws XMLException {
-		List<Element> children = parent.getChildren(name);
-		if (children == null || children.isEmpty()) {
-			return null;
-		}
-
-		return children.get(0);
 	}
 }

@@ -180,7 +180,7 @@ public class BoshConnector extends AbstractBoshConnector {
 				context.getEventBus().fire(
 						new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
 
-				return handled.isValue();
+				return false;//handled.isValue();
 			}
 		}
 		return false;

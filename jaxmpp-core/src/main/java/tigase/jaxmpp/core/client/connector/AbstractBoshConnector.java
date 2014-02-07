@@ -40,8 +40,8 @@ import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
@@ -224,8 +224,8 @@ public abstract class AbstractBoshConnector implements Connector {
 			throws JaxmppException {
 		try {
 			{
-				BoshPacketReceivedHandler.BoshPacketReceivedEvent event = 
-						new BoshPacketReceivedHandler.BoshPacketReceivedEvent(sessionObject, responseCode, response, responseData);
+				BoshPacketReceivedHandler.BoshPacketReceivedEvent event = new BoshPacketReceivedHandler.BoshPacketReceivedEvent(
+						sessionObject, responseCode, response, responseData);
 				context.getEventBus().fire(event, this);
 
 			}
@@ -330,7 +330,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Element prepareBody(byte[] payload) throws XMLException {
-		Element e = new DefaultElement("body");
+		Element e = ElementFactory.create("body");
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
@@ -341,7 +341,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Element prepareBody(Element payload) throws XMLException {
-		Element e = new DefaultElement("body");
+		Element e = ElementFactory.create("body");
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
@@ -353,7 +353,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Element prepareRetartBody() throws XMLException {
-		Element e = new DefaultElement("body");
+		Element e = ElementFactory.create("body");
 		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 		if (from != null) {
 			e.setAttribute("from", from.toString());
@@ -370,7 +370,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Element prepareStartBody() throws XMLException {
-		Element e = new DefaultElement("body");
+		Element e = ElementFactory.create("body");
 		e.setAttribute("content", "text/xml; charset=utf-8");
 		// e.setAttribute("from", data.fromUser);
 		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
@@ -393,7 +393,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected Element prepareTerminateBody(Element payload) throws XMLException {
-		Element e = new DefaultElement("body");
+		Element e = ElementFactory.create("body");
 		e.setAttribute("rid", nextRid().toString());
 		e.setAttribute("sid", getSid());
 		e.setAttribute("type", "terminate");
@@ -503,5 +503,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			w.terminate();
 		}
 		this.requests.clear();
+
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 }

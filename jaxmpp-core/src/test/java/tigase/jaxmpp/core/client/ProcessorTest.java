@@ -17,8 +17,8 @@
  */
 package tigase.jaxmpp.core.client;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 
@@ -35,7 +35,7 @@ public class ProcessorTest extends AbstractJaxmppTest {
 	}
 
 	public void test01() throws XMLException {
-		Element e = new DefaultElement("iq");
+		Element e = ElementFactory.create("iq");
 		Runnable r = processor.process(e);
 		r.run();
 		assertEquals(
@@ -44,9 +44,9 @@ public class ProcessorTest extends AbstractJaxmppTest {
 	}
 
 	public void test02() throws XMLException {
-		Element e = new DefaultElement("iq");
+		Element e = ElementFactory.create("iq");
 		e.setAttribute("type", "set");
-		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
+		e.addChild(ElementFactory.create("ping", null, "urn:xmpp:ping"));
 
 		Runnable r = processor.process(e);
 		r.run();
@@ -56,10 +56,10 @@ public class ProcessorTest extends AbstractJaxmppTest {
 	}
 
 	public void test03() throws XMLException {
-		Element e = new DefaultElement("iq");
+		Element e = ElementFactory.create("iq");
 		e.setAttribute("to", "a@b.c");
 		e.setAttribute("type", "get");
-		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
+		e.addChild(ElementFactory.create("ping", null, "urn:xmpp:ping"));
 
 		Runnable r = processor.process(e);
 		r.run();
@@ -67,10 +67,10 @@ public class ProcessorTest extends AbstractJaxmppTest {
 	}
 
 	public void test04() throws XMLException {
-		Element e = new DefaultElement("iq");
+		Element e = ElementFactory.create("iq");
 		e.setAttribute("to", "a@b.c");
 		e.setAttribute("type", "get");
-		e.addChild(new DefaultElement("ping", null, "urn:xmpp:ping"));
+		e.addChild(ElementFactory.create("ping", null, "urn:xmpp:ping"));
 
 		Runnable r = processor.process(e);
 		r.run();

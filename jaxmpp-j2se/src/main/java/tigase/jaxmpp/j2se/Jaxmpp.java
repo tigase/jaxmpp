@@ -22,12 +22,10 @@ import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
-import tigase.jaxmpp.core.client.JaxmppCore.DisconnectedHandler.DisconnectedEvent;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.ResponseManager;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -112,7 +110,7 @@ public class Jaxmpp extends JaxmppCore {
 	public Jaxmpp(SessionObject sessionObject) {
 		super();
 		this.eventBus = new ThreadSafeEventBus();
-		this.sessionObject = (AbstractSessionObject) sessionObject;
+		this.sessionObject = sessionObject;
 		init();
 	}
 
@@ -139,7 +137,7 @@ public class Jaxmpp extends JaxmppCore {
 	public void disconnect(boolean snc) throws JaxmppException {
 		disconnect(snc, true);
 	}
-	
+
 	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
@@ -149,7 +147,7 @@ public class Jaxmpp extends JaxmppCore {
 					throw new JaxmppException(e);
 				}
 				Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
-				if (sync != null && sync) {
+				if (snc || sync != null && sync) {
 					synchronized (Jaxmpp.this) {
 						// Jaxmpp.this.wait();
 					}
@@ -185,26 +183,6 @@ public class Jaxmpp extends JaxmppCore {
 		return fileTransferManager;
 	}
 
-	public void initFileTransferManager(boolean experimental) throws JaxmppException {
-		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-		if (capsModule != null && capsModule.getCache() == null) {
-			capsModule.setCache(new J2SECapabiliesCache());
-		}
-
-		fileTransferManager = new FileTransferManager();
-		fileTransferManager.setContext(getContext());
-		fileTransferManager.setJaxmpp(this);
-
-		getModulesManager().register(new FileTransferModule(getContext()));
-		getModulesManager().register(new Socks5BytestreamsModule(getContext()));
-
-		if (experimental) {
-			getModulesManager().register(new JingleModule(getContext()));
-			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-		}
-		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-	}
-		
 	@Override
 	protected void init() {
 		if (PresenceModule.getPresenceStore(sessionObject) == null)
@@ -237,6 +215,26 @@ public class Jaxmpp extends JaxmppCore {
 		this.processor = new Processor(this.modulesManager, context);
 
 		modulesInit();
+	}
+
+	public void initFileTransferManager(boolean experimental) throws JaxmppException {
+		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+		if (capsModule != null && capsModule.getCache() == null) {
+			capsModule.setCache(new J2SECapabiliesCache());
+		}
+
+		fileTransferManager = new FileTransferManager();
+		fileTransferManager.setContext(getContext());
+		fileTransferManager.setJaxmpp(this);
+
+		getModulesManager().register(new FileTransferModule(getContext()));
+		getModulesManager().register(new Socks5BytestreamsModule(getContext()));
+
+		if (experimental) {
+			getModulesManager().register(new JingleModule(getContext()));
+			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+		}
+		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
 
 	// public FileTransferManager getFileTransferManager() {
@@ -357,7 +355,7 @@ public class Jaxmpp extends JaxmppCore {
 			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
@@ -374,7 +372,7 @@ public class Jaxmpp extends JaxmppCore {
 			Jaxmpp.this.notify();
 		}
 
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	@Override
@@ -389,10 +387,9 @@ public class Jaxmpp extends JaxmppCore {
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
 		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
-		eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
 
 	/**

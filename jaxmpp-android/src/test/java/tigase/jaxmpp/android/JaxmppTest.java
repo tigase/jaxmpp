@@ -4,8 +4,6 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-import tigase.jaxmpp.android.Jaxmpp;
-
 public class JaxmppTest {
 
 	@Test

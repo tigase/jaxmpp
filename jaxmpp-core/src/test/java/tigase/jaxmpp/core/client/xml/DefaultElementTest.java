@@ -24,22 +24,22 @@ import junit.framework.TestCase;
 public class DefaultElementTest extends TestCase {
 
 	private static final Element createElement() throws XMLException {
-		Element message = new DefaultElement("message", null, null);
+		Element message = ElementFactory.create("message", null, null);
 		message.setAttribute("to", "romeo@example.net");
 		message.setAttribute("from", "juliet@example.com/balcony");
 		message.setAttribute("type", "chat");
 
-		message.addChild(new DefaultElement("subject", "I implore you!", null));
-		message.addChild(new DefaultElement("body", "Wherefore art thou, Romeo?", null));
-		message.addChild(new DefaultElement("thread", "e0ffe42b28561960c6b12b944a092794b9683a38", null));
-		message.addChild(new DefaultElement("x", "tigase:offline", "tigase"));
+		message.addChild(ElementFactory.create("subject", "I implore you!", null));
+		message.addChild(ElementFactory.create("body", "Wherefore art thou, Romeo?", null));
+		message.addChild(ElementFactory.create("thread", "e0ffe42b28561960c6b12b944a092794b9683a38", null));
+		message.addChild(ElementFactory.create("x", "tigase:offline", "tigase"));
 
 		return message;
 	}
 
 	public void testCreate() throws XMLException {
 		final Element element = createElement();
-		Element e1 = DefaultElement.create(element);
+		Element e1 = ElementFactory.create(element);
 		assertEquals(
 				"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
 				e1.getAsString());
@@ -68,28 +68,28 @@ public class DefaultElementTest extends TestCase {
 	}
 
 	public void testGetAsString01() throws XMLException {
-		Element element = new DefaultElement("iq", null, null);
+		Element element = ElementFactory.create("iq", null, null);
 		assertEquals("<iq/>", element.getAsString());
 	}
 
 	public void testGetAsString02() throws XMLException {
-		Element element = new DefaultElement("iq", "a", null);
+		Element element = ElementFactory.create("iq", "a", null);
 		assertEquals("<iq>a</iq>", element.getAsString());
 	}
 
 	public void testGetAsString03() throws XMLException {
-		Element element = new DefaultElement("iq", "a", "b");
+		Element element = ElementFactory.create("iq", "a", "b");
 		assertEquals("<iq xmlns=\"b\">a</iq>", element.getAsString());
 	}
 
 	public void testGetAsString04() throws XMLException {
-		Element element = new DefaultElement("iq", null, "b");
+		Element element = ElementFactory.create("iq", null, "b");
 		assertEquals("<iq xmlns=\"b\"/>", element.getAsString());
 	}
 
 	public void testGetAsString05() throws XMLException {
-		Element element = new DefaultElement("iq", null, "b");
-		element.addChild(new DefaultElement("query", null, "d"));
+		Element element = ElementFactory.create("iq", null, "b");
+		element.addChild(ElementFactory.create("query", null, "d"));
 		assertEquals("<iq xmlns=\"b\"><query xmlns=\"d\"/></iq>", element.getAsString());
 	}
 

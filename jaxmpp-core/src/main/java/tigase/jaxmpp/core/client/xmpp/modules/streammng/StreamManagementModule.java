@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
@@ -21,8 +20,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
@@ -255,7 +254,7 @@ public class StreamManagementModule implements XmppModule {
 		return x != null && x;
 	}
 
-	public static void reset(AbstractSessionObject sessionObject) {
+	public static void reset(SessionObject sessionObject) {
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
@@ -315,7 +314,7 @@ public class StreamManagementModule implements XmppModule {
 		if (log.isLoggable(Level.INFO)) {
 			log.info("Enabling stream management");
 		}
-		Element request = new DefaultElement("enable", null, XMLNS);
+		Element request = ElementFactory.create("enable", null, XMLNS);
 
 		request.setAttribute("resume", "true");
 
@@ -405,7 +404,7 @@ public class StreamManagementModule implements XmppModule {
 	}
 
 	private void processAckRequest(Element element) throws JaxmppException {
-		Element response = new DefaultElement("a", null, XMLNS);
+		Element response = ElementFactory.create("a", null, XMLNS);
 		response.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
 		context.getWriter().write(response);
 	}
@@ -536,14 +535,14 @@ public class StreamManagementModule implements XmppModule {
 		if (lr != null && now - lr < 1000)
 			return;
 
-		Element request = new DefaultElement("r", null, XMLNS);
+		Element request = ElementFactory.create("r", null, XMLNS);
 		// context.getWriter().write(request);
 		jaxmpp.getConnector().send(request);
 		context.getSessionObject().setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
 	}
 
 	public void resume() throws JaxmppException {
-		Element resume = new DefaultElement("resume", null, XMLNS);
+		Element resume = ElementFactory.create("resume", null, XMLNS);
 
 		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
 		resume.setAttribute("previd", (String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));

@@ -20,8 +20,8 @@ import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
@@ -308,7 +308,7 @@ public class DiscoveryModule extends AbstractIQModule {
 		if (jid != null)
 			iq.setTo(jid);
 		iq.setType(StanzaType.get);
-		Element query = new DefaultElement("query", null, INFO_XMLNS);
+		Element query = ElementFactory.create("query", null, INFO_XMLNS);
 		if (node != null)
 			query.setAttribute("node", node);
 		iq.addChild(query);
@@ -332,7 +332,7 @@ public class DiscoveryModule extends AbstractIQModule {
 		IQ iq = IQ.create();
 		iq.setTo(jid);
 		iq.setType(StanzaType.get);
-		Element query = new DefaultElement("query", null, ITEMS_XMLNS);
+		Element query = ElementFactory.create("query", null, ITEMS_XMLNS);
 		if (node != null) {
 			query.setAttribute("node", node);
 		}
@@ -365,12 +365,12 @@ public class DiscoveryModule extends AbstractIQModule {
 
 		Element result = XmlTools.makeResult(stanza);
 
-		Element queryResult = new DefaultElement("query", null, INFO_XMLNS);
+		Element queryResult = ElementFactory.create("query", null, INFO_XMLNS);
 		queryResult.setAttribute("node", node);
 		result.addChild(queryResult);
 
 		if (identity != null) {
-			Element identityElement = new DefaultElement("identity");
+			Element identityElement = ElementFactory.create("identity");
 			identityElement.setAttribute("category", identity.getCategory());
 			identityElement.setAttribute("type", identity.getType());
 			identityElement.setAttribute("name", identity.getName());
@@ -379,7 +379,7 @@ public class DiscoveryModule extends AbstractIQModule {
 
 		if (features != null) {
 			for (String feature : features) {
-				DefaultElement f = new DefaultElement("feature");
+				Element f = ElementFactory.create("feature");
 				f.setAttribute("var", feature);
 				queryResult.addChild(f);
 			}
@@ -393,13 +393,13 @@ public class DiscoveryModule extends AbstractIQModule {
 		final Item[] items = callback.getItems(context.getSessionObject(), stanza, node);
 
 		Element result = XmlTools.makeResult(stanza);
-		Element queryResult = new DefaultElement("query", null, ITEMS_XMLNS);
+		Element queryResult = ElementFactory.create("query", null, ITEMS_XMLNS);
 		queryResult.setAttribute("node", node);
 		result.addChild(queryResult);
 
 		if (items != null)
 			for (Item it : items) {
-				Element e = new DefaultElement("item");
+				Element e = ElementFactory.create("item");
 				if (it.getJid() != null)
 					e.setAttribute("jid", it.getJid().toString());
 				e.setAttribute("name", it.getName());

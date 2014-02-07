@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -88,16 +88,20 @@ public class BareJID implements Comparable<BareJID> {
 	}
 
 	@Override
-	public boolean equals(Object b) {
-		boolean result = false;
-
-		if (b instanceof BareJID) {
-			result = (this.domain == ((BareJID) b).domain)
-					&& ((this.localpart == null) ? this.localpart == ((BareJID) b).localpart
-							: this.localpart.equalsIgnoreCase(((BareJID) b).localpart));
-		}
-
-		return result;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof BareJID))
+			return false;
+		BareJID other = (BareJID) obj;
+		if ($toString == null) {
+			if (other.$toString != null)
+				return false;
+		} else if (!$toString.equals(other.$toString))
+			return false;
+		return true;
 	}
 
 	/**
@@ -120,7 +124,10 @@ public class BareJID implements Comparable<BareJID> {
 
 	@Override
 	public int hashCode() {
-		return $toString.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (($toString == null) ? 0 : $toString.hashCode());
+		return result;
 	}
 
 	@Override

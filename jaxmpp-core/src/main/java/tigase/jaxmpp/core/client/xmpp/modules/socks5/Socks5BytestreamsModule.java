@@ -31,8 +31,8 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule.StreamhostsHandler.StreamhostsEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -181,11 +181,11 @@ public class Socks5BytestreamsModule implements XmppModule {
 		iq.setTo(host);
 		iq.setType(StanzaType.set);
 
-		Element query = new DefaultElement("query", null, XMLNS_BS);
+		Element query = ElementFactory.create("query", null, XMLNS_BS);
 		query.setAttribute("sid", sid);
 		iq.addChild(query);
 
-		Element activate = new DefaultElement("activate", jid.toString(), null);
+		Element activate = ElementFactory.create("activate", jid.toString(), null);
 		query.addChild(activate);
 
 		context.getWriter().write(iq, callback);
@@ -196,7 +196,7 @@ public class Socks5BytestreamsModule implements XmppModule {
 		iq.setTo(host);
 		iq.setType(StanzaType.get);
 
-		Element query = new DefaultElement("query", null, XMLNS_BS);
+		Element query = ElementFactory.create("query", null, XMLNS_BS);
 		iq.addChild(query);
 
 		context.getWriter().write(iq, callback);
@@ -208,12 +208,12 @@ public class Socks5BytestreamsModule implements XmppModule {
 		iq.setTo(recipient);
 		iq.setType(StanzaType.set);
 
-		Element query = new DefaultElement("query", null, XMLNS_BS);
+		Element query = ElementFactory.create("query", null, XMLNS_BS);
 		iq.addChild(query);
 		query.setAttribute("sid", sid);
 
 		for (Streamhost host : hosts) {
-			Element streamhost = new DefaultElement("streamhost");
+			Element streamhost = ElementFactory.create("streamhost");
 			streamhost.setAttribute("jid", host.getJid().toString());
 			streamhost.setAttribute("host", host.getHost());
 			streamhost.setAttribute("port", String.valueOf(host.getPort()));
@@ -229,11 +229,11 @@ public class Socks5BytestreamsModule implements XmppModule {
 		iq.setId(id);
 		iq.setType(StanzaType.result);
 
-		Element query = new DefaultElement("query", null, XMLNS_BS);
+		Element query = ElementFactory.create("query", null, XMLNS_BS);
 		query.setAttribute("sid", sid);
 		iq.addChild(query);
 
-		Element streamhostUsed = new DefaultElement("streamhost-used");
+		Element streamhostUsed = ElementFactory.create("streamhost-used");
 		streamhostUsed.setAttribute("jid", streamhost.getJid().toString());
 		query.addChild(streamhostUsed);
 

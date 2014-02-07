@@ -38,8 +38,8 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
@@ -202,11 +202,11 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	public static final String ROSTER_STORE_KEY = "RosterModule#ROSTER_STORE";
 
 	private static final Element createItem(final RosterItem item) throws XMLException {
-		Element result = new DefaultElement("item");
+		Element result = ElementFactory.create("item");
 		result.setAttribute("jid", item.getJid().toString());
 		result.setAttribute("name", item.getName());
 		for (String gr : item.getGroups()) {
-			result.addChild(new DefaultElement("group", gr, null));
+			result.addChild(ElementFactory.create("group", gr, null));
 		}
 		return result;
 	}
@@ -285,7 +285,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(new DefaultElement("query", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
 		AsyncCallback c = asyncCallback != null ? asyncCallback : new AsyncCallback() {
@@ -461,8 +461,8 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	protected void remove(BareJID jid) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
-		Element item = query.addChild(new DefaultElement("item"));
+		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
+		Element item = query.addChild(ElementFactory.create("item"));
 		item.setAttribute("jid", jid.toString());
 		item.setAttribute("subscription", Subscription.remove.name());
 
@@ -492,7 +492,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	public void rosterRequest() throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
-		DefaultElement query = new DefaultElement("query", null, "jabber:iq:roster");
+		Element query = ElementFactory.create("query", null, "jabber:iq:roster");
 		if (isRosterVersioningAvailable()) {
 			String x = versionProvider.getCachedVersion(context.getSessionObject());
 			if (getRosterStore().getCount() == 0) {
@@ -530,7 +530,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	protected void update(RosterItem item) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
 		write(iq, new AsyncCallback() {

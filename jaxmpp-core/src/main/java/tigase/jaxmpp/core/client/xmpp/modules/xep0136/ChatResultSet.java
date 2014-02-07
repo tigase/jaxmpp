@@ -19,14 +19,14 @@ package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
 public class ChatResultSet extends ResultSet<ChatItem> {
 
-        private Chat chat = new Chat();
+	private Chat chat = new Chat();
 
-        public Chat getChat() {
-            return chat;
-        }
+	public Chat getChat() {
+		return chat;
+	}
 
-        void setChat(Chat chat) {
-            this.chat = chat;
-        }
+	void setChat(Chat chat) {
+		this.chat = chat;
+	}
 
 }

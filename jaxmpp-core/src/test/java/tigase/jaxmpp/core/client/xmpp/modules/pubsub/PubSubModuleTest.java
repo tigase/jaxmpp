@@ -32,8 +32,8 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.tpath.TPath;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PublishAsyncCallback;
@@ -58,13 +58,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 	}
 
 	private Runnable getResponseHandler(Element element) throws JaxmppException {
-		return ResponseManager.getResponseHandler(context.getSessionObject(), element, context.getWriter());
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		// TODO Auto-generated method stub
-		super.setUp();
+		return ResponseManager.getResponseHandler(context, element);
 	}
 
 	@Test
@@ -116,18 +110,18 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		message.setAttribute("from", "pubsub.shakespeare.lit");
 		message.setAttribute("to", "francisco@denmark.lit");
 
-		Element event = new DefaultElement("event", null, "http://jabber.org/protocol/pubsub#event");
+		Element event = ElementFactory.create("event", null, "http://jabber.org/protocol/pubsub#event");
 		message.addChild(event);
 
-		Element items = new DefaultElement("items");
+		Element items = ElementFactory.create("items");
 		items.setAttribute("node", "princely_musings");
 		event.addChild(items);
 
-		Element item = new DefaultElement("item");
+		Element item = ElementFactory.create("item");
 		item.setAttribute("id", "ae890ac52d0df67ed7cfdf51b644e901");
 		items.addChild(item);
 
-		final Element payload = new DefaultElement("content", "dupa", "jaxmpp:test");
+		final Element payload = ElementFactory.create("content", "dupa", "jaxmpp:test");
 
 		item.addChild(payload);
 
@@ -166,7 +160,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 	@Test
 	public void testPublishItemBareJIDStringStringElementAsyncCallback() throws XMLException, JaxmppException {
 		final boolean[] check = new boolean[] { false };
-		DefaultElement payload = new DefaultElement("content", "dupa", "jaxmpp:test");
+		Element payload = ElementFactory.create("content", "dupa", "jaxmpp:test");
 		this.pubsub.publishItem(BareJID.bareJIDInstance("a@b.c"), "nn", "123", payload, new PublishAsyncCallback() {
 
 			@Override
@@ -202,12 +196,12 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		responseIq.setAttribute("from", "a@b.c");
 		responseIq.setType(StanzaType.result);
 
-		Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub");
 		responseIq.addChild(pubsub);
-		Element publish = new DefaultElement("publish");
+		Element publish = ElementFactory.create("publish");
 		publish.setAttribute("node", "nn");
 		pubsub.addChild(publish);
-		Element item = new DefaultElement("item");
+		Element item = ElementFactory.create("item");
 		item.setAttribute("id", "123");
 		publish.addChild(item);
 
@@ -220,7 +214,7 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 	@Test
 	public void testPublishItemBareJIDStringStringElementAsyncCallback_Error() throws XMLException, JaxmppException {
 		final boolean[] check = new boolean[] { false };
-		DefaultElement payload = new DefaultElement("content", "dupa", "jaxmpp:test");
+		Element payload = ElementFactory.create("content", "dupa", "jaxmpp:test");
 		this.pubsub.publishItem(BareJID.bareJIDInstance("a@b.c"), "nn", "123", payload, new PublishAsyncCallback() {
 
 			@Override
@@ -257,11 +251,11 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		responseIq.setAttribute("from", "a@b.c");
 		responseIq.setType(StanzaType.error);
 
-		Element error = new DefaultElement("error", null, null);
+		Element error = ElementFactory.create("error", null, null);
 		error.setAttribute("type", "cancel");
 		responseIq.addChild(error);
-		error.addChild(new DefaultElement("feature-not-implemented", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
-		Element uns = new DefaultElement("unsupported", null, "http://jabber.org/protocol/pubsub#errors");
+		error.addChild(ElementFactory.create("feature-not-implemented", null, "urn:ietf:params:xml:ns:xmpp-stanzas"));
+		Element uns = ElementFactory.create("unsupported", null, "http://jabber.org/protocol/pubsub#errors");
 		uns.setAttribute("feature", "publish");
 		error.addChild(uns);
 
@@ -315,16 +309,16 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		responseIq.setAttribute("from", "pubsub.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub");
 		responseIq.addChild(pubsub);
-		Element items = new DefaultElement("items");
+		Element items = ElementFactory.create("items");
 		items.setAttribute("node", "princely_musings");
 		pubsub.addChild(items);
 
-		Element item0 = new DefaultElement("item");
+		Element item0 = ElementFactory.create("item");
 		item0.setAttribute("id", "ae890ac52d0df67ed7cfdf51b644e901");
 		items.addChild(item0);
-		item0.addChild(new DefaultElement("payload", "dupa_01", "tigase:test"));
+		item0.addChild(ElementFactory.create("payload", "dupa_01", "tigase:test"));
 
 		getResponseHandler(responseIq).run();
 		assertEquals("AsyncCallback not called", true, check[0]);
@@ -374,9 +368,9 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		responseIq.setAttribute("from", "pubsub.shakespeare.lit");
 		responseIq.setType(StanzaType.result);
 
-		Element pubsub = new DefaultElement("pubsub", null, "http://jabber.org/protocol/pubsub");
+		Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub");
 		responseIq.addChild(pubsub);
-		Element subs = new DefaultElement("subscription");
+		Element subs = ElementFactory.create("subscription");
 		subs.setAttribute("node", "princely_musings");
 		subs.setAttribute("jid", "francisco@denmark.lit");
 		subs.setAttribute("subid", "ba49252aaa4f5d320c24d3766f0bdcade78c78d3");
@@ -431,14 +425,14 @@ public class PubSubModuleTest extends AbstractJaxmppTest {
 		message.setAttribute("from", "workflow.shakespeare.lit");
 		message.setAttribute("to", "workerbee237@shakespeare.lit");
 
-		Element event = new DefaultElement("event", null, "http://jabber.org/protocol/pubsub#event");
+		Element event = ElementFactory.create("event", null, "http://jabber.org/protocol/pubsub#event");
 		message.addChild(event);
 
-		Element items = new DefaultElement("items");
+		Element items = ElementFactory.create("items");
 		items.setAttribute("node", "a290fjsl29j19kjb");
 		event.addChild(items);
 
-		Element unlock = new DefaultElement("unlock", null, "urn:xmpp:queueing:0");
+		Element unlock = ElementFactory.create("unlock", null, "urn:xmpp:queueing:0");
 		unlock.setAttribute("id", "ae890ac52d0df67ed7cfdf51b644e901");
 		items.addChild(unlock);
 

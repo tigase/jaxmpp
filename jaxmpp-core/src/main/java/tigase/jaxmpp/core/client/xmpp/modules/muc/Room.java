@@ -27,7 +27,8 @@ import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.StateChangeHandler.StateChangeEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -114,16 +115,16 @@ public class Room {
 	public Presence rejoin() throws JaxmppException {
 		Presence presence = Presence.create();
 		presence.setTo(JID.jidInstance(roomJid, nickname));
-		final DefaultElement x = new DefaultElement("x", null, "http://jabber.org/protocol/muc");
+		final Element x = ElementFactory.create("x", null, "http://jabber.org/protocol/muc");
 		presence.addChild(x);
 
 		if (password != null) {
-			x.addChild(new DefaultElement("password", password, null));
+			x.addChild(ElementFactory.create("password", password, null));
 		}
 
 		if (lastMessageDate != null) {
 			DateTimeFormat dtf = new DateTimeFormat();
-			DefaultElement history = new DefaultElement("history", null, null);
+			Element history = ElementFactory.create("history", null, null);
 			history.setAttribute("since", dtf.format(lastMessageDate));
 			x.addChild(history);
 		}

@@ -22,8 +22,8 @@ import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
@@ -74,7 +74,7 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		iq.setTo(jid);
-		iq.addChild(new DefaultElement("vCard", null, "vcard-temp"));
+		iq.addChild(ElementFactory.create("vCard", null, "vcard-temp"));
 
 		write(iq, timeout, asyncCallback);
 	}

@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,8 +24,8 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
@@ -100,7 +100,7 @@ public class JabberDataElement extends ElementWrapper {
 	 *            type of data.
 	 */
 	public JabberDataElement(XDataType type) throws XMLException {
-		super(new DefaultElement("x", null, "jabber:x:data"));
+		super(ElementFactory.create("x", null, "jabber:x:data"));
 		setAttribute("type", type.name());
 	}
 
@@ -114,7 +114,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain BooleanField}
 	 */
 	public final BooleanField addBooleanField(String var, Boolean value) throws XMLException {
-		BooleanField result = new BooleanField(new DefaultElement("field"));
+		BooleanField result = new BooleanField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -137,7 +137,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain FixedField}
 	 */
 	public final FixedField addFixedField(String value) throws XMLException {
-		FixedField result = new FixedField(new DefaultElement("field"));
+		FixedField result = new FixedField(ElementFactory.create("field"));
 		result.setFieldValue(value);
 		addField(result);
 		return result;
@@ -163,7 +163,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain HiddenField}
 	 */
 	public final HiddenField addHiddenField(String var, String value) throws XMLException {
-		HiddenField result = new HiddenField(new DefaultElement("field"));
+		HiddenField result = new HiddenField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -180,7 +180,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain JidMultiField}
 	 */
 	public final JidMultiField addJidMultiField(String var, JID... value) throws XMLException {
-		JidMultiField result = new JidMultiField(new DefaultElement("field"));
+		JidMultiField result = new JidMultiField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -197,7 +197,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain JidSingleField}
 	 */
 	public final JidSingleField addJidSingleField(String var, JID value) throws XMLException {
-		JidSingleField result = new JidSingleField(new DefaultElement("field"));
+		JidSingleField result = new JidSingleField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -214,7 +214,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain ListMultiField}
 	 */
 	public final ListMultiField addListMultiField(String var, String... value) throws XMLException {
-		ListMultiField result = new ListMultiField(new DefaultElement("field"));
+		ListMultiField result = new ListMultiField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -231,7 +231,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain ListSingleField}
 	 */
 	public final ListSingleField addListSingleField(String var, String value) throws XMLException {
-		ListSingleField result = new ListSingleField(new DefaultElement("field"));
+		ListSingleField result = new ListSingleField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -248,7 +248,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain TextMultiField}
 	 */
 	public final TextMultiField addTextMultiField(String var, String... value) throws XMLException {
-		TextMultiField result = new TextMultiField(new DefaultElement("field"));
+		TextMultiField result = new TextMultiField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -265,7 +265,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@link TextPrivateField}
 	 */
 	public final TextPrivateField addTextPrivateField(String var, String value) throws XMLException {
-		TextPrivateField result = new TextPrivateField(new DefaultElement("field"));
+		TextPrivateField result = new TextPrivateField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -282,7 +282,7 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain TextSingleField}
 	 */
 	public final TextSingleField addTextSingleField(String var, String value) throws XMLException {
-		TextSingleField result = new TextSingleField(new DefaultElement("field"));
+		TextSingleField result = new TextSingleField(ElementFactory.create("field"));
 		result.setVar(var);
 		result.setFieldValue(value);
 		addField(result);
@@ -297,10 +297,9 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return &lt;x xmlns='jabber:x:data'/&gt; {@linkplain Element XML Element}
 	 *         with form
 	 */
-	public Element createSubmitableElement(final XDataType type) throws XMLException {
-		DefaultElement e = DefaultElement.create(this, -1);
+	public Element createSubmitableElement(final XDataType type) throws JaxmppException {
+		Element e = ElementFactory.create(this);
 		e.setAttribute("type", type.name());
-
 		return e;
 	}
 

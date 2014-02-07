@@ -373,6 +373,7 @@ public class WebSocketConnector implements Connector {
 		}
 
 		socket.close();
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 
 	private void terminateStream() throws JaxmppException {

@@ -29,8 +29,8 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -119,7 +119,7 @@ public class SessionEstablishmentModule implements XmppModule {
 		iq.setXMLNS("jabber:client");
 		iq.setType(StanzaType.set);
 
-		Element bind = new DefaultElement("session", null, "urn:ietf:params:xml:ns:xmpp-session");
+		Element bind = ElementFactory.create("session", null, "urn:ietf:params:xml:ns:xmpp-session");
 		iq.addChild(bind);
 
 		context.getWriter().write(iq, new AsyncCallback() {

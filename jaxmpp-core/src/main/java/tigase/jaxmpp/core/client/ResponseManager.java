@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,6 +32,9 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
+/**
+ * Class for manage responses for IQ {@code type='get'} stanzas.
+ */
 public class ResponseManager {
 
 	protected static final class Entry {
@@ -58,9 +61,8 @@ public class ResponseManager {
 
 	public static final String RESPONSE_MANAGER_KEY = "ResponseManager#RESPONSE_MANAGER";
 
-	public static Runnable getResponseHandler(SessionObject sessionObject, Element element, PacketWriter writer)
-			throws JaxmppException {
-		return getResponseManager(sessionObject).getResponseHandler(element, writer, sessionObject);
+	public static Runnable getResponseHandler(Context context, Element element) throws JaxmppException {
+		return getResponseManager(context.getSessionObject()).getResponseHandler(element, context);
 	}
 
 	public static final ResponseManager getResponseManager(SessionObject sessionObject) {
@@ -80,6 +82,10 @@ public class ResponseManager {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
+	/**
+	 * Checks if any requested IQ stanza waits for answer longer than declared
+	 * timeout.
+	 */
 	public void checkTimeouts() throws JaxmppException {
 		long now = (new Date()).getTime();
 		Iterator<java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry>> it = this.getHandlers().entrySet().iterator();
@@ -109,8 +115,7 @@ public class ResponseManager {
 	 * @return Runnable object with handler
 	 * @throws XMLException
 	 */
-	public Runnable getResponseHandler(final Element element, PacketWriter writer, SessionObject sessionObject)
-			throws JaxmppException {
+	public Runnable getResponseHandler(final Element element, Context context) throws JaxmppException {
 		if (!Stanza.canBeConverted(element))
 			return null;
 
@@ -121,12 +126,12 @@ public class ResponseManager {
 		if (entry == null)
 			return null;
 
-		if (!verify(element, entry, sessionObject))
+		if (!verify(element, entry, context.getSessionObject()))
 			return null;
 
 		this.getHandlers().remove(id);
 
-		AbstractStanzaHandler r = new AbstractStanzaHandler(element, writer, sessionObject) {
+		AbstractStanzaHandler r = new AbstractStanzaHandler(element, context) {
 
 			@Override
 			protected void process() throws JaxmppException {

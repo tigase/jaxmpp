@@ -18,14 +18,11 @@
 package tigase.jaxmpp.j2se.filetransfer;
 
 import java.net.Socket;
-import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5BytestreamsConnectionManager;
-import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
-import tigase.jaxmpp.j2se.connection.ConnectionManager;
-import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -33,28 +30,44 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
+import tigase.jaxmpp.j2se.connection.ConnectionManager;
+import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5BytestreamsConnectionManager;
+import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5ConnectionManager;
 
 /**
- *
+ * 
  * @author andrzej
  */
-public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
-		implements ConnectionManager.ConnectionEstablishedHandler, FileTransferModule.FileTransferRequestHandler {
+public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract implements
+		ConnectionManager.ConnectionEstablishedHandler, FileTransferModule.FileTransferRequestHandler {
 
 	private static final Logger log = Logger.getLogger(Socks5FileTransferNegotiator.class.getCanonicalName());
 	private final String BASE = "session-";
-	private final String STREAM_METHOD = BASE + "stream-method";
-	private final String PACKET_ID = BASE + "initiation-packet-id";
 	private final Socks5BytestreamsConnectionManager connectionManager = new Socks5BytestreamsConnectionManager();
+	private final String PACKET_ID = BASE + "initiation-packet-id";
+	private final String STREAM_METHOD = BASE + "stream-method";
 
 	@Override
-	public void setContext(Context context) {
-		super.setContext(context);
-		connectionManager.setContext(context);
-		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, connectionManager, this);
+	public void acceptFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft)
+			throws JaxmppException {
+		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
+		if (ftModule != null) {
+			String packetId = ft.getData(PACKET_ID);
+			String streamMethod = ft.getData(STREAM_METHOD);
+			if (packetId == null) {
+				fireOnFailure(ft, null);
+			} else if (streamMethod == null) {
+				ftModule.rejectStreamInitiation(ft, packetId);
+			} else {
+				connectionManager.register(jaxmpp, ft);
+				ftModule.acceptStreamInitiation(ft, packetId, streamMethod);
+			}
+		}
 	}
 
 	@Override
@@ -79,7 +92,56 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 	}
 
 	@Override
-	public void sendFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) throws JaxmppException {
+	public void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
+			throws JaxmppException {
+		FileTransfer ft = (FileTransfer) connectionSession;
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "got ft incoming = {0} with packet id = {1}",
+					new Object[] { ft.isIncoming(), ft.getData(Socks5ConnectionManager.PACKET_ID) });
+		}
+		// if it is incoming file transfer we need to notify peer about used
+		// streamhost
+		if (ft.isIncoming() && ft.getData(Socks5ConnectionManager.PACKET_ID) != null) {
+			connectionManager.sendStreamhostUsed(ft, (String) ft.getData(Socks5ConnectionManager.PACKET_ID));
+		}
+		// fire notification that connection is established
+		if (socket != null) {
+			fireOnSuccess(ft);
+		}
+	}
+
+	@Override
+	public void onFileTransferRequest(SessionObject sessionObject,
+			tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id, List<String> streamMethods) {
+		FileTransfer ft = new FileTransfer(fts.getSessionObject(), fts.getPeer(), fts.getSid());
+		ft.setFileInfo(fts.getFilename(), fts.getFileSize(), fts.getFileModification(), fts.getFileMimeType());
+		ft.setData(PACKET_ID, id);
+		ft.setData(STREAM_METHOD, streamMethods.get(0));
+		fireOnRequest(sessionObject, ft);
+	}
+
+	@Override
+	public void registerListeners(JaxmppCore jaxmpp) {
+		jaxmpp.getModule(FileTransferModule.class).addFileTransferRequestHandler(this);
+	}
+
+	@Override
+	public void rejectFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft)
+			throws JaxmppException {
+		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
+		if (ftModule != null) {
+			String packetId = ft.getData(PACKET_ID);
+			if (packetId == null) {
+				fireOnFailure(ft, null);
+			} else {
+				ftModule.rejectStreamInitiation(ft, packetId);
+			}
+		}
+	}
+
+	@Override
+	public void sendFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft)
+			throws JaxmppException {
 		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
 		if (ftModule != null) {
 			connectionManager.initConnection(jaxmpp, ft, new ConnectionManager.InitializedCallback() {
@@ -92,7 +154,8 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 					}
 				}
 			});
-			//ftModule.sendStreamInitiationOffer(ft, new String[] { FileTransferModule.XMLNS_BS });
+			// ftModule.sendStreamInitiationOffer(ft, new String[] {
+			// FileTransferModule.XMLNS_BS });
 			return;
 		}
 
@@ -102,91 +165,40 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 	public void sendFile2(final JaxmppCore jaxmpp, final FileTransfer ft) throws JaxmppException {
 		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
 		if (ftModule != null) {
-			ftModule.sendStreamInitiationOffer(ft, new String[]{Socks5BytestreamsModule.XMLNS_BS}, new StreamInitiationOfferAsyncCallback() {
-				@Override
-				public void onAccept(String sid) {
-					try {
-						connectionManager.connectTcp(jaxmpp, ft);
-					} catch (JaxmppException ex) {
-						fireOnFailure(ft, ex);
-					}
-				}
+			ftModule.sendStreamInitiationOffer(ft, new String[] { Socks5BytestreamsModule.XMLNS_BS },
+					new StreamInitiationOfferAsyncCallback() {
+						@Override
+						public void onAccept(String sid) {
+							try {
+								connectionManager.connectTcp(jaxmpp, ft);
+							} catch (JaxmppException ex) {
+								fireOnFailure(ft, ex);
+							}
+						}
 
-				@Override
-				public void onError() {
-					fireOnFailure(ft, null);
-				}
+						@Override
+						public void onError() {
+							fireOnFailure(ft, null);
+						}
 
-				@Override
-				public void onReject() {
-					fireOnReject(ft);
-				}
-			});
+						@Override
+						public void onReject() {
+							fireOnReject(ft);
+						}
+					});
 		}
 	}
 
 	@Override
-	public void acceptFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) throws JaxmppException {
-		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
-		if (ftModule != null) {
-			String packetId = ft.getData(PACKET_ID);
-			String streamMethod = ft.getData(STREAM_METHOD);
-			if (packetId == null) {
-				fireOnFailure(ft, null);
-			} else if (streamMethod == null) {
-				ftModule.rejectStreamInitiation(ft, packetId);
-			} else {
-				connectionManager.register(jaxmpp, ft);
-				ftModule.acceptStreamInitiation(ft, packetId, streamMethod);
-			}
-		}
-	}
-
-	@Override
-	public void rejectFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) throws JaxmppException {
-		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
-		if (ftModule != null) {
-			String packetId = ft.getData(PACKET_ID);
-			if (packetId == null) {
-				fireOnFailure(ft, null);
-			} else {
-				ftModule.rejectStreamInitiation(ft, packetId);
-			}
-		}
-	}
-
-	@Override
-	public void registerListeners(JaxmppCore jaxmpp) {
-		jaxmpp.getModule(FileTransferModule.class).addFileTransferRequestHandler(this);
+	public void setContext(Context context) {
+		super.setContext(context);
+		connectionManager.setContext(context);
+		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
+				connectionManager, this);
 	}
 
 	@Override
 	public void unregisterListeners(JaxmppCore jaxmpp) {
 		jaxmpp.getModule(FileTransferModule.class).removeFileTransferRequestHandler(this);
-	}
-
-	@Override
-	public void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket) throws JaxmppException {
-		FileTransfer ft = (FileTransfer) connectionSession;
-		if (log.isLoggable(Level.FINEST)) {
-			log.log(Level.FINEST, "got ft incoming = {0} with packet id = {1}", new Object[]{ft.isIncoming(), ft.getData(Socks5BytestreamsConnectionManager.PACKET_ID)});
-		}
-		// if it is incoming file transfer we need to notify peer about used streamhost
-		if (ft.isIncoming() && ft.getData(Socks5BytestreamsConnectionManager.PACKET_ID) != null) {
-			connectionManager.sendStreamhostUsed(ft, (String) ft.getData(Socks5BytestreamsConnectionManager.PACKET_ID));
-		}
-		// fire notification that connection is established
-		if (socket != null) {
-			fireOnSuccess(ft);
-		}
-	}
-
-	@Override
-	public void onFileTransferRequest(SessionObject sessionObject, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id, List<String> streamMethods) {
-		FileTransfer ft = new FileTransfer(fts.getSessionObject(), fts.getPeer(), fts.getSid());
-		ft.setFileInfo(fts.getFilename(), fts.getFileSize(), fts.getFileModification(), fts.getFileMimeType());
-		ft.setData(PACKET_ID, id);
-		ft.setData(STREAM_METHOD, streamMethods.get(0));
-		fireOnRequest(sessionObject, ft);
 	}
 }

@@ -36,8 +36,8 @@ import tigase.jaxmpp.core.client.criteria.Or;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMechanism;
@@ -313,7 +313,7 @@ public class SaslModule implements XmppModule {
 		context.getSessionObject().setProperty(Scope.stream, SASL_MECHANISM, saslM);
 
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
-		Element auth = new DefaultElement("auth");
+		Element auth = ElementFactory.create("auth");
 		auth.setAttribute("xmlns", "urn:ietf:params:xml:ns:xmpp-sasl");
 		auth.setAttribute("mechanism", mechanism.name());
 		auth.setValue(mechanism.evaluateChallenge(null, context.getSessionObject()));
@@ -344,7 +344,7 @@ public class SaslModule implements XmppModule {
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
 		String v = element.getValue();
 		String r = mechanism.evaluateChallenge(v, context.getSessionObject());
-		Element auth = new DefaultElement("response", r, "urn:ietf:params:xml:ns:xmpp-sasl");
+		Element auth = ElementFactory.create("response", r, "urn:ietf:params:xml:ns:xmpp-sasl");
 		context.getWriter().write(auth);
 	}
 
