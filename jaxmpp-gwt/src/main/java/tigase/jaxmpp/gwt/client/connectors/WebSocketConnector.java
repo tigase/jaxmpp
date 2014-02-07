@@ -39,6 +39,7 @@ import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xml.client.XMLParser;
+import java.util.ArrayList;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler.SeeOtherHostEvent;
 
@@ -189,19 +190,8 @@ public class WebSocketConnector implements Connector {
 	protected void onError(Element response, Throwable ex) {		
 		try {
 			if (response != null) {
-				Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
-				if (seeOtherHost != null) {
-					String seeHost = seeOtherHost.getValue();
-					if (log.isLoggable(Level.FINE)) {
-						log.fine("Received see-other-host=" + seeHost);
-					}
-					MutableBoolean handled = new MutableBoolean();
-					WebSocketConnector.this.context.getEventBus().fire(
-							new SeeOtherHostEvent(WebSocketConnector.this.context.getSessionObject(), seeHost, handled));
-					if (handled.isValue()) {
-						return;
-					}
-				}
+				if (handleSeeOtherHost(response)) 
+					return;
 			}
 			stop();
 			fireOnError(null, ex, WebSocketConnector.this.context.getSessionObject());
@@ -210,6 +200,25 @@ public class WebSocketConnector implements Connector {
 		}
 	}
 
+	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
+		if (response == null) 
+			return false;
+
+		Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
+		if (seeOtherHost != null) {
+			String seeHost = seeOtherHost.getValue();
+			if (log.isLoggable(Level.FINE)) {
+				log.fine("Received see-other-host=" + seeHost);
+			}
+			MutableBoolean handled = new MutableBoolean();
+			context.getEventBus().fire(
+					new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+
+			return false;
+		}
+		return false;
+	}		
+	
 	private void parseSocketData(String x) throws JaxmppException {
 		// ignore keep alive "whitespace"
 		if (x == null || x.length() == 1) {
@@ -217,19 +226,21 @@ public class WebSocketConnector implements Connector {
 			if (x.length() == 0)
 				return;
 		}
+		
+		log.warning("received = " + x);
 
 		// workarounds for xml parsers implemented in browsers
-		if (x.endsWith("</stream:stream>")) {
+		if (x.endsWith("</stream:stream>") && !x.startsWith("<stream:stream ")) {
 			x = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' >" + x;
 		}
 		// workarounds for xml parsers implemented in browsers
 		else if (x.startsWith("<stream:")) {
 			// unclosed xml tags causes error!!
-			if (x.startsWith("<stream:stream ")) {
+			if (x.startsWith("<stream:stream ") && !x.contains("</stream:stream>")) {
 				x += "</stream:stream>";
 			}
 			// xml namespace must be declared!!
-			else {
+			else if (!x.contains("xmlns:stream")) {
 				int spaceIdx = x.indexOf(" ");
 				int closeIdx = x.indexOf(">");
 				int idx = spaceIdx < closeIdx ? spaceIdx : closeIdx;
@@ -238,25 +249,32 @@ public class WebSocketConnector implements Connector {
 		}
 
 		Element response = new GwtElement(XMLParser.parse(x).getDocumentElement());
+		List<Element> received = null;
 		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName())) {
-			List<Element> children = response.getChildren();
-			if (children != null) {
-				for (Element child : children) {
-					if ("parsererror".equals(child.getName())) {
-						continue;
-					}
+			received = response.getChildren();
+		}
+		else {
+			received = new ArrayList<Element>();
+			received.add(response);
+		}
 
+		if (received != null) {
+			for (Element child : received) {
+				if ("parsererror".equals(child.getName())) {
+					continue;
+				}
+
+				if (("error".equals(child.getName()) && child.getXMLNS() != null
+						&& child.getXMLNS().equals("http://etherx.jabber.org/streams"))
+						|| "stream:error".equals(child.getName())) {
+					onError(child, null);
+				} else {
 					fireOnStanzaReceived(child, context.getSessionObject());
 				}
 			}
-			return;
 		}
-		if ("error".equals(response.getName()) && response.getXMLNS() != null
-				&& response.getXMLNS().equals("http://etherx.jabber.org/streams")) {
-			onError(response, null);
-		} else {
-			fireOnStanzaReceived(response, context.getSessionObject());
-		}
+		
+		
 	}
 
 	@Override

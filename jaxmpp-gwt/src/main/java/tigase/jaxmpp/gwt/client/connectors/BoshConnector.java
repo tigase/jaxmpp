@@ -29,6 +29,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
+import java.util.List;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
 
@@ -78,6 +79,7 @@ public class BoshConnector extends AbstractBoshConnector {
 		return super.prepareBody(payload);
 	}
 
+	@Override
 	protected void onResponse(BoshRequest request, int responseCode, String responseData, Element response) throws JaxmppException {
 		if (response != null && this.host != null) {
 			String host = response.getAttribute(HOST_ATTR);
@@ -147,7 +149,28 @@ public class BoshConnector extends AbstractBoshConnector {
 	@Override
 	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught) throws JaxmppException {
 		if (response != null) {
-			Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
+			if (handleSeeOtherHost(response)) 
+				return;
+		}
+		super.onError(request, responseCode, responseData, response, caught);
+	}
+	
+	@Override
+	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response) throws JaxmppException {
+		if (handleSeeOtherHost(response)) 
+			return;
+		super.onTerminate(request, responseCode, responseData, response); 
+	}
+	
+	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
+		if (response == null) 
+			return false;
+		
+		List<Element> streamErrors = response.getChildren("stream:error");
+		if (streamErrors == null || streamErrors.isEmpty())
+			return false;
+		for (Element streamError : streamErrors) {
+			Element seeOtherHost = streamError.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
 			if (seeOtherHost != null) {
 				String seeHost = seeOtherHost.getValue();
 				if (log.isLoggable(Level.FINE)) {
@@ -156,12 +179,10 @@ public class BoshConnector extends AbstractBoshConnector {
 				MutableBoolean handled = new MutableBoolean();
 				context.getEventBus().fire(
 						new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
-				if (handled.isValue()) {
-					return;
-				}
+
+				return handled.isValue();
 			}
 		}
-		super.onError(request, responseCode, responseData, response, caught);
+		return false;
 	}
-	
 }

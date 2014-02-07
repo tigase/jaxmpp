@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.gwt.client;
 
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,6 +27,7 @@ import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
@@ -40,6 +43,8 @@ import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
 public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandler, ContextAware {
 
 	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
+
+	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 	
 	private Jaxmpp jaxmpp;
 	private Context context;
@@ -55,10 +60,6 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		context.getEventBus().addHandler(StateChangedHandler.StateChangedEvent.class, this);
 		context.getEventBus().addHandler(SeeOtherHostHandler.SeeOtherHostEvent.class, this);
 	}
-	
-//	public void setJaxmpp(Jaxmpp jaxmpp) {
-//		this.jaxmpp = jaxmpp;
-//	}
 	
 	public boolean initialize(Jaxmpp jaxmpp_) throws JaxmppException {
 		if (this.jaxmpp == null) {
@@ -100,11 +101,13 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 			return;
 		
 		String boshUrl = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
-		log.log(Level.INFO, "connector changed state " + oldState + " -> " + newState + " for = " + boshUrl);
+		if (log.isLoggable(Level.FINEST)) {
+			log.log(Level.FINEST, "connector changed state " + oldState + " -> " + newState + " for = " + boshUrl);
+		}
 
 		if (newState == Connector.State.disconnecting) {
 			if (oldState == Connector.State.connecting) {
-				log.log(Level.WARNING, "Disconnected before connecing");
+				log.log(Level.FINEST, "Disconnected before connecing");
 				Timer timer = new Timer() {
 					@Override
 					public void run() {
@@ -122,14 +125,23 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 
 
 	@Override
-	public void onSeeOtherHost(String seeHost, MutableBoolean handled) {
+	public void onSeeOtherHost(final String seeHost, MutableBoolean handled) {
 		handled.setValue(true);
-		connectionFailure(seeHost, false);
+		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
+		Timer timer = new Timer() {
+			@Override
+			public void run() {
+				log.log(Level.SEVERE, "reconnecting");
+				connectionFailure(seeHost, true);
+			}
+		};
+		timer.schedule(10);
 	}	
-	
+
 	public void connectionFailure(String seeHost, boolean hostFailure) {
+		String boshUrl = context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
+
 		if (hostFailure) {
-			String boshUrl = context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
 			resolver.hostFailure(boshUrl);
 		}
 
@@ -140,6 +152,24 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 				domain = userJid.getDomain();
 			}
 		}
+		
+		if (!resolver.isEnabled()) {
+			if (seeHost == null) {
+				// no webbased DNS resolver set and no see other host so we have
+				// no other option but we need to fail
+				webDnsCallback.onUrlFailed();
+			}
+			else {
+				MatchResult result = URL_PARSER.exec(boshUrl);
+				String newBoshUrl = result.getGroup(1) + "://" + seeHost
+						+ (result.getGroup(3) != null ? result.getGroup(3) : "")
+						+ result.getGroup(4);
+
+				webDnsCallback.onUrlResolved(domain, newBoshUrl);
+			}
+			return;
+		}
+		
 		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
 	}
 

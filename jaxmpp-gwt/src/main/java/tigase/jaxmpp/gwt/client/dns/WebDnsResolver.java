@@ -57,9 +57,10 @@ public class WebDnsResolver implements ContextAware {
 	}
 	
 	public void getHostForDomain(final String domain, String hostname, final DomainResolutionCallback hostResolutionCallback) {
-		
+	
 		if (dnsResult != null && dnsResult.getDomain().equals(domain) && dnsResult.hasMore()) {
 			selectHost(domain, hostname, hostResolutionCallback);
+			return;
 		}
 		
 		resolveDomain(domain, new com.google.gwt.user.client.rpc.AsyncCallback<DnsResult>() {
