@@ -37,6 +37,8 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.Property;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -45,10 +47,15 @@ import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
+import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
+import tigase.jaxmpp.j2se.J2SECapabiliesCache;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
@@ -60,7 +67,7 @@ import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
  */
 public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler,
 		FileTransferNegotiator.NegotiationRejectHandler, FileTransferNegotiator.NegotiationRequestHandler,
-		ConnectionManager.ConnectionEstablishedHandler {
+		ConnectionManager.ConnectionEstablishedHandler, Property {
 
 	public interface FileTransferFailureHandler extends EventHandler {
 
@@ -174,6 +181,26 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 				});
 	}
 
+	public static void initialize(JaxmppCore jaxmpp, boolean experimental) {
+		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
+		if (capsModule != null && capsModule.getCache() == null) {
+			capsModule.setCache(new J2SECapabiliesCache());
+		}
+
+		FileTransferManager fileTransferManager = new FileTransferManager();
+		fileTransferManager.setContext(jaxmpp.getContext());
+		fileTransferManager.setJaxmpp(jaxmpp);
+
+		jaxmpp.getModulesManager().register(new FileTransferModule(jaxmpp.getContext()));
+		jaxmpp.getModulesManager().register(new Socks5BytestreamsModule(jaxmpp.getContext()));
+
+		if (experimental) {
+			jaxmpp.getModulesManager().register(new JingleModule(jaxmpp.getContext()));
+			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+		}
+		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	}
+	
 	protected static String getCapsNode(Presence presence) throws XMLException {
 		if (presence == null) {
 			return null;
@@ -194,7 +221,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 
 	protected Context context = null;
 
-	private Jaxmpp jaxmpp = null;
+	private JaxmppCore jaxmpp = null;
 	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
 
 	public void acceptFile(FileTransfer ft) throws JaxmppException {
@@ -225,6 +252,11 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		return UUID.randomUUID().toString();
 	}
 
+	@Override
+	public Class<FileTransferManager> getPropertyClass() {
+		return FileTransferManager.class;
+	}
+	
 	@Override
 	public void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
 			throws JaxmppException {
@@ -345,8 +377,9 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 				FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent.class, this);
 	}
 
-	public void setJaxmpp(Jaxmpp jaxmpp) {
+	public void setJaxmpp(JaxmppCore jaxmpp) {
 		this.jaxmpp = jaxmpp;
+		jaxmpp.set(this);
 
 		DiscoveryModule discoveryModule = jaxmpp.getModule(DiscoveryModule.class);
 		if (discoveryModule != null) {

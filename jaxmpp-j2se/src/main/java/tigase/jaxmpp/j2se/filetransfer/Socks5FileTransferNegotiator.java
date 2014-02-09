@@ -32,6 +32,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamInitiationOfferAsyncCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -77,7 +78,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public boolean isSupported(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) {
-		Presence p = jaxmpp.getPresence().getPresence(ft.getPeer());
+		Presence p = PresenceModule.getPresenceStore(jaxmpp.getSessionObject()).getPresence(ft.getPeer());
 		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
 		CapabilitiesCache capsCache = capsModule.getCache();
 
@@ -166,7 +167,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
 		if (ftModule != null) {
 			ftModule.sendStreamInitiationOffer(ft, new String[] { Socks5BytestreamsModule.XMLNS_BS },
-					new StreamInitiationOfferAsyncCallback() {
+					new StreamInitiationOfferAsyncCallback(ft.getSid()) {
 						@Override
 						public void onAccept(String sid) {
 							try {

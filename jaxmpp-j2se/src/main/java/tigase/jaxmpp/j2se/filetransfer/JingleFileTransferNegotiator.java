@@ -42,8 +42,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Transport;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
@@ -116,7 +117,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public boolean isSupported(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft) {
-		Presence p = jaxmpp.getPresence().getPresence(ft.getPeer());
+		Presence p = PresenceModule.getPresenceStore(jaxmpp.getSessionObject()).getPresence(ft.getPeer());
 		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
 		CapabilitiesCache capsCache = capsModule.getCache();
 

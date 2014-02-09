@@ -86,14 +86,16 @@ public class CapabilitiesModule implements XmppModule {
 
 	private final DiscoveryModule discoveryModule;
 
-	private final XmppModulesManager modulesManager;
+//	private final XmppModulesManager modulesManager;
 
 	private final NodeDetailsCallback nodeDetailsCallback;
 
-	public CapabilitiesModule(Context context, DiscoveryModule discoveryModule, PresenceModule presenceModule,
-			XmppModulesManager modulesManager) {
+	public CapabilitiesModule(Context context) throws JaxmppException {
 		this.context = context;
-		this.discoveryModule = discoveryModule;
+		this.discoveryModule = context.getModuleProvider().getModule(DiscoveryModule.class);
+		if (this.discoveryModule == null) {
+			throw new JaxmppException("Required module: DiscoveryModule not available.");
+		}
 
 		final BeforePresenceSendHandler beforePresenceSendHandler = new BeforePresenceSendHandler() {
 
@@ -121,13 +123,13 @@ public class CapabilitiesModule implements XmppModule {
 		};
 		nodeDetailsCallback = new DiscoveryModule.DefaultNodeDetailsCallback(discoveryModule);
 
+		PresenceModule presenceModule = context.getModuleProvider().getModule(PresenceModule.class);
+		
 		presenceModule.addBeforePresenceSendHandler(beforePresenceSendHandler);
 		presenceModule.addContactAvailableHandler(contactAvailableHandler);
 		presenceModule.addContactChangedPresenceHandler(contactChangedPresenceHandler);
 
 		discoveryModule.setNodeCallback("", nodeDetailsCallback);
-
-		this.modulesManager = modulesManager;
 
 	}
 
@@ -140,7 +142,7 @@ public class CapabilitiesModule implements XmppModule {
 		String identity = category + "/" + type + "//" + nme + " " + v;
 
 		String ver = generateVerificationString(new String[] { identity },
-				this.modulesManager.getAvailableFeatures().toArray(new String[] {}));
+				context.getModuleProvider().getAvailableFeatures().toArray(new String[] {}));
 
 		String oldVer = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
 		if (oldVer != null && !oldVer.equals(ver)) {

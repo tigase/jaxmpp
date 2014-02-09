@@ -40,7 +40,7 @@ import tigase.jaxmpp.gwt.client.xml.GwtElement;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xml.client.XMLParser;
 import java.util.ArrayList;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler.SeeOtherHostEvent;
 
 /**

@@ -39,9 +39,20 @@
 
 	<modules>
 		<module>jaxmpp-core</module>
+		<module>jaxmpp-registration</module>
+		<module>jaxmpp-roster</module>
+		<module>jaxmpp-presence</module>
+		<module>jaxmpp-chat</module>
+		<module>jaxmpp-muc</module>
+		<module>jaxmpp-pubsub</module>
+		<module>jaxmpp-adhoc</module>
+		<module>jaxmpp-filetransfer</module>
+		<module>jaxmpp-socks5</module>
+		<module>jaxmpp-vcard</module>
+		<module>jaxmpp-xep0136</module>
 		<module>jaxmpp-j2se</module>
 		<module>jaxmpp-gwt</module>
-    <module>jaxmpp-android</module>
+		<module>jaxmpp-android</module>
   </modules>
 
 <scm>

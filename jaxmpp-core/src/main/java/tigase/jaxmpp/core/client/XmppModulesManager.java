@@ -28,13 +28,14 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 
 /**
  * XMPP Modules Manager. This manager finds correct module to handle given
  * incoming stanza.
  */
-public class XmppModulesManager {
+public class XmppModulesManager implements ModuleProvider {
 
 	private Context context;
 
@@ -74,6 +75,7 @@ public class XmppModulesManager {
 	 * 
 	 * @return Set of features.
 	 */
+	@Override
 	public Set<String> getAvailableFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		for (XmppModule plugin : this.modules) {

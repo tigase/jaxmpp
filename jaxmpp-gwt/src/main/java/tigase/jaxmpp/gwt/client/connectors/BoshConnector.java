@@ -31,7 +31,7 @@ import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import java.util.List;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 
 public class BoshConnector extends AbstractBoshConnector {
 

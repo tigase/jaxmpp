@@ -20,6 +20,18 @@
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-presence</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-roster</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
 		<!-- GWT deps (from central repo) -->
 		<dependency>
 			<groupId>com.google.gwt</groupId>

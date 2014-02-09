@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.eventbus.EventBus;
+import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 
 /**
  * Interface for information about XMPP connection context. It provides access
@@ -46,4 +47,11 @@ public interface Context {
 	 */
 	PacketWriter getWriter();
 
+	
+	/**
+	 * Returns {@link ModuleProvider}
+	 * 
+	 * @return {@link ModuleProvider} instance.
+	 */
+	ModuleProvider getModuleProvider();
 }

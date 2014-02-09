@@ -7,6 +7,7 @@ import org.junit.Before;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 
 public abstract class AbstractJaxmppTest extends TestCase {
 
@@ -24,6 +25,11 @@ public abstract class AbstractJaxmppTest extends TestCase {
 				return eventBus;
 			}
 
+			@Override
+			public ModuleProvider getModuleProvider() {
+				return null;
+			}
+			
 			@Override
 			public SessionObject getSessionObject() {
 				return sessionObject;

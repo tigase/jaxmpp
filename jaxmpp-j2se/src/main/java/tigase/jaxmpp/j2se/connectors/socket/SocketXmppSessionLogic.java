@@ -43,8 +43,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthFailedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler;
 
@@ -138,7 +136,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			@Override
 			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-				SocketXmppSessionLogic.this.processResourceBindEvent(bindedJid);
+				SocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
 			}
 		};
 
@@ -147,14 +145,14 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			@Override
 			public void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException {
 				// FIXME
-				sessionBindedAndEstablished();
+				sessionBindedAndEstablished(sessionObject);
 			}
 		};
 		this.sessionEstablishmentSuccessHandler = new SessionEstablishmentSuccessHandler() {
 
 			@Override
 			public void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException {
-				sessionBindedAndEstablished();
+				sessionBindedAndEstablished(sessionObject);
 			}
 		};
 
@@ -200,11 +198,11 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			sessionListener.onException(e);
 	}
 
-	protected void processResourceBindEvent(JID bindedJid) throws JaxmppException {
+	protected void processResourceBindEvent(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
 		if (SessionEstablishmentModule.isSessionEstablishingAvailable(context.getSessionObject())) {
 			modulesManager.getModule(SessionEstablishmentModule.class).establish();
 		} else
-			sessionBindedAndEstablished();
+			sessionBindedAndEstablished(sessionObject);
 	}
 
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
@@ -238,23 +236,15 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
-	private void sessionBindedAndEstablished() throws JaxmppException {
+	private void sessionBindedAndEstablished(SessionObject sessionObject) throws JaxmppException {
 		try {
 			DiscoveryModule discoInfo = this.modulesManager.getModule(DiscoveryModule.class);
 			if (discoInfo != null) {
 				discoInfo.discoverServerFeatures(null);
 			}
 
-			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
-			if (roster != null) {
-				roster.rosterRequest();
-			}
-
-			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
-			if (presence != null) {
-				presence.sendInitialPresence();
-			}
-
+			context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
+			
 			if (StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())) {
 				if (context.getSessionObject().getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
 						|| !((Boolean) context.getSessionObject().getProperty(

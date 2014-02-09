@@ -36,7 +36,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Candidate;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleTransportInfoHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Transport;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
 import tigase.jaxmpp.j2se.connection.ConnectionSessionHandler;

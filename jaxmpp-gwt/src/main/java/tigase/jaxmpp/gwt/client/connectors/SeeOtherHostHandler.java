@@ -20,7 +20,7 @@ package tigase.jaxmpp.gwt.client.connectors;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 
 /**
  *

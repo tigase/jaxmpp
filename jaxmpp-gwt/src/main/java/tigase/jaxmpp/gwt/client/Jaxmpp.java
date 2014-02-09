@@ -40,9 +40,6 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
@@ -204,11 +201,11 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void init() {
-		if (PresenceModule.getPresenceStore(sessionObject) == null)
-			PresenceModule.setPresenceStore(sessionObject, new GWTPresenceStore());
+//		if (PresenceModule.getPresenceStore(sessionObject) == null)
+//			PresenceModule.setPresenceStore(sessionObject, new GWTPresenceStore());
 
-		if (RosterModule.getRosterStore(sessionObject) == null)
-			RosterModule.setRosterStore(sessionObject, new RosterStore());
+//		if (RosterModule.getRosterStore(sessionObject) == null)
+//			RosterModule.setRosterStore(sessionObject, new RosterStore());
 
 		if (ResponseManager.getResponseManager(sessionObject) == null)
 			ResponseManager.setResponseManager(sessionObject, new ResponseManager());

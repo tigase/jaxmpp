@@ -31,7 +31,7 @@ import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
-import tigase.jaxmpp.core.client.xmpp.modules.jingle.MutableBoolean;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler;
 import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;

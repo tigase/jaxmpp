@@ -27,8 +27,8 @@ import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.EventListener;
 import tigase.jaxmpp.core.client.eventbus.MultiEventBus;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
+//import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
+//import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 /**
@@ -37,28 +37,28 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
  */
 public class MultiJaxmpp {
 
-	private final ArrayList<Chat> chats = new ArrayList<Chat>();
+//	private final ArrayList<Chat> chats = new ArrayList<Chat>();
 
 	private final MultiEventBus eventBus = new MultiEventBus();
 
 	private final HashMap<BareJID, JaxmppCore> jaxmpps = new HashMap<BareJID, JaxmppCore>();
 
 	public MultiJaxmpp() {
-		eventBus.addHandler(MessageModule.ChatCreatedHandler.ChatCreatedEvent.class, new MessageModule.ChatCreatedHandler() {
-
-			@Override
-			public void onChatCreated(SessionObject sessionObject, Chat chat, Message message) {
-				chats.add(chat);
-			}
-		});
-
-		eventBus.addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, new MessageModule.ChatClosedHandler() {
-
-			@Override
-			public void onChatClosed(SessionObject sessionObject, Chat chat) {
-				chats.remove(chat);
-			}
-		});
+//		eventBus.addHandler(MessageModule.ChatCreatedHandler.ChatCreatedEvent.class, new MessageModule.ChatCreatedHandler() {
+//
+//			@Override
+//			public void onChatCreated(SessionObject sessionObject, Chat chat, Message message) {
+//				chats.add(chat);
+//			}
+//		});
+//
+//		eventBus.addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, new MessageModule.ChatClosedHandler() {
+//
+//			@Override
+//			public void onChatClosed(SessionObject sessionObject, Chat chat) {
+//				chats.remove(chat);
+//			}
+//		});
 	}
 
 	/**
@@ -71,7 +71,7 @@ public class MultiJaxmpp {
 		synchronized (jaxmpps) {
 			eventBus.addEventBus(jaxmpp.getEventBus());
 			jaxmpps.put(jaxmpp.getSessionObject().getUserBareJid(), jaxmpp);
-			this.chats.addAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
+//			this.chats.addAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
 		}
 	}
 
@@ -150,15 +150,15 @@ public class MultiJaxmpp {
 		return get(sessionObject.getUserBareJid());
 	}
 
-	/**
-	 * Returns collection of all known {@linkplain Chat} from all registered
-	 * {@linkplain JaxmppCore}.
-	 * 
-	 * @return collection of chats
-	 */
-	public List<Chat> getChats() {
-		return Collections.unmodifiableList(chats);
-	}
+//	/**
+//	 * Returns collection of all known {@linkplain Chat} from all registered
+//	 * {@linkplain JaxmppCore}.
+//	 * 
+//	 * @return collection of chats
+//	 */
+//	public List<Chat> getChats() {
+//		return Collections.unmodifiableList(chats);
+//	}
 
 	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
@@ -191,7 +191,7 @@ public class MultiJaxmpp {
 	 */
 	public <T extends JaxmppCore> void remove(final T jaxmpp) {
 		synchronized (jaxmpps) {
-			this.chats.removeAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
+//			this.chats.removeAll(jaxmpp.getModule(MessageModule.class).getChatManager().getChats());
 			eventBus.removeEventBus(jaxmpp.getEventBus());
 			jaxmpps.remove(jaxmpp.getSessionObject().getUserBareJid());
 		}

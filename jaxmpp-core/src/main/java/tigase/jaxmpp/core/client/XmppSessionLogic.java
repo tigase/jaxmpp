@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.core.client;
 
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 /**
@@ -24,6 +26,25 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  */
 public interface XmppSessionLogic {
 
+	public static interface XmppSessionEstablishedHandler extends EventHandler {
+		
+		public static class XmppSessionEstablishedEvent extends JaxmppEvent<XmppSessionEstablishedHandler> {
+			
+			public XmppSessionEstablishedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+			
+			@Override
+			protected void dispatch(XmppSessionEstablishedHandler handler) throws Exception {
+				handler.onXmppSessionEstablished(sessionObject);
+			}
+			
+		}
+		
+		void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException;
+		
+	}
+	
 	/**
 	 * Interface for session listener.
 	 * 

@@ -38,8 +38,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthFailedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
-import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 
 public class BoshXmppSessionLogic implements XmppSessionLogic {
 
@@ -51,6 +49,8 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	private final Connector connector;
 
+	private final Context context;
+	
 	private StreamFeaturesModule featuresModule;
 
 	private final XmppModulesManager modulesManager;
@@ -66,6 +66,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	private final StreamFeaturesReceivedHandler streamFeaturesReceivedHandler;
 
 	public BoshXmppSessionLogic(Context context, Connector connector, XmppModulesManager modulesManager) {
+		this.context = context;
 		this.connector = connector;
 		this.modulesManager = modulesManager;
 
@@ -138,15 +139,8 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 				discovery.discoverServerFeatures(null);
 			}
 
-			RosterModule roster = this.modulesManager.getModule(RosterModule.class);
-			if (roster != null) {
-				roster.rosterRequest();
-			}
-
-			PresenceModule presence = this.modulesManager.getModule(PresenceModule.class);
-			if (presence != null) {
-				presence.sendInitialPresence();
-			}
+			context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
+			
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
