@@ -47,6 +47,7 @@
 		<module>jaxmpp-pubsub</module>
 		<module>jaxmpp-adhoc</module>
 		<module>jaxmpp-filetransfer</module>
+		<module>jaxmpp-jingle</module>
 		<module>jaxmpp-socks5</module>
 		<module>jaxmpp-vcard</module>
 		<module>jaxmpp-xep0136</module>
