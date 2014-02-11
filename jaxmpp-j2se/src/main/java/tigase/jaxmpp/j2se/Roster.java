@@ -22,11 +22,11 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 /**
- *
+ * 
  * @author andrzej
  */
 public class Roster {
-	
+
 	public static void initialize(Jaxmpp jaxmpp) throws JaxmppException {
 		RosterStore rosterStore = RosterModule.getRosterStore(jaxmpp.getSessionObject());
 		if (rosterStore == null) {
@@ -34,8 +34,8 @@ public class Roster {
 			RosterModule.setRosterStore(jaxmpp.getSessionObject(), rosterStore);
 		}
 		jaxmpp.set(rosterStore);
-		
-		jaxmpp.getModulesManager().register(new RosterModule(jaxmpp.getContext()));
+
+		jaxmpp.getModulesManager().register(new RosterModule());
 	}
-	
+
 }

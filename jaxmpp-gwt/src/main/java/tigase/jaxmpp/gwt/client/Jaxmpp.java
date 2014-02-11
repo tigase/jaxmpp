@@ -56,7 +56,7 @@ import com.google.gwt.user.client.Cookies;
 public class Jaxmpp extends JaxmppCore {
 
 	private final static String COOKIE_RID_KEY = "jaxmpp-rid";
-	
+
 	private final ConnectionManager connectionManager = new ConnectionManager();
 
 	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();;
@@ -201,11 +201,12 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void init() {
-//		if (PresenceModule.getPresenceStore(sessionObject) == null)
-//			PresenceModule.setPresenceStore(sessionObject, new GWTPresenceStore());
+		// if (PresenceModule.getPresenceStore(sessionObject) == null)
+		// PresenceModule.setPresenceStore(sessionObject, new
+		// GWTPresenceStore());
 
-//		if (RosterModule.getRosterStore(sessionObject) == null)
-//			RosterModule.setRosterStore(sessionObject, new RosterStore());
+		// if (RosterModule.getRosterStore(sessionObject) == null)
+		// RosterModule.setRosterStore(sessionObject, new RosterStore());
 
 		if (ResponseManager.getResponseManager(sessionObject) == null)
 			ResponseManager.setResponseManager(sessionObject, new ResponseManager());
@@ -213,7 +214,7 @@ public class Jaxmpp extends JaxmppCore {
 		super.init();
 
 		connectionManager.setContext(context);
-		
+
 		this.timeoutChecker = new RepeatingCommand() {
 
 			@Override
@@ -264,8 +265,10 @@ public class Jaxmpp extends JaxmppCore {
 	public void login() throws JaxmppException {
 		login(null);
 	}
-	
+
 	protected void login(String boshUrl) throws JaxmppException {
+		this.modulesManager.initIfRequired();
+
 		if (this.isConnected()) {
 			this.connector.stop(true);
 		}
@@ -274,17 +277,16 @@ public class Jaxmpp extends JaxmppCore {
 		this.sessionObject.clear();
 
 		if (boshUrl != null) {
-			this.sessionObject.setProperty(BoshConnector.BOSH_SERVICE_URL_KEY, boshUrl);
+			this.sessionObject.setProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, boshUrl);
 		}
-		
+
 		if (!connectionManager.initialize(this)) {
 			// we will login asynchronously as we need to do DNS resolution
 			// and so on, so we exit now
 			return;
 		}
-		
-		
-		intLogin();		
+
+		intLogin();
 	}
 
 	@Override

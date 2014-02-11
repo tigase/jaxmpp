@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class XmppModulesManager implements ModuleProvider {
 
 	private Context context;
 
-	private boolean initialized = false;
+	private final Set<XmppModule> initializationRequired = new HashSet<XmppModule>();
 
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
 
@@ -96,14 +97,17 @@ public class XmppModulesManager implements ModuleProvider {
 	 *            module class
 	 * @return module implementation
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
 		return (T) this.modulesByClasses.get(moduleClass);
 	}
 
-	public void init() {
-		this.initialized = true;
-		for (XmppModule mod : this.modules) {
+	public void initIfRequired() {
+		Iterator<XmppModule> it = this.initializationRequired.iterator();
+		while (it.hasNext()) {
+			XmppModule mod = it.next();
+			it.remove();
 			if (mod instanceof InitializingModule) {
 				((InitializingModule) mod).afterRegister();
 			}
@@ -138,9 +142,7 @@ public class XmppModulesManager implements ModuleProvider {
 		this.modulesByClasses.put((Class<XmppModule>) plugin.getClass(), plugin);
 		this.modules.add(plugin);
 
-		if (initialized && plugin instanceof InitializingModule) {
-			((InitializingModule) plugin).afterRegister();
-		}
+		initializationRequired.add(plugin);
 
 		return plugin;
 	}
@@ -159,6 +161,7 @@ public class XmppModulesManager implements ModuleProvider {
 			((InitializingModule) plugin).beforeUnregister();
 		}
 		this.modules.remove(plugin);
+		initializationRequired.remove(plugin);
 		return (T) this.modulesByClasses.remove(plugin.getClass());
 	}
 

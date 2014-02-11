@@ -37,10 +37,10 @@ public class Presence {
 			PresenceModule.setPresenceStore(jaxmpp.getSessionObject(), presenceStore);
 		}
 		jaxmpp.set(presenceStore);
-		
+
 		// registering presence modules
-		jaxmpp.getModulesManager().register(new PresenceModule(jaxmpp.getContext()));		
-		jaxmpp.getModulesManager().register(new CapabilitiesModule(jaxmpp.getContext()));
+		jaxmpp.getModulesManager().register(new PresenceModule());
+		jaxmpp.getModulesManager().register(new CapabilitiesModule());
 	}
-	
+
 }

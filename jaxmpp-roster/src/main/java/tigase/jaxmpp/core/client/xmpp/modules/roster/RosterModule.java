@@ -43,6 +43,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
@@ -57,7 +58,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 /**
  * Module for roster manipulation.
  */
-public class RosterModule extends AbstractIQModule implements InitializingModule, XmppSessionEstablishedHandler {
+public class RosterModule extends AbstractIQModule implements ContextAware, InitializingModule, XmppSessionEstablishedHandler {
 
 	public static enum Action {
 		askCancelled,
@@ -239,45 +240,10 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		sessionObject.setProperty(Scope.user, ROSTER_STORE_KEY, rosterStore);
 	}
 
-	private final RosterCacheProvider versionProvider;
+	private RosterCacheProvider versionProvider;
 
-	public RosterModule(Context context) {
-		super(context);
-		getRosterStore().setHandler(new RosterStore.Handler() {
-
-			@Override
-			public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
-					throws XMLException, JaxmppException {
-				RosterModule.this.add(jid, name, groups, asyncCallback);
-			}
-
-			@Override
-			public void cleared() {
-				RosterModule.this.onRosterCleared();
-			}
-
-			@Override
-			public void remove(BareJID jid) throws XMLException, JaxmppException {
-				RosterModule.this.remove(jid);
-			}
-
-			@Override
-			public void update(RosterItem item) throws XMLException, JaxmppException {
-				RosterModule.this.update(item);
-			}
-		});
-		context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
-				new AbstractSessionObject.ClearedHandler() {
-
-					@Override
-					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
-						if (scopes.contains(Scope.session)) {
-							getRosterStore().clear();
-						}
-					}
-				});
-		this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
-		context.getEventBus().addHandler(XmppSessionEstablishedHandler.XmppSessionEstablishedEvent.class, this);
+	public RosterModule() {
+		super();
 	}
 
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
@@ -316,8 +282,50 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 	@Override
 	public void beforeRegister() {
-		// TODO Auto-generated method stub
+		if (context == null)
+			throw new RuntimeException("Context cannot be null!");
 
+		RosterStore rosterStore = RosterModule.getRosterStore(context.getSessionObject());
+		if (rosterStore == null) {
+			rosterStore = new RosterStore();
+			RosterModule.setRosterStore(context.getSessionObject(), rosterStore);
+		}
+
+		getRosterStore().setHandler(new RosterStore.Handler() {
+
+			@Override
+			public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
+					throws XMLException, JaxmppException {
+				RosterModule.this.add(jid, name, groups, asyncCallback);
+			}
+
+			@Override
+			public void cleared() {
+				RosterModule.this.onRosterCleared();
+			}
+
+			@Override
+			public void remove(BareJID jid) throws XMLException, JaxmppException {
+				RosterModule.this.remove(jid);
+			}
+
+			@Override
+			public void update(RosterItem item) throws XMLException, JaxmppException {
+				RosterModule.this.update(item);
+			}
+		});
+		context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
+				new AbstractSessionObject.ClearedHandler() {
+
+					@Override
+					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+						if (scopes.contains(Scope.session)) {
+							getRosterStore().clear();
+						}
+					}
+				});
+		this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
+		context.getEventBus().addHandler(XmppSessionEstablishedHandler.XmppSessionEstablishedEvent.class, this);
 	}
 
 	@Override
@@ -371,13 +379,13 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 		}
 	}
 
+	protected void onRosterCleared() {
+		loadFromCache();
+	}
+
 	@Override
 	public void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException {
 		rosterRequest();
-	}
-	
-	protected void onRosterCleared() {
-		loadFromCache();
 	}
 
 	@Override
@@ -533,6 +541,11 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 
 			}
 		});
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	protected void update(RosterItem item) throws XMLException, JaxmppException {

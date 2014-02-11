@@ -38,7 +38,7 @@ public class Presence {
 		jaxmpp.set(presenceStore);
 		
 		// registering presence modules
-		jaxmpp.getModulesManager().register(new PresenceModule(jaxmpp.getContext()));		
+		jaxmpp.getModulesManager().register(new PresenceModule());		
 	}
 	
 }

@@ -34,9 +34,13 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public abstract class AbstractIQModule implements XmppModule {
 
-	protected final Context context;
+	protected Context context;
 
 	protected final Logger log;
+
+	public AbstractIQModule() {
+		log = Logger.getLogger(this.getClass().getName());
+	}
 
 	public AbstractIQModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());

@@ -140,8 +140,8 @@ public abstract class JaxmppCore {
 	protected XmppModulesManager modulesManager;
 
 	protected Processor processor;
-	
-	protected Map<Class<Property>,Property> properties = new HashMap<Class<Property>,Property>();
+
+	protected Map<Class<Property>, Property> properties = new HashMap<Class<Property>, Property>();
 
 	protected XmppSessionLogic sessionLogic;
 
@@ -188,9 +188,10 @@ public abstract class JaxmppCore {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
-//	public Chat createChat(JID jid) throws JaxmppException {
-//		return (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
-//	}
+	// public Chat createChat(JID jid) throws JaxmppException {
+	// return
+	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	// }
 
 	protected EventBus createEventBus() {
 		return new DefaultEventBus();
@@ -212,7 +213,7 @@ public abstract class JaxmppCore {
 	public <T extends Property> T get(Class<T> property) {
 		return (T) properties.get(property);
 	}
-	
+
 	/**
 	 * Returns configurator.
 	 * 
@@ -270,14 +271,14 @@ public abstract class JaxmppCore {
 		return modulesManager;
 	}
 
-//	/**
-//	 * Returns {@link PresenceStore}.
-//	 * 
-//	 * @return {@link PresenceStore}.
-//	 */
-//	public PresenceStore getPresence() {
-//		return PresenceModule.getPresenceStore(sessionObject);
-//	}
+	// /**
+	// * Returns {@link PresenceStore}.
+	// *
+	// * @return {@link PresenceStore}.
+	// */
+	// public PresenceStore getPresence() {
+	// return PresenceModule.getPresenceStore(sessionObject);
+	// }
 
 	/**
 	 * Returns {@link UserProperties}.
@@ -288,14 +289,14 @@ public abstract class JaxmppCore {
 		return sessionObject;
 	}
 
-//	/**
-//	 * Returns {@link RosterStore}.
-//	 * 
-//	 * @return {@link RosterStore}.
-//	 */
-//	public RosterStore getRoster() {
-//		return RosterModule.getRosterStore(sessionObject);
-//	}
+	// /**
+	// * Returns {@link RosterStore}.
+	// *
+	// * @return {@link RosterStore}.
+	// */
+	// public RosterStore getRoster() {
+	// return RosterModule.getRosterStore(sessionObject);
+	// }
 
 	/**
 	 * Returns {@link SessionObject}.
@@ -315,18 +316,18 @@ public abstract class JaxmppCore {
 			throw new RuntimeException("PacketWriter cannot be null!");
 		if (ResponseManager.getResponseManager(sessionObject) == null)
 			throw new RuntimeException("ResponseManager cannot be null!");
-//		if (RosterModule.getRosterStore(sessionObject) == null)
-//			throw new RuntimeException("RosterModule cannot be null!");
-//		if (PresenceModule.getPresenceStore(sessionObject) == null)
-//			throw new RuntimeException("PresenceModule cannot be null!");
+		// if (RosterModule.getRosterStore(sessionObject) == null)
+		// throw new RuntimeException("RosterModule cannot be null!");
+		// if (PresenceModule.getPresenceStore(sessionObject) == null)
+		// throw new RuntimeException("PresenceModule cannot be null!");
 
 		if (this.sessionObject instanceof EventBusAware) {
 			((EventBusAware) this.sessionObject).setEventBus(eventBus);
 		}
 
 		assert ResponseManager.getResponseManager(sessionObject) != null;
-//		assert RosterModule.getRosterStore(sessionObject) != null;
-//		assert PresenceModule.getPresenceStore(sessionObject) != null;
+		// assert RosterModule.getRosterStore(sessionObject) != null;
+		// assert PresenceModule.getPresenceStore(sessionObject) != null;
 
 		this.context = new Context() {
 
@@ -339,7 +340,7 @@ public abstract class JaxmppCore {
 			public ModuleProvider getModuleProvider() {
 				return JaxmppCore.this.modulesManager;
 			}
-			
+
 			@Override
 			public SessionObject getSessionObject() {
 				return JaxmppCore.this.sessionObject;
@@ -348,7 +349,7 @@ public abstract class JaxmppCore {
 			@Override
 			public PacketWriter getWriter() {
 				return JaxmppCore.this.writer;
-			}			
+			}
 		};
 
 		modulesManager = new XmppModulesManager(context);
@@ -448,14 +449,15 @@ public abstract class JaxmppCore {
 	protected void modulesInit() {
 		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, context));
 
-		final AuthModule authModule = this.modulesManager.register(new AuthModule(context, this.modulesManager));
+		this.modulesManager.register(new AuthModule(context, this.modulesManager));
 
-//		MessageModule messageModule = new MessageModule(context);
-//
-//		this.modulesManager.register(new MessageCarbonsModule(context, messageModule));
-//		this.modulesManager.register(messageModule);
+		// MessageModule messageModule = new MessageModule(context);
+		//
+		// this.modulesManager.register(new MessageCarbonsModule(context,
+		// messageModule));
+		// this.modulesManager.register(messageModule);
 
-		final DiscoveryModule discoveryModule = this.modulesManager.register(new DiscoveryModule(context, modulesManager));
+		this.modulesManager.register(new DiscoveryModule(context, modulesManager));
 
 		this.modulesManager.register(new SoftwareVersionModule(context));
 		this.modulesManager.register(new PingModule(context));
@@ -468,7 +470,6 @@ public abstract class JaxmppCore {
 
 		this.modulesManager.register(new SessionEstablishmentModule(context));
 
-		this.modulesManager.init();
 	}
 
 	protected void onConnectorStopped() {
@@ -560,18 +561,20 @@ public abstract class JaxmppCore {
 	public <T extends Property> T set(T property) {
 		return (T) this.properties.put((Class<Property>) property.getPropertyClass(), property);
 	}
-//	/**
-//	 * Sends Message stanza to recipient.
-//	 * 
-//	 * @param toJID
-//	 *            recipient.
-//	 * @param subject
-//	 *            subject of Message.
-//	 * @param message
-//	 *            content of Message.
-//	 */
-//	public void sendMessage(JID toJID, String subject, String message) throws JaxmppException {
-//		(this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID, subject, message);
-//	}
+	// /**
+	// * Sends Message stanza to recipient.
+	// *
+	// * @param toJID
+	// * recipient.
+	// * @param subject
+	// * subject of Message.
+	// * @param message
+	// * content of Message.
+	// */
+	// public void sendMessage(JID toJID, String subject, String message) throws
+	// JaxmppException {
+	// (this.modulesManager.getModule(MessageModule.class)).sendMessage(toJID,
+	// subject, message);
+	// }
 
 }

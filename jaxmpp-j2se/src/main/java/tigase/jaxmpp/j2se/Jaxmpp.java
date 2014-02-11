@@ -83,7 +83,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	private Executor executor;
 
-//	private FileTransferManager fileTransferManager;
+	// private FileTransferManager fileTransferManager;
 
 	private TimerTask loginTimeoutTask;
 
@@ -168,17 +168,18 @@ public class Jaxmpp extends JaxmppCore {
 		return executor;
 	}
 
-//	public FileTransferManager getFileTransferManager() {
-//		return fileTransferManager;
-//	}
+	// public FileTransferManager getFileTransferManager() {
+	// return fileTransferManager;
+	// }
 
 	@Override
 	protected void init() {
-//		if (PresenceModule.getPresenceStore(sessionObject) == null)
-//			PresenceModule.setPresenceStore(sessionObject, new J2SEPresenceStore());
+		// if (PresenceModule.getPresenceStore(sessionObject) == null)
+		// PresenceModule.setPresenceStore(sessionObject, new
+		// J2SEPresenceStore());
 
-//		if (RosterModule.getRosterStore(sessionObject) == null)
-//			RosterModule.setRosterStore(sessionObject, new RosterStore());
+		// if (RosterModule.getRosterStore(sessionObject) == null)
+		// RosterModule.setRosterStore(sessionObject, new RosterStore());
 
 		if (ResponseManager.getResponseManager(sessionObject) == null)
 			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
@@ -206,25 +207,26 @@ public class Jaxmpp extends JaxmppCore {
 		modulesInit();
 	}
 
-//	public void initFileTransferManager(boolean experimental) throws JaxmppException {
-//		CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-//		if (capsModule != null && capsModule.getCache() == null) {
-//			capsModule.setCache(new J2SECapabiliesCache());
-//		}
-//
-//		fileTransferManager = new FileTransferManager();
-//		fileTransferManager.setContext(getContext());
-//		fileTransferManager.setJaxmpp(this);
-//
-//		getModulesManager().register(new FileTransferModule(getContext()));
-//		getModulesManager().register(new Socks5BytestreamsModule(getContext()));
-//
-//		if (experimental) {
-//			getModulesManager().register(new JingleModule(getContext()));
-//			fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-//		}
-//		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-//	}
+	// public void initFileTransferManager(boolean experimental) throws
+	// JaxmppException {
+	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+	// if (capsModule != null && capsModule.getCache() == null) {
+	// capsModule.setCache(new J2SECapabiliesCache());
+	// }
+	//
+	// fileTransferManager = new FileTransferManager();
+	// fileTransferManager.setContext(getContext());
+	// fileTransferManager.setJaxmpp(this);
+	//
+	// getModulesManager().register(new FileTransferModule(getContext()));
+	// getModulesManager().register(new Socks5BytestreamsModule(getContext()));
+	//
+	// if (experimental) {
+	// getModulesManager().register(new JingleModule(getContext()));
+	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+	// }
+	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	// }
 
 	// public FileTransferManager getFileTransferManager() {
 	// return fileTransferManager;
@@ -266,6 +268,8 @@ public class Jaxmpp extends JaxmppCore {
 	 *            whole connecting process will be done in this method.
 	 */
 	public void login(boolean sync) throws JaxmppException {
+		this.modulesManager.initIfRequired();
+
 		this.sessionObject.clear(Scope.stream);
 
 		if (this.sessionLogic != null) {

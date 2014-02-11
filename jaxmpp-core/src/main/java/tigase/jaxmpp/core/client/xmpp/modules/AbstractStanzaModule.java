@@ -31,16 +31,20 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule {
+public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule, InitializingModule {
 
 	protected static Element getFirstChild(Element element, String elementName) throws XMLException {
 		List<Element> elements = element.getChildren(elementName);
 		return elements == null || elements.size() == 0 ? null : elements.get(0);
 	}
 
-	protected final Context context;
+	protected Context context;
 
 	protected final Logger log;
+
+	public AbstractStanzaModule() {
+		log = Logger.getLogger(this.getClass().getName());
+	}
 
 	public AbstractStanzaModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
@@ -53,6 +57,20 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 
 	public <H extends EventHandler> void addListener(EventListener listener) {
 		context.getEventBus().addListener(listener);
+	}
+
+	@Override
+	public void afterRegister() {
+	}
+
+	@Override
+	public void beforeRegister() {
+		if (context == null)
+			throw new RuntimeException("Context cannot be null");
+	}
+
+	@Override
+	public void beforeUnregister() {
 	}
 
 	protected void fireEvent(Event<?> event) {

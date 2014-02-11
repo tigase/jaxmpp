@@ -29,12 +29,13 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
-import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.DiscoInfoAsyncCallback;
@@ -48,7 +49,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public class CapabilitiesModule implements XmppModule {
+public class CapabilitiesModule implements XmppModule, ContextAware, InitializingModule {
 
 	private final static String ALGORITHM = "SHA-1";
 
@@ -82,20 +83,33 @@ public class CapabilitiesModule implements XmppModule {
 
 	private CapabilitiesCache cache;
 
-	private final Context context;
+	private Context context;
 
-	private final DiscoveryModule discoveryModule;
+	private DiscoveryModule discoveryModule;
 
-//	private final XmppModulesManager modulesManager;
+	// private final XmppModulesManager modulesManager;
 
-	private final NodeDetailsCallback nodeDetailsCallback;
+	private NodeDetailsCallback nodeDetailsCallback;
 
-	public CapabilitiesModule(Context context) throws JaxmppException {
-		this.context = context;
+	public CapabilitiesModule() {
+	}
+
+	@Override
+	public void afterRegister() {
+	}
+
+	@Override
+	public void beforeRegister() {
+		if (context == null)
+			throw new RuntimeException("Context cannot be null");
+
 		this.discoveryModule = context.getModuleProvider().getModule(DiscoveryModule.class);
-		if (this.discoveryModule == null) {
-			throw new JaxmppException("Required module: DiscoveryModule not available.");
-		}
+		if (this.discoveryModule == null)
+			throw new RuntimeException("Required module: DiscoveryModule not available.");
+
+		PresenceModule presenceModule = context.getModuleProvider().getModule(PresenceModule.class);
+		if (presenceModule == null)
+			throw new RuntimeException("Required module: PresenceModule not available.");
 
 		final BeforePresenceSendHandler beforePresenceSendHandler = new BeforePresenceSendHandler() {
 
@@ -123,14 +137,16 @@ public class CapabilitiesModule implements XmppModule {
 		};
 		nodeDetailsCallback = new DiscoveryModule.DefaultNodeDetailsCallback(discoveryModule);
 
-		PresenceModule presenceModule = context.getModuleProvider().getModule(PresenceModule.class);
-		
 		presenceModule.addBeforePresenceSendHandler(beforePresenceSendHandler);
 		presenceModule.addContactAvailableHandler(contactAvailableHandler);
 		presenceModule.addContactChangedPresenceHandler(contactChangedPresenceHandler);
 
 		discoveryModule.setNodeCallback("", nodeDetailsCallback);
 
+	}
+
+	@Override
+	public void beforeUnregister() {
 	}
 
 	private String calculateVerificationString() {
@@ -248,11 +264,14 @@ public class CapabilitiesModule implements XmppModule {
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
-		// TODO Auto-generated method stub
-
 	}
 
 	public void setCache(CapabilitiesCache cache) {
 		this.cache = cache;
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 }
