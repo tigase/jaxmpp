@@ -42,6 +42,7 @@ import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xml.client.XMLParser;
+import java.util.ArrayList;
 
 /**
  * 
@@ -208,10 +209,10 @@ public class WebSocketConnector implements Connector {
 			send(" ");
 	}
 
-	protected void onError(Element elem, Throwable ex) {
+		protected void onError(Element elem, Throwable ex) {
 		try {
 			stop();
-			fireOnError(null, ex, WebSocketConnector.this.sessionObject);
+			fireOnError(elem, ex, WebSocketConnector.this.sessionObject);
 		} catch (JaxmppException ex1) {
 			log.log(Level.SEVERE, null, ex1);
 		}
@@ -226,17 +227,15 @@ public class WebSocketConnector implements Connector {
 		}
 
 		// workarounds for xml parsers implemented in browsers
-		if (x.endsWith("</stream:stream>")) {
+		if (x.endsWith("</stream:stream>") && !x.startsWith("<stream:stream ")) {
 			x = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' >" + x;
-		}
-		// workarounds for xml parsers implemented in browsers
+		} // workarounds for xml parsers implemented in browsers
 		else if (x.startsWith("<stream:")) {
 			// unclosed xml tags causes error!!
-			if (x.startsWith("<stream:stream ")) {
+			if (x.startsWith("<stream:stream ") && !x.contains("</stream:stream>")) {
 				x += "</stream:stream>";
-			}
-			// xml namespace must be declared!!
-			else {
+			} // xml namespace must be declared!!
+			else if (!x.contains("xmlns:stream")) {
 				int spaceIdx = x.indexOf(" ");
 				int closeIdx = x.indexOf(">");
 				int idx = spaceIdx < closeIdx ? spaceIdx : closeIdx;
@@ -245,24 +244,28 @@ public class WebSocketConnector implements Connector {
 		}
 
 		Element response = new GwtElement(XMLParser.parse(x).getDocumentElement());
+		List<Element> received = null;
 		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName())) {
-			List<Element> children = response.getChildren();
-			if (children != null) {
-				for (Element child : children) {
-					if ("parsererror".equals(child.getName())) {
-						continue;
-					}
+			received = response.getChildren();
+		} else {
+			received = new ArrayList<Element>();
+			received.add(response);
+		}
 
+		if (received != null) {
+			for (Element child : received) {
+				if ("parsererror".equals(child.getName())) {
+					continue;
+				}
+
+				if (("error".equals(child.getName()) && child.getXMLNS() != null
+						&& child.getXMLNS().equals("http://etherx.jabber.org/streams"))
+						|| "stream:error".equals(child.getName())) {
+					onError(child, null);
+				} else {
 					fireOnStanzaReceived(child, sessionObject);
 				}
 			}
-			return;
-		}
-		if ("error".equals(response.getName()) && response.getXMLNS() != null
-				&& response.getXMLNS().equals("http://etherx.jabber.org/streams")) {
-			onError(response, null);
-		} else {
-			fireOnStanzaReceived(response, sessionObject);
 		}
 	}
 
