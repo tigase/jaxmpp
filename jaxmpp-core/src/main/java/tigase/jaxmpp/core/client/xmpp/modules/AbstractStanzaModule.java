@@ -24,14 +24,12 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.eventbus.Event;
-import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule, InitializingModule {
+public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule, InitializingModule, ContextAware {
 
 	protected static Element getFirstChild(Element element, String elementName) throws XMLException {
 		List<Element> elements = element.getChildren(elementName);
@@ -49,14 +47,6 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	public AbstractStanzaModule(Context context) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.context = context;
-	}
-
-	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
-		context.getEventBus().addListener(type, listener);
-	}
-
-	public <H extends EventHandler> void addListener(EventListener listener) {
-		context.getEventBus().addListener(listener);
 	}
 
 	@Override
@@ -92,12 +82,9 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	 */
 	public abstract void process(T stanza) throws JaxmppException;
 
-	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
-		context.getEventBus().remove(type, handler);
-	}
-
-	public void remove(EventHandler handler) {
-		context.getEventBus().remove(handler);
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	protected void write(Element stanza) throws JaxmppException {

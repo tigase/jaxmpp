@@ -447,9 +447,9 @@ public abstract class JaxmppCore {
 	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
-		this.ackModule = this.modulesManager.register(new StreamManagementModule(this, context));
+		this.ackModule = this.modulesManager.register(new StreamManagementModule(this));
 
-		this.modulesManager.register(new AuthModule(context, this.modulesManager));
+		this.modulesManager.register(new AuthModule());
 
 		// MessageModule messageModule = new MessageModule(context);
 		//
@@ -457,18 +457,18 @@ public abstract class JaxmppCore {
 		// messageModule));
 		// this.modulesManager.register(messageModule);
 
-		this.modulesManager.register(new DiscoveryModule(context, modulesManager));
+		this.modulesManager.register(new DiscoveryModule());
 
-		this.modulesManager.register(new SoftwareVersionModule(context));
-		this.modulesManager.register(new PingModule(context));
-		this.modulesManager.register(new ResourceBinderModule(context));
+		this.modulesManager.register(new SoftwareVersionModule());
+		this.modulesManager.register(new PingModule());
+		this.modulesManager.register(new ResourceBinderModule());
 
-		this.modulesManager.register(new StreamFeaturesModule(context));
-		this.modulesManager.register(new SaslModule(context));
-		NonSaslAuthModule nonSasl = new NonSaslAuthModule(context);
+		this.modulesManager.register(new StreamFeaturesModule());
+		this.modulesManager.register(new SaslModule());
+		NonSaslAuthModule nonSasl = new NonSaslAuthModule();
 		this.modulesManager.register(nonSasl);
 
-		this.modulesManager.register(new SessionEstablishmentModule(context));
+		this.modulesManager.register(new SessionEstablishmentModule());
 
 	}
 

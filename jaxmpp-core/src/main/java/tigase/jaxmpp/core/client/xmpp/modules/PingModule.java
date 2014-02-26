@@ -20,7 +20,6 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.Date;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -66,8 +65,7 @@ public class PingModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "urn:xmpp:ping" };
 
-	public PingModule(Context context) {
-		super(context);
+	public PingModule() {
 	}
 
 	@Override

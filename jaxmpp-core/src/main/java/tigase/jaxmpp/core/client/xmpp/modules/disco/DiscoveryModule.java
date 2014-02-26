@@ -8,12 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.criteria.Or;
@@ -25,6 +23,7 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xml.XmlTools;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent;
@@ -45,7 +44,7 @@ public class DiscoveryModule extends AbstractIQModule {
 
 		@Override
 		public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) {
-			return discoveryModule.modulesManager.getAvailableFeatures().toArray(new String[] {});
+			return discoveryModule.moduleProvider.getAvailableFeatures().toArray(new String[] {});
 		}
 
 		@Override
@@ -236,14 +235,12 @@ public class DiscoveryModule extends AbstractIQModule {
 
 	private final String[] features;
 
-	private final XmppModulesManager modulesManager;
+	private ModuleProvider moduleProvider;
 
 	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new DefaultNodeDetailsCallback(this);
 
-	public DiscoveryModule(Context context, XmppModulesManager modulesManager) {
-		super(context);
+	public DiscoveryModule() {
 		setNodeCallback(null, NULL_NODE_DETAILS_CALLBACK);
-		this.modulesManager = modulesManager;
 		this.features = new String[] { INFO_XMLNS, ITEMS_XMLNS };
 		this.criteria = ElementCriteria.name("iq").add(
 				new Or(ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { ITEMS_XMLNS }),
@@ -252,6 +249,12 @@ public class DiscoveryModule extends AbstractIQModule {
 
 	public void addServerFeaturesReceivedHandler(ServerFeaturesReceivedHandler handler) {
 		context.getEventBus().addHandler(ServerFeaturesReceivedHandler.ServerFeaturesReceivedEvent.class, handler);
+	}
+
+	@Override
+	public void beforeRegister() {
+		super.beforeRegister();
+		this.moduleProvider = context.getModuleProvider();
 	}
 
 	public void discoverServerFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {

@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,6 +32,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
+import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtendableModule;
+import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtensionsChain;
 
 /**
  * XMPP Modules Manager. This manager finds correct module to handle given
@@ -79,13 +82,20 @@ public class XmppModulesManager implements ModuleProvider {
 	@Override
 	public Set<String> getAvailableFeatures() {
 		HashSet<String> result = new HashSet<String>();
-		for (XmppModule plugin : this.modules) {
-			final String[] fs = plugin.getFeatures();
+		for (XmppModule module : this.modules) {
+			final String[] fs = module.getFeatures();
 			if (fs != null) {
 				for (String string : fs) {
 					result.add(string);
 				}
 			}
+			if (module instanceof ExtendableModule) {
+				ExtensionsChain ec = ((ExtendableModule) module).getExtensionChain();
+				Collection<String> ef = ec == null ? null : ec.getFeatures();
+				if (ef != null)
+					result.addAll(ef);
+			}
+
 		}
 		return result;
 	}

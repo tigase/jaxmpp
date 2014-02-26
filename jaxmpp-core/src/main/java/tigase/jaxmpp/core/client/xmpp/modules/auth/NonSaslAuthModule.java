@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -122,8 +121,7 @@ public class NonSaslAuthModule extends AbstractIQModule {
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:auth" }));
 
-	public NonSaslAuthModule(Context context) {
-		super(context);
+	public NonSaslAuthModule() {
 	}
 
 	protected void fireAuthStart(IQ iq) throws JaxmppException {

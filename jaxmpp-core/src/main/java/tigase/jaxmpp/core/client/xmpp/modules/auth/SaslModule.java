@@ -39,6 +39,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.PlainMechanism;
@@ -47,7 +48,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.XOAuth2Mechani
 /**
  * Module for SASL authentication.
  */
-public class SaslModule implements XmppModule {
+public class SaslModule implements XmppModule, ContextAware {
 
 	public interface SaslAuthFailedHandler extends EventHandler {
 
@@ -211,7 +212,7 @@ public class SaslModule implements XmppModule {
 		return result;
 	}
 
-	private final Context context;
+	private Context context;
 
 	protected final Logger log;
 
@@ -219,8 +220,7 @@ public class SaslModule implements XmppModule {
 
 	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
 
-	public SaslModule(Context context) {
-		this.context = context;
+	public SaslModule() {
 		log = Logger.getLogger(this.getClass().getName());
 
 		this.mechanisms.put("ANONYMOUS", new AnonymousMechanism());
@@ -367,6 +367,11 @@ public class SaslModule implements XmppModule {
 		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
 		context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

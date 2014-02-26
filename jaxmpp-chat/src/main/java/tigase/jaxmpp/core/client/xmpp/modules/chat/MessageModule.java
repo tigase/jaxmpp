@@ -36,42 +36,6 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 /**
  * Module to handle messages.
- * 
- * <dl>
- * <dt><b>Events:</b></dt>
- * 
- * <dd><b>{@link MessageModule#ChatClosed ChatClosed}</b> : {@link MessageEvent
- * MessageEvent} ()<br>
- * <div>Fires when Chat object is destroyed (for example by calling method
- * {@linkplain MessageModule#close(Chat) close()})</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link MessageModule#ChatCreated ChatCreated}</b> :
- * {@link MessageEvent MessageEvent} ()<br>
- * <div>Fires when new Chat object is created. It will be called after receiving
- * new message from buddy and on execute
- * {@linkplain MessageModule#createChat(JID) createChat()}.</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link MessageModule#ChatUpdated ChatUpdated}</b> :
- * {@link MessageEvent MessageEvent} ()<br>
- * <div>Fires when some data in Chat object is changed. For example when JID is
- * changed (buddy changed resource) or threadid is setted.</div>
- * <ul>
- * </ul></dd>
- * 
- * <dd><b>{@link MessageModule#MessageReceived MessageReceived}</b> :
- * {@link MessageEvent MessageEvent} ()<br>
- * <div>Fires when message is received.</div>
- * <ul>
- * </ul></dd>
- * 
- * </dl>
- * 
- * @author bmalkow
- * 
  */
 public class MessageModule extends AbstractStanzaModule<Message> {
 

@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -25,6 +26,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 /**
@@ -126,7 +128,11 @@ public class Processor {
 					@Override
 					protected void process() throws XMLException, XMPPException, JaxmppException {
 						for (XmppModule module : modules) {
-							module.process(this.element);
+							Element e = this.element;
+							if (module instanceof ExtendableModule) {
+								e = ((ExtendableModule) module).getExtensionChain().executeAfterReceiveChain(e);
+							}
+							module.process(e);
 						}
 					}
 				};

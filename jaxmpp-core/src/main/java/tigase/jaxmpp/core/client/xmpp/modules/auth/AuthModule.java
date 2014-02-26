@@ -25,7 +25,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
-import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -34,6 +33,9 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
@@ -44,7 +46,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
  * authentication module to use. Currently it choose between
  * {@linkplain SaslModule} and {@linkplain NonSaslAuthModule}.
  */
-public class AuthModule implements XmppModule {
+public class AuthModule implements XmppModule, ContextAware, InitializingModule {
 
 	public interface AuthFailedHandler extends EventHandler {
 
@@ -149,16 +151,43 @@ public class AuthModule implements XmppModule {
 		return saslSupported || nonSaslSupported;
 	}
 
-	private final Context context;
+	private Context context;
 
 	private final Logger log;
 
-	private final XmppModulesManager moduleManager;
+	private ModuleProvider moduleManager;
 
-	public AuthModule(Context context, XmppModulesManager modulesManager) {
-		this.context = context;
-		this.moduleManager = modulesManager;
+	public AuthModule() {
 		this.log = Logger.getLogger(this.getClass().getName());
+	}
+
+	public void addAuthFailedHandler(AuthFailedHandler handler) {
+		context.getEventBus().addHandler(AuthFailedHandler.AuthFailedEvent.class, handler);
+	}
+
+	public void addAuthStartHandler(AuthStartHandler handler) {
+		context.getEventBus().addHandler(AuthStartHandler.AuthStartEvent.class, handler);
+	}
+
+	public void addAuthSuccessHandler(AuthSuccessHandler handler) {
+		context.getEventBus().addHandler(AuthSuccessHandler.AuthSuccessEvent.class, handler);
+	}
+
+	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
+		context.getEventBus().addListener(type, listener);
+	}
+
+	public <H extends EventHandler> void addListener(EventListener listener) {
+		context.getEventBus().addListener(listener);
+	}
+
+	@Override
+	public void afterRegister() {
+	}
+
+	@Override
+	public void beforeRegister() {
+		this.moduleManager = context.getModuleProvider();
 
 		context.getEventBus().addHandler(SaslModule.SaslAuthFailedHandler.SaslAuthFailedEvent.class,
 				new SaslModule.SaslAuthFailedHandler() {
@@ -225,24 +254,8 @@ public class AuthModule implements XmppModule {
 				});
 	}
 
-	public void addAuthFailedHandler(AuthFailedHandler handler) {
-		context.getEventBus().addHandler(AuthFailedHandler.AuthFailedEvent.class, handler);
-	}
-
-	public void addAuthStartHandler(AuthStartHandler handler) {
-		context.getEventBus().addHandler(AuthStartHandler.AuthStartEvent.class, handler);
-	}
-
-	public void addAuthSuccessHandler(AuthSuccessHandler handler) {
-		context.getEventBus().addHandler(AuthSuccessHandler.AuthSuccessEvent.class, handler);
-	}
-
-	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
-		context.getEventBus().addListener(type, listener);
-	}
-
-	public <H extends EventHandler> void addListener(EventListener listener) {
-		context.getEventBus().addListener(listener);
+	@Override
+	public void beforeUnregister() {
 	}
 
 	@Override
@@ -307,6 +320,11 @@ public class AuthModule implements XmppModule {
 
 	public void removeAuthSuccessHandler(AuthSuccessHandler handler) {
 		context.getEventBus().remove(AuthSuccessHandler.AuthSuccessEvent.class, handler);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

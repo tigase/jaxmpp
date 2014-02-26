@@ -162,10 +162,6 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		return registrationSupported;
 	}
 
-	public InBandRegistrationModule(Context context) {
-		super(context);
-	}
-
 	public void addNotSupportedErrorHandler(NotSupportedErrorHandler handler) {
 		context.getEventBus().addHandler(NotSupportedErrorHandler.NotSupportedErrorEvent.class, handler);
 	}

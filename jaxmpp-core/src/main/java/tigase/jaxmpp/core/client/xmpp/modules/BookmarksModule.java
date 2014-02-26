@@ -20,7 +20,6 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -62,8 +61,8 @@ public class BookmarksModule extends AbstractIQModule {
 
 	private static final String[] FEATURES = { BOOKMARKS_XMLNS };
 
-	public BookmarksModule(Context context) {
-		super(context);
+	public BookmarksModule() {
+		super();
 	}
 
 	@Override
@@ -135,4 +134,5 @@ public class BookmarksModule extends AbstractIQModule {
 
 		write(iq, callback);
 	}
+
 }

@@ -18,51 +18,26 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModule;
-import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public abstract class AbstractIQModule implements XmppModule {
-
-	protected Context context;
-
-	protected final Logger log;
-
-	public AbstractIQModule() {
-		log = Logger.getLogger(this.getClass().getName());
-	}
-
-	public AbstractIQModule(Context context) {
-		log = Logger.getLogger(this.getClass().getName());
-		this.context = context;
-	}
-
-	protected void fireEvent(Event<?> event) {
-		context.getEventBus().fire(event, this);
-	}
+public abstract class AbstractIQModule extends AbstractStanzaExtendableModule<IQ> {
 
 	@Override
-	public void process(Element $element) throws JaxmppException {
-		final Stanza stanza = Stanza.create($element);
+	public void process(IQ stanza) throws JaxmppException {
 		final StanzaType type = stanza.getType();
 
 		if (stanza instanceof IQ && type == StanzaType.set)
-			processSet((IQ) stanza);
+			processSet(stanza);
 		else if (stanza instanceof IQ && type == StanzaType.get)
-			processGet((IQ) stanza);
+			processGet(stanza);
 		else {
-			log.log(Level.WARNING, "Unhandled stanza " + $element.getName() + ", type=" + $element.getAttribute("type")
-					+ ", id=" + $element.getAttribute("id"));
+			log.log(Level.WARNING, "Unhandled stanza " + stanza.getName() + ", type=" + stanza.getAttribute("type") + ", id="
+					+ stanza.getAttribute("id"));
 			throw new XMPPException(ErrorCondition.bad_request);
 		}
 	}
@@ -82,17 +57,5 @@ public abstract class AbstractIQModule implements XmppModule {
 	 *            incoming XMPP stanza
 	 */
 	protected abstract void processSet(IQ element) throws JaxmppException;
-
-	protected void write(Element stanza) throws JaxmppException {
-		context.getWriter().write(stanza);
-	}
-
-	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, asyncCallback);
-	}
-
-	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-		context.getWriter().write(stanza, timeout, asyncCallback);
-	}
 
 }

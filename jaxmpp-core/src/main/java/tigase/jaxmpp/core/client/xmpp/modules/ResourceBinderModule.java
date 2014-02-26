@@ -41,7 +41,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  * Module for <a href='http://xmpp.org/rfcs/rfc6120.html#bind'>Resource
  * Binding</a>.
  */
-public class ResourceBinderModule implements XmppModule {
+public class ResourceBinderModule implements XmppModule, ContextAware {
 
 	/**
 	 * Event fires on binding error.
@@ -117,13 +117,12 @@ public class ResourceBinderModule implements XmppModule {
 		return sessionObject.getProperty(BINDED_RESOURCE_JID);
 	}
 
-	private final Context context;
+	private Context context;
 
 	protected final Logger log;
 
-	public ResourceBinderModule(Context context) {
+	public ResourceBinderModule() {
 		log = Logger.getLogger(this.getClass().getName());
-		this.context = context;
 	}
 
 	public void addResourceBindErrorHandler(ResourceBindErrorHandler handler) {
@@ -207,6 +206,11 @@ public class ResourceBinderModule implements XmppModule {
 
 	public void removeResourceBindSuccessHandler(ResourceBindSuccessHandler handler) {
 		context.getEventBus().remove(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, handler);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

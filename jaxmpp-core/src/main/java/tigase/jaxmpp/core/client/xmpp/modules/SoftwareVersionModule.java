@@ -20,7 +20,6 @@ package tigase.jaxmpp.core.client.xmpp.modules;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -103,8 +102,7 @@ public class SoftwareVersionModule extends AbstractIQModule {
 
 	private final String[] FEATURES = new String[] { "jabber:iq:version" };
 
-	public SoftwareVersionModule(Context context) {
-		super(context);
+	public SoftwareVersionModule() {
 	}
 
 	/**

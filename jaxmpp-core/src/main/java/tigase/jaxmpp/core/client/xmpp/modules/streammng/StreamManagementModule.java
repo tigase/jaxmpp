@@ -24,13 +24,14 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
+import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementEnabledHandler.StreamManagementEnabledEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler.UnacknowledgedEvent;
 
-public class StreamManagementModule implements XmppModule {
+public class StreamManagementModule implements XmppModule, ContextAware {
 
 	private static class MutableLong extends Number {
 
@@ -265,7 +266,7 @@ public class StreamManagementModule implements XmppModule {
 		sessionObject.setProperty(INCOMING_STREAM_H_KEY, null);
 	}
 
-	private final Context context;
+	private Context context;
 
 	private final Criteria crit = ElementCriteria.xmlns(XMLNS);
 
@@ -275,10 +276,9 @@ public class StreamManagementModule implements XmppModule {
 
 	private final LinkedList<Element> outgoingQueue = new LinkedList<Element>();
 
-	public StreamManagementModule(JaxmppCore jaxmpp, Context context) {
+	public StreamManagementModule(JaxmppCore jaxmpp) {
 		log = Logger.getLogger(this.getClass().getName());
 		this.jaxmpp = jaxmpp;
-		this.context = context;
 
 		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
 				new Connector.StanzaSendingHandler() {
@@ -562,6 +562,11 @@ public class StreamManagementModule implements XmppModule {
 		v.value = value == null ? 0 : value;
 		if (v.value < 0)
 			v.value = 0;
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

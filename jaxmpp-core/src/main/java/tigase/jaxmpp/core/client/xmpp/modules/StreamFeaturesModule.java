@@ -37,7 +37,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeature
  * 'http://xmpp.org/rfcs/rfc6120.html#streams-negotiation-features'>Stream
  * Features</a>.
  */
-public class StreamFeaturesModule implements XmppModule {
+public class StreamFeaturesModule implements XmppModule, ContextAware {
 
 	/**
 	 * Event fires when stream features are received.
@@ -84,12 +84,11 @@ public class StreamFeaturesModule implements XmppModule {
 		sessionObject.setProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY, element);
 	}
 
-	private final Context context;
+	private Context context;
 
 	protected final Logger log;
 
-	public StreamFeaturesModule(Context context) {
-		this.context = context;
+	public StreamFeaturesModule() {
 		log = Logger.getLogger(this.getClass().getName());
 	}
 
@@ -119,6 +118,11 @@ public class StreamFeaturesModule implements XmppModule {
 
 	public void removeStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
 		context.getEventBus().remove(StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent.class, handler);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

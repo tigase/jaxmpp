@@ -40,7 +40,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  * Module for <a href='http://xmpp.org/rfcs/rfc3921.html#session'>Session
  * Establishment</a>.
  */
-public class SessionEstablishmentModule implements XmppModule {
+public class SessionEstablishmentModule implements XmppModule, ContextAware {
 
 	public interface SessionEstablishmentErrorHandler extends EventHandler {
 
@@ -97,13 +97,12 @@ public class SessionEstablishmentModule implements XmppModule {
 		return features != null && features.getChildrenNS("session", "urn:ietf:params:xml:ns:xmpp-session") != null;
 	}
 
-	private final Context context;
+	private Context context;
 
 	protected final Logger log;
 
-	public SessionEstablishmentModule(Context context) {
+	public SessionEstablishmentModule() {
 		log = Logger.getLogger(this.getClass().getName());
-		this.context = context;
 	}
 
 	public void addSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
@@ -169,6 +168,11 @@ public class SessionEstablishmentModule implements XmppModule {
 
 	public void removeSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
 		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 }

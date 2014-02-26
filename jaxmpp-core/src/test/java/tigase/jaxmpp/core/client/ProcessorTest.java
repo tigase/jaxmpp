@@ -30,7 +30,7 @@ public class ProcessorTest extends AbstractJaxmppTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		XmppModulesManager xmppModulesManages = new XmppModulesManager(context);
-		xmppModulesManages.register(new PingModule(context));
+		xmppModulesManages.register(new PingModule());
 		this.processor = new Processor(xmppModulesManages, context);
 	}
 

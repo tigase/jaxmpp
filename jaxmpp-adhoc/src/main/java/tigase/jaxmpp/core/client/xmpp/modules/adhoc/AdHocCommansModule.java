@@ -24,13 +24,11 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -132,21 +130,23 @@ public class AdHocCommansModule extends AbstractIQModule {
 		return UIDGenerator.next() + UIDGenerator.next();
 	}
 
-	private final NodeDetailsCallback commandDiscoveryCallback;
+	private NodeDetailsCallback commandDiscoveryCallback;
 
 	private final Map<String, AdHocCommand> commands = new HashMap<String, AdHocCommand>();
 
-	private final DiscoveryModule discoveryModule;
+	private DiscoveryModule discoveryModule;
 
 	private final String[] FEATURES = { "http://jabber.org/protocol/commands" };
 
 	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
-	public AdHocCommansModule(Context context) throws JaxmppException {
-		super(context);
+	@Override
+	public void beforeRegister() {
+		super.beforeRegister();
+
 		this.discoveryModule = context.getModuleProvider().getModule(DiscoveryModule.class);
 		if (this.discoveryModule == null) {
-			throw new JaxmppException("Required module: DiscoveryModule not available.");
+			throw new RuntimeException("Required module: DiscoveryModule not available.");
 		}
 		this.commandDiscoveryCallback = new NodeDetailsCallback() {
 
@@ -257,7 +257,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 	public String[] getFeatures() {
 		return FEATURES;
 	}
-	
+
 	protected Identity getModuleIdentity(SessionObject sessionObject, IQ requestStanza, String node) {
 		Identity identity = new Identity();
 		identity.setCategory("automation");
