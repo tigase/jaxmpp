@@ -25,7 +25,6 @@ import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -491,8 +490,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	private final DateTimeFormat dtf;
 
-	public PubSubModule(Context context) {
-		super(context);
+	public PubSubModule() {
 		dtf = new DateTimeFormat();
 	}
 

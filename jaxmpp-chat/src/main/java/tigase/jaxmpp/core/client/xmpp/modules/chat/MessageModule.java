@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
 
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
@@ -189,10 +188,16 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	private final AbstractChatManager chatManager;
 
-	public MessageModule(Context context) {
-		super(context);
+	public MessageModule() {
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
+	}
+
+	@Override
+	public void beforeRegister() {
+		// TODO Auto-generated method stub
+		super.beforeRegister();
+
 		this.chatManager.setContext(context);
 		this.chatManager.initialize();
 	}

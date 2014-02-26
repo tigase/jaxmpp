@@ -25,7 +25,6 @@ import java.util.Set;
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
@@ -925,8 +924,28 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	private AbstractRoomsManager roomsManager;
 
-	public MucModule(Context context) {
-		super(context);
+	public MucModule() {
+
+		this.crit = new Criteria() {
+
+			@Override
+			public Criteria add(Criteria criteria) {
+				return null;
+			}
+
+			@Override
+			public boolean match(Element element) throws XMLException {
+				return checkElement(element);
+			}
+		};
+		dtf = new DateTimeFormat();
+
+	}
+
+	@Override
+	public void beforeRegister() {
+		super.beforeRegister();
+
 		context.getEventBus().addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
 				new Connector.StateChangedHandler() {
 
@@ -950,21 +969,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 						onSessionObjectCleared(sessionObject, scopes);
 					}
 				});
-
-		this.crit = new Criteria() {
-
-			@Override
-			public Criteria add(Criteria criteria) {
-				return null;
-			}
-
-			@Override
-			public boolean match(Element element) throws XMLException {
-				return checkElement(element);
-			}
-		};
-		dtf = new DateTimeFormat();
-
 	}
 
 	// XXX What is it???

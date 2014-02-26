@@ -44,11 +44,6 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 		log = Logger.getLogger(this.getClass().getName());
 	}
 
-	public AbstractStanzaModule(Context context) {
-		log = Logger.getLogger(this.getClass().getName());
-		this.context = context;
-	}
-
 	@Override
 	public void afterRegister() {
 	}

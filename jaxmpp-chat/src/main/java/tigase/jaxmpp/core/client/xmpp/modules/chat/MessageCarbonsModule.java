@@ -3,7 +3,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -92,15 +91,20 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 
 	private final Criteria criteria;
 
-	private final MessageModule messageModule;
+	private MessageModule messageModule;
 
-	public MessageCarbonsModule(Context context) throws JaxmppException {
-		super(context);
+	public MessageCarbonsModule() throws JaxmppException {
+		criteria = ElementCriteria.name("message").add(ElementCriteria.xmlns(XMLNS_MC));
+	}
+
+	@Override
+	public void beforeRegister() {
+		super.beforeRegister();
+
 		this.messageModule = context.getModuleProvider().getModule(MessageModule.class);
 		if (this.messageModule == null) {
-			throw new JaxmppException("Required module: MessageModule not available.");
+			throw new RuntimeException("Required module: MessageModule not available.");
 		}
-		criteria = ElementCriteria.name("message").add(ElementCriteria.xmlns(XMLNS_MC));
 	}
 
 	/**

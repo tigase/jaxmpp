@@ -18,7 +18,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules.vcard;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -48,8 +47,7 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
-	public VCardModule(Context context) {
-		super(context);
+	public VCardModule() {
 	}
 
 	@Override
