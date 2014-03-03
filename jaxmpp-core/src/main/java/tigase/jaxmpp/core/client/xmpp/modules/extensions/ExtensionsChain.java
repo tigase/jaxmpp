@@ -11,7 +11,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 
 public class ExtensionsChain {
 
-	protected final Collection<Extension<Element>> extensions = new ArrayList<Extension<Element>>();
+	protected final Collection<Extension> extensions = new ArrayList<Extension>();
 
 	private Logger log;
 
@@ -19,16 +19,15 @@ public class ExtensionsChain {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
-	@SuppressWarnings("unchecked")
-	public void addExtension(Extension<? extends Element> f) {
-		this.extensions.add((Extension<Element>) f);
+	public void addExtension(Extension f) {
+		this.extensions.add(f);
 	}
 
 	public Element executeAfterReceiveChain(final Element element) {
-		Iterator<Extension<Element>> it = extensions.iterator();
+		Iterator<Extension> it = extensions.iterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
-			Extension<Element> x = it.next();
+			Extension x = it.next();
 			try {
 				e = x.afterReceive(e);
 			} catch (Exception ex) {
@@ -39,10 +38,10 @@ public class ExtensionsChain {
 	}
 
 	public Element executeBeforeSendChain(final Element element) {
-		Iterator<Extension<Element>> it = extensions.iterator();
+		Iterator<Extension> it = extensions.iterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
-			Extension<Element> x = it.next();
+			Extension x = it.next();
 			try {
 				e = x.beforeSend(e);
 			} catch (Exception ex) {
@@ -52,13 +51,13 @@ public class ExtensionsChain {
 		return e;
 	}
 
-	public Collection<Extension<Element>> getExtension() {
+	public Collection<Extension> getExtension() {
 		return Collections.unmodifiableCollection(extensions);
 	}
 
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
-		for (Extension<?> e : this.extensions) {
+		for (Extension e : this.extensions) {
 			final String[] fs = e.getFeatures();
 			if (fs != null) {
 				for (String string : fs) {
@@ -69,7 +68,7 @@ public class ExtensionsChain {
 		return result;
 	}
 
-	public void removeExtension(Extension<?> f) {
+	public void removeExtension(Extension f) {
 		this.extensions.remove(f);
 	}
 

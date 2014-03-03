@@ -31,7 +31,7 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 	private final ExtensionsChain extensionsChain = new ExtensionsChain();
 
 	@Override
-	public void addExtension(Extension<?> e) {
+	public void addExtension(Extension e) {
 		extensionsChain.addExtension(e);
 	}
 
@@ -41,7 +41,7 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 	}
 
 	@Override
-	public void removeExtension(Extension<?> e) {
+	public void removeExtension(Extension e) {
 		extensionsChain.removeExtension(e);
 	}
 
