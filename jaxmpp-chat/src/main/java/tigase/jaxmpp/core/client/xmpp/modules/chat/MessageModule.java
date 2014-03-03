@@ -310,6 +310,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		if (chat == null) {
 			chat = chatManager.createChat(interlocutorJid, threadId);
+			chat.setMessageModule(this);
 			fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
 		} else {
 			update(chat, interlocutorJid, threadId);
