@@ -18,7 +18,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtendableModule;
@@ -31,8 +30,9 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 
 	private final ExtensionsChain extensionsChain = new ExtensionsChain();
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void addExtension(Extension<XmppModule> e) {
+	public void addExtension(Extension e) {
 		e.setXmppModule(this);
 		extensionsChain.addExtension(e);
 	}
@@ -42,8 +42,9 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 		return extensionsChain;
 	}
 
+	@SuppressWarnings({ "rawtypes" })
 	@Override
-	public void removeExtension(Extension<XmppModule> e) {
+	public void removeExtension(Extension e) {
 		extensionsChain.removeExtension(e);
 	}
 
