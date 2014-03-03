@@ -25,28 +25,18 @@ package tigase.jaxmpp.core.client;
  */
 public abstract class UIDGenerator {
 
-	private static final class UIDGenerator3 extends UIDGenerator {
+	private static final class UIDGenerator35 extends UIDGenerator {
 
 		private int[] k1 = new int[32];
 
-		private int[] k2 = new int[32];
+		private long l = 5;
 
-		private long l = 4;
+		private int[] v = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0 };
 
-		private int[] v = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-		public UIDGenerator3() {
-			for (int i = 0; i < k1.length; i++) {
-				k1[i] = k2[i] = i;
-			}
+		public UIDGenerator35() {
 			for (int i = 0; i < k1.length; i++) {
 				k1[i] = ((int) (Math.random() * 6173)) % k1.length;
-			}
-			for (int i = k2.length - 1; i >= 0; i--) {
-				int a = ((int) (Math.random() * 6173)) % k2.length;
-				int tmp = k2[i];
-				k2[i] = k2[a];
-				k2[a] = tmp;
 			}
 		}
 
@@ -61,19 +51,20 @@ public abstract class UIDGenerator {
 		}
 
 		@Override
-		public String nextUID() {
+		protected String nextUID() {
 			inc(0);
 
-			int b = (int) (Math.random() * 6173) % ELEMENTS.length();
-			String t = "" + ELEMENTS.charAt(b);
-			b = k2[b % k2.length] ^ ((b >>> 1) ^ (b << 9));
-			b = k1[b % k1.length] ^ ((b >>> 1) ^ (b << 8));
-			b = k2[b % k2.length] ^ ((b >>> 1) ^ (b << 7));
+			int iv = (int) (Math.random() * 6173) % ELEMENTS.length();
+			String t = "" + ELEMENTS.charAt(iv);
+			int b = (1 + k1[(iv) % k1.length]) % ELEMENTS.length();
 			for (int i = 0; i < l; i++) {
 				int a = v[i];
-				a = (a + k1[Math.abs(b) % k1.length]) % ELEMENTS.length();
+
+				a = (a + b) % ELEMENTS.length();
 				t += ELEMENTS.charAt(a);
-				b = k2[a % k2.length] ^ ((b >>> 1) ^ (b << 9));
+
+				b = (b + a + k1[(iv + i) % k1.length]) % ELEMENTS.length();
+
 			}
 			return t;
 		}
@@ -81,7 +72,13 @@ public abstract class UIDGenerator {
 
 	private static final String ELEMENTS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	private final static UIDGenerator generator = new UIDGenerator3();
+	private final static UIDGenerator generator = new UIDGenerator35();
+
+	public static void main(String[] args) {
+		for (int i = 0; i < 100; i++) {
+			System.out.println(next());
+		}
+	}
 
 	/**
 	 * Generate next id;
