@@ -17,10 +17,12 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
+import java.util.Iterator;
 import java.util.List;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
+import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -29,6 +31,7 @@ import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
+import tigase.jaxmpp.core.client.xmpp.modules.extensions.Extension;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -226,6 +229,23 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		return this.chatManager.createChat(jid, generateThreadID());
 	}
 
+	protected Message executeBeforeMessageProcess(final Message element, Chat chat) {
+		Iterator<Extension> it = getExtensionChain().getExtension().iterator();
+		Message e = element;
+		while (it.hasNext() && e != null) {
+			Extension x = it.next();
+			if (x instanceof MessageModuleExtension) {
+				try {
+					e = ((MessageModuleExtension) x).beforeMessageProcess(element, chat);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					log.warning("Problem on calling executeBeforeMessageProcess: " + ex.getMessage());
+				}
+			}
+		}
+		return e;
+	}
+
 	public Chat createChatInstance(Message message, final JID interlocutorJid) throws JaxmppException {
 		Chat chat = chatManager.createChat(interlocutorJid, message.getThread());
 		fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
@@ -289,10 +309,13 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		}
 
 		if (chat == null) {
-			chat = createChatInstance(message, interlocutorJid);
+			chat = chatManager.createChat(interlocutorJid, threadId);
+			fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
 		} else {
 			update(chat, interlocutorJid, threadId);
 		}
+
+		message = executeBeforeMessageProcess(message, chat);
 
 		if (message != null && fireReceivedEvent)
 			fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, chat));
@@ -353,6 +376,10 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		}
 
 		return changed;
+	}
+
+	public void writeMessage(Message msg) throws JaxmppException {
+		write(msg);
 	}
 
 }

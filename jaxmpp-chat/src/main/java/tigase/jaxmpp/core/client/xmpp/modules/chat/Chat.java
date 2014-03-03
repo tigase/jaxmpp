@@ -36,6 +36,8 @@ public class Chat {
 
 	private JID jid;
 
+	private MessageModule messageModule;
+
 	private String threadId;
 
 	/**
@@ -93,7 +95,7 @@ public class Chat {
 	 * 
 	 * @param body
 	 *            message to send.
-	 * @return 
+	 * @return
 	 */
 	protected Message sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
@@ -103,7 +105,7 @@ public class Chat {
 		msg.setBody(body);
 
 		// this would make it impossible for Extensions to process this message!
-		//this.context.getWriter().write(msg);
+		// this.context.getWriter().write(msg);
 		return msg;
 	}
 
@@ -115,6 +117,10 @@ public class Chat {
 	 */
 	public void setJid(JID jid) {
 		this.jid = jid;
+	}
+
+	public void setMessageModule(MessageModule module) {
+		this.messageModule = module;
 	}
 
 	/**
