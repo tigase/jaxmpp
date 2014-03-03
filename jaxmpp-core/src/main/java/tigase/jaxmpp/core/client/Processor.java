@@ -132,7 +132,8 @@ public class Processor {
 							if (module instanceof ExtendableModule) {
 								e = ((ExtendableModule) module).getExtensionChain().executeAfterReceiveChain(e);
 							}
-							module.process(e);
+							if (e != null)
+								module.process(e);
 						}
 					}
 				};

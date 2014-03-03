@@ -27,7 +27,7 @@ public class ExtensionsChain {
 	public Element executeAfterReceiveChain(final Element element) {
 		Iterator<Extension<Element>> it = extensions.iterator();
 		Element e = element;
-		while (it.hasNext()) {
+		while (it.hasNext() && e != null) {
 			Extension<Element> x = it.next();
 			try {
 				e = x.afterReceive(e);
@@ -41,7 +41,7 @@ public class ExtensionsChain {
 	public Element executeBeforeSendChain(final Element element) {
 		Iterator<Extension<Element>> it = extensions.iterator();
 		Element e = element;
-		while (it.hasNext()) {
+		while (it.hasNext() && e != null) {
 			Extension<Element> x = it.next();
 			try {
 				e = x.beforeSend(e);
