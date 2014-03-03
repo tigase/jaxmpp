@@ -31,8 +31,6 @@ class DefaultChatManager extends AbstractChatManager {
 
 	protected final ArrayList<Chat> chats = new ArrayList<Chat>();
 
-	protected Context context;
-
 	DefaultChatManager() {
 		super();
 	}

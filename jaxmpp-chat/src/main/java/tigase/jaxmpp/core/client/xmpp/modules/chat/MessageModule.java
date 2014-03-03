@@ -223,6 +223,12 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		return this.chatManager.createChat(jid, generateThreadID());
 	}
 
+	public Chat createChatInstance(Message message, final JID interlocutorJid) throws JaxmppException {
+		Chat chat = chatManager.createChat(interlocutorJid, message.getThread());
+		fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
+		return chat;
+	}
+
 	protected String generateThreadID() {
 		return UIDGenerator.next() + UIDGenerator.next() + UIDGenerator.next();
 	}
@@ -265,7 +271,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		process(message, interlocutorJid, true);
 	}
 
-	Chat process(final Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
+	Chat process(Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
 			return null;
@@ -280,13 +286,12 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		}
 
 		if (chat == null) {
-			chat = chatManager.createChat(interlocutorJid, threadId);
-			fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
+			chat = createChatInstance(message, interlocutorJid);
 		} else {
 			update(chat, interlocutorJid, threadId);
 		}
 
-		if (fireReceivedEvent)
+		if (message != null && fireReceivedEvent)
 			fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, chat));
 
 		return chat;
