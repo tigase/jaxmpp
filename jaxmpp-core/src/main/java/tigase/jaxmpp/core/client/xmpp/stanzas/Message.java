@@ -32,7 +32,7 @@ public class Message extends Stanza {
 		return createMessage();
 	}
 
-	Message(Element element) throws XMLException {
+	protected Message(Element element) throws XMLException {
 		super(element);
 		if (!"message".equals(element.getName()))
 			throw new RuntimeException("Wrong element name: " + element.getName());

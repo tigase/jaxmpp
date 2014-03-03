@@ -176,6 +176,13 @@ public class ElementWrapper implements Element {
 	}
 
 	/**
+	 * @return the element
+	 */
+	public Element getWrappedElement() {
+		return element;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	@Override
