@@ -162,7 +162,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 			Message encapsulatedMessage = (Message) Stanza.create(element);
 
 			JID interlocutorJid = encapsulatedMessage.getFrom();
-			Chat chat = this.messageModule.getChatManager().process(encapsulatedMessage, interlocutorJid);
+			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
 			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
 					context.getSessionObject(), CarbonEventType.received, encapsulatedMessage, chat);
@@ -177,7 +177,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 			Message encapsulatedMessage = (Message) Stanza.create(element);
 
 			JID interlocutorJid = encapsulatedMessage.getTo();
-			Chat chat = this.messageModule.getChatManager().process(encapsulatedMessage, interlocutorJid);
+			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
 			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
 					context.getSessionObject(), CarbonEventType.sent, encapsulatedMessage, chat);

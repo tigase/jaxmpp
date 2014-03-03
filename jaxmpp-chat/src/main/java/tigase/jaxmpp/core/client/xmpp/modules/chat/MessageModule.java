@@ -30,8 +30,8 @@ import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageReceivedHandler.MessageReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
  * Module to handle messages.
@@ -220,7 +220,11 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 * @return chat object
 	 */
 	public Chat createChat(JID jid) throws JaxmppException {
-		return this.chatManager.createChat(jid);
+		return this.chatManager.createChat(jid, generateThreadID());
+	}
+
+	protected String generateThreadID() {
+		return UIDGenerator.next() + UIDGenerator.next() + UIDGenerator.next();
 	}
 
 	public AbstractChatManager getChatManager() {
@@ -256,13 +260,36 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void process(Message element) throws JaxmppException {
+	public void process(Message message) throws JaxmppException {
+		final JID interlocutorJid = message.getFrom();
+		process(message, interlocutorJid, true);
+	}
 
-		Chat chat = chatManager.process(element);
+	Chat process(final Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
+		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
+				&& message.getType() != StanzaType.headline)
+			return null;
 
-		MessageReceivedEvent event = new MessageReceivedEvent(context.getSessionObject(), element, chat);
+		final String threadId = message.getThread();
 
-		fireEvent(event);
+		Chat chat = chatManager.getChat(interlocutorJid, threadId);
+
+		if (chat == null && message.getBody() == null) {
+			// no chat, not body. Lets skip it.
+			return null;
+		}
+
+		if (chat == null) {
+			chat = chatManager.createChat(interlocutorJid, threadId);
+			fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
+		} else {
+			update(chat, interlocutorJid, threadId);
+		}
+
+		if (fireReceivedEvent)
+			fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, chat));
+
+		return chat;
 	}
 
 	/**
@@ -283,6 +310,28 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		msg.setId(UIDGenerator.next());
 
 		write(msg);
+	}
+
+	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
+		boolean changed = false;
+
+		if (!chat.getJid().equals(fromJid)) {
+			chat.setJid(fromJid);
+			changed = true;
+		}
+
+		if (chat.getThreadId() == null && threadId != null) {
+			chat.setThreadId(threadId);
+			changed = true;
+		}
+
+		if (changed) {
+			ChatUpdatedHandler.ChatUpdatedEvent event = new ChatUpdatedHandler.ChatUpdatedEvent(context.getSessionObject(),
+					chat);
+			context.getEventBus().fire(event);
+		}
+
+		return changed;
 	}
 
 }
