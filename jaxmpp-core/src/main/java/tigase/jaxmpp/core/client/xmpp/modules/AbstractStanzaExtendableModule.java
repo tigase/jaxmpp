@@ -30,10 +30,8 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 
 	private final ExtensionsChain extensionsChain = new ExtensionsChain();
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void addExtension(Extension e) {
-		e.setXmppModule(this);
 		extensionsChain.addExtension(e);
 	}
 
@@ -42,7 +40,6 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 		return extensionsChain;
 	}
 
-	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public void removeExtension(Extension e) {
 		extensionsChain.removeExtension(e);

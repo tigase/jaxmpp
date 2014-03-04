@@ -8,12 +8,11 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.xml.Element;
 
 public class ExtensionsChain {
 
-	protected final Collection<Extension<XmppModule>> extensions = new ArrayList<Extension<XmppModule>>();
+	protected final Collection<Extension> extensions = new ArrayList<Extension>();
 
 	private Logger log;
 
@@ -21,15 +20,15 @@ public class ExtensionsChain {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
-	public void addExtension(Extension<XmppModule> f) {
+	public void addExtension(Extension f) {
 		this.extensions.add(f);
 	}
 
 	public Element executeAfterReceiveChain(final Element element) {
-		Iterator<Extension<XmppModule>> it = extensions.iterator();
+		Iterator<Extension> it = extensions.iterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
-			Extension<XmppModule> x = it.next();
+			Extension x = it.next();
 			try {
 				e = x.afterReceive(e);
 			} catch (Exception ex) {
@@ -40,10 +39,10 @@ public class ExtensionsChain {
 	}
 
 	public Element executeBeforeSendChain(final Element element) {
-		Iterator<Extension<XmppModule>> it = extensions.iterator();
+		Iterator<Extension> it = extensions.iterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
-			Extension<XmppModule> x = it.next();
+			Extension x = it.next();
 			try {
 				e = x.beforeSend(e);
 			} catch (Exception ex) {
@@ -53,13 +52,13 @@ public class ExtensionsChain {
 		return e;
 	}
 
-	public Collection<Extension<XmppModule>> getExtension() {
+	public Collection<Extension> getExtension() {
 		return Collections.unmodifiableCollection(extensions);
 	}
 
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
-		for (Extension<XmppModule> e : this.extensions) {
+		for (Extension e : this.extensions) {
 			final String[] fs = e.getFeatures();
 			if (fs != null) {
 				for (String string : fs) {
@@ -70,7 +69,7 @@ public class ExtensionsChain {
 		return result;
 	}
 
-	public void removeExtension(Extension<XmppModule> f) {
+	public void removeExtension(Extension f) {
 		this.extensions.remove(f);
 	}
 

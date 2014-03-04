@@ -1,10 +1,9 @@
 package tigase.jaxmpp.core.client.xmpp.modules.extensions;
 
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 
-public interface Extension<M extends XmppModule> {
+public interface Extension {
 
 	Element afterReceive(Element received) throws JaxmppException;
 
@@ -12,5 +11,4 @@ public interface Extension<M extends XmppModule> {
 
 	String[] getFeatures();
 
-	void setXmppModule(M module);
 }
