@@ -20,6 +20,7 @@ package tigase.jaxmpp.j2se;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
+import tigase.jaxmpp.core.client.xmpp.modules.roster.DefaultRosterStore;
 
 /**
  * 
@@ -30,7 +31,7 @@ public class Roster {
 	public static void initialize(Jaxmpp jaxmpp) throws JaxmppException {
 		RosterStore rosterStore = RosterModule.getRosterStore(jaxmpp.getSessionObject());
 		if (rosterStore == null) {
-			rosterStore = new RosterStore();
+			rosterStore = new DefaultRosterStore();
 			RosterModule.setRosterStore(jaxmpp.getSessionObject(), rosterStore);
 		}
 		jaxmpp.set(rosterStore);

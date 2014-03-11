@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2012 "Bartosz Ma��kowski" <bartosz.malkowski@tigase.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,13 +30,14 @@ import java.util.Set;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Property;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Storage for keeping roster.
  */
-public class RosterStore implements Property {
+public abstract class RosterStore implements Property {
 
 	static interface Handler {
 
@@ -54,11 +55,8 @@ public class RosterStore implements Property {
 		boolean match(RosterItem item);
 	}
 
-	protected final Set<String> groups = new HashSet<String>();
-
 	private Handler handler;
-
-	protected final Map<BareJID, RosterItem> roster = new HashMap<BareJID, RosterItem>();
+	protected SessionObject sessionObject;
 
 	/**
 	 * Adds new contact to roster.
@@ -114,44 +112,10 @@ public class RosterStore implements Property {
 		add(jid, name, x, asyncCallback);
 	}
 
-	Set<String> addItem(RosterItem item) {
-		synchronized (this.roster) {
-			this.roster.put(item.getJid(), item);
-		}
-		final HashSet<String> addedGroups = new HashSet<String>();
-		synchronized (this.groups) {
-			for (String g : item.getGroups()) {
-				if (!this.groups.contains(g)) {
-					addedGroups.add(g);
-				}
-			}
-			this.groups.addAll(addedGroups);
-		}
-		return addedGroups;
-	}
+	protected abstract Set<String> addItem(RosterItem item);
 
-	Set<String> calculateModifiedGroups(final HashSet<String> groupsOld) {
-		reloadGroups();
-		HashSet<String> modifiedGroups = new HashSet<String>();
-
-		Iterator<String> e = groupsOld.iterator();
-		while (e.hasNext()) {
-			String gg = e.next();
-			if (!groups.contains(gg)) {
-				modifiedGroups.add(gg);
-			}
-		}
-		e = groups.iterator();
-		while (e.hasNext()) {
-			String gg = e.next();
-			if (!groupsOld.contains(gg)) {
-				modifiedGroups.add(gg);
-			}
-		}
-
-		return modifiedGroups;
-	}
-
+	protected abstract Set<String> calculateModifiedGroups(final HashSet<String> groupsOld);
+	
 	/**
 	 * Clears storage.
 	 */
@@ -168,11 +132,7 @@ public class RosterStore implements Property {
 	 *            bare JID.
 	 * @return roster item.
 	 */
-	public RosterItem get(BareJID jid) {
-		synchronized (this.roster) {
-			return this.roster.get(jid);
-		}
-	}
+	public abstract RosterItem get(BareJID jid);
 
 	/**
 	 * Returns all buddies from roster.
@@ -190,50 +150,25 @@ public class RosterStore implements Property {
 	 *            selector.
 	 * @return all matched roster items.
 	 */
-	public List<RosterItem> getAll(final Predicate predicate) {
-		ArrayList<RosterItem> result = new ArrayList<RosterItem>();
-		synchronized (this.roster) {
-			if (predicate == null)
-				result.addAll(this.roster.values());
-			else
-				for (RosterItem i : this.roster.values()) {
-					if (predicate.match(i))
-						result.add(i);
-				}
-		}
-		return result;
-	}
+	public abstract List<RosterItem> getAll(final Predicate predicate);
 
 	/**
 	 * Returns number of roster items in storage.
 	 * 
 	 * @return number of roster items in storage.
 	 */
-	public int getCount() {
-		return roster.size();
-	}
+	public abstract int getCount();
 
 	/**
 	 * Get all known groups of buddies.
 	 * 
 	 * @return collection of group names.
 	 */
-	public Collection<? extends String> getGroups() {
-		return Collections.unmodifiableCollection(this.groups);
-	}
+	public abstract Collection<? extends String> getGroups();
 
 	@Override
 	public Class<RosterStore> getPropertyClass() {
 		return RosterStore.class;
-	}
-	
-	void reloadGroups() {
-		synchronized (groups) {
-			groups.clear();
-			for (RosterItem i : this.roster.values()) {
-				groups.addAll(i.getGroups());
-			}
-		}
 	}
 
 	/**
@@ -247,20 +182,9 @@ public class RosterStore implements Property {
 			this.handler.remove(jid);
 	}
 
-	public void removeAll() {
-		synchronized (this.roster) {
-			roster.clear();
-		}
-		synchronized (this.groups) {
-			groups.clear();
-		}
-	}
+	public abstract void removeAll();
 
-	void removeItem(BareJID jid) {
-		synchronized (this.roster) {
-			this.roster.remove(jid);
-		}
-	}
+	protected abstract void removeItem(BareJID jid);
 
 	void setHandler(Handler handler) {
 		this.handler = handler;
@@ -278,4 +202,7 @@ public class RosterStore implements Property {
 
 	}
 
+	public void setSessionObject(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
 }

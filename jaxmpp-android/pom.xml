@@ -5,7 +5,7 @@
 	<parent>
 		<artifactId>tigase-jaxmpp</artifactId>
 		<groupId>tigase</groupId>
-		<version>2.1.0-SNAPSHOT</version>
+		<version>3.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-android</artifactId>
 	<packaging>apklib</packaging>
@@ -37,6 +37,12 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-j2se</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-roster</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>dnsjava</groupId>

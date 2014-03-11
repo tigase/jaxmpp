@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2012 "Bartosz Ma��kowski" <bartosz.malkowski@tigase.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -237,6 +237,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	}
 
 	public static void setRosterStore(SessionObject sessionObject, RosterStore rosterStore) {
+		rosterStore.setSessionObject(sessionObject);
 		sessionObject.setProperty(Scope.user, ROSTER_STORE_KEY, rosterStore);
 	}
 
@@ -246,6 +247,11 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		super();
 	}
 
+	public RosterModule(RosterCacheProvider versionProvider) {
+		super();
+		this.versionProvider = versionProvider;
+	}
+	
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
 			JaxmppException {
 		RosterItem item = new RosterItem(jid, context.getSessionObject());
@@ -287,7 +293,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 		RosterStore rosterStore = RosterModule.getRosterStore(context.getSessionObject());
 		if (rosterStore == null) {
-			rosterStore = new RosterStore();
+			rosterStore = new DefaultRosterStore();
 			RosterModule.setRosterStore(context.getSessionObject(), rosterStore);
 		}
 
@@ -324,7 +330,8 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 						}
 					}
 				});
-		this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
+		if (this.versionProvider == null)
+			this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
 		context.getEventBus().addHandler(XmppSessionEstablishedHandler.XmppSessionEstablishedEvent.class, this);
 	}
 
@@ -406,7 +413,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		RosterItem currentItem = getRosterStore().get(jid);
 		if (subscription == Subscription.remove && currentItem != null) {
 			// remove item
-			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().groups);
+			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().getGroups());
 			fill(currentItem, name, subscription, null, ask);
 			getRosterStore().removeItem(jid);
 			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
@@ -438,7 +445,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.subscribed, null));
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
-			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().groups);
+			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().getGroups());
 			fill(currentItem, name, subscription, groups, ask);
 			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, null, modifiedGroups));
