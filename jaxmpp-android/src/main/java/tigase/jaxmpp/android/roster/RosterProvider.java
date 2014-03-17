@@ -43,8 +43,8 @@ import android.preference.PreferenceManager;
 
 public class RosterProvider implements RosterCacheProvider {
 
-	private final Context context;
-	private final SQLiteOpenHelper dbHelper;
+	protected final Context context;
+	protected final SQLiteOpenHelper dbHelper;
 	private SharedPreferences prefs;
 	private final String versionKeyPrefix;
 
@@ -90,7 +90,7 @@ public class RosterProvider implements RosterCacheProvider {
 				RosterItemsCacheTableMetaData.FIELD_NAME, RosterItemsCacheTableMetaData.FIELD_SUBSCRIPTION,
 				RosterItemsCacheTableMetaData.FIELD_ASK, RosterItemsCacheTableMetaData.FIELD_TIMESTAMP, 
 			}, 
-			RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = '?' and " + RosterItemsCacheTableMetaData.FIELD_JID + " = '?'", 
+			RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ? and " + RosterItemsCacheTableMetaData.FIELD_JID + " = ?", 
 			new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()), 
 			DatabaseUtils.sqlEscapeString(jid.toString())}, null, null, null);
 
@@ -150,7 +150,7 @@ public class RosterProvider implements RosterCacheProvider {
 					+ " ON g." + RosterGroupsCacheTableMetaData.FIELD_ID + " = gi." + RosterItemsGroupsCacheTableMetaData.FIELD_GROUP
 				+ " INNER JOIN " + RosterItemsCacheTableMetaData.TABLE_NAME + " i "
 					+ " ON i." + RosterItemsCacheTableMetaData.FIELD_ID + " = gi." + RosterItemsGroupsCacheTableMetaData.FIELD_ITEM
-				+ " WHERE i." + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = '?'"
+				+ " WHERE i." + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?"
 				, new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
 		try {
 			List<String> groups = new ArrayList<String>();
@@ -167,7 +167,7 @@ public class RosterProvider implements RosterCacheProvider {
 	public int getCount(SessionObject sessionObject) {
 		final SQLiteDatabase db = dbHelper.getReadableDatabase();
 		Cursor c = db.rawQuery("SELECT count(" + RosterItemsCacheTableMetaData.FIELD_ID + ") FROM " + RosterItemsCacheTableMetaData.TABLE_NAME 
-				+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = '?'", 
+				+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?", 
 				new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
 		try {
 			if (c.moveToNext()) {
@@ -188,9 +188,9 @@ public class RosterProvider implements RosterCacheProvider {
 		try {
 			db.execSQL("DELETE FROM " + RosterItemsGroupsCacheTableMetaData.TABLE_NAME 
 					+ " WHERE " + RosterItemsGroupsCacheTableMetaData.FIELD_ITEM + " IN ("
-						+ "SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + " FROM " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = '?'"
+						+ "SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + " FROM " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?"
 					+ ")", new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
-			db.delete(RosterItemsCacheTableMetaData.TABLE_NAME, RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = '?'", 
+			db.delete(RosterItemsCacheTableMetaData.TABLE_NAME, RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?", 
 					new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });			
 			db.setTransactionSuccessful();
 		}
@@ -233,9 +233,9 @@ public class RosterProvider implements RosterCacheProvider {
 				}
 			
 				db.execSQL("DELETE FROM " + RosterItemsGroupsCacheTableMetaData.TABLE_NAME + " WHERE " 
-					+ RosterItemsGroupsCacheTableMetaData.FIELD_ITEM + " = " + rosterItem.getId() 
+					+ RosterItemsGroupsCacheTableMetaData.FIELD_ITEM + " =  ? " 
 					+ " AND " + RosterItemsGroupsCacheTableMetaData.FIELD_GROUP + " IN (?)", 
-					new String[] { groupsToRemove.toString() });
+					new String[] { String.valueOf(rosterItem.getId()), groupsToRemove.toString() });
 			}
 			
 			Set<String> addedGroups = new HashSet<String>();

@@ -30,7 +30,7 @@ public class RosterItemsCacheTableMetaData implements BaseColumns {
 	public static final String FIELD_JID = "jid";
 
 	public static final String FIELD_NAME = "name";
-
+	
 	public static final String FIELD_SUBSCRIPTION = "subscription";
 
 	public static final String FIELD_TIMESTAMP = "timestamp";

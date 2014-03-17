@@ -103,8 +103,8 @@ public class ChatProvider {
 		final SQLiteDatabase db = dbHelper.getReadableDatabase();
 		if (threadId != null) {
 			Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_RESOURCE }, 
-					OpenChatTableMetaData.FIELD_ACCOUNT + " = '?' and " + OpenChatTableMetaData.FIELD_JID + " = '?' and " + OpenChatTableMetaData.FIELD_TYPE 
-					+ " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = '?'", 
+					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
+					+ " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 					new String[] { 
 						DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
 						DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
@@ -120,8 +120,8 @@ public class ChatProvider {
 		}
 		if (jid.getResource() != null) {
 			Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_THREAD_ID }, 
-					OpenChatTableMetaData.FIELD_ACCOUNT + " = '?' and " + OpenChatTableMetaData.FIELD_JID + " = '?' and " + OpenChatTableMetaData.FIELD_TYPE 
-					+ " = 0 and " + OpenChatTableMetaData.FIELD_RESOURCE + " = '?'", 
+					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
+					+ " = 0 and " + OpenChatTableMetaData.FIELD_RESOURCE + " = ?", 
 					new String[] { 
 						DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
 						DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
@@ -136,8 +136,8 @@ public class ChatProvider {
 			}			
 		}
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_THREAD_ID, 
-				OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + " = '?' and " + OpenChatTableMetaData.FIELD_JID 
-				+ " = '?' and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = '?'", 
+				OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID 
+				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 				new String[] { 
 					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
 					DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
@@ -163,7 +163,7 @@ public class ChatProvider {
 		List<Object[]> chats = new ArrayList<Object[]>();
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_JID, 
 				OpenChatTableMetaData.FIELD_THREAD_ID, OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + 
-				" = '?' and " + OpenChatTableMetaData.FIELD_TYPE + " = 0", 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0", 
 				new String[] { 
 					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString())
 				}, null, null, null, null);
@@ -180,7 +180,7 @@ public class ChatProvider {
 	public boolean isChatOpenFor(SessionObject sessionObject, BareJID jid) {
 		final SQLiteDatabase db = dbHelper.getReadableDatabase();
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID }, OpenChatTableMetaData.FIELD_ACCOUNT + 
-				" = '?' and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_JID + " = '?'", 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_JID + " = ?", 
 				new String[] { 
 					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
 					DatabaseUtils.sqlEscapeString(jid.toString()),
