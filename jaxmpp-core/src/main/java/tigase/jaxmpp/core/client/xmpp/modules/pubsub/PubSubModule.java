@@ -1262,11 +1262,13 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            PubSub service address.
 	 * @param max
 	 *            maximum amount of items to be retrieve from single node.
+	 * @param after
+	 *            returns only items created after given date.
 	 * @param callback
 	 *            request callback.
 	 */
-	public void retrieveItems(BareJID pubSubJID, final Integer max, final RetrieveMultiItemsAsyncCallback callback)
-			throws JaxmppException {
+	public void retrieveItems(BareJID pubSubJID, final Integer max, final Date after,
+			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
 
 		final SubscriptionsRetrieveAsyncCallback subscriptionsCallback = new SubscriptionsRetrieveAsyncCallback() {
 
@@ -1294,7 +1296,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 				try {
 					for (SubscriptionElement subscriptionElement : subscriptions) {
 						retrieveItems(subscriptionElement.getJID().getBareJid(), subscriptionElement.getNode(), max, null,
-								new RetrieveItemsAsyncCallback() {
+								after, new RetrieveItemsAsyncCallback() {
 
 									@Override
 									protected void onEror(IQ response, ErrorCondition errorCondition,
@@ -1353,7 +1355,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 * @param callback
 	 *            request callback
 	 */
-	public void retrieveItems(BareJID pubSubJID, String nodeName, Integer max, Integer index, AsyncCallback callback)
+	public void retrieveItems(BareJID pubSubJID, String nodeName, Integer max, Integer index, Date after, AsyncCallback callback)
 			throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
@@ -1372,6 +1374,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			}
 			if (index != null) {
 				rsm.addChild(new DefaultElement("index", Integer.toString(index), null));
+			}
+			if (after != null) {
+				rsm.addChild(new DefaultElement("dt_after", dtf.format(after), "http://tigase.org/pubsub"));
 			}
 			pubsub.addChild(rsm);
 		}
