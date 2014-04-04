@@ -28,9 +28,11 @@ import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
+import tigase.jaxmpp.core.client.connector.BoshXmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
@@ -261,6 +263,31 @@ public class Jaxmpp extends JaxmppCore {
 		lastRid = null;
 		this.sessionObject.clear();
 		intLogin();
+	}
+
+	/**
+	 * Pre-binded BOSH login.
+	 * 
+	 * @param sid
+	 * @param rid
+	 * @param bindedResource
+	 * @throws JaxmppException
+	 */
+	public void login(String sid, Long rid, JID bindedJID) throws JaxmppException {
+		if (this.isConnected()) {
+			this.connector.stop(true);
+		}
+
+		lastRid = null;
+		this.sessionObject.clear();
+
+		sessionObject.setProperty(AbstractBoshConnector.RID_KEY, rid);
+		sessionObject.setProperty(AbstractBoshConnector.SID_KEY, sid);
+		sessionObject.setProperty(ResourceBinderModule.BINDED_RESOURCE_JID, bindedJID);
+		this.sessionObject.setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.connected);
+
+		intLogin();
+		((BoshXmppSessionLogic) this.sessionLogic).processResourceBindEvent();
 	}
 
 	@Override

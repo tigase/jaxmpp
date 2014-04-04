@@ -24,11 +24,15 @@ import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.ConnectorEvent;
+import tigase.jaxmpp.core.client.Connector.State;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
+import tigase.jaxmpp.core.client.connector.BoshXmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
@@ -81,11 +85,9 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
-	private final ConnectorWrapper connectorWrapper;
+	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
-	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";;
-
-	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
+	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";;
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
@@ -104,6 +106,8 @@ public class Jaxmpp extends JaxmppCore {
 		});
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
+
+	private final ConnectorWrapper connectorWrapper;
 
 	private Executor executor;
 
@@ -176,7 +180,7 @@ public class Jaxmpp extends JaxmppCore {
 	public void disconnect(boolean snc) throws JaxmppException {
 		disconnect(snc, true);
 	}
-	
+
 	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
@@ -309,6 +313,53 @@ public class Jaxmpp extends JaxmppCore {
 			// onException(e);
 			throw e;
 		}
+	}
+
+	public void login(String sid, Long rid, JID bindedJID) throws JaxmppException {
+
+		this.sessionObject.clear(Scope.stream);
+
+		if (this.sessionLogic != null) {
+			this.sessionLogic.unbind();
+			this.sessionLogic = null;
+		}
+
+		sessionObject.setProperty(Jaxmpp.CONNECTOR_TYPE, "bosh");
+		sessionObject.setProperty(AbstractBoshConnector.RID_KEY, rid);
+		sessionObject.setProperty(AbstractBoshConnector.SID_KEY, sid);
+		sessionObject.setProperty(ResourceBinderModule.BINDED_RESOURCE_JID, bindedJID);
+
+		this.connectorWrapper.setConnector(createConnector());
+
+		sessionObject.setProperty(Connector.CONNECTOR_STAGE_KEY, State.connected);
+
+		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
+		this.sessionLogic.setSessionListener(new SessionListener() {
+
+			@Override
+			public void onException(JaxmppException e) throws JaxmppException {
+				Jaxmpp.this.onException(e);
+			}
+		});
+
+		try {
+			this.sessionLogic.beforeStart();
+			this.connector.start();
+			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+				JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
+				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
+				throw e;
+			}
+			((BoshXmppSessionLogic) sessionLogic).processResourceBindEvent();
+		} catch (JaxmppException e) {
+			// onException(e);
+			throw e;
+		} catch (Exception e1) {
+			JaxmppException e = new JaxmppException(e1);
+			// onException(e);
+			throw e;
+		}
+
 	}
 
 	@Override

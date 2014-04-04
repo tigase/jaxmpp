@@ -104,7 +104,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 			@Override
 			public void handleEvent(ResourceBindEvent be) throws JaxmppException {
 				try {
-					processResourceBindEvent(be);
+					processResourceBindEvent();
 				} catch (JaxmppException e) {
 					processException(e);
 				}
@@ -131,7 +131,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		}
 	}
 
-	protected void processResourceBindEvent(ResourceBindEvent be) throws JaxmppException {
+	public void processResourceBindEvent() throws JaxmppException {
 		try {
 			DiscoInfoModule discoInfo = this.modulesManager.getModule(DiscoInfoModule.class);
 			if (discoInfo != null) {
