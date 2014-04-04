@@ -127,13 +127,15 @@ public class BoshConnector extends AbstractBoshConnector {
 
         @Override
         protected Element prepareBody(Element payload) throws XMLException {
-                // trying to reuse BoshWorker if data is not sent yet
-                if (currentWorker != null) {
-                        currentWorker.appendToBody(payload);
-                        return null;
-                }
+            // trying to reuse BoshWorker if data is not sent yet
+            if (currentWorker != null) {
+				if (payload != null) {
+                    currentWorker.appendToBody(payload);
+				}
+                return currentWorker.getBodyElement();
+            }
                 
-                return super.prepareBody(payload);
+            return super.prepareBody(payload);
         }
         
         /**

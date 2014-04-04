@@ -281,6 +281,7 @@ public class Jaxmpp extends JaxmppCore {
 		lastRid = null;
 		this.sessionObject.clear();
 
+		sessionObject.setProperty(SessionObject.USER_BARE_JID, bindedJID.getBareJid());
 		sessionObject.setProperty(AbstractBoshConnector.RID_KEY, rid);
 		sessionObject.setProperty(AbstractBoshConnector.SID_KEY, sid);
 		sessionObject.setProperty(ResourceBinderModule.BINDED_RESOURCE_JID, bindedJID);
