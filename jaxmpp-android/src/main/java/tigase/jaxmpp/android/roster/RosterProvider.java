@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.prefs.Preferences;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -70,7 +69,7 @@ public class RosterProvider implements RosterCacheProvider {
 			v.put(RosterItemsCacheTableMetaData.FIELD_ASK, rosterItem.isAsk());
 			v.put(RosterItemsCacheTableMetaData.FIELD_TIMESTAMP, (new Date()).getTime());
 			
-			db.insert(RosterItemsCacheTableMetaData.TABLE_NAME, null, v);
+			db.insert(RosterItemsCacheTableMetaData.TABLE_NAME, null, v); // CONFLICT_REPLACE?
 			
 			addedGroups = updateRosterItemGroups(db, rosterItem);
 			
@@ -88,11 +87,30 @@ public class RosterProvider implements RosterCacheProvider {
 		Cursor c = db.query(RosterItemsCacheTableMetaData.TABLE_NAME, new String[] { 
 				RosterItemsCacheTableMetaData.FIELD_ID, 
 				RosterItemsCacheTableMetaData.FIELD_NAME, RosterItemsCacheTableMetaData.FIELD_SUBSCRIPTION,
-				RosterItemsCacheTableMetaData.FIELD_ASK, RosterItemsCacheTableMetaData.FIELD_TIMESTAMP, 
+				RosterItemsCacheTableMetaData.FIELD_ASK, RosterItemsCacheTableMetaData.FIELD_TIMESTAMP
 			}, 
 			RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ? and " + RosterItemsCacheTableMetaData.FIELD_JID + " = ?", 
-			new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()), 
-			DatabaseUtils.sqlEscapeString(jid.toString())}, null, null, null);
+			new String[] { sessionObject.getUserBareJid().toString(), jid.toString()}, null, null, null);
+
+//		if (c.getCount() == 0) {
+//			c.close();
+//			log.info("no results in first attempt - trying rawQuery");
+//			c = db.rawQuery("SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + ", " + RosterItemsCacheTableMetaData.FIELD_NAME + ", " + RosterItemsCacheTableMetaData.FIELD_SUBSCRIPTION
+//					+ ", " + RosterItemsCacheTableMetaData.FIELD_ASK + ", " + RosterItemsCacheTableMetaData.FIELD_TIMESTAMP + " FROM " + RosterItemsCacheTableMetaData.TABLE_NAME 
+//					+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ? and " + RosterItemsCacheTableMetaData.FIELD_JID + " = ?", 
+//					new String[] { sessionObject.getUserBareJid().toString(), 
+//					DatabaseUtils.sqlEscapeString(jid.toString())});
+//		}
+//		
+//		if (c.getCount() == 0) {
+//			c.close();
+//			log.info("no results in first attempt - trying rawQuery by id");
+//			long id = (sessionObject.getUserBareJid() + "::" + jid).hashCode();
+//			c = db.rawQuery("SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + ", " + RosterItemsCacheTableMetaData.FIELD_NAME + ", " + RosterItemsCacheTableMetaData.FIELD_SUBSCRIPTION
+//					+ ", " + RosterItemsCacheTableMetaData.FIELD_ASK + ", " + RosterItemsCacheTableMetaData.FIELD_TIMESTAMP + " FROM " + RosterItemsCacheTableMetaData.TABLE_NAME 
+//					+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ID + " = ?", 
+//					new String[] { String.valueOf(id) });
+//		}
 
 		try {
 			if (c.moveToNext()) {
@@ -120,7 +138,7 @@ public class RosterProvider implements RosterCacheProvider {
 			else {
 				return null;
 			}
-		}
+		}	
 		finally {
 			if (c != null && !c.isClosed())
 				c.close();
@@ -151,7 +169,7 @@ public class RosterProvider implements RosterCacheProvider {
 				+ " INNER JOIN " + RosterItemsCacheTableMetaData.TABLE_NAME + " i "
 					+ " ON i." + RosterItemsCacheTableMetaData.FIELD_ID + " = gi." + RosterItemsGroupsCacheTableMetaData.FIELD_ITEM
 				+ " WHERE i." + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?"
-				, new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
+				, new String[] { sessionObject.getUserBareJid().toString() });
 		try {
 			List<String> groups = new ArrayList<String>();
 			while (c.moveToNext()) {
@@ -168,7 +186,7 @@ public class RosterProvider implements RosterCacheProvider {
 		final SQLiteDatabase db = dbHelper.getReadableDatabase();
 		Cursor c = db.rawQuery("SELECT count(" + RosterItemsCacheTableMetaData.FIELD_ID + ") FROM " + RosterItemsCacheTableMetaData.TABLE_NAME 
 				+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?", 
-				new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
+				new String[] { sessionObject.getUserBareJid().toString() });
 		try {
 			if (c.moveToNext()) {
 				return c.getInt(0);
@@ -188,10 +206,11 @@ public class RosterProvider implements RosterCacheProvider {
 		try {
 			db.execSQL("DELETE FROM " + RosterItemsGroupsCacheTableMetaData.TABLE_NAME 
 					+ " WHERE " + RosterItemsGroupsCacheTableMetaData.FIELD_ITEM + " IN ("
-						+ "SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + " FROM " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?"
-					+ ")", new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });
+						+ "SELECT " + RosterItemsCacheTableMetaData.FIELD_ID + " FROM " + RosterItemsCacheTableMetaData.TABLE_NAME 
+						+ " WHERE " + RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?"
+					+ ")", new String[] { sessionObject.getUserBareJid().toString() });
 			db.delete(RosterItemsCacheTableMetaData.TABLE_NAME, RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " = ?", 
-					new String[] { DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()) });			
+					new String[] { sessionObject.getUserBareJid().toString() });			
 			db.setTransactionSuccessful();
 		}
 		finally {
@@ -249,14 +268,14 @@ public class RosterProvider implements RosterCacheProvider {
 						if (toAddAll.length() > 0) {
 							toAddAll.append(",");
 						}
-						toAddAll.append("'");
+						//toAddAll.append("'");
 						toAddAll.append(DatabaseUtils.sqlEscapeString(group));
-						toAddAll.append("'");
+						//toAddAll.append("'");
 					}
 					
 					// query for ids of existing groups
 					c = db.rawQuery("SELECT " + RosterGroupsCacheTableMetaData.FIELD_ID + ", " + RosterGroupsCacheTableMetaData.FIELD_NAME 
-					+ " FROM " + RosterGroupsCacheTableMetaData.TABLE_NAME + " g WHERE g.name IN (?)" , new String[] { toAddAll.toString() });
+					+ " FROM " + RosterGroupsCacheTableMetaData.TABLE_NAME + " g WHERE g.name IN (" + toAddAll.toString() + ")",  null);
 					List<Long> toAddIds = new ArrayList<Long>();
 					while (c.moveToNext()) {
 						toAddIds.add(c.getLong(0));

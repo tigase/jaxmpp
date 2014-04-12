@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -71,7 +70,8 @@ public class ChatProvider {
 			values.put(OpenChatTableMetaData.FIELD_THREAD_ID, threadId);
 		}
 		
-		return db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		long result = db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		return result;
 	}
 
 	public long creteMuc(SessionObject sessionObject, JID fromJid, String nickname, String password) throws JaxmppException {
@@ -89,7 +89,8 @@ public class ChatProvider {
 			values.put(OpenChatTableMetaData.FIELD_PASSWORD, password);
 		}
 		
-		return db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		long result = db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		return result;
 	}
 
 	/**
@@ -106,9 +107,9 @@ public class ChatProvider {
 					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
 					+ " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 					new String[] { 
-						DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
-						DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
-						DatabaseUtils.sqlEscapeString(threadId)
+						sessionObject.getUserBareJid().toString(),
+						jid.getBareJid().toString(),
+						threadId
 					}, null, null, null, null);
 			try {
 				if (c.moveToNext()) {
@@ -123,9 +124,9 @@ public class ChatProvider {
 					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
 					+ " = 0 and " + OpenChatTableMetaData.FIELD_RESOURCE + " = ?", 
 					new String[] { 
-						DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
-						DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
-						DatabaseUtils.sqlEscapeString(jid.getResource())
+						sessionObject.getUserBareJid().toString(),
+						jid.getBareJid().toString(),
+						jid.getResource()
 					}, null, null, null, null);
 			try {
 				if (c.moveToNext()) {
@@ -139,9 +140,9 @@ public class ChatProvider {
 				OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID 
 				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 				new String[] { 
-					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
-					DatabaseUtils.sqlEscapeString(jid.getBareJid().toString()),
-					DatabaseUtils.sqlEscapeString(threadId)
+					sessionObject.getUserBareJid().toString(),
+					jid.getBareJid().toString(),
+					threadId
 				}, null, null, null, null);
 		try {
 			if (c.moveToNext()) {
@@ -149,7 +150,7 @@ public class ChatProvider {
 			}
 		} finally {
 			c.close();
-		}		
+		}	
 		return null;
 	}
 
@@ -165,7 +166,7 @@ public class ChatProvider {
 				OpenChatTableMetaData.FIELD_THREAD_ID, OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + 
 				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0", 
 				new String[] { 
-					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString())
+					sessionObject.getUserBareJid().toString()
 				}, null, null, null, null);
 		try {
 			while (c.moveToNext()) {
@@ -182,8 +183,8 @@ public class ChatProvider {
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID }, OpenChatTableMetaData.FIELD_ACCOUNT + 
 				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_JID + " = ?", 
 				new String[] { 
-					DatabaseUtils.sqlEscapeString(sessionObject.getUserBareJid().toString()),
-					DatabaseUtils.sqlEscapeString(jid.toString()),
+					sessionObject.getUserBareJid().toString(),
+					jid.toString()
 				}, null, null, null, null);
 		try {
 			if (c.moveToNext()) {
