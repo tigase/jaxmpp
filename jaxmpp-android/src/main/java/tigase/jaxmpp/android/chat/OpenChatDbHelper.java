@@ -32,7 +32,7 @@ public class OpenChatDbHelper {
 			+ OpenChatTableMetaData.FIELD_RESOURCE + " TEXT,"
 			+ OpenChatTableMetaData.FIELD_NICKNAME + " TEXT, "
 			+ OpenChatTableMetaData.FIELD_PASSWORD + " TEXT, "
-			+ OpenChatTableMetaData.FIELD_ROOM_STATE + " TEXT"
+			+ OpenChatTableMetaData.FIELD_ROOM_STATE + " INTEGER"
 			+ ");";
 	
 	public static void onCreate(SQLiteDatabase database) {

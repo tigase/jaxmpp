@@ -46,4 +46,6 @@ public class OpenChatTableMetaData {
     
     public static final String TABLE_NAME = "open_chats";	
 	
+    public static final int TYPE_CHAT = 0;
+    public static final int TYPE_MUC = 1;
 }

@@ -31,7 +31,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
 
 public class AndroidChatManager extends AbstractChatManager {
 
-	private Context context;
 	private ChatProvider provider;
 	
 	public AndroidChatManager(ChatProvider provider) {

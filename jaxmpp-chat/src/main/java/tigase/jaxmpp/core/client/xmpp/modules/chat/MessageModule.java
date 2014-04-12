@@ -188,6 +188,10 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	private final AbstractChatManager chatManager;
 
+	public MessageModule(AbstractChatManager chatManager) {
+		this.chatManager = chatManager;
+	}
+	
 	public MessageModule() {
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();

@@ -42,14 +42,20 @@ import android.preference.PreferenceManager;
 
 public class RosterProvider implements RosterCacheProvider {
 
+	public static interface Listener {
+		void onChange(Long rosterItemId);
+	}	
+	
 	protected final Context context;
 	protected final SQLiteOpenHelper dbHelper;
+	protected final Listener listener;
 	private SharedPreferences prefs;
 	private final String versionKeyPrefix;
 
-	public RosterProvider(Context context, SQLiteOpenHelper dbHelper, String versionKeyPrefix) {
+	public RosterProvider(Context context, SQLiteOpenHelper dbHelper, Listener listener, String versionKeyPrefix) {
 		this.context = context;
 		this.dbHelper = dbHelper;
+		this.listener = listener;
 		this.prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		this.versionKeyPrefix = versionKeyPrefix;
 	}
@@ -78,7 +84,9 @@ public class RosterProvider implements RosterCacheProvider {
 		finally {
 			db.endTransaction();
 		}
-		
+		if (listener != null) {
+			listener.onChange(rosterItem.getId());
+		}
 		return addedGroups;
 	}
 
@@ -159,6 +167,9 @@ public class RosterProvider implements RosterCacheProvider {
 		finally {
 			db.endTransaction();
 		}			
+		if (listener != null) {
+			listener.onChange(rosterItem.getId());
+		}		
 	}
 	
 	public Collection<? extends String> getGroups(SessionObject sessionObject) {
@@ -216,6 +227,10 @@ public class RosterProvider implements RosterCacheProvider {
 		finally {
 			db.endTransaction();
 		}
+		if (listener != null) {
+			listener.onChange(null);
+		}
+		
 	}
 	
 	private void removeEmptyGroups(SQLiteDatabase db) {

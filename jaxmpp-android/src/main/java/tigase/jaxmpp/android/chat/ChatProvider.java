@@ -33,26 +33,36 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class ChatProvider {
 
+	public static interface Listener {
+		void onChange(Long chatId);
+	}
+	
 	private final Context context;
 	private final SQLiteOpenHelper dbHelper;
+	private final Listener listener;
 	
-	public ChatProvider(Context context, SQLiteOpenHelper dbHelper) {
+	public ChatProvider(Context context, SQLiteOpenHelper dbHelper, Listener listener) {
 		this.context = context;
 		this.dbHelper = dbHelper;		
+		this.listener = listener;
 	}
 	
 	public boolean close(SessionObject sessionObject, long chatId) {
 		final SQLiteDatabase db = dbHelper.getWritableDatabase();
 		db.beginTransaction();
+		int deleted = 0;
 		try {
-			int deleted = db.delete(OpenChatTableMetaData.TABLE_NAME, OpenChatTableMetaData.FIELD_ID + " = ?", 
+			deleted = db.delete(OpenChatTableMetaData.TABLE_NAME, OpenChatTableMetaData.FIELD_ID + " = ?", 
 					new String[] { String.valueOf(chatId) });
-			db.setTransactionSuccessful();
-			return deleted > 0;
+			db.setTransactionSuccessful();			
 		}
 		finally {
 			db.endTransaction();
 		}
+		if (listener != null) {
+			listener.onChange(chatId);
+		}
+		return deleted > 0;		
 	}
 
 	public long createChat(SessionObject sessionObject, JID fromJid, String threadId) throws JaxmppException {
@@ -62,6 +72,7 @@ public class ChatProvider {
 		values.put(OpenChatTableMetaData.FIELD_ACCOUNT, sessionObject.getUserBareJid().toString());
 		values.put(OpenChatTableMetaData.FIELD_JID, fromJid.getBareJid().toString());
 		values.put(OpenChatTableMetaData.FIELD_TIMESTAMP, (new Date()).getTime());
+		values.put(OpenChatTableMetaData.FIELD_TYPE, OpenChatTableMetaData.TYPE_CHAT);
 		
 		if (fromJid.getResource() != null) {
 			values.put(OpenChatTableMetaData.FIELD_RESOURCE, fromJid.getResource());
@@ -71,6 +82,9 @@ public class ChatProvider {
 		}
 		
 		long result = db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		if (listener != null) {
+			listener.onChange(result);
+		}			
 		return result;
 	}
 
@@ -81,6 +95,7 @@ public class ChatProvider {
 		values.put(OpenChatTableMetaData.FIELD_ACCOUNT, sessionObject.getUserBareJid().toString());
 		values.put(OpenChatTableMetaData.FIELD_JID, fromJid.getBareJid().toString());
 		values.put(OpenChatTableMetaData.FIELD_TIMESTAMP, (new Date()).getTime());
+		values.put(OpenChatTableMetaData.FIELD_TYPE, OpenChatTableMetaData.TYPE_MUC);
 		
 		if (nickname != null) {
 			values.put(OpenChatTableMetaData.FIELD_NICKNAME, nickname);
@@ -90,6 +105,9 @@ public class ChatProvider {
 		}
 		
 		long result = db.insert(OpenChatTableMetaData.TABLE_NAME, null, values);
+		if (listener != null) {
+			listener.onChange(result);
+		}
 		return result;
 	}
 
@@ -122,7 +140,7 @@ public class ChatProvider {
 		if (jid.getResource() != null) {
 			Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_THREAD_ID }, 
 					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
-					+ " = 0 and " + OpenChatTableMetaData.FIELD_RESOURCE + " = ?", 
+					+ " = " + OpenChatTableMetaData.TYPE_CHAT + " and " + OpenChatTableMetaData.FIELD_RESOURCE + " = ?", 
 					new String[] { 
 						sessionObject.getUserBareJid().toString(),
 						jid.getBareJid().toString(),
@@ -138,7 +156,7 @@ public class ChatProvider {
 		}
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_THREAD_ID, 
 				OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID 
-				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
+				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_CHAT + " and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 				new String[] { 
 					sessionObject.getUserBareJid().toString(),
 					jid.getBareJid().toString(),
@@ -164,7 +182,7 @@ public class ChatProvider {
 		List<Object[]> chats = new ArrayList<Object[]>();
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_JID, 
 				OpenChatTableMetaData.FIELD_THREAD_ID, OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + 
-				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0", 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_CHAT, 
 				new String[] { 
 					sessionObject.getUserBareJid().toString()
 				}, null, null, null, null);
@@ -181,7 +199,7 @@ public class ChatProvider {
 	public boolean isChatOpenFor(SessionObject sessionObject, BareJID jid) {
 		final SQLiteDatabase db = dbHelper.getReadableDatabase();
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID }, OpenChatTableMetaData.FIELD_ACCOUNT + 
-				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = 0 and " + OpenChatTableMetaData.FIELD_JID + " = ?", 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_CHAT + " and " + OpenChatTableMetaData.FIELD_JID + " = ?", 
 				new String[] { 
 					sessionObject.getUserBareJid().toString(),
 					jid.toString()
