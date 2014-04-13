@@ -123,7 +123,7 @@ public class ChatProvider {
 		if (threadId != null) {
 			Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_RESOURCE }, 
 					OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID + " = ? and " + OpenChatTableMetaData.FIELD_TYPE 
-					+ " = 0 and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
+					+ " = " + OpenChatTableMetaData.TYPE_CHAT  + " and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
 					new String[] { 
 						sessionObject.getUserBareJid().toString(),
 						jid.getBareJid().toString(),
@@ -156,11 +156,10 @@ public class ChatProvider {
 		}
 		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_THREAD_ID, 
 				OpenChatTableMetaData.FIELD_RESOURCE }, OpenChatTableMetaData.FIELD_ACCOUNT + " = ? and " + OpenChatTableMetaData.FIELD_JID 
-				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_CHAT + " and " + OpenChatTableMetaData.FIELD_THREAD_ID + " = ?", 
+				+ " = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_CHAT, 
 				new String[] { 
 					sessionObject.getUserBareJid().toString(),
-					jid.getBareJid().toString(),
-					threadId
+					jid.getBareJid().toString()
 				}, null, null, null, null);
 		try {
 			if (c.moveToNext()) {
