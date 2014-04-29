@@ -40,9 +40,45 @@
 	<modules>
 		<module>jaxmpp-core</module>
 		<module>jaxmpp-j2se</module>
-		<module>jaxmpp-gwt</module>
-    <module>jaxmpp-android</module>
   </modules>
+
+	<profiles>
+		<profile>
+			<id>android</id>
+			<activation>
+				<property>
+					<name>android</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-android</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>gwt</id>
+			<activation>
+				<property>
+					<name>gwt</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-gwt</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>all</id>
+			<activation>
+				<property>
+					<name>all</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-android</module>
+				<module>jaxmpp-gwt</module>
+			</modules>
+		</profile>
+	</profiles>
+
 
 <scm>
     <developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
