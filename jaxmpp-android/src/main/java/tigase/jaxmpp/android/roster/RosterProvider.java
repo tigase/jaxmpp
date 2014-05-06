@@ -75,8 +75,12 @@ public class RosterProvider implements RosterCacheProvider {
 			v.put(RosterItemsCacheTableMetaData.FIELD_ASK, rosterItem.isAsk());
 			v.put(RosterItemsCacheTableMetaData.FIELD_TIMESTAMP, (new Date()).getTime());
 			
-			db.insert(RosterItemsCacheTableMetaData.TABLE_NAME, null, v); // CONFLICT_REPLACE?
-			
+			// in most of cases we will already have this record
+			int updated = db.update(RosterItemsCacheTableMetaData.TABLE_NAME, v, RosterItemsCacheTableMetaData.FIELD_ID + " = ?", 
+					new String[] { String.valueOf(rosterItem.getId()) });
+			if (updated == 0) {
+				db.insertWithOnConflict(RosterItemsCacheTableMetaData.TABLE_NAME, null, v, SQLiteDatabase.CONFLICT_REPLACE); // CONFLICT_REPLACE?
+			}
 			addedGroups = updateRosterItemGroups(db, rosterItem);
 			
 			db.setTransactionSuccessful();

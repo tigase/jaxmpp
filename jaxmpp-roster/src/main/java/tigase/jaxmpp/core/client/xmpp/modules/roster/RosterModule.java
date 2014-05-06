@@ -430,23 +430,31 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
 			fill(currentItem, name, subscription, null, ask);
+			// store needs to know that item has changed!
+			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.askCancelled, null));
 			log.fine("Roster item " + jid + " ask cancelled");
 		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from
 				|| currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
 			fill(currentItem, name, subscription, null, ask);
+			// store needs to know that item has changed!
+			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.unsubscribed, null));
 			log.fine("Roster item " + jid + " unsubscribed");
 		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both
 				|| currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
 			fill(currentItem, name, subscription, null, ask);
+			// store needs to know that item has changed!
+			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.subscribed, null));
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
 			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().getGroups());
 			fill(currentItem, name, subscription, groups, ask);
+			// store needs to know that item has changed!
+			getRosterStore().addItem(currentItem);
 			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, null, modifiedGroups));
 			log.fine("Roster item " + jid + " updated");
