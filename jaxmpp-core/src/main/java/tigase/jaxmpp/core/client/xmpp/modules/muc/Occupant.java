@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatState;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 
 public class Occupant {
@@ -31,6 +32,8 @@ public class Occupant {
 	private long id;
 
 	private Presence presence;
+	
+	private ChatState chatState = null;
 
 	public Occupant() {
 		id = ++counter;
@@ -81,6 +84,14 @@ public class Occupant {
 		}
 	}
 
+	public ChatState getChatState() {
+		return chatState;
+	}
+	
+	protected void setChatState(ChatState state) {
+		this.chatState = state;
+	}
+	
 	@Override
 	public int hashCode() {
 		return ("occupant" + id).hashCode();

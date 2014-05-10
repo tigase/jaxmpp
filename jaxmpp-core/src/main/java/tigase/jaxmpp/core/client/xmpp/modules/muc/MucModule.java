@@ -20,8 +20,8 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
-
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedEvent;
 import tigase.jaxmpp.core.client.BareJID;
@@ -46,6 +46,7 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatState;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationEvent.Type;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
@@ -663,6 +664,19 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		if (element.getType() == StanzaType.error) {
 			event = new MucEvent(MessageError, sessionObject);
 		} else {
+			if (nickname != null) {
+				Occupant occupant = room.getPresences().get(nickname);
+				if (occupant != null) {
+					// processing and updating chat state change event
+					List<Element> chatStateElems = element.getChildrenNS(ChatState.XMLNS);
+					if (chatStateElems != null && chatStateElems.size() > 0) {
+						ChatState chatState = ChatState.fromElement(chatStateElems.get(0));
+						occupant.setChatState(chatState);
+						MucEvent chatStateChangedEvent = new MucEvent(OccupantChangedPresence, sessionObject);
+						fireMucEvent(chatStateChangedEvent, null, nickname, room, occupant, null);
+					}
+				}
+			}
 			if (room.getState() != State.joined) {
 				room.setState(State.joined);
 			}

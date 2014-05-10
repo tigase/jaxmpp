@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -30,6 +29,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatState;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MucEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
@@ -64,6 +64,8 @@ public class Room {
 
 	private State state = State.not_joined;
 
+	private ChatState localChatState = null;
+	
 	private final Map<String, Occupant> tempOccupants = new HashMap<String, Occupant>();
 
 	private final PacketWriter writer;
@@ -89,6 +91,10 @@ public class Room {
 		return lastMessageDate;
 	}
 
+	protected ChatState getLocalChatState(ChatState state) {
+		return localChatState;
+	}
+	
 	public String getNickname() {
 		return nickname;
 	}
@@ -147,12 +153,25 @@ public class Room {
 	public void remove(Occupant occupant) throws XMLException {
 		this.presences.remove(occupant.getNickname());
 	}
+	
+	private void sendChatState(ChatState state) throws XMLException, JaxmppException {
+		Message msg = Message.create();
+		msg.setTo(JID.jidInstance(roomJid));
+		msg.setType(StanzaType.groupchat);
+		msg.addChild(state.toElement());
+
+		this.writer.write(msg);		
+	}
 
 	public void sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(JID.jidInstance(roomJid));
 		msg.setType(StanzaType.groupchat);
 		msg.setBody(body);
+		if (localChatState != null) {
+			msg.addChild(ChatState.active.toElement());
+			localChatState = ChatState.active;
+		}
 
 		this.writer.write(msg);
 	}
@@ -163,6 +182,17 @@ public class Room {
 		}
 	}
 
+	public void setLocalChatState(ChatState state) throws XMLException, JaxmppException {
+		if (state == null) {
+			this.localChatState = null;
+			return;
+		}
+		if (!state.equals(localChatState)) {
+			localChatState = state;
+			sendChatState(state);
+		}
+	}
+	
 	public void setObservable(Observable observable) {
 		this.observable = observable;
 	}
