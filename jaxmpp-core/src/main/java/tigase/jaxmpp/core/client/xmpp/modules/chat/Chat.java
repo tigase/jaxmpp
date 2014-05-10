@@ -44,9 +44,9 @@ public class Chat {
 
 	private final PacketWriter writer;
 	
-	private ChatState localState = null;
+	private ChatState localChatState = null;
 
-	private ChatState state = null;
+	private ChatState chatState = null;
 	
 	/**
 	 * Creates new chat representation object.
@@ -89,30 +89,30 @@ public class Chat {
 		return sessionObject;
 	}
 
-	public ChatState getState() {
-		return state;
+	public ChatState getChatState() {
+		return chatState;
 	}
 	
-	protected void setState(ChatState state) {
-		this.state = state;
+	protected void setChatState(ChatState state) {
+		this.chatState = state;
 	}
 	
-	protected ChatState getLocalState() {
-		return localState;
+	protected ChatState getLocalChatState() {
+		return localChatState;
 	}
 	
-	public void setLocalState(ChatState state) throws XMLException, JaxmppException {
+	public void setLocalChatState(ChatState state) throws XMLException, JaxmppException {
 		if (state == null) {
-			this.localState = null;
+			this.localChatState = null;
 			return;
 		}
-		if (!state.equals(this.localState) && (localState != null || state != ChatState.gone)) {
-			this.localState = state;
-			sendState(state);
+		if (!state.equals(this.localChatState) && (localChatState != null || state != ChatState.gone)) {
+			this.localChatState = state;
+			sendChatState(state);
 		}
 	}
 	
-	private void sendState(ChatState state) throws XMLException, JaxmppException {
+	private void sendChatState(ChatState state) throws XMLException, JaxmppException {
 		// we need to check if recipient is online as there is no point in sending
 		// state change notifications to offline users
 		PresenceStore presenceStore = sessionObject.getPresence();
@@ -149,9 +149,9 @@ public class Chat {
 		msg.setThread(threadId);
 		msg.setBody(body);
 
-		if (localState != null) {
+		if (localChatState != null) {
 			msg.addChild(ChatState.active.toElement());
-			localState = ChatState.active;
+			localChatState = ChatState.active;
 		}
 		
 		this.writer.write(msg);

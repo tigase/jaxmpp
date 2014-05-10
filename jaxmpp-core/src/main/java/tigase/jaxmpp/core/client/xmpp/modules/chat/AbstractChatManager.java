@@ -112,11 +112,11 @@ public abstract class AbstractChatManager {
 		if (scopes != null && scopes.contains(Scope.session)) {
 			for (Chat chat : this.chats) {
 				try {
-					chat.setLocalState(null);
+					chat.setLocalChatState(null);
 				} catch (JaxmppException ex) {
 					// should not happen
 				}
-				chat.setState(null);
+				chat.setChatState(null);
 				try {
 					MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatStateChanged, sessionObject);
 					event.setChat(chat);
@@ -157,7 +157,7 @@ public abstract class AbstractChatManager {
 		List<Element> stateElems = message.getChildrenNS(ChatState.XMLNS);
 		if (stateElems != null && stateElems.size() > 0) {
 			Element stateElem = stateElems.get(0);
-			chat.setState(ChatState.fromElement(stateElem));
+			chat.setChatState(ChatState.fromElement(stateElem));
 			
 			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatStateChanged, sessionObject);
 			event.setChat(chat);
