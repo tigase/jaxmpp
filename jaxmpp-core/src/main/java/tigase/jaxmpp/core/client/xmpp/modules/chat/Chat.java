@@ -23,6 +23,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -42,7 +43,11 @@ public class Chat {
 	private String threadId;
 
 	private final PacketWriter writer;
+	
+	private ChatState localState = null;
 
+	private ChatState state = null;
+	
 	/**
 	 * Creates new chat representation object.
 	 * 
@@ -84,6 +89,39 @@ public class Chat {
 		return sessionObject;
 	}
 
+	public ChatState getState() {
+		return state;
+	}
+	
+	protected void setState(ChatState state) {
+		this.state = state;
+	}
+	
+	protected ChatState getLocalState() {
+		return localState;
+	}
+	
+	public void setLocalState(ChatState state) throws XMLException, JaxmppException {
+		if (!state.equals(this.localState) && (localState != null || state != ChatState.gone)) {
+			this.localState = state;
+			sendState(state);
+		}
+	}
+	
+	private void sendState(ChatState state) throws XMLException, JaxmppException {
+		// we need to check if recipient is online as there is no point in sending
+		// state change notifications to offline users
+		PresenceStore presenceStore = sessionObject.getPresence();
+		if (presenceStore == null || !presenceStore.isAvailable(jid.getBareJid()))
+			return;
+		Message msg = Message.create();
+		msg.setTo(jid);
+		msg.setType(StanzaType.chat);
+		msg.addChild(state.toElement());
+		
+		this.writer.write(msg);
+	}
+	
 	/**
 	 * Returns thread-id.
 	 * 
@@ -107,6 +145,11 @@ public class Chat {
 		msg.setThread(threadId);
 		msg.setBody(body);
 
+		if (localState != null) {
+			msg.addChild(ChatState.active.toElement());
+			localState = ChatState.active;
+		}
+		
 		this.writer.write(msg);
 	}
 

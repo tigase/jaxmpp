@@ -130,6 +130,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	public static final EventType ChatCreated = new EventType();
 
 	public static final EventType ChatUpdated = new EventType();
+	
+	public static final EventType ChatStateChanged = new EventType();
 
 	private static final Criteria CRIT = new Criteria() {
 
@@ -149,6 +151,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		}
 	};
 
+	private static final String[] FEATURES = { ChatState.XMLNS };
+	
 	public static final EventType MessageReceived = new EventType();
 
 	private final AbstractChatManager chatManager;
@@ -210,7 +214,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 */
 	@Override
 	public String[] getFeatures() {
-		return null;
+		return FEATURES;
 	}
 
 	Observable getObservable() {

@@ -16,3 +16,4 @@ jaxmpp-core/build
 jaxmpp-gwt/build
 jaxmpp-android/bin
 jaxmpp-android/gen
+*.class

@@ -19,7 +19,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -28,6 +27,7 @@ import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.Observable;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.MessageEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -132,6 +132,16 @@ public abstract class AbstractChatManager {
 			update(chat, interlocutorJid, threadId);
 		}
 
+		List<Element> stateElems = message.getChildrenNS(ChatState.XMLNS);
+		if (stateElems != null && stateElems.size() > 0) {
+			Element stateElem = stateElems.get(0);
+			chat.setState(ChatState.fromElement(stateElem));
+			
+			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatStateChanged, sessionObject);
+			event.setChat(chat);
+			event.setMessage(message);
+			observable.fireEvent(event.getType(), event);
+		}
 		return chat;
 	}
 
