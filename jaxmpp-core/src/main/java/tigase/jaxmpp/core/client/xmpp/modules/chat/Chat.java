@@ -102,6 +102,10 @@ public class Chat {
 	}
 	
 	public void setLocalState(ChatState state) throws XMLException, JaxmppException {
+		if (state == null) {
+			this.localState = null;
+			return;
+		}
 		if (!state.equals(this.localState) && (localState != null || state != ChatState.gone)) {
 			this.localState = state;
 			sendState(state);

@@ -18,6 +18,8 @@
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
+import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.Connector;
 
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -28,6 +30,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.observer.BaseEvent;
 import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -157,7 +160,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	private final AbstractChatManager chatManager;
 
-	public MessageModule(Observable parentObservable, SessionObject sessionObject, PacketWriter packetWriter) {
+	public MessageModule(Observable parentObservable, final SessionObject sessionObject, PacketWriter packetWriter) {
 		super(ObservableFactory.instance(parentObservable), sessionObject, packetWriter);
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
@@ -165,6 +168,16 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		this.chatManager.setPacketWriter(packetWriter);
 		this.chatManager.setSessionObject(sessionObject);
 		this.chatManager.initialize();
+		if (this.sessionObject instanceof AbstractSessionObject) {
+			((AbstractSessionObject) this.sessionObject).addListener(AbstractSessionObject.Cleared,
+					new Listener<AbstractSessionObject.ClearedEvent>() {
+
+						@Override
+						public void handleEvent(AbstractSessionObject.ClearedEvent be) throws JaxmppException {
+							chatManager.onSessionObjectCleared(be.getSessionObject(), be.getScopes());
+						}
+					});
+		}
 	}
 
 	/**

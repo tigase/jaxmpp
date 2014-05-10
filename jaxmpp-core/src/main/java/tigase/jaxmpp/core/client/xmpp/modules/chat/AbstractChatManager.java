@@ -19,10 +19,12 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
@@ -106,6 +108,26 @@ public abstract class AbstractChatManager {
 		return false;
 	}
 
+	public void onSessionObjectCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
+		if (scopes != null && scopes.contains(Scope.session)) {
+			for (Chat chat : this.chats) {
+				try {
+					chat.setLocalState(null);
+				} catch (JaxmppException ex) {
+					// should not happen
+				}
+				chat.setState(null);
+				try {
+					MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatStateChanged, sessionObject);
+					event.setChat(chat);
+					observable.fireEvent(event);
+				} catch (JaxmppException ex) {
+					// there is nothing we can do, but this should not happen as well
+				}
+			}
+		}
+	}
+	
 	public Chat process(Message message, JID interlocutorJid, Observable observable) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
