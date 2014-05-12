@@ -102,6 +102,13 @@ public class Chat {
 	}
 	
 	public void setLocalChatState(ChatState state) throws XMLException, JaxmppException {
+		if (ChatState.isChatStateDisabled(sessionObject)) {
+			if (localChatState != null) {
+				sendChatState(ChatState.active);
+				localChatState = null;
+			}
+			return;
+		}
 		if (state == null) {
 			this.localChatState = null;
 			return;

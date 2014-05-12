@@ -227,7 +227,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 */
 	@Override
 	public String[] getFeatures() {
-		return FEATURES;
+		return ChatState.isChatStateDisabled(sessionObject) ? null : FEATURES;
 	}
 
 	Observable getObservable() {
@@ -268,4 +268,15 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		writer.write(msg);
 	}
 
+	public boolean setChatStateDisabled(boolean value) {
+		if (value == ChatState.isChatStateDisabled(sessionObject))
+			return false;
+		sessionObject.setProperty(ChatState.CHAT_STATE_DISABLED_KEY, value);
+		sessionObject.setProperty("XEP115VerificationString", null);
+		if (value) {
+			chatManager.resetChatStates();
+		}
+		return true;
+	}
+	
 }

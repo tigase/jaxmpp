@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -33,6 +34,8 @@ public enum ChatState {
 	composing,
 	paused;
 
+	public static final String CHAT_STATE_DISABLED_KEY = "xep-0085#disabled";	
+	
 	public static String XMLNS = "http://jabber.org/protocol/chatstates";	
 	
 	public Element toElement() throws XMLException	 {
@@ -46,5 +49,10 @@ public enum ChatState {
 			return null;
 		return ChatState.valueOf(elem.getName());
 	} 
+	
+	public static boolean isChatStateDisabled(SessionObject sessionObject) {
+		Boolean value = sessionObject.getProperty(CHAT_STATE_DISABLED_KEY);
+		return (value != null && value);		
+	}
 	
 }

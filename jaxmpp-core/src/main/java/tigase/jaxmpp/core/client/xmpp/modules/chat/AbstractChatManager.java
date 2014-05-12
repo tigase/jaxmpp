@@ -110,21 +110,7 @@ public abstract class AbstractChatManager {
 
 	public void onSessionObjectCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
 		if (scopes != null && scopes.contains(Scope.session)) {
-			for (Chat chat : this.chats) {
-				try {
-					chat.setLocalChatState(null);
-				} catch (JaxmppException ex) {
-					// should not happen
-				}
-				chat.setChatState(null);
-				try {
-					MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatStateChanged, sessionObject);
-					event.setChat(chat);
-					observable.fireEvent(event);
-				} catch (JaxmppException ex) {
-					// there is nothing we can do, but this should not happen as well
-				}
-			}
+			resetChatStates();
 		}
 	}
 	
@@ -154,15 +140,17 @@ public abstract class AbstractChatManager {
 			update(chat, interlocutorJid, threadId);
 		}
 
-		List<Element> stateElems = message.getChildrenNS(ChatState.XMLNS);
-		if (stateElems != null && stateElems.size() > 0) {
-			Element stateElem = stateElems.get(0);
-			chat.setChatState(ChatState.fromElement(stateElem));
+		if (!ChatState.isChatStateDisabled(sessionObject)) {
+			List<Element> stateElems = message.getChildrenNS(ChatState.XMLNS);
+			if (stateElems != null && stateElems.size() > 0) {
+				Element stateElem = stateElems.get(0);
+				chat.setChatState(ChatState.fromElement(stateElem));
 			
-			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatStateChanged, sessionObject);
-			event.setChat(chat);
-			event.setMessage(message);
-			observable.fireEvent(event.getType(), event);
+				MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatStateChanged, sessionObject);
+				event.setChat(chat);
+				event.setMessage(message);
+				observable.fireEvent(event.getType(), event);
+			}
 		}
 		return chat;
 	}
@@ -172,6 +160,24 @@ public abstract class AbstractChatManager {
 		return process(message, interlocutorJid, observable);
 	}
 
+	protected void resetChatStates() {
+		for (Chat chat : this.chats) {
+			try {
+				chat.setLocalChatState(null);
+			} catch (JaxmppException ex) {
+				// should not happen
+			}
+			chat.setChatState(null);
+			try {
+				MessageModule.MessageEvent event = new MessageEvent(MessageModule.ChatStateChanged, sessionObject);
+				event.setChat(chat);
+				observable.fireEvent(event);
+			} catch (JaxmppException ex) {
+				// there is nothing we can do, but this should not happen as well
+			}
+		}		
+	}
+	
 	void setObservable(Observable observable) {
 		this.observable = observable;
 	}
