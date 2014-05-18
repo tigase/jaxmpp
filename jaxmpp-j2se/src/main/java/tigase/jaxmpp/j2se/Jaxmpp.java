@@ -145,6 +145,7 @@ public class Jaxmpp extends JaxmppCore {
 		} finally {
 			if (resetStreamManagement) {
 				StreamManagementModule.reset(sessionObject);
+				sessionObject.clear(Scope.session);
 			}
 		}
 	}

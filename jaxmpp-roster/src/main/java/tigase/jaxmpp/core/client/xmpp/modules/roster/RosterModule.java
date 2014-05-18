@@ -325,7 +325,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 					@Override
 					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
-						if (scopes.contains(Scope.session)) {
+						if (scopes.contains(Scope.user)) {
 							getRosterStore().clear();
 						}
 					}

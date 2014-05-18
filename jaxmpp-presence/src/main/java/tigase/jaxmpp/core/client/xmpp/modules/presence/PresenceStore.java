@@ -63,8 +63,8 @@ public abstract class PresenceStore implements Property {
 			Iterator<Presence> it = bestPresence.values().iterator();
 			while (it.hasNext()) {
 				Presence i = it.next();
-				handler.onOffline(i);
 				it.remove();
+				handler.onOffline(i);
 			}
 		} else
 			bestPresence.clear();
