@@ -67,6 +67,8 @@ public class AndroidChatManager extends AbstractChatManager {
 	@Override
 	public Chat getChat(JID jid, String threadId) {
 		Object[] data = provider.getChat(context.getSessionObject(), jid, threadId);
+		if (data == null)
+			return null;
 		Chat chat = new Chat((Long) data[0], context);
 		chat.setThreadId((String) data[1]);		
 		if (data[2] != null) {
