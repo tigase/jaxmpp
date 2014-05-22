@@ -20,6 +20,7 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
@@ -113,7 +114,7 @@ public abstract class AbstractChatManager {
 			resetChatStates();
 		}
 	}
-	
+
 	public Chat process(Message message, JID interlocutorJid, Observable observable) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
@@ -145,7 +146,7 @@ public abstract class AbstractChatManager {
 			if (stateElems != null && stateElems.size() > 0) {
 				Element stateElem = stateElems.get(0);
 				chat.setChatState(ChatState.fromElement(stateElem));
-			
+
 				MessageEvent event = new MessageModule.MessageEvent(MessageModule.ChatStateChanged, sessionObject);
 				event.setChat(chat);
 				event.setMessage(message);
@@ -173,11 +174,12 @@ public abstract class AbstractChatManager {
 				event.setChat(chat);
 				observable.fireEvent(event);
 			} catch (JaxmppException ex) {
-				// there is nothing we can do, but this should not happen as well
+				// there is nothing we can do, but this should not happen as
+				// well
 			}
-		}		
+		}
 	}
-	
+
 	void setObservable(Observable observable) {
 		this.observable = observable;
 	}

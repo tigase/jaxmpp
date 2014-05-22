@@ -18,9 +18,8 @@
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
-import tigase.jaxmpp.core.client.AbstractSessionObject;
-import tigase.jaxmpp.core.client.Connector;
 
+import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -33,6 +32,7 @@ import tigase.jaxmpp.core.client.observer.EventType;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
@@ -109,6 +109,8 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 		private Chat chat;
 
+		private String id;
+
 		public MessageEvent(EventType type, SessionObject sessionObject) {
 			super(type, sessionObject);
 		}
@@ -122,8 +124,19 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			return chat;
 		}
 
+		/**
+		 * @return the id
+		 */
+		public String getId() {
+			return id;
+		}
+
 		public void setChat(Chat chat) {
 			this.chat = chat;
+		}
+
+		public void setId(String id) {
+			this.id = id;
 		}
 
 	}
@@ -132,9 +145,9 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 
 	public static final EventType ChatCreated = new EventType();
 
-	public static final EventType ChatUpdated = new EventType();
-	
 	public static final EventType ChatStateChanged = new EventType();
+
+	public static final EventType ChatUpdated = new EventType();
 
 	private static final Criteria CRIT = new Criteria() {
 
@@ -154,9 +167,13 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		}
 	};
 
-	private static final String[] FEATURES = { ChatState.XMLNS };
-	
+	private static final String[] FEATURES = { ChatState.XMLNS, "urn:xmpp:receipts" };
+
 	public static final EventType MessageReceived = new EventType();
+
+	public static final EventType ReceiptReceivedMessage = new EventType();
+
+	public static final String RECEIPTS_XMLNS = "urn:xmpp:receipts";
 
 	private final AbstractChatManager chatManager;
 
@@ -239,6 +256,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 */
 	@Override
 	public void process(Message element) throws JaxmppException {
+		processRequestReceipts(element);
 		MessageEvent event = new MessageEvent(MessageReceived, sessionObject);
 		event.setMessage(element);
 		Chat chat = chatManager.process(element, observable);
@@ -246,6 +264,33 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 			event.setChat(chat);
 		}
 		observable.fireEvent(event.getType(), event);
+		processReceivedReceipts(element, chat);
+	}
+
+	private void processReceivedReceipts(final Message element, Chat chat) throws JaxmppException {
+		Element receipt = element.getChildrenNS("received", MessageModule.RECEIPTS_XMLNS);
+		if (receipt != null) {
+			MessageEvent event = new MessageModule.MessageEvent(MessageModule.ReceiptReceivedMessage, sessionObject);
+			event.setChat(chat);
+			event.setMessage(element);
+			event.setId(receipt.getAttribute("id"));
+			observable.fireEvent(event.getType(), event);
+		}
+	}
+
+	private void processRequestReceipts(final Message element) throws JaxmppException {
+		if (element.getChildrenNS("request", MessageModule.RECEIPTS_XMLNS) != null) {
+			Message msg = Message.create();
+			msg.setId(UIDGenerator.next());
+			msg.setTo(element.getFrom());
+
+			Element received = new DefaultElement("received", null, MessageModule.RECEIPTS_XMLNS);
+			if (element.getId() != null)
+				received.setAttribute("id", element.getId());
+			msg.addChild(received);
+
+			writer.write(msg);
+		}
 	}
 
 	/**
@@ -278,5 +323,5 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		}
 		return true;
 	}
-	
+
 }

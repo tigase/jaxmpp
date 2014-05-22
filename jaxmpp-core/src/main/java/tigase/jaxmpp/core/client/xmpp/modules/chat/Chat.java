@@ -20,8 +20,10 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.EventType;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -34,20 +36,22 @@ public class Chat {
 
 	public static final EventType MessageReceived = new EventType();
 
+	private ChatState chatState = null;
+
 	private final long id;
 
 	private JID jid;
+
+	private ChatState localChatState = null;
+
+	private boolean messageDeliveryReceiptsEnabled = false;
 
 	private final SessionObject sessionObject;
 
 	private String threadId;
 
 	private final PacketWriter writer;
-	
-	private ChatState localChatState = null;
 
-	private ChatState chatState = null;
-	
 	/**
 	 * Creates new chat representation object.
 	 * 
@@ -62,6 +66,10 @@ public class Chat {
 		this.id = id;
 		this.sessionObject = sessionObject;
 		this.writer = packetWriter;
+	}
+
+	public ChatState getChatState() {
+		return chatState;
 	}
 
 	/**
@@ -80,6 +88,10 @@ public class Chat {
 		return jid;
 	}
 
+	protected ChatState getLocalChatState() {
+		return localChatState;
+	}
+
 	/**
 	 * Return {@linkplain SessionObject} related to this chat.
 	 * 
@@ -89,18 +101,79 @@ public class Chat {
 		return sessionObject;
 	}
 
-	public ChatState getChatState() {
-		return chatState;
+	/**
+	 * Returns thread-id.
+	 * 
+	 * @return thread-id or <code>null</code> if not present.
+	 */
+	public String getThreadId() {
+		return threadId;
 	}
-	
+
+	/**
+	 * @return the messageDeliveryReceiptsEnabled
+	 */
+	public boolean isMessageDeliveryReceiptsEnabled() {
+		return messageDeliveryReceiptsEnabled;
+	}
+
+	private void sendChatState(ChatState state) throws XMLException, JaxmppException {
+		// we need to check if recipient is online as there is no point in
+		// sending
+		// state change notifications to offline users
+		PresenceStore presenceStore = sessionObject.getPresence();
+		if (presenceStore == null || !presenceStore.isAvailable(jid.getBareJid()))
+			return;
+		Message msg = Message.create();
+		msg.setTo(jid);
+		msg.setType(StanzaType.chat);
+		msg.addChild(state.toElement());
+
+		this.writer.write(msg);
+	}
+
+	/**
+	 * Sends message in current chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 * 
+	 * @param body
+	 *            message to send.
+	 */
+	public Message sendMessage(String body) throws XMLException, JaxmppException {
+		Message msg = Message.create();
+		msg.setTo(jid);
+		msg.setType(StanzaType.chat);
+		msg.setThread(threadId);
+		msg.setId(UIDGenerator.next());
+		msg.setBody(body);
+
+		if (localChatState != null) {
+			msg.addChild(ChatState.active.toElement());
+			localChatState = ChatState.active;
+		}
+
+		if (messageDeliveryReceiptsEnabled) {
+			msg.addChild(new DefaultElement("request", null, MessageModule.RECEIPTS_XMLNS));
+		}
+
+		this.writer.write(msg);
+		return msg;
+	}
+
 	protected void setChatState(ChatState state) {
 		this.chatState = state;
 	}
-	
-	protected ChatState getLocalChatState() {
-		return localChatState;
+
+	/**
+	 * Sets interlocutor JID.
+	 * 
+	 * @param jid
+	 *            interlocutor JID.
+	 */
+	public void setJid(JID jid) {
+		this.jid = jid;
 	}
-	
+
 	public void setLocalChatState(ChatState state) throws XMLException, JaxmppException {
 		if (ChatState.isChatStateDisabled(sessionObject)) {
 			if (localChatState != null) {
@@ -118,60 +191,13 @@ public class Chat {
 			sendChatState(state);
 		}
 	}
-	
-	private void sendChatState(ChatState state) throws XMLException, JaxmppException {
-		// we need to check if recipient is online as there is no point in sending
-		// state change notifications to offline users
-		PresenceStore presenceStore = sessionObject.getPresence();
-		if (presenceStore == null || !presenceStore.isAvailable(jid.getBareJid()))
-			return;
-		Message msg = Message.create();
-		msg.setTo(jid);
-		msg.setType(StanzaType.chat);
-		msg.addChild(state.toElement());
-		
-		this.writer.write(msg);
-	}
-	
-	/**
-	 * Returns thread-id.
-	 * 
-	 * @return thread-id or <code>null</code> if not present.
-	 */
-	public String getThreadId() {
-		return threadId;
-	}
 
 	/**
-	 * Sends message in current chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 * 
-	 * @param body
-	 *            message to send.
+	 * @param messageDeliveryReceiptsEnabled
+	 *            the messageDeliveryReceiptsEnabled to set
 	 */
-	public void sendMessage(String body) throws XMLException, JaxmppException {
-		Message msg = Message.create();
-		msg.setTo(jid);
-		msg.setType(StanzaType.chat);
-		msg.setThread(threadId);
-		msg.setBody(body);
-
-		if (localChatState != null) {
-			msg.addChild(ChatState.active.toElement());
-			localChatState = ChatState.active;
-		}
-		
-		this.writer.write(msg);
-	}
-
-	/**
-	 * Sets interlocutor JID.
-	 * 
-	 * @param jid
-	 *            interlocutor JID.
-	 */
-	public void setJid(JID jid) {
-		this.jid = jid;
+	public void setMessageDeliveryReceiptsEnabled(boolean messageDeliveryReceiptsEnabled) {
+		this.messageDeliveryReceiptsEnabled = messageDeliveryReceiptsEnabled;
 	}
 
 	/**
