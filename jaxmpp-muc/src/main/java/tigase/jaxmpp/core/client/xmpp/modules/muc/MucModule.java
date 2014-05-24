@@ -925,7 +925,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	private AbstractRoomsManager roomsManager;
 
 	public MucModule() {
-
+		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
+		if (cm == null) {
+			cm = new DefaultRoomsManager();
+		}
+		roomsManager = cm;
+		
 		this.crit = new Criteria() {
 
 			@Override
@@ -939,7 +944,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			}
 		};
 		dtf = new DateTimeFormat();
-
+	}
+	
+	public MucModule(AbstractRoomsManager cm) {
+		this();
+		roomsManager = cm;
 	}
 
 	@Override
@@ -956,8 +965,6 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 					}
 				});
 
-		AbstractRoomsManager cm = UniversalFactory.createInstance(AbstractRoomsManager.class.getName());
-		this.roomsManager = cm != null ? cm : new DefaultRoomsManager();
 		this.roomsManager.setContext(this.context);
 		this.roomsManager.initialize();
 
@@ -1034,6 +1041,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		return this.roomsManager.getRooms();
 	}
 
+	public Room getRoom(BareJID roomJid) {
+		return this.roomsManager.get(roomJid);
+	}
+	
 	/**
 	 * Sends mediated invitation.
 	 * 
@@ -1333,5 +1344,4 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		}
 
 	}
-
 }

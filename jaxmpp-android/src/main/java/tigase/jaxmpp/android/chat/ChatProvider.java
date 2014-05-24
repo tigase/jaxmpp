@@ -25,6 +25,7 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.Room;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -88,7 +89,7 @@ public class ChatProvider {
 		return result;
 	}
 
-	public long creteMuc(SessionObject sessionObject, JID fromJid, String nickname, String password) throws JaxmppException {
+	public long createMuc(SessionObject sessionObject, JID fromJid, String nickname, String password) {
 		final SQLiteDatabase db = dbHelper.getWritableDatabase();
 		
 		final ContentValues values = new ContentValues();
@@ -212,4 +213,58 @@ public class ChatProvider {
 		}			
 		return false;
 	}	
+	
+	public List<Object[]> getRooms(SessionObject sessionObject) {
+		final SQLiteDatabase db = dbHelper.getReadableDatabase();
+		List<Object[]> rooms = new ArrayList<Object[]>();
+		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID, OpenChatTableMetaData.FIELD_JID, 
+				OpenChatTableMetaData.FIELD_NICKNAME, OpenChatTableMetaData.FIELD_PASSWORD }, OpenChatTableMetaData.FIELD_ACCOUNT + 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_MUC, 
+				new String[] { 
+					sessionObject.getUserBareJid().toString()
+				}, null, null, null, null);
+		try {
+			while (c.moveToNext()) {
+				rooms.add(new Object[] { c.getLong(0),  BareJID.bareJIDInstance(c.getString(1)), c.getString(2), c.getString(3) });
+			}
+		} finally {
+			c.close();
+		}			
+		return rooms;		
+	}
+	
+	public void updateRoomState(SessionObject sessionObject, BareJID room, int state) {
+		final SQLiteDatabase db = dbHelper.getWritableDatabase();
+		
+		Cursor c = db.query(OpenChatTableMetaData.TABLE_NAME, new String[] { OpenChatTableMetaData.FIELD_ID }, OpenChatTableMetaData.FIELD_ACCOUNT + 
+				" = ? and " + OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_MUC + " and " + OpenChatTableMetaData.FIELD_JID + "=?", 
+				new String[] { sessionObject.getUserBareJid().toString(), room.toString() }, null, null, null);
+		
+		long id = 0;
+		try {
+			if (c.moveToNext()) {
+				id = c.getLong(0);
+			}
+		} catch (Exception ex) {
+		}
+		
+		final ContentValues values = new ContentValues();
+		values.put(OpenChatTableMetaData.FIELD_ROOM_STATE, state);
+		
+		long result = db.update(OpenChatTableMetaData.TABLE_NAME, values, OpenChatTableMetaData.FIELD_ID + " = ?", new String[] { String.valueOf(id) });
+		if (listener != null && result != 0) {
+			listener.onChange(id);
+		}			
+	}
+	
+	public void resetRoomState(int state) {
+		final SQLiteDatabase db = dbHelper.getWritableDatabase();
+		final ContentValues values = new ContentValues();
+		values.put(OpenChatTableMetaData.FIELD_ROOM_STATE, state);
+		
+		db.update(OpenChatTableMetaData.TABLE_NAME, values, OpenChatTableMetaData.FIELD_TYPE + " = " + OpenChatTableMetaData.TYPE_MUC, null);
+		if (listener != null) {
+			listener.onChange(null);
+		}			
+	}
 }

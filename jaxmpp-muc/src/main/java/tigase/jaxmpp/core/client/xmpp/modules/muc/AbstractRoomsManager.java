@@ -65,6 +65,7 @@ public abstract class AbstractRoomsManager {
 
 	public void setContext(Context context) {
 		this.context = context;
+		this.setSessionObject(context.getSessionObject());
 	}
 
 	void setSessionObject(SessionObject sessionObject) {
