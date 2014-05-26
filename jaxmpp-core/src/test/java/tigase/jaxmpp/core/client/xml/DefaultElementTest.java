@@ -37,36 +37,6 @@ public class DefaultElementTest extends TestCase {
 		return message;
 	}
 
-	public void testCreate() throws XMLException {
-		final Element element = createElement();
-		Element e1 = DefaultElement.create(element);
-		assertEquals(
-				"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
-				e1.getAsString());
-
-		e1 = DefaultElement.create(element, 0);
-		assertEquals("<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"/>", e1.getAsString());
-
-		e1 = DefaultElement.create(element, 1);
-		assertEquals(
-				"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
-				e1.getAsString());
-	}
-
-	public void testGetAsString00() throws XMLException {
-		Element element = createElement();
-		try {
-			String t = element.getAsString();
-			assertEquals(
-					"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
-					t);
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-
-	}
-
 	public void testGetAsString01() throws XMLException {
 		Element element = new DefaultElement("iq", null, null);
 		assertEquals("<iq/>", element.getAsString());
