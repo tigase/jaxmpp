@@ -350,6 +350,7 @@ public class Jaxmpp extends JaxmppCore {
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
 				throw e;
 			}
+			onResourceBinded(null);
 			((BoshXmppSessionLogic) sessionLogic).processResourceBindEvent();
 		} catch (JaxmppException e) {
 			// onException(e);

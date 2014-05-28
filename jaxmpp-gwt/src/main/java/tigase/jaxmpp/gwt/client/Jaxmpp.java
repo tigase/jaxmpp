@@ -288,6 +288,7 @@ public class Jaxmpp extends JaxmppCore {
 		this.sessionObject.setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.connected);
 
 		intLogin();
+		onResourceBinded(null);
 		((BoshXmppSessionLogic) this.sessionLogic).processResourceBindEvent();
 	}
 
