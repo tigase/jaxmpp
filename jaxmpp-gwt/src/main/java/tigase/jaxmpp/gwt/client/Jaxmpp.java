@@ -55,6 +55,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Cookies;
@@ -77,10 +78,11 @@ public class Jaxmpp extends JaxmppCore {
 			private final com.google.gwt.i18n.client.DateTimeFormat df1 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 			private final com.google.gwt.i18n.client.DateTimeFormat df2 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-
+			
 			@Override
 			public String format(Date date) {
-				return df1.format(date);
+				TimeZone timezone = TimeZone.createTimeZone(0);
+				return df1.format(date, timezone);
 			}
 
 			@Override
