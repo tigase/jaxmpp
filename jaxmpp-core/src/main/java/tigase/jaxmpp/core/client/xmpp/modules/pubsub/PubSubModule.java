@@ -1267,7 +1267,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 * @param callback
 	 *            request callback.
 	 */
-	public void retrieveItems(BareJID pubSubJID, final Integer max, final Date after,
+	public void retrieveItems(final BareJID pubSubJID, final Integer max, final Date after,
 			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
 
 		final SubscriptionsRetrieveAsyncCallback subscriptionsCallback = new SubscriptionsRetrieveAsyncCallback() {
@@ -1295,8 +1295,8 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 				try {
 					for (SubscriptionElement subscriptionElement : subscriptions) {
-						retrieveItems(subscriptionElement.getJID().getBareJid(), subscriptionElement.getNode(), max, null,
-								after, new RetrieveItemsAsyncCallback() {
+						retrieveItems(pubSubJID, subscriptionElement.getNode(), max, null, after,
+								new RetrieveItemsAsyncCallback() {
 
 									@Override
 									protected void onEror(IQ response, ErrorCondition errorCondition,
