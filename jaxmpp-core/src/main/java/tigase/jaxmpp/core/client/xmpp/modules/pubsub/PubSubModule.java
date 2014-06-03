@@ -1279,7 +1279,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			private final ArrayList<Item> resultItems = new ArrayList<Item>();
 
 			private void checkAndCallSuccess() {
-				if (counter[0] <= 0)
+				if (counter[0] <= 0 && callback != null)
 					callback.onRetrieve(resultItems);
 			}
 
