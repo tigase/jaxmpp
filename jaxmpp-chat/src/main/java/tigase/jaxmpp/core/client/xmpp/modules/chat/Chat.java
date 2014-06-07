@@ -93,15 +93,18 @@ public class Chat {
 	 * 
 	 * @param body
 	 *            message to send.
+	 * @return 
 	 */
-	public void sendMessage(String body) throws XMLException, JaxmppException {
+	protected Message sendMessage(String body) throws XMLException, JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(jid);
 		msg.setType(StanzaType.chat);
 		msg.setThread(threadId);
 		msg.setBody(body);
 
-		this.context.getWriter().write(msg);
+		// this would make it impossible for Extensions to process this message!
+		//this.context.getWriter().write(msg);
+		return msg;
 	}
 
 	/**

@@ -6,7 +6,7 @@
 		<version>3.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-im</artifactId>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 
 	<name>Java XMPP Library - IM </name>
 

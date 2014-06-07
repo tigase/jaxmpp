@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -30,9 +32,25 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 
 	private final ExtensionsChain extensionsChain = new ExtensionsChain();
 
+	public String[] getFeaturesWithExtensions(String[] superFeatures) {
+		ArrayList<String> features = new ArrayList<String>();
+		if (superFeatures != null)
+			features.addAll(Arrays.asList(superFeatures));
+		for (Extension e : extensionsChain.getExtension()) {
+			String[] f = e.getFeatures();
+			if (f != null && f.length > 0) {
+				features.addAll(Arrays.asList(f));
+			}
+		}
+		return features.toArray(new String[features.size()]);
+	}
+	
 	@Override
 	public void addExtension(Extension e) {
 		extensionsChain.addExtension(e);
+		if (e instanceof ContextAware) {
+			((ContextAware) e).setContext(context);
+		}
 	}
 
 	@Override

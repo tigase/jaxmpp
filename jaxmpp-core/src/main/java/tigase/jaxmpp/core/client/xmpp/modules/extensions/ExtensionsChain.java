@@ -56,6 +56,16 @@ public class ExtensionsChain {
 		return Collections.unmodifiableCollection(extensions);
 	}
 
+	public <T extends Extension> T getExtension(Class<T> cls) {
+		Iterator<Extension> it = extensions.iterator();
+		while (it.hasNext()) {
+			Extension x = it.next();
+			if (cls.isAssignableFrom(x.getClass()))
+				return (T) x;
+		}
+		return null;
+	}
+	
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		for (Extension e : this.extensions) {

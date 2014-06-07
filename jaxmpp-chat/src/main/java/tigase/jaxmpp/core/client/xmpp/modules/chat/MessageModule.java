@@ -18,7 +18,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.List;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
@@ -29,14 +28,14 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
  * Module to handle messages.
  */
-public class MessageModule extends AbstractStanzaModule<Message> {
+public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 	public interface ChatClosedHandler extends EventHandler {
 
@@ -263,7 +262,7 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 	 */
 	@Override
 	public String[] getFeatures() {
-		return null;
+		return getFeaturesWithExtensions(null);
 	}
 
 	/**
@@ -318,6 +317,19 @@ public class MessageModule extends AbstractStanzaModule<Message> {
 		msg.setTo(toJID);
 		msg.setId(UIDGenerator.next());
 
+		write(msg);
+	}
+	
+	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 * 
+	 * @param body
+	 *            message to send.
+	 * @return 
+	 */	
+	public void sendMessage(Chat chat, String body) throws XMLException, JaxmppException {
+		Message msg = chat.sendMessage(body);
 		write(msg);
 	}
 
