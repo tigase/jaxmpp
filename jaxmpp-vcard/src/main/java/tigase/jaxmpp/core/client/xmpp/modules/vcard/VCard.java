@@ -43,6 +43,12 @@ public class VCard implements Serializable {
 
 	}
 
+	public static VCard fromElement(Element elem) throws XMLException {
+		VCard vcard = new VCard();
+		vcard.loadData(elem);
+		return vcard;
+	}
+	
 	private static String getChildValue(Element it, String string) throws XMLException {
 		List<Element> l = it.getChildren(string);
 		if (l == null || l.size() == 0)
@@ -244,6 +250,10 @@ public class VCard implements Serializable {
 			if (match(it, "EMAIL", "WORK")) {
 				this.workEmail = getChildValue(it, "USERID");
 			} else if (match(it, "EMAIL", "HOME")) {
+				this.homeEmail = getChildValue(it, "USERID");
+			} else if (match(it, "EMAIL")) {
+				// in case if there is no mark if it is home or work email
+				// lets assume it is home email
 				this.homeEmail = getChildValue(it, "USERID");
 			} else if (match(it, "ADR", "HOME")) {
 				for (Element e : it.getChildren()) {
