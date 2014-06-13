@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.AbstractSessionObject.ClearedEvent;
 import tigase.jaxmpp.core.client.BareJID;
@@ -43,6 +44,7 @@ import tigase.jaxmpp.core.client.observer.Observable;
 import tigase.jaxmpp.core.client.observer.ObservableFactory;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
@@ -50,6 +52,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatState;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationEvent.Type;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
+import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -414,6 +417,28 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			writer.write(message);
 		}
 
+	}
+
+	public void destroy( Room room ) throws XMLException, JaxmppException {
+		if ( room.getState() == State.joined ){
+			IQ iq = IQ.create();
+			iq.setType( StanzaType.set );
+			iq.setTo( JID.jidInstance( room.getRoomJid() ) );
+
+			Element query = new DefaultElement( "query" );
+			query.setXMLNS( "http://jabber.org/protocol/muc#owner" );
+			query.addChild( new DefaultElement( "destroy" ) );
+			iq.addChild( query );
+
+			writer.write( iq );
+			room.setState( State.not_joined );
+		}
+
+		this.roomsManager.remove( room );
+
+		MucEvent event = new MucEvent( RoomClosed, sessionObject );
+		event.setRoom( room );
+		observable.fireEvent( event );
 	}
 
 	public void enable(Room room) throws JaxmppException {
