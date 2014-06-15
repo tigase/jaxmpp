@@ -33,7 +33,7 @@ public interface SaslMechanism {
 	 *            current {@linkplain SessionObject}
 	 * @return calculated response
 	 */
-	String evaluateChallenge(String input, SessionObject sessionObject);
+	String evaluateChallenge(String input, SessionObject sessionObject) throws ClientSaslException;
 
 	/**
 	 * This method is used to check if mechanism can be used with current

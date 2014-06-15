@@ -174,6 +174,7 @@ public class SaslModule implements XmppModule, ContextAware {
 		 * or &lt;response/&gt element.
 		 */
 		temporary_auth_failure,
+		server_not_trusted
 
 	}
 
@@ -329,14 +330,21 @@ public class SaslModule implements XmppModule, ContextAware {
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
-		if ("success".equals(element.getName())) {
-			context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
-			processSuccess(element);
-		} else if ("failure".equals(element.getName())) {
-			context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
-			processFailure(element);
-		} else if ("challenge".equals(element.getName())) {
-			processChallenge(element);
+		try {
+			if ("success".equals(element.getName())) {
+				context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+				processSuccess(element);
+			} else if ("failure".equals(element.getName())) {
+				context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+				processFailure(element);
+			} else if ("challenge".equals(element.getName())) {
+				processChallenge(element);
+			}
+		} catch (ClientSaslException e) {
+			SaslAuthFailedHandler.SaslAuthFailedEvent event = new SaslAuthFailedHandler.SaslAuthFailedEvent(
+					context.getSessionObject(), null);
+			context.getEventBus().fire(event, this);
+			throw e;
 		}
 	}
 
@@ -364,6 +372,11 @@ public class SaslModule implements XmppModule, ContextAware {
 	}
 
 	protected void processSuccess(Element element) throws JaxmppException {
+		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
+		String v = element.getValue();
+		if (v != null)
+			mechanism.evaluateChallenge(v, context.getSessionObject());
+
 		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 		log.fine("Authenticated");
 		context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
