@@ -29,7 +29,11 @@ import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
 
+import java.util.logging.Logger;
+
 public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogic {
+
+	protected static final Logger log = Logger.getLogger( SocketInBandRegistrationXmppSessionLogic.class.getName() );
 
 	private final SocketConnector connector;
 
@@ -91,7 +95,7 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 	}
 
 	protected void processStreamFeatures(StreamFeaturesReceivedEvent be) throws JaxmppException {
-		System.out.println(be.getFeatures().getAsString());
+		log.fine(be.getFeatures().getAsString());
 		try {
 			final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);

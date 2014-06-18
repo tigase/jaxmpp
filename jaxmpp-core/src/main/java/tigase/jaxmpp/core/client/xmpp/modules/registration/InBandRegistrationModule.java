@@ -145,8 +145,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 				@Override
 				public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 					// TODO Auto-generated method stub
-					System.out.println("??? ");
-					System.out.println(responseStanza.getAsString());
+					log.fine("??? ");
+					log.fine(responseStanza.getAsString());
 					RegistrationEvent event = new RegistrationEvent(ReceivedError, sessionObject);
 					event.setStanza((IQ) responseStanza);
 
