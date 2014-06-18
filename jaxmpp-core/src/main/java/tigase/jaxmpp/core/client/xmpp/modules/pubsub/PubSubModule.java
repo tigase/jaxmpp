@@ -1257,7 +1257,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	/**
 	 * Gets published item(s) from all subscribed noded.
-	 * 
+	 *
 	 * @param pubSubJID
 	 *            PubSub service address.
 	 * @param max
@@ -1268,6 +1268,22 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 *            request callback.
 	 */
 	public void retrieveItems(final BareJID pubSubJID, final Integer max, final Date after,
+			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
+		retrieveItems(pubSubJID, max, null, after, callback);
+	}
+	/**
+	 * Gets published item(s) from all subscribed noded.
+	 * 
+	 * @param pubSubJID
+	 *            PubSub service address.
+	 * @param max
+	 *            maximum amount of items to be retrieve from single node.
+	 * @param after
+	 *            returns only items created after given date.
+	 * @param callback
+	 *            request callback.
+	 */
+	public void retrieveItems(final BareJID pubSubJID, final Integer max, final Integer index, final Date after,
 			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
 
 		final SubscriptionsRetrieveAsyncCallback subscriptionsCallback = new SubscriptionsRetrieveAsyncCallback() {
@@ -1295,7 +1311,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 				try {
 					for (SubscriptionElement subscriptionElement : subscriptions) {
-						retrieveItems(pubSubJID, subscriptionElement.getNode(), max, null, after,
+						retrieveItems(pubSubJID, subscriptionElement.getNode(), max, index, after,
 								new RetrieveItemsAsyncCallback() {
 
 									@Override
