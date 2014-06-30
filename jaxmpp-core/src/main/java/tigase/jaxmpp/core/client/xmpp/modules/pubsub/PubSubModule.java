@@ -1343,6 +1343,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 									}
 								});
 					}
+					// in case if user has no subscribed nodes we need to check
+					// and call proper callback
+					checkAndCallSuccess();
 				} catch (JaxmppException e) {
 					log.log(Level.WARNING, "Problem on mass retrieving", e);
 				}
