@@ -357,6 +357,24 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		write(msg);
 	}
 
+	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 * 
+	 * @param body
+	 *            message to send.
+	 * @return 
+	 */	
+	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws XMLException, JaxmppException {
+		Message msg = chat.sendMessage(body);
+		if (additionalElems != null) {
+			for (Element child : additionalElems) {
+				msg.addChild(child);
+			}
+		}
+		write(msg);
+	}
+
 	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
 		boolean changed = false;
 
