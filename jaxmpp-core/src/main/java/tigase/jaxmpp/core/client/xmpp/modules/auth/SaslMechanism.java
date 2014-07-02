@@ -48,6 +48,13 @@ public interface SaslMechanism {
 	boolean isAllowedToUse(SessionObject sessionObject);
 
 	/**
+	 * Determines whether the authentication exchange has completed.
+	 * 
+	 * @return <code>true</code> if exchange is complete.
+	 */
+	boolean isComplete();
+
+	/**
 	 * Return mechanism name.
 	 * 
 	 * @return mechanism name.

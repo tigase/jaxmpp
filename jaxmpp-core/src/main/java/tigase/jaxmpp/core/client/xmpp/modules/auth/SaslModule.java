@@ -168,13 +168,13 @@ public class SaslModule implements XmppModule, ContextAware {
 		 * element or an &lt;auth/&gt element with initial response data.
 		 */
 		not_authorized,
+		server_not_trusted,
 		/**
 		 * The authentication failed because of a temporary error condition
 		 * within the receiving entity; sent in reply to an &lt;auth/&gt element
 		 * or &lt;response/&gt element.
 		 */
-		temporary_auth_failure,
-		server_not_trusted
+		temporary_auth_failure
 
 	}
 
@@ -350,6 +350,8 @@ public class SaslModule implements XmppModule, ContextAware {
 
 	protected void processChallenge(Element element) throws XMPPException, XMLException, JaxmppException {
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
+		if (mechanism.isComplete())
+			throw new ClientSaslException("Mechanism " + mechanism.name() + " is finished but Server sent challenge.");
 		String v = element.getValue();
 		String r = mechanism.evaluateChallenge(v, context.getSessionObject());
 		Element auth = ElementFactory.create("response", r, "urn:ietf:params:xml:ns:xmpp-sasl");
@@ -373,13 +375,20 @@ public class SaslModule implements XmppModule, ContextAware {
 
 	protected void processSuccess(Element element) throws JaxmppException {
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
-		String v = element.getValue();
-		if (v != null)
-			mechanism.evaluateChallenge(v, context.getSessionObject());
 
-		context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
-		log.fine("Authenticated");
-		context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
+		String v = element.getValue();
+		mechanism.evaluateChallenge(v, context.getSessionObject());
+
+		if (mechanism.isComplete()) {
+			context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
+			log.fine("Authenticated");
+			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
+		} else {
+			log.fine("Authenticated by server but responses are not accepted by client.");
+			context.getEventBus().fire(
+					new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(), SaslError.server_not_trusted),
+					this);
+		}
 	}
 
 	@Override

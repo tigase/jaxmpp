@@ -28,12 +28,14 @@ public class PlainMechanism implements SaslMechanism {
 
 	private static final String NULL = String.valueOf((char) 0);
 
+	private boolean complete = false;
+
 	public PlainMechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
-		if (input == null) {
+		if (!complete) {
 			CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
 			if (callback == null)
 				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
@@ -41,15 +43,21 @@ public class PlainMechanism implements SaslMechanism {
 			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
+			complete = true;
 			return base64;
-		}
-		return null;
+		} else
+			return null;
 	}
 
 	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
 		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
 	}
 
 	@Override

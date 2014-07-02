@@ -45,12 +45,14 @@ public class XOAuth2Mechanism implements SaslMechanism {
 
 	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
 
+	private boolean complete = false;
+
 	public XOAuth2Mechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
-		if (input == null) {
+		if (!complete) {
 			XOAuth2TokenCallback callback = sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY);
 			if (callback == null)
 				callback = new DefaultXOAuth2TokenCallback(sessionObject);
@@ -58,9 +60,10 @@ public class XOAuth2Mechanism implements SaslMechanism {
 			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
+			complete = true;
 			return base64;
-		}
-		return null;
+		} else
+			return null;
 	}
 
 	@Override
@@ -70,8 +73,12 @@ public class XOAuth2Mechanism implements SaslMechanism {
 	}
 
 	@Override
+	public boolean isComplete() {
+		return complete;
+	}
+
+	@Override
 	public String name() {
 		return "X-OAUTH2";
 	}
-
 }

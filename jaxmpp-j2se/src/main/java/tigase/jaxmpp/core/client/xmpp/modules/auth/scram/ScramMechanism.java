@@ -76,6 +76,8 @@ public class ScramMechanism implements SaslMechanism {
 
 	private final byte[] clientKeyData;
 
+	private boolean complete = false;
+
 	private String conce;
 
 	private final String mechanismName;
@@ -153,16 +155,6 @@ public class ScramMechanism implements SaslMechanism {
 				clientFinalMessage.append(',');
 				clientFinalMessage.append("p=").append(Base64.encode(clientProof));
 
-				System.out.println("C: clientKeyData=" + Base64.encode(clientKeyData) + "     "
-						+ Arrays.toString(clientKeyData));
-				System.out.println("C: serverKeyData=" + Base64.encode(serverKeyData) + "     "
-						+ Arrays.toString(serverKeyData));
-
-				System.out.println("C: saltedPassword=" + Base64.encode(saltedPassword));
-				System.out.println("C: clientKey=" + Base64.encode(clientKey));
-				System.out.println("C: storedKey=" + Base64.encode(storedKey));
-				System.out.println("C: authMessage=" + authMessage);
-
 				++stage;
 				return Base64.encode(clientFinalMessage.toString().getBytes());
 			} else if (stage == 2) {
@@ -183,6 +175,12 @@ public class ScramMechanism implements SaslMechanism {
 				if (!Arrays.equals(serverSignature, Base64.decode(v)))
 					throw new ClientSaslException("Invalid Server Signatuer");
 
+				++stage;
+				complete = true;
+				return null;
+			} else if (complete && input == null) {
+				// server last message was sent in challange. Here should be
+				// SUCCESS
 				return null;
 			} else
 				throw new ClientSaslException(name() + ": Client at illegal state");
@@ -202,6 +200,11 @@ public class ScramMechanism implements SaslMechanism {
 	public boolean isAllowedToUse(SessionObject sessionObject) {
 		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
 	}
 
 	protected SecretKey key(final byte[] key) {

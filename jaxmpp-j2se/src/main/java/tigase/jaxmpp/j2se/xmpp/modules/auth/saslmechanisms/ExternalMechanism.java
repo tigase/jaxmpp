@@ -10,9 +10,12 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 public class ExternalMechanism implements SaslMechanism {
 
+	private boolean complete = false;
+
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
 		BareJID jid = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+		complete = true;
 		if (jid == null) {
 			return "=";
 		} else {
@@ -25,6 +28,11 @@ public class ExternalMechanism implements SaslMechanism {
 		KeyManager[] kms = sessionObject.getProperty(SocketConnector.KEY_MANAGERS_KEY);
 		Boolean sext = sessionObject.getProperty(SocketConnector.SASL_EXTERNAL_ENABLED_KEY);
 		return kms != null && sext != null && sext.booleanValue();
+	}
+
+	@Override
+	public boolean isComplete() {
+		return complete;
 	}
 
 	@Override
