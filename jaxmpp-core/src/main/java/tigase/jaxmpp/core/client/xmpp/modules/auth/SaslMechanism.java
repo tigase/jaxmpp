@@ -50,9 +50,11 @@ public interface SaslMechanism {
 	/**
 	 * Determines whether the authentication exchange has completed.
 	 * 
+	 * @param sessionObject
+	 *            current {@linkplain SessionObject}
 	 * @return <code>true</code> if exchange is complete.
 	 */
-	boolean isComplete();
+	boolean isComplete(SessionObject sessionObject);
 
 	/**
 	 * Return mechanism name.

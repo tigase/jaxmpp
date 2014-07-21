@@ -18,29 +18,21 @@
 package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 
-public class AnonymousMechanism implements SaslMechanism {
-
-	private boolean complete = false;
+public class AnonymousMechanism extends AbstractSaslMechanism {
 
 	public AnonymousMechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObjec) {
-		complete = true;
+		setComplete(sessionObjec, true);
 		return null;
 	}
 
 	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
 		return true;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return complete;
 	}
 
 	@Override

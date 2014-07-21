@@ -17,16 +17,35 @@ import javax.crypto.spec.SecretKeySpec;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.ClientSaslException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AbstractSaslMechanism;
 
-public class ScramMechanism implements SaslMechanism {
+public class ScramMechanism extends AbstractSaslMechanism {
+
+	private class Data {
+
+		private String authMessage;
+
+		private String cb = "n,";
+
+		private String clientFirstMessageBare;
+
+		private String conce;
+
+		private byte[] saltedPassword;
+
+		private int stage = 0;
+
+	}
 
 	private final static String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 	private static final Charset CHARSET = Charset.forName("UTF-8");
+
+	private final static String SCRAM_SASL_DATA_KEY = "SCRAM_SASL_DATA_KEY";
 
 	private final static Pattern SERVER_FIRST_MESSAGE = Pattern.compile("^(m=[^\\000=]+,)?r=([\\x21-\\x2B\\x2D-\\x7E]+),s=([a-zA-Z0-9/+=]+),i=(\\d+)(?:,.*)?$");
 
@@ -68,27 +87,13 @@ public class ScramMechanism implements SaslMechanism {
 
 	private final String algorithm;
 
-	private String authMessage;
-
-	private String cb = "n,";
-
-	private String clientFirstMessageBare;
-
 	private final byte[] clientKeyData;
-
-	private boolean complete = false;
-
-	private String conce;
 
 	private final String mechanismName;
 
 	private final Random random = new SecureRandom();
 
-	private byte[] saltedPassword;
-
 	private final byte[] serverKeyData;
-
-	private int stage = 0;
 
 	public ScramMechanism() {
 		this("SCRAM-SHA-1", "SHA1", "Client Key".getBytes(), "Server Key".getBytes());
@@ -103,25 +108,26 @@ public class ScramMechanism implements SaslMechanism {
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) throws ClientSaslException {
+		final Data data = getData(sessionObject);
 		try {
-			if (stage == 0) {
+			if (data.stage == 0) {
 				final BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-				conce = randomString();
+				data.conce = randomString();
 
 				StringBuilder sb = new StringBuilder();
 				sb.append("n,");
 				// sb.append("a=").append(userJID.toString());
 				sb.append(',');
-				this.cb = sb.toString();
+				data.cb = sb.toString();
 
 				sb = new StringBuilder();
 				sb.append("n=").append(userJID.getLocalpart()).append(',');
-				sb.append("r=").append(conce);
-				this.clientFirstMessageBare = sb.toString();
+				sb.append("r=").append(data.conce);
+				data.clientFirstMessageBare = sb.toString();
 
-				++stage;
-				return Base64.encode((this.cb + this.clientFirstMessageBare).getBytes());
-			} else if (stage == 1) {
+				++data.stage;
+				return Base64.encode((data.cb + data.clientFirstMessageBare).getBytes());
+			} else if (data.stage == 1) {
 				final String serverFirstMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_FIRST_MESSAGE.matcher(serverFirstMessage);
 				if (!r.matches())
@@ -132,7 +138,7 @@ public class ScramMechanism implements SaslMechanism {
 				final byte[] salt = Base64.decode(r.group(3));
 				final int iterations = Integer.parseInt(r.group(4));
 
-				if (!nonce.startsWith(conce))
+				if (!nonce.startsWith(data.conce))
 					throw new ClientSaslException("Wrong nonce");
 
 				CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
@@ -140,24 +146,24 @@ public class ScramMechanism implements SaslMechanism {
 					callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
 
 				StringBuilder clientFinalMessage = new StringBuilder();
-				clientFinalMessage.append("c=").append(Base64.encode(cb.getBytes())).append(',');
+				clientFinalMessage.append("c=").append(Base64.encode(data.cb.getBytes())).append(',');
 				clientFinalMessage.append("r=").append(nonce);
 
-				this.authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessage.toString();
+				data.authMessage = data.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessage.toString();
 
-				this.saltedPassword = hi(algorithm, normalize(callback.getCredential()), salt, iterations);
-				byte[] clientKey = hmac(key(saltedPassword), clientKeyData);
+				data.saltedPassword = hi(algorithm, normalize(callback.getCredential()), salt, iterations);
+				byte[] clientKey = hmac(key(data.saltedPassword), clientKeyData);
 				byte[] storedKey = h(clientKey);
 
-				byte[] clientSignature = hmac(key(storedKey), authMessage.getBytes());
+				byte[] clientSignature = hmac(key(storedKey), data.authMessage.getBytes());
 				byte[] clientProof = xor(clientKey, clientSignature);
 
 				clientFinalMessage.append(',');
 				clientFinalMessage.append("p=").append(Base64.encode(clientProof));
 
-				++stage;
+				++data.stage;
 				return Base64.encode(clientFinalMessage.toString().getBytes());
-			} else if (stage == 2) {
+			} else if (data.stage == 2) {
 				final String serverLastMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_LAST_MESSAGE.matcher(serverLastMessage);
 				if (!r.matches())
@@ -169,16 +175,16 @@ public class ScramMechanism implements SaslMechanism {
 				if (e != null)
 					throw new ClientSaslException("Error: " + e);
 
-				byte[] serverKey = hmac(key(saltedPassword), serverKeyData);
-				byte[] serverSignature = hmac(key(serverKey), authMessage.getBytes());
+				byte[] serverKey = hmac(key(data.saltedPassword), serverKeyData);
+				byte[] serverSignature = hmac(key(serverKey), data.authMessage.getBytes());
 
 				if (!Arrays.equals(serverSignature, Base64.decode(v)))
 					throw new ClientSaslException("Invalid Server Signatuer");
 
-				++stage;
-				complete = true;
+				++data.stage;
+				setComplete(sessionObject, true);
 				return null;
-			} else if (complete && input == null) {
+			} else if (isComplete(sessionObject) && input == null) {
 				// server last message was sent in challange. Here should be
 				// SUCCESS
 				return null;
@@ -191,6 +197,15 @@ public class ScramMechanism implements SaslMechanism {
 		}
 	}
 
+	protected Data getData(SessionObject sessionObject) {
+		Data data = sessionObject.getProperty(SCRAM_SASL_DATA_KEY);
+		if (data == null) {
+			data = new Data();
+			sessionObject.setProperty(Scope.stream, SCRAM_SASL_DATA_KEY, data);
+		}
+		return data;
+	}
+
 	protected byte[] h(byte[] data) throws NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance(algorithm);
 		return digest.digest(data);
@@ -200,11 +215,6 @@ public class ScramMechanism implements SaslMechanism {
 	public boolean isAllowedToUse(SessionObject sessionObject) {
 		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return complete;
 	}
 
 	protected SecretKey key(final byte[] key) {

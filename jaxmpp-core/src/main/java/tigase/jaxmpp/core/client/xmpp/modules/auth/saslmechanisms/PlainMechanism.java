@@ -22,20 +22,17 @@ import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 
-public class PlainMechanism implements SaslMechanism {
+public class PlainMechanism extends AbstractSaslMechanism {
 
 	private static final String NULL = String.valueOf((char) 0);
-
-	private boolean complete = false;
 
 	public PlainMechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
-		if (!complete) {
+		if (!isComplete(sessionObject)) {
 			CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
 			if (callback == null)
 				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
@@ -43,7 +40,7 @@ public class PlainMechanism implements SaslMechanism {
 			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
-			complete = true;
+			setComplete(sessionObject, true);
 			return base64;
 		} else
 			return null;
@@ -53,11 +50,6 @@ public class PlainMechanism implements SaslMechanism {
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
 		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return complete;
 	}
 
 	@Override

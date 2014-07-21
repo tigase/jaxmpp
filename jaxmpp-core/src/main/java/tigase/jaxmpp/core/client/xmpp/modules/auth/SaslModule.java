@@ -350,7 +350,7 @@ public class SaslModule implements XmppModule, ContextAware {
 
 	protected void processChallenge(Element element) throws XMPPException, XMLException, JaxmppException {
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
-		if (mechanism.isComplete())
+		if (mechanism.isComplete(context.getSessionObject()))
 			throw new ClientSaslException("Mechanism " + mechanism.name() + " is finished but Server sent challenge.");
 		String v = element.getValue();
 		String r = mechanism.evaluateChallenge(v, context.getSessionObject());
@@ -379,7 +379,7 @@ public class SaslModule implements XmppModule, ContextAware {
 		String v = element.getValue();
 		mechanism.evaluateChallenge(v, context.getSessionObject());
 
-		if (mechanism.isComplete()) {
+		if (mechanism.isComplete(context.getSessionObject())) {
 			context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 			log.fine("Authenticated");
 			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);

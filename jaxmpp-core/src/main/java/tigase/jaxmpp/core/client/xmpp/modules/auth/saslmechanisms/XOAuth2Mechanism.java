@@ -20,10 +20,9 @@ package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.XOAuth2TokenCallback;
 
-public class XOAuth2Mechanism implements SaslMechanism {
+public class XOAuth2Mechanism extends AbstractSaslMechanism {
 
 	private class DefaultXOAuth2TokenCallback implements XOAuth2TokenCallback {
 
@@ -45,14 +44,12 @@ public class XOAuth2Mechanism implements SaslMechanism {
 
 	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
 
-	private boolean complete = false;
-
 	public XOAuth2Mechanism() {
 	}
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
-		if (!complete) {
+		if (!isComplete(sessionObject)) {
 			XOAuth2TokenCallback callback = sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY);
 			if (callback == null)
 				callback = new DefaultXOAuth2TokenCallback(sessionObject);
@@ -60,7 +57,7 @@ public class XOAuth2Mechanism implements SaslMechanism {
 			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
-			complete = true;
+			setComplete(sessionObject, true);
 			return base64;
 		} else
 			return null;
@@ -70,11 +67,6 @@ public class XOAuth2Mechanism implements SaslMechanism {
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
 		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null || sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
-	}
-
-	@Override
-	public boolean isComplete() {
-		return complete;
 	}
 
 	@Override
