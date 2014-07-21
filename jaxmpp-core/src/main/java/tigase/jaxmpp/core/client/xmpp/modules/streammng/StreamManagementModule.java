@@ -311,6 +311,10 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 	 * Client enables stream management.
 	 */
 	public void enable() throws JaxmppException {
+		if (isStreamManagementTurnedOn(this.context.getSessionObject())) {
+			log.finest("Stream management is already enabled. ignoring request to enable it.");
+			return;
+		}
 		if (log.isLoggable(Level.INFO)) {
 			log.info("Enabling stream management");
 		}
