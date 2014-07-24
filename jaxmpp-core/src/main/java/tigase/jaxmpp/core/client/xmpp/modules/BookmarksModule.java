@@ -93,7 +93,7 @@ public class BookmarksModule extends AbstractIQModule {
 	 * @param callback
 	 *            callback
 	 */
-	public void publishBookmarks(List<Element> bookmarks, AsyncCallback callback) throws JaxmppException {
+	public void publishBookmarks(List<? extends Element> bookmarks, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 
@@ -120,7 +120,7 @@ public class BookmarksModule extends AbstractIQModule {
 	 * @param callback
 	 *            callback to handle response.
 	 */
-	public void retrieveBookmarks(BookmarksAsyncCallback callback) throws JaxmppException {
+	public void retrieveBookmarks(AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
