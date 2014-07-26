@@ -762,7 +762,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			@Override
 			protected void dispatch(PresenceErrorHandler handler) {
-				handler.onPresenceError(sessionObject);
+				handler.onPresenceError(sessionObject, room, presence, nickname);
 			}
 
 			public String getNickname() {
@@ -791,7 +791,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		}
 
-		void onPresenceError(SessionObject sessionObject);
+		void onPresenceError(SessionObject sessionObject, Room room, Presence presence, String nickname);
 	}
 
 	/**
