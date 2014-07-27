@@ -102,8 +102,8 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 				JaxmppCore jaxmpp = (JaxmppCore) session.getData(JAXMPP_KEY);
 				connectToProxy(jaxmpp, session, transport.getSid(), candidate);
 			} else {
-				Socket socket = session.getData("socket");
-				fireOnConnected(session, socket);
+				//Socket socket = session.getData("socket");
+				fireOnConnected(session);
 			}
 		} catch (Exception ex) {
 			this.fireOnFailure(session);

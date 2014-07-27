@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -56,6 +57,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule.Act
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
+import tigase.jaxmpp.j2se.filetransfer.FileTransfer;
+import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
 
 /**
  * 
@@ -327,14 +330,27 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 						return State.Closed;
 					}
 
-					ft.setData("socket", socket.socket());
-
-					state = State.ActiveServ;
-
 					if (log.isLoggable(Level.FINEST)) {
 						log.log(Level.FINEST, "sending response to COMMAND");
 					}
 					socket.write(tmp);
+					try {
+						// small delay to workaround issue with Psi+
+						Thread.sleep(100);
+					} catch (Exception ex) {}
+					if (!socket.socket().isClosed()) {
+						synchronized (ft) {
+							List<Socket> sockets = ft.getData("sockets");
+							if (sockets == null) {
+								sockets = new ArrayList<Socket>();
+								ft.setData("sockets", sockets);
+							}
+							sockets.add(socket.socket());
+						}
+						state = State.ActiveServ;
+					}
+					else
+						return State.Closed;
 				}
 				break;
 
@@ -546,6 +562,21 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 	}
 
+	protected void fireOnConnected(ConnectionSession session) {
+		List<Socket> sockets = session.getData("sockets");
+		for (Socket socket : sockets) {
+			if (socket.isClosed())
+				continue;
+			try {
+				socket.getInputStream().read(new byte[0]);
+				socket.getOutputStream().write(new byte[0]);
+			} catch (Exception ex) {}
+			if (socket.isClosed())
+				continue;
+			fireOnConnected(session, socket);
+		}
+	}
+	
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
 			context.getEventBus().fire(
@@ -712,5 +743,21 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+		this.context.getEventBus().addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class, 
+				new FileTransferManager.FileTransferSuccessHandler() {
+			@Override
+			public void onFileTransferSuccess(SessionObject sessionObject,
+					FileTransfer fileTransfer) {
+				unregisterSession(fileTransfer);
+			}			
+		});
+		this.context.getEventBus().addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class, 
+				new FileTransferManager.FileTransferFailureHandler() {
+			@Override
+			public void onFileTransferFailure(SessionObject sessionObject,
+					FileTransfer fileTransfer) {
+				unregisterSession(fileTransfer);
+			}			
+		});
 	}
 }

@@ -428,6 +428,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 					fireOnSuccess(fileTransfer);
 				} catch (IOException ex) {
 					log.log(Level.SEVERE, "exception transfering data", ex);
+					fireOnFailure(fileTransfer);
 				}
 			}
 		}.start();
@@ -450,6 +451,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 					fireOnSuccess(fileTransfer);
 				} catch (IOException ex) {
 					log.log(Level.SEVERE, "exception transfering data", ex);
+					fireOnFailure(fileTransfer);
 				}
 			}
 		}.start();

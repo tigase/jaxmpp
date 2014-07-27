@@ -140,12 +140,13 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 				if (host.getJid().equals(ResourceBinderModule.getBindedJID(ft.getSessionObject()))) {
 					System.out.println("streamhost-used = 'local'");
 					synchronized (ft) {
-						Socket socket = ft.getData("socket");
-						if (socket != null) {
-							fireOnConnected(ft, socket);
-						} else {
-							ft.setData("streamhost-received", true);
-						}
+						fireOnConnected(ft);
+//						Socket socket = ft.getData("socket");
+//						if (socket != null) {
+//							fireOnConnected(ft, socket);
+//						} else {
+//							ft.setData("streamhost-received", true);
+//						}
 					}
 				} else {
 					try {
