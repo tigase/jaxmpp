@@ -271,6 +271,12 @@ public class Jaxmpp extends JaxmppCore {
 	public void login(boolean sync) throws JaxmppException {
 		this.modulesManager.initIfRequired();
 
+		final Connector.State state = sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY);
+		if (state != null && state != Connector.State.disconnected) {
+			log.info("Cannot login, because Connector.State is " + state);
+			throw new JaxmppException("Connector is not in disconnected state");
+		}
+
 		this.sessionObject.clear(Scope.stream);
 
 		if (this.sessionLogic != null) {
