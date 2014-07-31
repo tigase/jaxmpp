@@ -28,7 +28,6 @@ import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -340,6 +339,54 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	public static abstract class RetrieveMultiItemsAsyncCallback extends PubSubAsyncCallback {
 
 		protected abstract void onRetrieve(Collection<Item> items);
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
+			final Element event = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
+			List<Element> tmp = event == null ? null : event.getChildren("items");
+			final Element items = tmp == null || tmp.isEmpty() ? null : tmp.get(0);
+
+			ArrayList<Item> result = new ArrayList<Item>();
+
+			List<Element> itemElements = items == null ? null : items.getChildren("item");
+			if (itemElements != null)
+				for (Element item : itemElements) {
+					final String itemId = item.getAttribute("id");
+					final Element payload = item.getFirstChild();
+					final String nodeName = item.getAttribute("node");
+
+					Item it = new Item(nodeName, itemId, payload);
+					result.add(it);
+				}
+
+			Integer count = null;
+			Integer firstIndex = null;
+			String first = null;
+			String last = null;
+
+			Element rsm = event != null ? event.getChildrenNS("set", "http://jabber.org/protocol/rsm") : null;
+			if (rsm != null) {
+				for (Element el : rsm.getChildren()) {
+					if ("first".equals(el.getName())) {
+						first = el.getValue();
+						if (el.getAttribute("index") != null)
+							firstIndex = Integer.parseInt(el.getAttribute("index"));
+					} else if ("last".equals(el.getName())) {
+						last = el.getValue();
+					} else if ("count".equals(el.getName())) {
+						count = Integer.parseInt(el.getValue());
+					}
+				}
+			}
+
+			// onRetrieve((IQ) responseStanza, result, count, firstIndex, first,
+			// last);
+			onRetrieve(result);
+		}
+
+		// protected abstract void onRetrieve(IQ responseStanza,
+		// Collection<Item> items, Integer count, Integer firstIndex,
+		// String first, String last);
 
 	}
 
@@ -1257,7 +1304,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 
 	/**
 	 * Gets published item(s) from all subscribed noded.
-	 *
+	 * 
 	 * @param pubSubJID
 	 *            PubSub service address.
 	 * @param max
@@ -1271,6 +1318,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
 		retrieveItems(pubSubJID, max, null, after, callback);
 	}
+
 	/**
 	 * Gets published item(s) from all subscribed noded.
 	 * 
@@ -1285,79 +1333,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 */
 	public void retrieveItems(final BareJID pubSubJID, final Integer max, final Integer index, final Date after,
 			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
-
-		final SubscriptionsRetrieveAsyncCallback subscriptionsCallback = new SubscriptionsRetrieveAsyncCallback() {
-
-			private final long[] counter = new long[] { 0l, 0l, 0l };
-
-			private final boolean[] finished = new boolean[] { false };
-
-			private final ArrayList<Item> resultItems = new ArrayList<Item>();
-
-			private void checkAndCallSuccess() {
-				if (counter[0] <= 0 && callback != null)
-					callback.onRetrieve(resultItems);
-			}
-
-			@Override
-			protected void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition)
-					throws JaxmppException {
-				callback.onError(response, errorCondition);
-			}
-
-			@Override
-			protected void onRetrieve(IQ response, String node, Collection<SubscriptionElement> subscriptions) {
-				counter[0] = subscriptions.size();
-
-				try {
-					for (SubscriptionElement subscriptionElement : subscriptions) {
-						retrieveItems(pubSubJID, subscriptionElement.getNode(), max, index, after,
-								new RetrieveItemsAsyncCallback() {
-
-									@Override
-									protected void onEror(IQ response, ErrorCondition errorCondition,
-											PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-										if (finished[0])
-											return;
-										--counter[0];
-										++counter[2];
-										checkAndCallSuccess();
-									}
-
-									@Override
-									protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
-										if (finished[0])
-											return;
-										--counter[0];
-										resultItems.addAll(items);
-										checkAndCallSuccess();
-									}
-
-									@Override
-									public void onTimeout() throws JaxmppException {
-										if (finished[0])
-											return;
-										--counter[0];
-										++counter[1];
-										checkAndCallSuccess();
-									}
-								});
-					}
-					// in case if user has no subscribed nodes we need to check
-					// and call proper callback
-					checkAndCallSuccess();
-				} catch (JaxmppException e) {
-					log.log(Level.WARNING, "Problem on mass retrieving", e);
-				}
-			}
-
-			@Override
-			public void onTimeout() throws JaxmppException {
-				callback.onTimeout();
-			}
-		};
-
-		retrieveOwnSubscription(pubSubJID, null, subscriptionsCallback);
+		retrieveOwnSubscription(pubSubJID, null, callback);
 	}
 
 	/**
