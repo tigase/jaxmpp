@@ -1333,7 +1333,7 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	 */
 	public void retrieveItems(final BareJID pubSubJID, final Integer max, final Integer index, final Date after,
 			final RetrieveMultiItemsAsyncCallback callback) throws JaxmppException {
-		retrieveOwnSubscription(pubSubJID, null, callback);
+		retrieveItems(pubSubJID, (String) null, max, index, after, (AsyncCallback) callback);
 	}
 
 	/**
