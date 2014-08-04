@@ -45,6 +45,7 @@ import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -325,6 +326,8 @@ public class SocketConnector implements Connector {
 
 	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
 
+	private final static HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
+
 	/**
 	 * Default size of buffer used to decode data before parsing
 	 */
@@ -334,6 +337,10 @@ public class SocketConnector implements Connector {
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
+
+	public static final String HOSTNAME_VERIFIER_DISABLED_KEY = "HOSTNAME_VERIFIER_DISABLED_KEY";
+
+	public static final String HOSTNAME_VERIFIER_KEY = "HOSTNAME_VERIFIER_KEY";
 
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
 
@@ -626,7 +633,24 @@ public class SocketConnector implements Connector {
 			writer = null;
 			reader = null;
 			log.fine("Start handshake");
+
+			final String hostname;
+			if (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID) != null) {
+				hostname = ((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain();
+			} else if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) != null) {
+				hostname = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
+			} else {
+				hostname = null;
+			}
+
 			s1.startHandshake();
+
+			final HostnameVerifier hnv = context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY);
+			if (hnv != null && !hnv.verify(hostname, s1.getSession())) {
+				throw new javax.net.ssl.SSLHandshakeException(
+						"Cerificate hostname doesn't match domain name you want to connect.");
+			}
+
 			socket = s1;
 			writer = socket.getOutputStream();
 			reader = new Reader(socket.getInputStream());
@@ -849,6 +873,12 @@ public class SocketConnector implements Connector {
 
 		if (context.getSessionObject().getProperty(TRUST_MANAGERS_KEY) == null)
 			context.getSessionObject().setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
+
+		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
+			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
+		} else if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY) == null) {
+			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, DEFAULT_HOSTNAME_VERIFIER);
+		}
 
 		setStage(State.connecting);
 
