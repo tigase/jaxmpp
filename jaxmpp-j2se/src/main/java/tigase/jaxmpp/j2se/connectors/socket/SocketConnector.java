@@ -45,6 +45,7 @@ import java.util.zip.InflaterInputStream;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -114,33 +115,21 @@ public class SocketConnector implements Connector {
 	}
 
 	/**
-	 * OutputStreamFlushWrap class is wrapper class used to wrap DeflaterOutputStream
-	 * to force flushing every time data is written to output stream
+	 * OutputStreamFlushWrap class is wrapper class used to wrap
+	 * DeflaterOutputStream to force flushing every time data is written to
+	 * output stream
 	 */
 	private class OutputStreamFlushWrap extends OutputStream {
 
 		private final OutputStream outputStream;
-		
+
 		public OutputStreamFlushWrap(OutputStream outputStream) {
 			this.outputStream = outputStream;
 		}
-		
+
 		@Override
-		public void write(byte[] b) throws IOException {
-			outputStream.write(b);
-			outputStream.flush();			
-		}
-		
-		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
-			outputStream.write(b, off, len);
-			outputStream.flush();
-		}
-		
-		@Override
-		public void write(int b) throws IOException {
-			outputStream.write(b);
-			outputStream.flush();
+		public void close() throws IOException {
+			outputStream.close();
 		}
 
 		@Override
@@ -149,12 +138,25 @@ public class SocketConnector implements Connector {
 		}
 
 		@Override
-		public void close() throws IOException {
-			outputStream.close();
+		public void write(byte[] b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();
 		}
-		
+
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			outputStream.write(b, off, len);
+			outputStream.flush();
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			outputStream.write(b);
+			outputStream.flush();
+		}
+
 	}
-	
+
 	/**
 	 * New Reader class replaces standard InputStreamReader as it cannot read
 	 * from InflaterInputStream.
@@ -307,6 +309,8 @@ public class SocketConnector implements Connector {
 
 	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
 
+	private final static HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
+
 	/**
 	 * Default size of buffer used to decode data before parsing
 	 */
@@ -321,6 +325,10 @@ public class SocketConnector implements Connector {
 	 * see-other-host
 	 */
 	public final static EventType HostChanged = new EventType();
+
+	public static final String HOSTNAME_VERIFIER_DISABLED_KEY = "HOSTNAME_VERIFIER_DISABLED_KEY";
+
+	public static final String HOSTNAME_VERIFIER_KEY = "HOSTNAME_VERIFIER_KEY";
 
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
 
@@ -643,7 +651,24 @@ public class SocketConnector implements Connector {
 			writer = null;
 			reader = null;
 			log.fine("Start handshake");
+
+			final String hostname;
+			if (sessionObject.getProperty(SessionObject.USER_BARE_JID) != null) {
+				hostname = ((BareJID) sessionObject.getProperty(SessionObject.USER_BARE_JID)).getDomain();
+			} else if (sessionObject.getProperty(SessionObject.DOMAIN_NAME) != null) {
+				hostname = sessionObject.getProperty(SessionObject.DOMAIN_NAME);
+			} else {
+				hostname = null;
+			}
+
 			s1.startHandshake();
+
+			final HostnameVerifier hnv = sessionObject.getProperty(HOSTNAME_VERIFIER_KEY);
+			if (hnv != null && !hnv.verify(hostname, s1.getSession())) {
+				throw new javax.net.ssl.SSLHandshakeException(
+						"Cerificate hostname doesn't match domain name you want to connect.");
+			}
+
 			socket = s1;
 			writer = socket.getOutputStream();
 			reader = new Reader(socket.getInputStream());
@@ -685,22 +710,22 @@ public class SocketConnector implements Connector {
 					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
 				}
 			} catch (NoSuchFieldException ex) {
-				
+
 				// if we do not have field we are on standard Java VM
 				try {
-					// try to create flushable DeflaterOutputStream but it exists 
-					// only on Java 7 so we access it using reflection for compatibility
-					Constructor<DeflaterOutputStream> flushable = 
-							DeflaterOutputStream.class.getConstructor(OutputStream.class, 
+					// try to create flushable DeflaterOutputStream but it
+					// exists
+					// only on Java 7 so we access it using reflection for
+					// compatibility
+					Constructor<DeflaterOutputStream> flushable = DeflaterOutputStream.class.getConstructor(OutputStream.class,
 							Deflater.class, boolean.class);
-					
-					// we need wrap DeflaterOutputStream to flush it every time we are
+
+					// we need wrap DeflaterOutputStream to flush it every time
+					// we are
 					// writing to it
-					writer = new OutputStreamFlushWrap(
-							flushable.newInstance(socket.getOutputStream(), compressor, true));
-					
-				}
-				catch (NoSuchMethodException ex1) {
+					writer = new OutputStreamFlushWrap(flushable.newInstance(socket.getOutputStream(), compressor, true));
+
+				} catch (NoSuchMethodException ex1) {
 					// if we do not find constructor from Java 7 we use flushing
 					// algorithm which was working fine on Java 6
 					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
@@ -713,10 +738,10 @@ public class SocketConnector implements Connector {
 							super.def.setLevel(Deflater.BEST_COMPRESSION);
 							super.deflate();
 						}
-					};					
+					};
 				}
 			}
-				
+
 			Inflater decompressor = new Inflater(false);
 			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
 			reader = new Reader(is);
@@ -887,6 +912,12 @@ public class SocketConnector implements Connector {
 
 		if (sessionObject.getProperty(TRUST_MANAGERS_KEY) == null)
 			sessionObject.setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
+
+		if (sessionObject.getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
+			sessionObject.setProperty(HOSTNAME_VERIFIER_KEY, null);
+		} else if (sessionObject.getProperty(HOSTNAME_VERIFIER_KEY) == null) {
+			sessionObject.setProperty(HOSTNAME_VERIFIER_KEY, DEFAULT_HOSTNAME_VERIFIER);
+		}
 
 		setStage(State.connecting);
 
