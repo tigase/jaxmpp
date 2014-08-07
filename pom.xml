@@ -44,6 +44,7 @@
 		<module>jaxmpp-presence</module>
 		<module>jaxmpp-chat</module>
 		<module>jaxmpp-muc</module>
+		<module>jaxmpp-deliveryreceipts</module>
 		<module>jaxmpp-pubsub</module>
 		<module>jaxmpp-adhoc</module>
 		<module>jaxmpp-filetransfer</module>
