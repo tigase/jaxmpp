@@ -132,7 +132,7 @@ public class BoshConnector extends AbstractBoshConnector {
 				if (payload != null) {
                     currentWorker.appendToBody(payload);
 				}
-                return currentWorker.getBodyElement();
+                return null;
             }
                 
             return super.prepareBody(payload);

@@ -445,11 +445,14 @@ public abstract class AbstractBoshConnector implements Connector {
 			throw new JaxmppException("BOSH service URL not defined!");
 
 		if (getState() == State.connected) {
-			processSendData(prepareBody((Element) null));
+			Element body = prepareBody((Element) null);
+			processSendData(body);
 
-			Element x = prepareBody((Element) null);
-			x.setAttribute("cache", "get_all");
-			processSendData(x);
+			if (body != null) {
+				Element x = body;
+				x.setAttribute("cache", "get_all");
+				processSendData(x);
+			}
 
 			// processSendData(prepareBody(null));
 			// requests.clear();

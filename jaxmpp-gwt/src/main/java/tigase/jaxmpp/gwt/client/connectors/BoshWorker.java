@@ -125,10 +125,6 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
 		};
 	}
-
-	public Element getBodyElement() {
-		return this.element;
-	}
 	
 	public void appendToBody(Element stanza) throws XMLException {
 		this.element.addChild(stanza);
