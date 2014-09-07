@@ -60,7 +60,11 @@ public class ExtensionsChain {
 		Iterator<Extension> it = extensions.iterator();
 		while (it.hasNext()) {
 			Extension x = it.next();
-			if (cls.isAssignableFrom(x.getClass()))
+			// in GWT there is no support for isAssignableFrom so following
+			// breaks compilation of GWT project
+			//if (cls.isAssignableFrom(x.getClass()))
+			// I think that following will be ok for now
+			if (cls.equals(x.getClass()))
 				return (T) x;
 		}
 		return null;

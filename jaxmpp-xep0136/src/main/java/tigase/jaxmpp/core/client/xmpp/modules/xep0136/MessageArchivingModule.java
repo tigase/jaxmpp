@@ -213,7 +213,7 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 	}
 
 	public void retriveCollection(final JID withJid, final Date startTime, final Date endTime, String afterId,
-			Integer maxCount, final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
+			Integer index, Integer maxCount, final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
@@ -226,6 +226,9 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 
 		set.addChild(ElementFactory.create("max", (maxCount != null ? Integer.toString(maxCount) : "100"), null));
 
+		if (index != null) {
+			set.addChild(ElementFactory.create("index", String.valueOf(index), null));
+		}
 		if (afterId != null) {
 			set.addChild(ElementFactory.create("after", afterId, null));
 		}

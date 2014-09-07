@@ -41,15 +41,15 @@ public class DefaultElementTest extends TestCase {
 		final Element element = createElement();
 		Element e1 = ElementFactory.create(element);
 		assertEquals(
-				"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
+				"<message from=\"juliet@example.com/balcony\" to=\"romeo@example.net\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
 				e1.getAsString());
 
 		e1 = DefaultElement.create(element, 0);
-		assertEquals("<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"/>", e1.getAsString());
+		assertEquals("<message from=\"juliet@example.com/balcony\" to=\"romeo@example.net\" type=\"chat\"/>", e1.getAsString());
 
 		e1 = DefaultElement.create(element, 1);
 		assertEquals(
-				"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
+				"<message from=\"juliet@example.com/balcony\" to=\"romeo@example.net\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
 				e1.getAsString());
 	}
 
@@ -58,7 +58,7 @@ public class DefaultElementTest extends TestCase {
 		try {
 			String t = element.getAsString();
 			assertEquals(
-					"<message to=\"romeo@example.net\" from=\"juliet@example.com/balcony\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
+					"<message from=\"juliet@example.com/balcony\" to=\"romeo@example.net\" type=\"chat\"><subject>I implore you!</subject><body>Wherefore art thou, Romeo?</body><thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread><x xmlns=\"tigase\">tigase:offline</x></message>",
 					t);
 		} catch (Exception e) {
 			e.printStackTrace();

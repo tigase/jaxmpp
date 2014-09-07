@@ -63,7 +63,7 @@ public class ProcessorTest extends AbstractJaxmppTest {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
+		assertEquals("<iq type=\"result\" from=\"a@b.c\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 	public void test04() throws XMLException {
@@ -74,7 +74,7 @@ public class ProcessorTest extends AbstractJaxmppTest {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq from=\"a@b.c\" type=\"result\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
+		assertEquals("<iq type=\"result\" from=\"a@b.c\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
 	}
 
 }
