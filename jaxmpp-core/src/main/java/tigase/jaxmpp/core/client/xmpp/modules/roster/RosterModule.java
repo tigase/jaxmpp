@@ -418,7 +418,7 @@ public class RosterModule extends AbstractIQModule implements InitializingModule
 	protected void update(RosterItem item) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(new DefaultElement("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(new DefaultElement("query", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
 		writer.write(iq, new AsyncCallback() {
