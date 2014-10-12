@@ -153,19 +153,24 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 			}
 		}
 		
-		if (!resolver.isEnabled()) {
+		boolean seeHostIsUri = isUsableUrl(seeHost);
+		if (!resolver.isEnabled() || seeHostIsUri) {
 			if (seeHost == null) {
 				// no webbased DNS resolver set and no see other host so we have
 				// no other option but we need to fail
 				webDnsCallback.onUrlFailed();
 			}
 			else {
-				MatchResult result = URL_PARSER.exec(boshUrl);
-				String newBoshUrl = result.getGroup(1) + "://" + seeHost
-						+ (result.getGroup(3) != null ? result.getGroup(3) : "")
-						+ result.getGroup(4);
+				if (seeHostIsUri) {
+					MatchResult result = URL_PARSER.exec(boshUrl);
+					String newBoshUrl = result.getGroup(1) + "://" + seeHost
+							+ (result.getGroup(3) != null ? result.getGroup(3) : "")
+							+ result.getGroup(4);
 
-				webDnsCallback.onUrlResolved(domain, newBoshUrl);
+					webDnsCallback.onUrlResolved(domain, newBoshUrl);
+				} else {
+					webDnsCallback.onUrlResolved(domain, seeHost);
+				}
 			}
 			return;
 		}
@@ -173,4 +178,7 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
 	}
 
+	private boolean isUsableUrl(String url) {
+		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") || url.startsWith("wss://"));
+	}
 }

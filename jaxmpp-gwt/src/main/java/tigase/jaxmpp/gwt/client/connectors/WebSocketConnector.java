@@ -40,8 +40,8 @@ import tigase.jaxmpp.gwt.client.xml.GwtElement;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.xml.client.XMLParser;
 import java.util.ArrayList;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
-import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler.SeeOtherHostEvent;
 
 /**
  * 
@@ -49,6 +49,8 @@ import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler.SeeOtherHostEvent
  */
 public class WebSocketConnector implements Connector {
 
+	public static final String FORCE_RFC_KEY = "force-rfc-mode";
+	
 	private final Context context;
 	protected final Logger log;
 	private Timer pingTimer = null;
@@ -56,6 +58,12 @@ public class WebSocketConnector implements Connector {
 
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 	private final WebSocketCallback socketCallback;
+	
+	private Boolean rfcCompatible = null;
+	
+	private boolean isRfc() {
+		return rfcCompatible;
+	}
 
 	public WebSocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());
@@ -65,6 +73,16 @@ public class WebSocketConnector implements Connector {
 			@Override
 			public void onClose(WebSocket ws) {
 				try {
+					if (getState() == State.connected && !rfcCompatible 
+							&& StreamFeaturesModule.getStreamFeatures(WebSocketConnector.this.context.getSessionObject()) == null) {
+						if (pingTimer != null) {
+							pingTimer.cancel();
+							pingTimer = null;
+						}
+						rfcCompatible = true;
+						start();
+						return;
+					}					
 					stop(true);
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
@@ -93,6 +111,9 @@ public class WebSocketConnector implements Connector {
 			@Override
 			public void onOpen(WebSocket ws) {
 				try {
+					if ("xmpp-framing".equals(ws.getProtocol())) {
+						rfcCompatible = true;
+					}
 					setStage(State.connected);
 					restartStream();
 
@@ -219,6 +240,16 @@ public class WebSocketConnector implements Connector {
 		return false;
 	}		
 	
+	protected boolean handleSeeOtherUri(String seeOtherUri) throws JaxmppException {
+		MutableBoolean handled = new MutableBoolean();
+		context.getEventBus().fire(
+				new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeOtherUri, handled));
+		
+		stop();
+		fireOnError(null, null, WebSocketConnector.this.context.getSessionObject());		
+		return false;
+	}
+	
 	private void parseSocketData(String x) throws JaxmppException {
 		// ignore keep alive "whitespace"
 		if (x == null || x.length() == 1) {
@@ -227,7 +258,7 @@ public class WebSocketConnector implements Connector {
 				return;
 		}
 		
-		log.warning("received = " + x);
+		log.finest("received = " + x);
 
 		// workarounds for xml parsers implemented in browsers
 		if (x.endsWith("</stream:stream>") && !x.startsWith("<stream:stream ")) {
@@ -259,9 +290,28 @@ public class WebSocketConnector implements Connector {
 		}
 
 		if (received != null) {
+			boolean isRfc = isRfc();
 			for (Element child : received) {
 				if ("parsererror".equals(child.getName())) {
 					continue;
+				}
+
+				if (isRfc && "urn:ietf:params:xml:ns:xmpp-framing".equals(child.getXMLNS())) {
+					if ("close".equals(child.getName())) {
+						if (child.getAttribute("see-other-uri") != null) {
+						// received new version of see-other-host called see-other-uri 
+							// designed just for XMPP over WebSocket
+							String uri = child.getAttribute("see-other-uri");
+							handleSeeOtherUri(uri);
+							continue;
+						}
+						log.fine("received <close/> stanza, so we need to close this connection..");
+						stop();
+					}
+					if ("open".equals(child.getName())) {
+						// received <open/> stanza should be ignored
+						continue;
+					}
 				}
 
 				if (("error".equals(child.getName()) && child.getXMLNS() != null
@@ -280,7 +330,11 @@ public class WebSocketConnector implements Connector {
 	@Override
 	public void restartStream() throws XMLException, JaxmppException {
 		StringBuilder sb = new StringBuilder();
-		sb.append("<stream:stream ");
+		if (isRfc()) {
+			sb.append("<open ");
+		} else {
+			sb.append("<stream:stream ");
+		}
 
 		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
 		String to;
@@ -296,9 +350,14 @@ public class WebSocketConnector implements Connector {
 			sb.append("to='").append(to).append("' ");
 		}
 
-		sb.append("xmlns='jabber:client' ");
-		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
-		sb.append("version='1.0'>");
+		sb.append("version='1.0' ");
+		
+		if (isRfc()) {
+			sb.append("xmlns='urn:ietf:params:xml:ns:xmpp-framing'/>");
+		} else {
+			sb.append("xmlns='jabber:client' ");
+			sb.append("xmlns:stream='http://etherx.jabber.org/streams'>");
+		}
 
 		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Restarting XMPP Stream");
@@ -347,9 +406,21 @@ public class WebSocketConnector implements Connector {
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
+		if (rfcCompatible == null) {
+			rfcCompatible = context.getSessionObject().getProperty(WebSocketConnector.FORCE_RFC_KEY);
+		}
+		if (rfcCompatible == null)
+			rfcCompatible = false;
 		String url = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		setStage(State.connecting);
-		socket = new WebSocket(url, "xmpp", socketCallback);
+		// maybe we should add other "protocols" to indicate which version of xmpp-over-websocket is used?
+		// if we would ask for "xmpp" and "xmpp-framing" new server would (at least Tigase) would respond
+		// with "xmpp-framing" to try newer version of protocol and older with "xmpp" suggesting to try 
+		// older protocol at first but in both cases we should be ready for error and failover!!
+		// This would only reduce number of roundtrips in case of an error.
+		// WARNING: old Tigase will not throw an exception when new protocol is tried - it will just hang.
+		// Good idea would be also to allow user to pass protocol version (new, old, autodetection [old and if failed try the new one])
+		socket = new WebSocket(url, new String[] { "xmpp", "xmpp-framing" }, socketCallback);
 	}
 
 	@Override
@@ -379,7 +450,7 @@ public class WebSocketConnector implements Connector {
 	private void terminateStream() throws JaxmppException {
 		final State state = getState();
 		if (state == State.connected || state == State.connecting) {
-			String x = "</stream:stream>";
+			String x = isRfc() ? "<close xmlns='urn:ietf:params:xml:ns:xmpp-framing'/>" : "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
 			send(x);
 		} else {

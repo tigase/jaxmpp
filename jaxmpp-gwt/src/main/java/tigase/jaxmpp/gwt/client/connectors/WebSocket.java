@@ -18,6 +18,7 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 /**
  * 
@@ -34,9 +35,24 @@ public class WebSocket {
 
 	public WebSocket(String url, String protocol, WebSocketCallback callback) {
 		this.callback = callback;
-		this.jsWebSocket = createJSWebSocket(url, protocol, this);
+		JsArrayString jsProtocols = (JsArrayString) JsArrayString.createArray();
+		if (protocol != null) {
+			jsProtocols.push(protocol);
+		}
+		this.jsWebSocket = createJSWebSocket(url, jsProtocols, this);
 	}
 
+	public WebSocket(String url, String[] protocols, WebSocketCallback callback) {
+		this.callback = callback;
+		JsArrayString jsProtocols = (JsArrayString) JsArrayString.createArray();
+		if (protocols != null) {
+			for (String protocol : protocols) {
+				jsProtocols.push(protocol);
+			}
+		}
+		this.jsWebSocket = createJSWebSocket(url, jsProtocols, this);
+	}	
+	
 	public void close() {
 		callback = null;
 		closeInternal();
@@ -46,8 +62,8 @@ public class WebSocket {
 										this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.close();
 										}-*/;
 
-	private native JavaScriptObject createJSWebSocket(final String url, final String protocol, final WebSocket webSocket) /*-{
-																															var jsWebSocket = new WebSocket(url, protocol);
+	private native JavaScriptObject createJSWebSocket(final String url, final JsArrayString protocols, final WebSocket webSocket) /*-{
+																															var jsWebSocket = new WebSocket(url, protocols);
 																															
 																															jsWebSocket.onopen = function() {
 																															webSocket.@tigase.jaxmpp.gwt.client.connectors.WebSocket::onOpen()();
@@ -98,6 +114,10 @@ public class WebSocket {
 		}
 	}
 
+	public native String getProtocol() /*-{
+										return this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.protocol;
+									}-*/;
+	
 	public native void send(String message) /*-{
 											if (!message) return;
 											this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.send(message);
