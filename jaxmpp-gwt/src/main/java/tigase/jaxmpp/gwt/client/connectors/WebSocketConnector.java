@@ -49,7 +49,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
  */
 public class WebSocketConnector implements Connector {
 
-	public static final String FORCE_RFC_KEY = "force-rfc-mode";
+	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
 	
 	private final Context context;
 	protected final Logger log;
