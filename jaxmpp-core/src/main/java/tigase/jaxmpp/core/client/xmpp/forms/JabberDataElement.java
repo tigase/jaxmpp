@@ -37,23 +37,23 @@ public class JabberDataElement extends ElementWrapper {
 
 	private static AbstractField<?> create(Element element) throws XMLException {
 		final String type = element.getAttribute("type");
-		if (type.equals("boolean")) {
+		if ("boolean".equals(type)) {
 			return new BooleanField(element);
-		} else if (type.equals("fixed")) {
+		} else if ("fixed".equals(type)) {
 			return new FixedField(element);
-		} else if (type.equals("hidden")) {
+		} else if ("hidden".equals(type)) {
 			return new HiddenField(element);
-		} else if (type.equals("jid-multi")) {
+		} else if ("jid-multi".equals(type)) {
 			return new JidMultiField(element);
-		} else if (type.equals("jid-single")) {
+		} else if ("jid-single".equals(type)) {
 			return new JidSingleField(element);
-		} else if (type.equals("list-multi")) {
+		} else if ("list-multi".equals(type)) {
 			return new ListMultiField(element);
-		} else if (type.equals("list-single")) {
+		} else if ("list-single".equals(type)) {
 			return new ListSingleField(element);
-		} else if (type.equals("text-multi")) {
+		} else if ("text-multi".equals(type)) {
 			return new TextMultiField(element);
-		} else if (type.equals("text-private")) {
+		} else if ("text-private".equals(type)) {
 			return new TextPrivateField(element);
 		} else {
 			return new TextSingleField(element);
