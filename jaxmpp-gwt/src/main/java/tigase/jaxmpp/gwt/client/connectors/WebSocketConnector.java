@@ -149,7 +149,7 @@ public class WebSocketConnector implements Connector {
 
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
-		return new BoshXmppSessionLogic(context, this, modulesManager);
+		return new WebSocketXmppSessionLogic(this, modulesManager, context);
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
@@ -284,7 +284,7 @@ public class WebSocketConnector implements Connector {
 		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName())) {
 			received = response.getChildren();
 		}
-		else {
+		else if (response != null) {
 			received = new ArrayList<Element>();
 			received.add(response);
 		}

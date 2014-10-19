@@ -359,48 +359,42 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 		final boolean enabled = isStreamManagementTurnedOn(context.getSessionObject());
-		if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
-			processResumed(element);
-		} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
-			processFailed(element);
-		} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
-			processStreamManagementEnabled(element);
-		} else if (enabled && "r".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
-			processAckRequest(element);
-		} else if (enabled && "a".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
-			throw new JaxmppException("Should be processed already");
-			// processAckAnswer(element);
-		} else
-			throw new XMPPException(ErrorCondition.feature_not_implemented);
+
+		throw new JaxmppException("Should be processed already");
 	}
 
 	private void processAckAnswer(Element element) throws XMLException {
 		String hs = element.getAttribute("h");
 		try {
-			final long oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
-			final long newH = Long.parseLong(hs);
+			long oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
+			long newH = Long.parseLong(hs);
 
 			log.fine("Current h=" + oldH + "; received h=" + newH);
 
-			if (oldH > newH) {
-				ArrayList<Element> notSentElements = new ArrayList<Element>();
+			if (oldH >= newH) {
+//				ArrayList<Element> notSentElements = new ArrayList<Element>();
+//				synchronized (this.outgoingQueue) {
+//					for (int i = 0; i < oldH - newH; i++) {
+//						if (!outgoingQueue.isEmpty()) {
+//							Element ee = this.outgoingQueue.removeLast();
+//							notSentElements.add(0, ee);
+//						}
+//					}
+//					this.outgoingQueue.clear();
+//				}
+//				UnacknowledgedEvent event = new UnacknowledgedEvent(context.getSessionObject(), notSentElements);
+//				context.getEventBus().fire(event);
+//			} else {
 				synchronized (this.outgoingQueue) {
-					for (int i = 0; i < oldH - newH; i++) {
-						if (!outgoingQueue.isEmpty()) {
-							Element ee = this.outgoingQueue.removeLast();
-							notSentElements.add(0, ee);
-						}
+					oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
+					long left = oldH - newH;
+					// removing confirmed elements leaving unconfirmed in outgoningQueue
+					while (this.outgoingQueue.size() > left) {
+						this.outgoingQueue.removeFirst();
 					}
-					this.outgoingQueue.clear();
-				}
-				UnacknowledgedEvent event = new UnacknowledgedEvent(context.getSessionObject(), notSentElements);
-				context.getEventBus().fire(event);
-			} else {
-				synchronized (this.outgoingQueue) {
-					this.outgoingQueue.clear();
 				}
 			}
-			setAckHValue(OUTGOING_STREAM_H_KEY, newH);
+			//setAckHValue(OUTGOING_STREAM_H_KEY, newH);
 		} catch (Exception e) {
 
 		}
@@ -432,16 +426,51 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 
 		StreamManagementFailedEvent event = new StreamManagementFailedEvent(context.getSessionObject(), condition);
 		context.getEventBus().fire(event);
+		
+		List<Element> notSentElements = null;
+		synchronized (this.outgoingQueue) {
+			notSentElements = new ArrayList<Element>(notSentElements);
+			outgoingQueue.clear();
+		}
+		
+		if (!notSentElements.isEmpty()) {
+			UnacknowledgedEvent eventNotSentElements = new UnacknowledgedEvent(context.getSessionObject(), notSentElements);
+			context.getEventBus().fire(eventNotSentElements);	
+		}
 	}
 
 	public boolean processIncomingStanza(Element element) throws XMLException {
-		if (!isAckEnabled(context.getSessionObject()))
+		if (!isAckEnabled(context.getSessionObject())) {
+			if (XMLNS.equals(element.getXMLNS())) {
+				try {
+					if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+						processResumed(element);
+					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+						processFailed(element);
+					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+						processStreamManagementEnabled(element);
+					}
+					return true;
+				} catch (JaxmppException ex) {
+					// this should not happed
+					log.log(Level.SEVERE, "exception processing stream management incoming stanza = " + element.getAsString(), ex);
+				}
+			}
 			return false;
+		}
 
-		if (element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+		if (XMLNS.equals(element.getXMLNS())) {
 
 			if ("a".equals(element.getName())) {
 				processAckAnswer(element);
+				return true;
+			} else if ("r".equals(element.getName())) {
+				try {				
+					processAckRequest(element);
+				} catch (JaxmppException ex) {
+					// this should not happed
+					log.log(Level.SEVERE, "exception processing stream management incoming stanza = " + element.getAsString(), ex);
+				}					
 				return true;
 			} else
 				return false;
@@ -483,8 +512,22 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		String hs = element.getAttribute("h");
 		final Long newH = hs == null ? null : Long.parseLong(hs);
 
-		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
-
+		synchronized (this.outgoingQueue) {
+			context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+			long oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
+			long left = oldH - newH;
+			// removing confirmed elements leaving unconfirmed in outgoningQueue
+			while (this.outgoingQueue.size() > left) {
+				this.outgoingQueue.removeFirst();
+			}
+			setAckHValue(OUTGOING_STREAM_H_KEY, newH);
+			List<Element> unacked = new ArrayList<Element>(this.outgoingQueue);
+			this.outgoingQueue.clear();
+			for (Element unackedElem : unacked) {
+				context.getWriter().write(unackedElem);
+			}
+		}
+	
 		StreamResumedEvent event = new StreamResumedEvent(context.getSessionObject(), newH, element.getAttribute("previd"));
 		context.getEventBus().fire(event);
 	}

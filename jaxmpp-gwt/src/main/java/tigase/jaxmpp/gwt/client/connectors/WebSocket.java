@@ -19,6 +19,8 @@ package tigase.jaxmpp.gwt.client.connectors;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -104,7 +106,11 @@ public class WebSocket {
 
 	private void onMessage(String message) {
 		if (callback != null) {
-			callback.onMessage(this, message);
+			try {
+				callback.onMessage(this, message);
+			} catch (Exception ex) {
+				Logger.getLogger("WebSocket").log(Level.SEVERE, "exception processing message = " + message);
+			}
 		}
 	}
 

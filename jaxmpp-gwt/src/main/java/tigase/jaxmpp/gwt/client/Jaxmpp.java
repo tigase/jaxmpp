@@ -52,6 +52,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Cookies;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 
 public class Jaxmpp extends JaxmppCore {
 
@@ -171,6 +172,9 @@ public class Jaxmpp extends JaxmppCore {
 			this.connector.stop();
 		} catch (XMLException e) {
 			throw new JaxmppException(e);
+		} finally {
+			StreamManagementModule.reset(sessionObject);
+			sessionObject.clear(SessionObject.Scope.session);				
 		}
 	}
 
@@ -269,12 +273,18 @@ public class Jaxmpp extends JaxmppCore {
 	protected void login(String boshUrl) throws JaxmppException {
 		this.modulesManager.initIfRequired();
 
+		boolean wasConnected = false;
 		if (this.isConnected()) {
 			this.connector.stop(true);
+			wasConnected = true;
 		}
 
 		lastRid = null;
-		this.sessionObject.clear();
+		if (wasConnected) {
+			this.sessionObject.clear();
+		} else {
+			this.sessionObject.clear(SessionObject.Scope.stream);
+		}
 
 		if (boshUrl != null) {
 			this.sessionObject.setProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, boshUrl);

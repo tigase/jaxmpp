@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,10 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.j2se.connectors.socket;
+package tigase.jaxmpp.gwt.client.connectors;
 
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -32,10 +31,9 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindErrorHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule.SessionEstablishmentErrorHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule.SessionEstablishmentSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
@@ -44,9 +42,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler;
 
-public class SocketXmppSessionLogic implements XmppSessionLogic {
+public class WebSocketXmppSessionLogic implements XmppSessionLogic {
 
 	static Throwable extractCauseException(Throwable ex) {
 		Throwable th = ex.getCause();
@@ -69,7 +66,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private final AuthSuccessHandler authSuccessHandler;
 
-	private final SocketConnector connector;
+	private final WebSocketConnector connector;
 
 	private final Connector.ErrorHandler connectorListener;
 
@@ -83,30 +80,30 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	private ResourceBindSuccessHandler resourceBindListener;
 
-	private final SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
+	private final SessionEstablishmentModule.SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
 
 	private SessionEstablishmentModule sessionEstablishmentModule;
 
-	private final SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
+	private final SessionEstablishmentModule.SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
 
 	private SessionListener sessionListener;
 
-	private final StreamResumedHandler smResumedListener;
+	private final StreamManagementModule.StreamResumedHandler smResumedListener;
 
 	private final StreamFeaturesReceivedHandler streamFeaturesEventListener;
 
 	private StreamManagementModule streamManaegmentModule;
 
-	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, Context context) {
+	public WebSocketXmppSessionLogic(WebSocketConnector connector, XmppModulesManager modulesManager, Context context) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
 		this.context = context;
 
-		this.connectorListener = new ErrorHandler() {
+		this.connectorListener = new Connector.ErrorHandler() {
 
 			@Override
 			public void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException {
-				SocketXmppSessionLogic.this.processConnectorErrors(condition, caught);
+				WebSocketXmppSessionLogic.this.processConnectorErrors(condition, caught);
 			}
 		};
 
@@ -114,7 +111,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			@Override
 			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
-				SocketXmppSessionLogic.this.processStreamFeatures(featuresElement);
+				WebSocketXmppSessionLogic.this.processStreamFeatures(featuresElement);
 			}
 		};
 
@@ -122,25 +119,25 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 			@Override
 			public void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException {
-				SocketXmppSessionLogic.this.processAuthFailed(error);
+				WebSocketXmppSessionLogic.this.processAuthFailed(error);
 			}
 		};
 		this.authSuccessHandler = new AuthSuccessHandler() {
 
 			@Override
 			public void onAuthSuccess(SessionObject sessionObject) throws JaxmppException {
-				SocketXmppSessionLogic.this.processAuthSuccess();
+				WebSocketXmppSessionLogic.this.processAuthSuccess();
 			}
 		};
 		this.resourceBindListener = new ResourceBindSuccessHandler() {
 
 			@Override
 			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-				SocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
+				WebSocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
 			}
 		};
 
-		this.sessionEstablishmentErrorHandler = new SessionEstablishmentErrorHandler() {
+		this.sessionEstablishmentErrorHandler = new SessionEstablishmentModule.SessionEstablishmentErrorHandler() {
 
 			@Override
 			public void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException {
@@ -148,7 +145,7 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 				sessionBindedAndEstablished(sessionObject);
 			}
 		};
-		this.sessionEstablishmentSuccessHandler = new SessionEstablishmentSuccessHandler() {
+		this.sessionEstablishmentSuccessHandler = new SessionEstablishmentModule.SessionEstablishmentSuccessHandler() {
 
 			@Override
 			public void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException {
@@ -156,13 +153,13 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			}
 		};
 
-		this.smResumedListener = new StreamResumedHandler() {
+		this.smResumedListener = new StreamManagementModule.StreamResumedHandler() {
 
 			@Override
 			public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
 				//sessionObject.clear(Scope.session);
 				//resourceBinder.bind();
-				SocketXmppSessionLogic.this.context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
+				WebSocketXmppSessionLogic.this.context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 			}
 		};
 	}
@@ -208,11 +205,11 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
 		try {
-			final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
+//			final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
 			final boolean authAvailable = AuthModule.isAuthAvailable(context.getSessionObject());
-			final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
-			final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
-			final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
+//			final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
+//			final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
+//			final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
 
 			final boolean isAuthorized = context.getSessionObject().getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
 			final boolean isConnectionSecure = connector.isSecure();
@@ -221,11 +218,12 @@ public class SocketXmppSessionLogic implements XmppSessionLogic {
 			final boolean resumption = StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())
 					&& StreamManagementModule.isResumptionEnabled(context.getSessionObject());
 
-			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
-				connector.startTLS();
-			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
-				connector.startZLib();
-			} else if (!isAuthorized && authAvailable) {
+//			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
+//				connector.startTLS();
+//			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
+//				connector.startZLib();
+//			} else 
+			if (!isAuthorized && authAvailable) {
 				authModule.login();
 			} else if (isAuthorized && resumption) {
 				streamManaegmentModule.resume();

@@ -15,7 +15,7 @@ public abstract class AbstractSaslMechanism implements SaslMechanism {
 	}
 
 	protected void setComplete(SessionObject sessionObject, boolean complete) {
-		sessionObject.setProperty(Scope.session, SASL_COMPLETE_KEY, complete);
+		sessionObject.setProperty(Scope.stream, SASL_COMPLETE_KEY, complete);
 	}
 
 }
