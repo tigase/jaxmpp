@@ -60,6 +60,11 @@ public class WebSocket {
 		closeInternal();
 	}
 
+	public boolean isSecure() {
+		String url = getURL();
+		return url != null && url.startsWith("wss://");
+	}
+	
 	private native void closeInternal() /*-{
 										this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.close();
 										}-*/;
@@ -123,7 +128,7 @@ public class WebSocket {
 	public native String getProtocol() /*-{
 										return this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.protocol;
 									}-*/;
-	
+
 	public native void send(String message) /*-{
 											if (!message) return;
 											this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.send(message);

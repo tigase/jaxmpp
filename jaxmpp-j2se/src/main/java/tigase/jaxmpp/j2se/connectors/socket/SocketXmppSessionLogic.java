@@ -17,281 +17,39 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
-import tigase.jaxmpp.core.client.connector.StreamError;
+import tigase.jaxmpp.core.client.connector.AbstractSocketXmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule.SessionEstablishmentErrorHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule.SessionEstablishmentSuccessHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthFailedHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
-import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler;
 
-public class SocketXmppSessionLogic implements XmppSessionLogic {
-
-	static Throwable extractCauseException(Throwable ex) {
-		Throwable th = ex.getCause();
-		if (th == null)
-			return ex;
-
-		for (int i = 0; i < 4; i++) {
-			if (!(th instanceof JaxmppException))
-				return th;
-			if (th.getCause() == null)
-				return th;
-			th = th.getCause();
-		}
-		return ex;
-	}
-
-	private final AuthFailedHandler authFailedHandler;
-
-	private AuthModule authModule;
-
-	private final AuthSuccessHandler authSuccessHandler;
-
-	private final SocketConnector connector;
-
-	private final Connector.ErrorHandler connectorListener;
-
-	private final Context context;
-
-	private StreamFeaturesModule featuresModule;
-
-	private final XmppModulesManager modulesManager;
-
-	private ResourceBinderModule resourceBinder;
-
-	private ResourceBindSuccessHandler resourceBindListener;
-
-	private final SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
-
-	private SessionEstablishmentModule sessionEstablishmentModule;
-
-	private final SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
-
-	private SessionListener sessionListener;
-
-	private final StreamResumedHandler smResumedListener;
-
-	private final StreamFeaturesReceivedHandler streamFeaturesEventListener;
-
-	private StreamManagementModule streamManaegmentModule;
+public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<SocketConnector> {
 
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, Context context) {
-		this.connector = connector;
-		this.modulesManager = modulesManager;
-		this.context = context;
-
-		this.connectorListener = new ErrorHandler() {
-
-			@Override
-			public void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException {
-				SocketXmppSessionLogic.this.processConnectorErrors(condition, caught);
-			}
-		};
-
-		this.streamFeaturesEventListener = new StreamFeaturesReceivedHandler() {
-
-			@Override
-			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
-				SocketXmppSessionLogic.this.processStreamFeatures(featuresElement);
-			}
-		};
-
-		this.authFailedHandler = new AuthFailedHandler() {
-
-			@Override
-			public void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException {
-				SocketXmppSessionLogic.this.processAuthFailed(error);
-			}
-		};
-		this.authSuccessHandler = new AuthSuccessHandler() {
-
-			@Override
-			public void onAuthSuccess(SessionObject sessionObject) throws JaxmppException {
-				SocketXmppSessionLogic.this.processAuthSuccess();
-			}
-		};
-		this.resourceBindListener = new ResourceBindSuccessHandler() {
-
-			@Override
-			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-				SocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
-			}
-		};
-
-		this.sessionEstablishmentErrorHandler = new SessionEstablishmentErrorHandler() {
-
-			@Override
-			public void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException {
-				// FIXME
-				sessionBindedAndEstablished(sessionObject);
-			}
-		};
-		this.sessionEstablishmentSuccessHandler = new SessionEstablishmentSuccessHandler() {
-
-			@Override
-			public void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException {
-				sessionBindedAndEstablished(sessionObject);
-			}
-		};
-
-		this.smResumedListener = new StreamResumedHandler() {
-
-			@Override
-			public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
-				//sessionObject.clear(Scope.session);
-				//resourceBinder.bind();
-				SocketXmppSessionLogic.this.context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
-			}
-		};
+		super(connector, modulesManager, context);
 	}
 
 	@Override
-	public void beforeStart() throws JaxmppException {
-		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null
-				&& context.getSessionObject().getProperty(SessionObject.USER_BARE_JID) == null)
-			throw new JaxmppException("No user JID or server name specified");
-
-		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null)
-			context.getSessionObject().setProperty(SessionObject.DOMAIN_NAME,
-					((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain());
-	}
-
-	protected void processAuthFailed(SaslError error) throws JaxmppException {
-		throw new JaxmppException("Unauthorized with condition=" + error);
-	}
-
-	protected void processAuthSuccess() throws JaxmppException {
-		connector.restartStream();
-	}
-
-	protected void processConnectorErrors(StreamError condition, Throwable caught) throws JaxmppException {
-		if (caught != null) {
-			Throwable e1 = extractCauseException(caught);
-			JaxmppException e = (JaxmppException) (e1 instanceof JaxmppException ? e1 : new JaxmppException(e1));
-			processException(e);
-		}
-	}
-
-	protected void processException(JaxmppException e) throws JaxmppException {
-		if (sessionListener != null)
-			sessionListener.onException(e);
-	}
-
-	protected void processResourceBindEvent(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-		if (SessionEstablishmentModule.isSessionEstablishingAvailable(context.getSessionObject())) {
-			modulesManager.getModule(SessionEstablishmentModule.class).establish();
-		} else
-			sessionBindedAndEstablished(sessionObject);
-	}
-
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
 		try {
 			final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
-			final boolean authAvailable = AuthModule.isAuthAvailable(context.getSessionObject());
 			final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
 			final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
 			final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
 
-			final boolean isAuthorized = context.getSessionObject().getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
 			final boolean isConnectionSecure = connector.isSecure();
 			final boolean isConnectionCompressed = connector.isCompressed();
-
-			final boolean resumption = StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())
-					&& StreamManagementModule.isResumptionEnabled(context.getSessionObject());
 
 			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
 				connector.startTLS();
 			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
 				connector.startZLib();
-			} else if (!isAuthorized && authAvailable) {
-				authModule.login();
-			} else if (isAuthorized && resumption) {
-				streamManaegmentModule.resume();
-			} else if (isAuthorized) {
-				resourceBinder.bind();
+			} else {
+				super.processStreamFeatures(featuresElement);
 			}
 		} catch (XMLException e) {
 			e.printStackTrace();
 		}
 	}
-
-	private void sessionBindedAndEstablished(SessionObject sessionObject) throws JaxmppException {
-		try {
-			DiscoveryModule discoInfo = this.modulesManager.getModule(DiscoveryModule.class);
-			if (discoInfo != null) {
-				discoInfo.discoverServerFeatures(null);
-			}
-
-			context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
-			
-			if (StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())) {
-				if (context.getSessionObject().getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
-						|| !((Boolean) context.getSessionObject().getProperty(
-								StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
-					StreamManagementModule streamManagement = this.modulesManager.getModule(StreamManagementModule.class);
-					streamManagement.enable();
-				}
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public void setSessionListener(SessionListener sessionListener) throws JaxmppException {
-		this.sessionListener = sessionListener;
-		featuresModule = this.modulesManager.getModule(StreamFeaturesModule.class);
-		authModule = this.modulesManager.getModule(AuthModule.class);
-		resourceBinder = this.modulesManager.getModule(ResourceBinderModule.class);
-		this.sessionEstablishmentModule = this.modulesManager.getModule(SessionEstablishmentModule.class);
-		this.streamManaegmentModule = this.modulesManager.getModule(StreamManagementModule.class);
-
-		context.getEventBus().addHandler(Connector.ErrorHandler.ErrorEvent.class, connectorListener);
-		featuresModule.addStreamFeaturesReceivedHandler(streamFeaturesEventListener);
-		authModule.addAuthSuccessHandler(authSuccessHandler);
-		authModule.addAuthFailedHandler(authFailedHandler);
-		resourceBinder.addResourceBindSuccessHandler(resourceBindListener);
-
-		this.sessionEstablishmentModule.addSessionEstablishmentErrorHandler(sessionEstablishmentErrorHandler);
-		this.sessionEstablishmentModule.addSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
-
-		this.streamManaegmentModule.addStreamResumedHandler(smResumedListener);
-	}
-
-	@Override
-	public void unbind() throws JaxmppException {
-		context.getEventBus().remove(Connector.ErrorHandler.ErrorEvent.class, connectorListener);
-		featuresModule.removeStreamFeaturesReceivedHandler(streamFeaturesEventListener);
-		authModule.removeAuthSuccessHandler(authSuccessHandler);
-		authModule.removeAuthFailedHandler(authFailedHandler);
-		resourceBinder.removeResourceBindSuccessHandler(resourceBindListener);
-
-		this.sessionEstablishmentModule.removeSessionEstablishmentErrorHandler(sessionEstablishmentErrorHandler);
-		this.sessionEstablishmentModule.removeSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
-
-		this.streamManaegmentModule.removeStreamResumedHandler(smResumedListener);
-	}
-
 }

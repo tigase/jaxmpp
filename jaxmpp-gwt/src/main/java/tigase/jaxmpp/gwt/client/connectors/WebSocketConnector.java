@@ -82,8 +82,16 @@ public class WebSocketConnector implements Connector {
 						rfcCompatible = true;
 						start();
 						return;
-					}					
-					stop(true);
+					}			
+					if (getState() != State.disconnected && getState() == State.disconnecting) {
+						if (pingTimer != null) {
+							pingTimer.cancel();
+							pingTimer = null;
+						}
+						fireOnError(null, null, WebSocketConnector.this.context.getSessionObject());
+					} else {
+						stop(true);
+					}
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
 				}
@@ -93,7 +101,11 @@ public class WebSocketConnector implements Connector {
 			public void onError(WebSocket ws) {
 				log.warning("received WebSocket error - terminating");
 				try {
-					stop(true);
+					if (pingTimer != null) {
+						pingTimer.cancel();
+						pingTimer = null;
+					}
+					fireOnError(null, null, WebSocketConnector.this.context.getSessionObject());
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
 				}
@@ -197,7 +209,7 @@ public class WebSocketConnector implements Connector {
 
 	@Override
 	public boolean isSecure() {
-		return false;
+		return socket != null && socket.isSecure();
 	}
 
 	@Override
