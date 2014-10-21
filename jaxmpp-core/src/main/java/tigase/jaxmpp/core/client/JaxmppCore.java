@@ -243,12 +243,18 @@ public abstract class JaxmppCore {
 		};
 	}
 
-	public void addListener(EventType eventType, Listener<?> listener) {
-		observable.addListener(eventType, listener);
+	public void addListener( EventType eventType, Listener<?> listener ) {
+		if ( log.isLoggable( Level.FINEST ) ) {
+			log.finest( "Registering listener (" + sessionObject.hashCode() + "): " + listener );
+		}
+		observable.addListener( eventType, listener );
 	}
 
-	public void addListener(Listener<?> listener) {
-		observable.addListener(listener);
+	public void addListener( Listener<?> listener ) {
+		if ( log.isLoggable( Level.FINEST ) ) {
+			log.finest( "Registering listener (" + sessionObject.hashCode() + "): " + listener );
+		}
+		observable.addListener( listener );
 	}
 
 	public Chat createChat(JID jid) throws JaxmppException {

@@ -122,8 +122,9 @@ public abstract class BoshWorker implements BoshRequest {
 
 				final String responseData = sb.toString();
 
-				if (log.isLoggable(Level.FINEST))
-					log.finest("Received: " + responseData);
+				if ( log.isLoggable( Level.FINEST ) ){
+					log.finest( "Received (" + sessionObject.hashCode() + "): " + responseData );
+				}
 
 				if (responseCode != 200) {
 					onError(responseCode, responseData, null, null);

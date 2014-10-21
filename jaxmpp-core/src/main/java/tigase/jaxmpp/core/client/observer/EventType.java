@@ -21,9 +21,9 @@ import java.io.Serializable;
 
 /**
  * Base class for all events type.
- * 
+ *
  * @author bmalkow
- * 
+ *
  */
 public class EventType implements Serializable {
 
@@ -31,10 +31,19 @@ public class EventType implements Serializable {
 
 	private static final long serialVersionUID = 3511154964022649735L;
 
+	private String creationPlace;
+
 	private final int id;
 
 	public EventType() {
 		this.id = ++counter;
+		final Exception stp = new Exception();
+		try {
+			StackTraceElement startPlace = stp.getStackTrace()[1];
+			creationPlace = startPlace.toString();
+		} catch (Exception e) {
+			creationPlace = null;
+		}
 	}
 
 	@Override
@@ -49,6 +58,11 @@ public class EventType implements Serializable {
 	@Override
 	public int hashCode() {
 		return ("event" + id).hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return "EventType(" + id + (creationPlace == null ? "" : (", " + creationPlace)) + ")";
 	}
 
 }
