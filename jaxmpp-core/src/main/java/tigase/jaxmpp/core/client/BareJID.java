@@ -24,7 +24,7 @@ public class BareJID implements Comparable<BareJID> {
 
 	/**
 	 * Creates instance of {@link BareJID}.
-	 * 
+	 *
 	 * @param jid
 	 *            string contains full JID or bare JID
 	 * @return bare JID
@@ -36,7 +36,7 @@ public class BareJID implements Comparable<BareJID> {
 
 	/**
 	 * Creates instance of {@link BareJID}.
-	 * 
+	 *
 	 * @param p_localpart
 	 *            localpart
 	 * @param p_domain
@@ -66,9 +66,15 @@ public class BareJID implements Comparable<BareJID> {
 		return result;
 	}
 
-	private static String toString(String p_localpart, String p_domain) {
+	static String toComparableString(String p_localpart, String p_domain) {
+		return (((p_localpart != null) && (p_localpart.length() > 0)) ? (p_localpart.toLowerCase() + "@" + p_domain) : p_domain);
+	}
+
+	static String toString(String p_localpart, String p_domain) {
 		return (((p_localpart != null) && (p_localpart.length() > 0)) ? (p_localpart + "@" + p_domain) : p_domain);
 	}
+
+	private final String $comparableString;
 
 	private final String $toString;
 
@@ -80,29 +86,34 @@ public class BareJID implements Comparable<BareJID> {
 		this.localpart = localpart != null ? localpart.intern() : null;
 		this.domain = domain.toLowerCase().intern();
 		this.$toString = toString(this.localpart, this.domain);
+		this.$comparableString = toComparableString(this.localpart, this.domain);
 	}
 
 	@Override
 	public int compareTo(BareJID o) {
-		return $toString.compareTo(o.$toString);
+		return $comparableString.compareTo(o.$comparableString);
 	}
 
 	@Override
-	public boolean equals(Object b) {
-		boolean result = false;
-
-		if (b instanceof BareJID) {
-			result = (this.domain == ((BareJID) b).domain)
-					&& ((this.localpart == null) ? this.localpart == ((BareJID) b).localpart
-							: this.localpart.equalsIgnoreCase(((BareJID) b).localpart));
-		}
-
-		return result;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BareJID other = (BareJID) obj;
+		if ($comparableString == null) {
+			if (other.$comparableString != null)
+				return false;
+		} else if (!$comparableString.equals(other.$comparableString))
+			return false;
+		return true;
 	}
 
 	/**
 	 * Return domainpart.
-	 * 
+	 *
 	 * @return domainpart
 	 */
 	public String getDomain() {
@@ -111,7 +122,7 @@ public class BareJID implements Comparable<BareJID> {
 
 	/**
 	 * Return localpart.
-	 * 
+	 *
 	 * @return localpart
 	 */
 	public String getLocalpart() {
@@ -120,7 +131,10 @@ public class BareJID implements Comparable<BareJID> {
 
 	@Override
 	public int hashCode() {
-		return $toString.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (($comparableString == null) ? 0 : $comparableString.hashCode());
+		return result;
 	}
 
 	@Override

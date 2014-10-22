@@ -48,7 +48,13 @@ public class JIDTest extends TestCase {
 		assertEquals(JID.jidInstance("a@b/c"), JID.jidInstance("a@b/c"));
 		assertEquals(JID.jidInstance("a", "b", "c"), JID.jidInstance("a@b/c"));
 
+		assertEquals(JID.jidInstance("a@b/C"), JID.jidInstance("A@B/C"));
+		assertTrue(JID.jidInstance("A@b/c").equals(JID.jidInstance("a@b/c")));
+		assertFalse(JID.jidInstance("a@b/C").equals(JID.jidInstance("a@b/c")));
+		assertEquals(JID.jidInstance("a@b/C").hashCode(), JID.jidInstance("A@B/C").hashCode());
+
 		assertFalse(JID.jidInstance("a@b").equals(JID.jidInstance("a@b/c")));
+		assertFalse(JID.jidInstance("a@b/C").hashCode() == JID.jidInstance("a@b/c").hashCode());
 	}
 
 	public void testPercentJids() {
@@ -66,6 +72,9 @@ public class JIDTest extends TestCase {
 
 		jid = JID.jidInstance("a@b/c");
 		assertEquals("a@b/c", jid.toString());
+
+		jid = JID.jidInstance("A@B/C");
+		assertEquals("A@b/C", jid.toString());
 	}
 
 }

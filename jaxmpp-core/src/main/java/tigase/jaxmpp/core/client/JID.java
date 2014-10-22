@@ -25,7 +25,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID} from {@link BareJID}.
-	 * 
+	 *
 	 * @param bareJid
 	 *            bare JID
 	 * @return full JID. Resource is <code>null</code>.
@@ -36,7 +36,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
+	 *
 	 * @param bareJid
 	 *            bare JID
 	 * @param p_resource
@@ -49,7 +49,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
+	 *
 	 * @param jid
 	 *            string contains JID
 	 * @return full JID.
@@ -62,7 +62,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
+	 *
 	 * @param localpart
 	 *            localpart
 	 * @param domain
@@ -75,7 +75,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
+	 *
 	 * @param localpart
 	 *            localpart
 	 * @param domain
@@ -88,13 +88,21 @@ public class JID implements Comparable<JID> {
 		return jidInstance(BareJID.bareJIDInstance(localpart, domain), resource);
 	}
 
-	private static String toString(BareJID bareJid, String p_resource) {
-		return bareJid.toString() + (((p_resource != null) && (p_resource.length() > 0)) ? "/" + p_resource : "");
+	static String toComparableString(BareJID bareJid, String p_resource) {
+		return BareJID.toComparableString(bareJid.getLocalpart(), bareJid.getDomain())
+				+ (((p_resource != null) && (p_resource.length() > 0)) ? "/" + p_resource : "");
+	}
+
+	static String toString(BareJID bareJid, String p_resource) {
+		return BareJID.toString(bareJid.getLocalpart(), bareJid.getDomain())
+				+ (((p_resource != null) && (p_resource.length() > 0)) ? "/" + p_resource : "");
 	}
 
 	private final String $toString;
 
 	private final BareJID bareJid;
+
+	private final String comparableString;
 
 	private final String resource;
 
@@ -102,6 +110,7 @@ public class JID implements Comparable<JID> {
 		this.bareJid = bareJid;
 		this.resource = resource == null ? null : resource.intern();
 		this.$toString = toString(bareJid, resource);
+		this.comparableString = toComparableString(bareJid, resource);
 	}
 
 	/**
@@ -109,27 +118,30 @@ public class JID implements Comparable<JID> {
 	 */
 	@Override
 	public int compareTo(JID o) {
-		return $toString.compareTo(o.$toString);
+		return comparableString.compareTo(o.comparableString);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public boolean equals(Object b) {
-		boolean result = false;
-		if (b instanceof JID) {
-			JID jid = (JID) b;
-			result = bareJid.equals(jid.bareJid)
-					&& ((resource == jid.resource) || ((resource != null) && resource.equals(jid.resource)));
-		}
-		return result;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JID other = (JID) obj;
+		if (comparableString == null) {
+			if (other.comparableString != null)
+				return false;
+		} else if (!comparableString.equals(other.comparableString))
+			return false;
+		return true;
 	}
 
 	/**
 	 * Returns bare JID part (<code>&lt;localpart@domainpart&gt;</code>) from
 	 * full JID.
-	 * 
+	 *
 	 * @return bare JID
 	 */
 	public BareJID getBareJid() {
@@ -138,7 +150,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return domainpart.
-	 * 
+	 *
 	 * @return domainpart
 	 */
 	public String getDomain() {
@@ -147,7 +159,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return localpart.
-	 * 
+	 *
 	 * @return localpart
 	 */
 	public String getLocalpart() {
@@ -156,7 +168,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return resource.
-	 * 
+	 *
 	 * @return resource
 	 */
 	public String getResource() {
@@ -165,7 +177,10 @@ public class JID implements Comparable<JID> {
 
 	@Override
 	public int hashCode() {
-		return $toString.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((comparableString == null) ? 0 : comparableString.hashCode());
+		return result;
 	}
 
 	@Override

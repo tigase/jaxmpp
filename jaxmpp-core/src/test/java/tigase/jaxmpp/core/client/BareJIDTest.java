@@ -26,6 +26,9 @@ public class BareJIDTest extends TestCase {
 		assertEquals(BareJID.bareJIDInstance("a@b"), BareJID.bareJIDInstance("a", "b"));
 		assertEquals(BareJID.bareJIDInstance("a", "b"), BareJID.bareJIDInstance("a", "b"));
 		assertEquals(BareJID.bareJIDInstance("a@b"), BareJID.bareJIDInstance("a@b/c"));
+
+		assertEquals(BareJID.bareJIDInstance("a@b"), BareJID.bareJIDInstance("A@B"));
+		assertEquals(BareJID.bareJIDInstance("a@b").hashCode(), BareJID.bareJIDInstance("A@B").hashCode());
 	}
 
 	public void testGetDomain() {
@@ -52,6 +55,12 @@ public class BareJIDTest extends TestCase {
 
 		jid = BareJID.bareJIDInstance("a@b/c");
 		assertEquals("a@b", jid.toString());
+
+		jid = BareJID.bareJIDInstance("A@B/C");
+		assertEquals("A@b", jid.toString());
+
+		jid = BareJID.bareJIDInstance("A@B");
+		assertEquals("A@b", jid.toString());
 	}
 
 }
