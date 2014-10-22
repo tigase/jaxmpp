@@ -26,7 +26,12 @@ import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.observer.Observable;
 
+import java.util.Arrays;
+import java.util.logging.Logger;
+
 public abstract class AbstractRoomsManager {
+
+	protected final Logger log = Logger.getLogger(this.getClass().getName());
 
 	protected Observable observable;
 
@@ -37,6 +42,7 @@ public abstract class AbstractRoomsManager {
 	protected SessionObject sessionObject;
 
 	public boolean contains(BareJID roomJid) {
+		log.finer( "RoomsManager, rooms: " + rooms.keySet() + ", contains(" + roomJid + "): " + this.rooms.containsKey( roomJid ) );
 		return this.rooms.containsKey(roomJid);
 	}
 
@@ -67,10 +73,12 @@ public abstract class AbstractRoomsManager {
 	}
 
 	public void register(Room room) {
+		log.finer( "RoomsManager, register room: " + room.getRoomJid() );
 		this.rooms.put(room.getRoomJid(), room);
 	}
 
 	public boolean remove(Room room) {
+		log.finer( "RoomsManager, removing room: " + room.getRoomJid() );
 		return this.rooms.remove(room.getRoomJid()) != null;
 	}
 

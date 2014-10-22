@@ -538,6 +538,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	}
 
 	public Room join(final String roomName, final String mucServer, final String nickname) throws XMLException, JaxmppException {
+		log.finer("Joining room[1]: " + roomName + ", mucServer: " + mucServer + ", nickname: " + nickname);
 		return join(roomName, mucServer, nickname, null);
 	}
 
@@ -549,6 +550,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 		Room room = this.roomsManager.createRoomInstance(roomJid, nickname, password);
 		this.roomsManager.register(room);
+
+		log.finer("Joining room[2]: " + room + ", roomsManager(" + roomsManager.getRooms().size() + "): " + roomsManager.getRooms());
 
 		Presence presence = room.rejoin();
 
@@ -593,16 +596,24 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	@Override
 	public void process(Stanza element) throws JaxmppException {
+		log.finer("Processing message: " + element.getAsString());
 		if (element instanceof Message && MEDIATED_INVITATION_DECLINED_CRIT.match(element)) {
+			log.finer("Processing -- processInvitationDeclinedMessage");
 			processInvitationDeclinedMessage((Message) element);
 		} else if (element instanceof Message && MEDIATED_INVITATION_CRIT.match(element)) {
+			log.finer("Processing -- processMediatedInvitationMessage");
 			processMediatedInvitationMessage((Message) element);
 		} else if (element instanceof Message && DIRECT_INVITATION_CRIT.match(element)) {
+			log.finer("Processing -- processDirectInvitationMessage");
 			processDirectInvitationMessage((Message) element);
-		} else if (element instanceof Message)
+		} else if (element instanceof Message) {
+			log.finer("Processing -- processMessage");
 			processMessage((Message) element);
-		else if (element instanceof Presence)
+		}
+		else if (element instanceof Presence) {
+			log.finer("Processing -- processPresence");
 			processPresence((Presence) element);
+		}
 		else
 			throw new RuntimeException("Stanza not handled");
 	}
@@ -680,9 +691,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		final BareJID roomJid = from.getBareJid();
 		final String nickname = from.getResource();
 
-		Room room = this.roomsManager.get(roomJid);
-		if (room == null)
+		Room room = this.roomsManager.get( roomJid );
+		if ( room == null ){
+			log.finer( "Room " + roomJid + " not registered in RoomManager." );
 			return;
+		}
 		// throw new XMPPException(ErrorCondition.service_unavailable);
 
 		MucEvent event;

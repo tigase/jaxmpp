@@ -26,6 +26,7 @@ public class DefaultRoomsManager extends AbstractRoomsManager {
 	@Override
 	public Room createRoomInstance(BareJID roomJid, String nickname, String password) {
 		Room room = new Room(chatIds++, packetWriter, roomJid, nickname, sessionObject);
+		log.finer( "RoomsManager, createRoomInstance roomJid: " + roomJid + ", room: " + room );
 		room.setPassword(password);
 		room.setObservable(observable);
 
