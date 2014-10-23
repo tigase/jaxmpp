@@ -33,7 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.U
 
 public class StreamManagementModule implements XmppModule, ContextAware {
 
-	private static class MutableLong extends Number {
+	public static class MutableLong extends Number {
 
 		private static final long serialVersionUID = 1L;
 
@@ -62,6 +62,10 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		@Override
 		public String toString() {
 			return String.valueOf(value);
+		}
+		
+		public void setValue(long value) {
+			this.value = value;
 		}
 	}
 

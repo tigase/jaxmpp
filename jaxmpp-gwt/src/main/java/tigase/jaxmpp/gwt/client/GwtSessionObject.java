@@ -17,6 +17,9 @@
  */
 package tigase.jaxmpp.gwt.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import java.util.HashMap;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
@@ -24,6 +27,20 @@ import tigase.jaxmpp.core.client.JID;
 
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.MutableLong;
+import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 public class GwtSessionObject extends AbstractSessionObject {
 
@@ -88,6 +105,20 @@ public class GwtSessionObject extends AbstractSessionObject {
 	}
 
 	public String serialize() {
+		try {
+			//		for (String key : properties.keySet()) {
+//			Entry e = properties.get(key);
+//			if (e.scope == Scope.stream)
+//				continue;
+//			Object val = e.value;
+//			log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+//		}
+			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
+			log("serialized object = ", jsObject);
+		} catch (XMLException ex) {
+			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("{");
@@ -96,4 +127,49 @@ public class GwtSessionObject extends AbstractSessionObject {
 
 		return sb.toString();
 	}
+	
+	public void test() {
+		try {
+			//		for (String key : properties.keySet()) {
+//			Entry e = properties.get(key);
+//			if (e.scope == Scope.stream)
+//				continue;
+//			Object val = e.value;
+//			log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+//		}
+			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
+			log("serialized object = ", jsObject);
+			JsonSerializationHelper helper = new JsonSerializationHelper(null);
+			Map<String,Entry> map = (Map) helper.fromJSON(jsObject);
+			
+			Set<String> allKeys = new HashSet<String>(properties.keySet());
+			allKeys.removeAll(map.keySet());
+			
+			log("not serialized/deserialized keys", "" + allKeys.size());
+			for (String key : allKeys) {
+				Entry e = properties.get(key);
+				if (e.scope == Scope.stream)
+					continue;				
+				Object val = e.value;
+				log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+			}
+		} catch (XMLException ex) {
+			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
+		} catch (JaxmppException ex) {
+			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
+		}				
+	}
+	
+	public static native void log(String key, String scope, String cls, String val) /*-{
+		console.log(key, scope, cls, val);
+	}-*/;
+
+	public static native void log(String cls, String val) /*-{
+		console.log(cls, val);
+	}-*/;	
+
+	public static native void log(String cls, JavaScriptObject val) /*-{
+		console.log(cls, val);
+	}-*/;	
+	
 }
