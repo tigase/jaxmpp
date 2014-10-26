@@ -55,13 +55,50 @@
 		<module>jaxmpp-im</module>
 		<module>jaxmpp-all</module>
 		<module>jaxmpp-j2se</module>
-		<module>jaxmpp-gwt</module>
-		<module>jaxmpp-android</module>
-  </modules>
+	</modules>
 
-<scm>
-    <developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
-  </scm>
+	<profiles>
+		<profile>
+			<id>android</id>
+			<activation>
+				<property>
+					<name>android</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-android</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>gwt</id>
+			<activation>
+				<property>
+					<name>gwt</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-gwt</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>all</id>
+			<activation>
+				<property>
+					<name>all</name>
+				</property>
+			</activation>
+			<modules>
+				<module>jaxmpp-android</module>
+				<module>jaxmpp-gwt</module>
+			</modules>
+		</profile>
+	</profiles>
+
+
+
+	<scm>
+		<developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
+	</scm>
 
 	<build>
 		<pluginManagement>
@@ -76,22 +113,22 @@
 					</configuration>
 				</plugin>
 				<plugin>
-				    <groupId>org.apache.maven.plugins</groupId>
-				    <artifactId>maven-source-plugin</artifactId>
-				    <executions>
-				        <execution>
-				            <id>attach-sources</id>
-				            <goals>
-				                <goal>jar-no-fork</goal>
-				            </goals>
-				        </execution>
-				        <execution>
-				            <id>attach-test-sources</id>
-				            <goals>
-				                <goal>test-jar-no-fork</goal>
-				            </goals>
-				        </execution>
-				    </executions>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>attach-sources</id>
+							<goals>
+								<goal>jar-no-fork</goal>
+							</goals>
+						</execution>
+						<execution>
+							<id>attach-test-sources</id>
+							<goals>
+								<goal>test-jar-no-fork</goal>
+							</goals>
+						</execution>
+					</executions>
 				</plugin>				
 			</plugins>
 		</pluginManagement>
