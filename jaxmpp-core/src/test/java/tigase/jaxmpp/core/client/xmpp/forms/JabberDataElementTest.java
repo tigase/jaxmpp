@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.xml.ElementBuilder;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class JabberDataElementTest {
@@ -30,38 +31,40 @@ public class JabberDataElementTest {
 	public void testCreate01() throws XMLException {
 		JabberDataElement x = new JabberDataElement(XDataType.form);
 
-		assertEquals("<x xmlns=\"jabber:x:data\" type=\"form\"/>", x.getAsString());
+		ElementBuilder expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form");
+		assertEquals(expected.getElement(), x);
 
 		x.addFORM_TYPE("jabber:bot");
 
-		assertEquals(
-				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field></x>",
-				x.getAsString());
-
+		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
+				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot");
+		assertEquals(expected.getElement(), x);
 	}
 
 	@Test
 	public void testCreate02() throws XMLException {
 		JabberDataElement x = new JabberDataElement(XDataType.form);
 
-		assertEquals("<x xmlns=\"jabber:x:data\" type=\"form\"/>", x.getAsString());
+		ElementBuilder expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form");
+		assertEquals(expected.getElement(), x);
 
 		x.addFORM_TYPE("jabber:bot");
 
-		assertEquals(
-				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field></x>",
-				x.getAsString());
+		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
+				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot");
+		assertEquals(expected.getElement(), x);
 
 		x.setInstructions("in");
-		assertEquals(
-				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field><instructions>in</instructions></x>",
-				x.getAsString());
+		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
+				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot").up().child("instructions").setValue(
+						"in");
+		assertEquals(expected.getElement(), x);
 
 		x.setTitle("tt");
-		assertEquals(
-				"<x xmlns=\"jabber:x:data\" type=\"form\"><field var=\"FORM_TYPE\" type=\"hidden\"><value>jabber:bot</value></field><instructions>in</instructions><title>tt</title></x>",
-				x.getAsString());
-
+		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
+				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot").up().child("instructions").setValue(
+						"in").up().child("title").setValue("tt");
+		assertEquals(expected.getElement(), x);
 	}
 
 	@Test
@@ -71,7 +74,10 @@ public class JabberDataElementTest {
 		assertEquals("boolean", field.getAttribute("type"));
 		assertEquals("boolean", field.getType());
 
-		assertEquals("<field var=\"public\" type=\"boolean\"><value>1</value></field>", field.getAsString());
+		ElementBuilder expected = ElementBuilder.create("field").setAttribute("type", "boolean").setAttribute("var", "public").child(
+				"value").setValue("1");
+
+		assertEquals(expected.getElement(), field);
 	}
 
 	@Test

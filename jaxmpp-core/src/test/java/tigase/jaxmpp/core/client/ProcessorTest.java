@@ -38,9 +38,17 @@ public class ProcessorTest extends AbstractJaxmppTest {
 		Element e = ElementFactory.create("iq");
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals(
-				"<iq type=\"error\"><error code=\"501\" type=\"cancel\"><feature-not-implemented xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error></iq>",
-				((MockWriter) context.getWriter()).poll().getAsString());
+
+		Element expected = ElementFactory.create("iq");
+		expected.setAttribute("type", "error");
+		Element er = expected.addChild(ElementFactory.create("error"));
+		er.setAttribute("code", "501");
+		er.setAttribute("type", "cancel");
+		Element fni = er.addChild(ElementFactory.create("feature-not-implemented"));
+		fni.setXMLNS("urn:ietf:params:xml:ns:xmpp-stanzas");
+
+		assertEquals(expected, ((MockWriter) context.getWriter()).poll());
+
 	}
 
 	public void test02() throws XMLException {
@@ -50,9 +58,16 @@ public class ProcessorTest extends AbstractJaxmppTest {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals(
-				"<iq type=\"error\"><error code=\"405\" type=\"cancel\"><not-allowed xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error></iq>",
-				((MockWriter) context.getWriter()).poll().getAsString());
+
+		Element expected = ElementFactory.create("iq");
+		expected.setAttribute("type", "error");
+		Element er = expected.addChild(ElementFactory.create("error"));
+		er.setAttribute("code", "405");
+		er.setAttribute("type", "cancel");
+		Element fni = er.addChild(ElementFactory.create("not-allowed"));
+		fni.setXMLNS("urn:ietf:params:xml:ns:xmpp-stanzas");
+
+		assertEquals(expected, ((MockWriter) context.getWriter()).poll());
 	}
 
 	public void test03() throws XMLException {
@@ -63,7 +78,12 @@ public class ProcessorTest extends AbstractJaxmppTest {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq type=\"result\" from=\"a@b.c\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
+
+		Element expected = ElementFactory.create("iq");
+		expected.setAttribute("from", "a@b.c");
+		expected.setAttribute("type", "result");
+
+		assertEquals(expected, ((MockWriter) context.getWriter()).poll());
 	}
 
 	public void test04() throws XMLException {
@@ -74,7 +94,12 @@ public class ProcessorTest extends AbstractJaxmppTest {
 
 		Runnable r = processor.process(e);
 		r.run();
-		assertEquals("<iq type=\"result\" from=\"a@b.c\"/>", ((MockWriter) context.getWriter()).poll().getAsString());
+
+		Element expected = ElementFactory.create("iq");
+		expected.setAttribute("from", "a@b.c");
+		expected.setAttribute("type", "result");
+
+		assertEquals(expected, ((MockWriter) context.getWriter()).poll());
 	}
 
 }
