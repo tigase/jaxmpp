@@ -295,7 +295,11 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	}
 
 	Chat process(Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
-		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
+		if (message.getType() == StanzaType.normal) {
+			message = executeBeforeMessageProcess(message, null);
+			if (message != null && fireReceivedEvent)
+				fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, null));
+		} else if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
 			return null;
 
@@ -343,15 +347,15 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		write(msg);
 	}
-	
+
 	/**
 	 * Sends message in passed chat. It uses correct interlocutor JID and
 	 * thread-id.
 	 * 
 	 * @param body
 	 *            message to send.
-	 * @return 
-	 */	
+	 * @return
+	 */
 	public void sendMessage(Chat chat, String body) throws XMLException, JaxmppException {
 		Message msg = chat.sendMessage(body);
 		write(msg);
@@ -363,9 +367,10 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 * 
 	 * @param body
 	 *            message to send.
-	 * @return 
-	 */	
-	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws XMLException, JaxmppException {
+	 * @return
+	 */
+	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws XMLException,
+			JaxmppException {
 		Message msg = chat.sendMessage(body);
 		if (additionalElems != null) {
 			for (Element child : additionalElems) {
