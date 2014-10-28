@@ -299,6 +299,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			message = executeBeforeMessageProcess(message, null);
 			if (message != null && fireReceivedEvent)
 				fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, null));
+			return null;
 		} else if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error
 				&& message.getType() != StanzaType.headline)
 			return null;
