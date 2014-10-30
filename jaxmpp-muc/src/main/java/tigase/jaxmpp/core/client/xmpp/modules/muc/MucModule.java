@@ -1291,7 +1291,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			room.setState(State.not_joined);
 			// this.roomsManager.remove(room.getRoomJid());
 		} else if (room.getState() != State.joined) {
-			room.setState(State.joined);
+		//	room.setState(State.joined);
+			
 		}
 
 		final XMucUserElement xUser = XMucUserElement.extract(element);
