@@ -29,13 +29,14 @@ import java.util.Map;
 import java.util.Set;
 import tigase.jaxmpp.core.client.AbstractSessionObject;
 import tigase.jaxmpp.core.client.BareJID;
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
-import static tigase.jaxmpp.gwt.client.GwtSessionObject.log;
+//import static tigase.jaxmpp.gwt.client.GwtSessionObject.log;
 import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 /**
@@ -55,21 +56,29 @@ public class JsonSerializationHelper {
 	}
 	
 	private static final long INT_SPLIT = ((long) Integer.MAX_VALUE) + 1;
-	/*
-- class java.lang.Boolean true VM521:39
-class tigase.jaxmpp.core.client.ResponseManager tigase.jaxmpp.core.client.ResponseManager@71a047a5 VM521:39
-class tigase.jaxmpp.core.client.xmpp.modules.roster.DefaultRosterStore tigase.jaxmpp.core.client.xmpp.modules.roster.DefaultRosterStore@51bfdbea VM521:39
---class tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule$MutableLong 2 VM521:39
-- class tigase.jaxmpp.core.client.BareJID test@zeus VM521:39
-- class java.lang.Boolean true VM521:39
-class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPresenceStore@656dd4fa VM521:39
-- class tigase.jaxmpp.core.client.JID test@zeus/173750028-173750028-173750028-tigase-2 	
-	*/
 	
 	private final Serializable[] serializers;
+	private final SessionObject sessionObject;
 	
-	public JsonSerializationHelper(Serializable[] serializers) {
+	public JsonSerializationHelper(SessionObject sessionObject, Map<String, AbstractSessionObject.Entry> properties) {
+		this.sessionObject = sessionObject;
+		
+		List<Serializable> list = new ArrayList<Serializable>();
+		for (AbstractSessionObject.Entry entry : properties.values()) {
+			if (entry != null && entry.value instanceof Serializable)
+				list.add((Serializable) entry.value);
+		}
+		
+		this.serializers = list.toArray(new Serializable[list.size()]);
+	}
+	
+	public JsonSerializationHelper(SessionObject sessionObject, Serializable[] serializers) {
+		this.sessionObject = sessionObject;
 		this.serializers = serializers;
+	}
+	
+	public SessionObject getSessionObject() {
+		return sessionObject;
 	}
 	
 	public static JavaScriptObject toJSON(Object val) throws XMLException {
@@ -91,6 +100,9 @@ class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPres
 			JavaScriptObject jsMap = JavaScriptObject.createObject();
 			Map<String,Object> map = (Map<String,Object>) val;
 			for (String key : map.keySet()) {
+				if (Connector.CONNECTOR_STAGE_KEY.equals(key))
+					continue;
+				
 				Object v = map.get(key);
 				JavaScriptObject e = toJSON(v);
 				if (e != null) {
@@ -135,7 +147,7 @@ class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPres
 		} else if (val instanceof JsonSerializationHelper.Serializable) {
 			return ((Serializable) val).toJSON();
 		} else {
-			log(val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+			//log(val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
 			return null;
 		}
 	}
@@ -172,7 +184,7 @@ class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPres
 		jsMap[key] = val;
 	}-*/;
 	
-	private static native void addToArray(JavaScriptObject jsArr, JavaScriptObject val) /*-{
+	public static native void addToArray(JavaScriptObject jsArr, JavaScriptObject val) /*-{
 		jsArr.push(val);
 	}-*/;
 	
@@ -199,7 +211,7 @@ class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPres
 			for (int i=0; i<jsKeys.length(); i++) { 
 				String key = jsKeys.get(i);
 				JavaScriptObject v = getObjectFromObject(val, key);
-				log("trying to decode for key = " + key, v);
+				//log("trying to decode for key = " + key, v);
 				Object v1 = fromJSON(v);
 				map.put(key, v1);
 			}
@@ -254,7 +266,7 @@ class tigase.jaxmpp.gwt.client.GWTPresenceStore tigase.jaxmpp.gwt.client.GWTPres
 				if (val != null)
 					return val;
 			}
-			log("Unknown type of serialized object", obj);
+			//log("Unknown type of serialized object", obj);
 			return null;
 		}
 	}

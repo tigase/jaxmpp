@@ -521,8 +521,10 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			long oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
 			long left = oldH - newH;
 			// removing confirmed elements leaving unconfirmed in outgoningQueue
-			while (this.outgoingQueue.size() > left) {
-				this.outgoingQueue.removeFirst();
+			if (left > 0) {
+				while (this.outgoingQueue.size() > left) {
+					this.outgoingQueue.removeFirst();
+				}
 			}
 			setAckHValue(OUTGOING_STREAM_H_KEY, newH);
 			List<Element> unacked = new ArrayList<Element>(this.outgoingQueue);

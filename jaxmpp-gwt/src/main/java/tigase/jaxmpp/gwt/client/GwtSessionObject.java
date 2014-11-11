@@ -101,57 +101,61 @@ public class GwtSessionObject extends AbstractSessionObject {
 		return sb;
 	}
 
-	public void restore(final JSONValue value) throws RestoringSessionException {
+	public void restore(final String value) throws RestoringSessionException {
+		JavaScriptObject jsObject = decodeJson(value);
+		JsonSerializationHelper helper = new JsonSerializationHelper(this, properties);
+		try {		
+			Map<String,Entry> map = (Map) helper.fromJSON(jsObject);
+			for (String key : map.keySet()) {
+				properties.put(key, map.get(key));
+			}
+		} catch (JaxmppException ex) {
+			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
+			throw new RestoringSessionException("Could not restore session: " + ex.getMessage());
+		}
 	}
 
 	public String serialize() {
 		try {
-			//		for (String key : properties.keySet()) {
-//			Entry e = properties.get(key);
-//			if (e.scope == Scope.stream)
-//				continue;
-//			Object val = e.value;
-//			log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
-//		}
 			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
-			log("serialized object = ", jsObject);
+			//log("serialized object = ", jsObject);
+			return encodeJson(jsObject);
 		} catch (XMLException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		
-		StringBuilder sb = new StringBuilder();
 
-		sb.append("{");
-
-		sb.append("}");
-
-		return sb.toString();
+		return null;
 	}
+	
+	private static native String encodeJson(JavaScriptObject obj) /*-{
+		return JSON.stringify(obj);
+	}-*/;
+	
+	private static native JavaScriptObject decodeJson(String str) /*-{
+		try {
+			return JSON.parse(str);
+		} catch (ex) {
+			return {};
+		}
+	}-*/;
 	
 	public void test() {
 		try {
-			//		for (String key : properties.keySet()) {
-//			Entry e = properties.get(key);
-//			if (e.scope == Scope.stream)
-//				continue;
-//			Object val = e.value;
-//			log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
-//		}
 			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
-			log("serialized object = ", jsObject);
-			JsonSerializationHelper helper = new JsonSerializationHelper(null);
+			//log("serialized object = ", jsObject);
+			JsonSerializationHelper helper = new JsonSerializationHelper(this, properties);
 			Map<String,Entry> map = (Map) helper.fromJSON(jsObject);
 			
 			Set<String> allKeys = new HashSet<String>(properties.keySet());
 			allKeys.removeAll(map.keySet());
 			
-			log("not serialized/deserialized keys", "" + allKeys.size());
+			//log("not serialized/deserialized keys", "" + allKeys.size());
 			for (String key : allKeys) {
 				Entry e = properties.get(key);
 				if (e.scope == Scope.stream)
 					continue;				
 				Object val = e.value;
-				log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+				//log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
 			}
 		} catch (XMLException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
@@ -160,16 +164,16 @@ public class GwtSessionObject extends AbstractSessionObject {
 		}				
 	}
 	
-	public static native void log(String key, String scope, String cls, String val) /*-{
-		console.log(key, scope, cls, val);
-	}-*/;
-
-	public static native void log(String cls, String val) /*-{
-		console.log(cls, val);
-	}-*/;	
-
-	public static native void log(String cls, JavaScriptObject val) /*-{
-		console.log(cls, val);
-	}-*/;	
+//	public static native void log(String key, String scope, String cls, String val) /*-{
+//		console.log(key, scope, cls, val);
+//	}-*/;
+//
+//	public static native void log(String cls, String val) /*-{
+//		console.log(cls, val);
+//	}-*/;	
+//
+//	public static native void log(String cls, JavaScriptObject val) /*-{
+//		console.log(cls, val);
+//	}-*/;	
 	
 }
