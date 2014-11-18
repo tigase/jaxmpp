@@ -76,7 +76,7 @@ class DefaultChatManager extends AbstractChatManager {
 				break;
 			}
 			if (jid.getResource() != null && c.getJid().getResource() != null
-					&& jid.getResource().equals(c.getJid().getResource())) {
+					&& jid.getResource().equals(c.getJid().getResource()) && !(threadId != null && c.getThreadId() != null)) {
 				chat = c;
 				break;
 			}
