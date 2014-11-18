@@ -289,11 +289,13 @@ public class WebSocketConnector implements Connector {
 				int idx = spaceIdx < closeIdx ? spaceIdx : closeIdx;
 				x = x.substring(0, idx) + " xmlns:stream='http://etherx.jabber.org/streams' " + x.substring(idx);
 			}
+		} else {
+			x = "<root>" + x + "</root>";
 		}
 
 		Element response = new GwtElement(XMLParser.parse(x).getDocumentElement());
 		List<Element> received = null;
-		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName())) {
+		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName()) || "root".equals(response.getName())) {
 			received = response.getChildren();
 		}
 		else if (response != null) {
