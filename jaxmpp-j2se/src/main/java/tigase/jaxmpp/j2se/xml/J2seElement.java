@@ -169,8 +169,10 @@ public class J2seElement implements Element {
 	@Override
 	public void removeChild(Element child) throws XMLException {
 		int index = indexOf(child);
-		if (index != -1)
-			this.xmlElement.getChildren().remove(index);
+		if (index != -1) {
+			tigase.xml.Element z = this.xmlElement.getChildren().get(index);
+			this.xmlElement.removeChild(z);
+		}
 
 	}
 
