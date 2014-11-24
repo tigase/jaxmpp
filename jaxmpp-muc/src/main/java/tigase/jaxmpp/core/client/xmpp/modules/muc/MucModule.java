@@ -91,7 +91,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	}
 
-	protected abstract class Invitation {
+	public abstract class Invitation {
 
 		private JID inviterJID;
 
