@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
@@ -40,7 +41,10 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.BooleanField;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Item;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationDeclinedHandler.InvitationDeclinedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationReceivedHandler.InvitationReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.JoinRequestedHandler.JoinRequestedEvent;
@@ -55,6 +59,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.PresenceErrorHandler
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.RoomClosedHandler.RoomClosedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.YouJoinedHandler.YouJoinedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room.State;
+import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
@@ -62,6 +67,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class MucModule extends AbstractStanzaModule<Stanza> {
+
+	public static final String OWNER_XMLNS = "http://jabber.org/protocol/muc#owner";
 
 	public final class DirectInvitation extends Invitation {
 
@@ -930,7 +937,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			cm = new DefaultRoomsManager();
 		}
 		roomsManager = cm;
-		
+
 		this.crit = new Criteria() {
 
 			@Override
@@ -945,7 +952,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		};
 		dtf = new DateTimeFormat();
 	}
-	
+
 	public MucModule(AbstractRoomsManager cm) {
 		this();
 		roomsManager = cm;
@@ -1044,7 +1051,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	public Room getRoom(BareJID roomJid) {
 		return this.roomsManager.get(roomJid);
 	}
-	
+
 	/**
 	 * Sends mediated invitation.
 	 * 
@@ -1291,8 +1298,8 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			room.setState(State.not_joined);
 			// this.roomsManager.remove(room.getRoomJid());
 		} else if (room.getState() != State.joined) {
-		//	room.setState(State.joined);
-			
+			// room.setState(State.joined);
+
 		}
 
 		final XMucUserElement xUser = XMucUserElement.extract(element);
@@ -1344,5 +1351,48 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			fireEvent(new NewRoomCreatedEvent(context.getSessionObject(), room, element));
 		}
 
+	}
+
+	public static abstract class RoomConfgurationAsyncCallback implements AsyncCallback {
+		public abstract void onConfigurationReceived(JabberDataElement configuration) throws XMLException;
+
+		@Override
+		public void onSuccess(Stanza responseStanza) throws JaxmppException {
+			final Element query = responseStanza.getChildrenNS("query", OWNER_XMLNS);
+			Element x = query.getChildrenNS("x", "jabber:x:data");
+
+			JabberDataElement r = new JabberDataElement(x);
+
+			onConfigurationReceived(r);
+		}
+
+	}
+
+	public void getRoomConfiguration(Room room, AsyncCallback asyncCallback) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.get);
+		iq.setTo(JID.jidInstance(room.getRoomJid()));
+
+		iq.addChild(ElementFactory.create("query", null, OWNER_XMLNS));
+
+		write(iq, asyncCallback);
+	}
+
+	public void setRoomConfiguration(Room room, JabberDataElement configuration, AsyncCallback asyncCallback)
+			throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.set);
+		iq.setTo(JID.jidInstance(room.getRoomJid()));
+
+		Element q = iq.addChild(ElementFactory.create("query", null, OWNER_XMLNS));
+
+		if (configuration == null) {
+			Element x = q.addChild(ElementFactory.create("x", null, "jabber:x:data"));
+			x.setAttribute("type", "submit");
+		} else {
+			q.addChild(configuration.createSubmitableElement(XDataType.submit));
+		}
+
+		write(iq, asyncCallback);
 	}
 }
