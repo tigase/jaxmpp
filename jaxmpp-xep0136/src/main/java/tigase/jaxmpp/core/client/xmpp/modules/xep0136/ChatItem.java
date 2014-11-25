@@ -21,6 +21,11 @@ import java.util.Date;
 
 public class ChatItem {
 
+	@Override
+	public String toString() {
+		return "ChatItem{" + "body=" + body + ", date=" + date + ", type=" + type + '}';
+	}
+
 	public static enum Type {
 
 		FROM,

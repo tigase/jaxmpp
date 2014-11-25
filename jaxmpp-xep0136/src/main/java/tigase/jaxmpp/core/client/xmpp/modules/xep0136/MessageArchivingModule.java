@@ -188,7 +188,10 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		Element retrieve = ElementFactory.create("list", null, ARCHIVE_XMLNS);
 		iq.addChild(retrieve);
 		retrieve.setAttribute("with", withJid.toString());
-		retrieve.setAttribute("start", format.format(startTime));
+
+		if ( startTime != null ){
+			retrieve.setAttribute( "start", format.format( startTime ) );
+		}
 
 		if (endTime != null) {
 			retrieve.setAttribute("end", format.format(endTime));
@@ -236,7 +239,7 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		writer.write(iq, null, callback);
 	}
 
-	public void setAutoArchive(boolean enable) throws JaxmppException {
+	public void setAutoArchive(boolean enable, final AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
@@ -244,8 +247,7 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		autoEl.setAttribute("save", String.valueOf(enable));
 		iq.addChild(autoEl);
 
-		writer.write(iq);
-
+		writer.write(iq, null, callback);
 	}
 
 	@Override

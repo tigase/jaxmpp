@@ -42,6 +42,11 @@ public class Chat {
 		return withJid;
 	}
 
+	@Override
+	public String toString() {
+		return "Chat{" + "start=" + start + ", subject=" + subject + ", withJid=" + withJid + '}';
+	}
+
 	void process(Element chat, DateTimeFormat df1) throws XMLException {
 		setWithJid(JID.jidInstance(chat.getAttribute("with")));
 		setStart(df1.parse(chat.getAttribute("start")));
