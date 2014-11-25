@@ -33,7 +33,7 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 
 	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)";
 
-	private static final String TIME_ZONE = "(([+-]\\d\\d:\\d\\d)|Z)";
+	private static final String TIME_ZONE = "(([+-]\\d\\d:?\\d\\d)|Z)";
 
 	private final DateFormat dateFormat;
 
@@ -50,7 +50,7 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 	private final TimeZone timeZoneUTC = TimeZone.getTimeZone("UTC");
 
 	public DateTimeFormatProviderImpl() {
-		this.dateTimePattern = Pattern.compile("^" + DATE + "T" + TIME + TIME_ZONE + "$");
+		this.dateTimePattern = Pattern.compile("^" + DATE + "T" + TIME + TIME_ZONE + "?$");
 		this.datePattern = Pattern.compile("^" + DATE + "$");
 		this.timePattern = Pattern.compile("^" + TIME + TIME_ZONE + "?$");
 		this.dateTimeFormatUTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
