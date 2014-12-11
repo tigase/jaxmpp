@@ -24,6 +24,10 @@ import java.util.Map;
 
 import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
 
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Default implementation of XML Element object. This class should be used every
  * time when new XML Element is created.
@@ -90,6 +94,27 @@ public class DefaultElement implements Element {
 			return ElementComparator.equal((Element) obj, this);
 		else
 			return false;
+	}
+
+	@Override
+	public Element findChild(String[] elemPath) throws XMLException {
+		if (elemPath[0].isEmpty()) {
+			elemPath = Arrays.copyOfRange(elemPath, 1, elemPath.length);
+		}
+			if (!elemPath[0].equals(getName())) {
+				return null;
+			}
+
+		Element child = this;
+
+		// we must start with 1 not 0 as 0 is name of parent element
+		for (int i = 1; (i < elemPath.length) && (child != null); i++) {
+			String str = elemPath[i];
+
+				child = child.getFirstChild( str);
+		}
+
+		return child;
 	}
 
 	@Override
@@ -216,6 +241,12 @@ public class DefaultElement implements Element {
 			else
 				return null;
 		}
+	}
+
+	@Override
+	public Element getFirstChild(String name) throws XMLException {
+		List<Element> l = getChildren(name);
+		return l != null && !l.isEmpty() ? l.get(0) : null;
 	}
 
 	@Override

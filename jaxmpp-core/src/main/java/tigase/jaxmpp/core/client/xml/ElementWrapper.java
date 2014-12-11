@@ -56,6 +56,11 @@ public class ElementWrapper implements Element {
 		return this.element.equals(obj);
 	}
 
+	@Override
+	public Element findChild(String[] elemPath) throws XMLException {
+		return element.findChild( elemPath );
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -138,11 +143,12 @@ public class ElementWrapper implements Element {
 		return element.getFirstChild();
 	}
 
-	public Element getFirstChild(String name) throws XMLException {
-		List<Element> l = getChildren(name);
-		return l != null && !l.isEmpty() ? l.get(0) : null;
+	@Override
+	public Element getFirstChild( String name ) throws XMLException {
+		List<Element> l = getChildren( name );
+		return l != null && !l.isEmpty() ? l.get( 0 ) : null;
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 */

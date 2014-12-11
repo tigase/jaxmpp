@@ -32,6 +32,8 @@ public interface Element {
 	 */
 	Element addChild(Element child) throws XMLException;
 
+	public Element findChild(String[] elemPath) throws XMLException;
+	
 	/**
 	 * Get this element as XML string.
 	 * 
@@ -115,6 +117,8 @@ public interface Element {
 	 * @throws XMLException
 	 */
 	Element getFirstChild() throws XMLException;
+
+	Element getFirstChild(String name) throws XMLException;
 
 	/**
 	 * Get name of this element.

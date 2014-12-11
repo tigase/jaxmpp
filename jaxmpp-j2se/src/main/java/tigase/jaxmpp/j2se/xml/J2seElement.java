@@ -46,6 +46,16 @@ public class J2seElement implements Element {
 	}
 
 	@Override
+	public Element findChild( String[] elemPath ) throws XMLException {
+		final tigase.xml.Element child = this.xmlElement.findChild( elemPath );
+		if ( child != null ){
+			return new J2seElement( child );
+		} else {
+			return null;
+		}
+	}
+
+	@Override
 	public String getAsString() throws XMLException {
 		return this.xmlElement.toString();
 	}
@@ -118,6 +128,11 @@ public class J2seElement implements Element {
 		if (children != null && children.size() > 0)
 			return new J2seElement(children.get(0), this);
 		return null;
+	}
+
+	@Override
+	public Element getFirstChild( String name ) throws XMLException {
+		return new J2seElement(this.xmlElement.getChild( name ));
 	}
 
 	@Override
