@@ -38,7 +38,7 @@ import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
-import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
+import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.NotificationReceivedHandler.NotificationReceivedEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -57,7 +57,8 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
  * @author bmalkow
  * 
  */
-public class PubSubModule extends AbstractStanzaModule<Message> {
+//public class PubSubModule extends AbstractStanzaModule<Message> {
+public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 
 	public static class AffiliationElement extends ElementWrapper {
 
@@ -1024,7 +1025,9 @@ public class PubSubModule extends AbstractStanzaModule<Message> {
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, AsyncCallback callback)
 			throws JaxmppException {
 		IQ iq = IQ.create();
-		iq.setTo(JID.jidInstance(pubSubJID));
+		if ( pubSubJID != null ){
+			iq.setTo( JID.jidInstance( pubSubJID ) );
+		}
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
