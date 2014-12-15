@@ -27,6 +27,8 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementComparator;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.Arrays;
+
 import com.google.gwt.xml.client.Node;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
@@ -62,6 +64,28 @@ public class GwtElement implements Element {
 			return ElementComparator.equal((Element) obj, this);
 		else
 			return false;
+	}
+
+	@Override
+	public Element findChild( String[] elemPath ) throws XMLException {
+
+		if (elemPath[0].isEmpty()) {
+			elemPath = Arrays.copyOfRange(elemPath, 1, elemPath.length);
+		}
+			if (!elemPath[0].equals(getName())) {
+				return null;
+			}
+
+		Element child = this;
+
+		// we must start with 1 not 0 as 0 is name of parent element
+		for (int i = 1; (i < elemPath.length) && (child != null); i++) {
+			String str = elemPath[i];
+
+				child = child.getFirstChild( str);
+		}
+
+		return child;
 	}
 
 	@Override
@@ -174,6 +198,18 @@ public class GwtElement implements Element {
 		// com.google.gwt.xml.client.Element c =
 		// (com.google.gwt.xml.client.Element) xmlElement.getFirstChild();
 		// return c == null ? null : new GwtElement(c);
+	}
+
+	@Override
+	public Element getFirstChild( String name ) throws XMLException {
+		NodeList nodes = this.xmlElement.getChildNodes();
+		for (int i = 0; i < nodes.getLength(); i++) {
+			Node node = nodes.item(i);
+			if (node instanceof com.google.gwt.xml.client.Element && node.getNodeName().equals( name)) {
+				return new GwtElement((com.google.gwt.xml.client.Element) node);
+			}
+		}
+		return null;
 	}
 
 	@Override

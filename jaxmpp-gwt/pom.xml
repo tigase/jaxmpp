@@ -11,7 +11,7 @@
 	<name>Java XMPP Library for GWT</name>
 
 	<properties>
-		<gwt.version>2.2.0</gwt.version>
+		<gwt.version>2.6.1</gwt.version>
 	</properties>
 
 	<dependencies>
@@ -52,7 +52,7 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>gwt-maven-plugin</artifactId>
-				<version>2.6.1</version>
+				<version>${gwt.version}</version>
 				<executions>
 					<execution>
 						<phase>prepare-package</phase>
