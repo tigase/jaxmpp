@@ -104,4 +104,19 @@ public class DefaultElementTest extends TestCase {
 		assertEquals("tigase", c.getXMLNS());
 
 	}
+
+	public void testFindChild() throws XMLException {
+		final Element element = createElement();
+
+		Element nullElement = element.findChild( new String[] {"message", "missing"} );
+
+		assertNull(nullElement);
+
+		Element c = element.findChild( new String[] {"message", "body"} );
+		assertNotNull(c);
+		assertEquals("body", c.getName());
+		assertEquals("Wherefore art thou, Romeo?", c.getValue());
+
+	}
+
 }

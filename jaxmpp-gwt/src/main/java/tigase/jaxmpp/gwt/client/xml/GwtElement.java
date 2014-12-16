@@ -68,21 +68,23 @@ public class GwtElement implements Element {
 
 	@Override
 	public Element findChild( String[] elemPath ) throws XMLException {
-
-		if (elemPath[0].isEmpty()) {
-			elemPath = Arrays.copyOfRange(elemPath, 1, elemPath.length);
+		if ( elemPath[0].isEmpty() ){
+			final int len = elemPath.length - 1;
+			String[] tmp = new String[ len ];
+			System.arraycopy( elemPath, 1, tmp, 1, len );
+			elemPath = tmp;
 		}
-			if (!elemPath[0].equals(getName())) {
-				return null;
-			}
+		if ( !elemPath[0].equals( getName() ) ){
+			return null;
+		}
 
 		Element child = this;
 
 		// we must start with 1 not 0 as 0 is name of parent element
-		for (int i = 1; (i < elemPath.length) && (child != null); i++) {
+		for ( int i = 1 ; ( i < elemPath.length ) && ( child != null ) ; i++ ) {
 			String str = elemPath[i];
 
-				child = child.getFirstChild( str);
+			child = child.getFirstChild( str );
 		}
 
 		return child;

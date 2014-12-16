@@ -17,16 +17,12 @@
  */
 package tigase.jaxmpp.core.client.xml;
 
+import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
-
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Default implementation of XML Element object. This class should be used every
@@ -99,7 +95,10 @@ public class DefaultElement implements Element {
 	@Override
 	public Element findChild(String[] elemPath) throws XMLException {
 		if (elemPath[0].isEmpty()) {
-			elemPath = Arrays.copyOfRange(elemPath, 1, elemPath.length);
+			final int len = elemPath.length-1;
+			String[] tmp = new String[len];
+			System.arraycopy( elemPath, 1, tmp, 1, len );
+			elemPath = tmp;
 		}
 			if (!elemPath[0].equals(getName())) {
 				return null;
