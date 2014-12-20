@@ -180,31 +180,22 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		writer.write(iq, null, callback);
 	}
 
+	@Deprecated
 	public void listCollections(final JID withJid, final Date startTime, final Date endTime, final String afterId,
 			final CollectionAsyncCallback callback) throws XMLException, JaxmppException {
+		tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria crit = 
+				new tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria().setWith(withJid).setStart(startTime).setEnd(endTime).setAfter(afterId);
+		listCollections(crit, callback);
+	}
+	
+	public void listCollections(final tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria crit, final CollectionAsyncCallback callback) 
+			throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
 		Element retrieve = ElementFactory.create("list", null, ARCHIVE_XMLNS);
 		iq.addChild(retrieve);
-		retrieve.setAttribute("with", withJid.toString());
-
-		if ( startTime != null ){
-			retrieve.setAttribute( "start", format.format( startTime ) );
-		}
-
-		if (endTime != null) {
-			retrieve.setAttribute("end", format.format(endTime));
-		}
-
-		Element set = ElementFactory.create("set", null, "http://jabber.org/protocol/rsm");
-		retrieve.addChild(set);
-
-		set.addChild(ElementFactory.create("max", "100", null));
-
-		if (afterId != null) {
-			set.addChild(ElementFactory.create("after", afterId, null));
-		}
+		crit.toElement(retrieve);
 
 		writer.write(iq, null, callback);
 	}
@@ -215,26 +206,22 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
+	@Deprecated
 	public void retriveCollection(final JID withJid, final Date startTime, final Date endTime, String afterId,
 			Integer index, Integer maxCount, final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
+		tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria crit = 
+				new tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria().setWith(withJid).setStart(startTime).setEnd(endTime).setAfter(afterId);
+		retrieveCollection(crit, callback);
+	}
+	
+	public void retrieveCollection(final tigase.jaxmpp.core.client.xmpp.modules.xep0136.Criteria crit, 
+			final ItemsAsyncCallback callback) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 
 		Element retrieve = ElementFactory.create("retrieve", null, ARCHIVE_XMLNS);
 		iq.addChild(retrieve);
-		retrieve.setAttribute("with", withJid.toString());
-		retrieve.setAttribute("start", format.format(startTime));
-
-		Element set = ElementFactory.create("set", null, "http://jabber.org/protocol/rsm");
-
-		set.addChild(ElementFactory.create("max", (maxCount != null ? Integer.toString(maxCount) : "100"), null));
-
-		if (index != null) {
-			set.addChild(ElementFactory.create("index", String.valueOf(index), null));
-		}
-		if (afterId != null) {
-			set.addChild(ElementFactory.create("after", afterId, null));
-		}
+		crit.toElement(retrieve);
 
 		writer.write(iq, null, callback);
 	}
