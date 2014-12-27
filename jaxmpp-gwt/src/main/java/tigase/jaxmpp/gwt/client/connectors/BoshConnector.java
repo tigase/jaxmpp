@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.gwt.client.connectors;
 
+import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import java.util.logging.Level;
 
 import tigase.jaxmpp.core.client.Context;

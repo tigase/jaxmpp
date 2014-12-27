@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,24 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.gwt.client.connectors;
+package tigase.jaxmpp.j2se.connectors.socket;
 
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.connector.AbstractSocketXmppSessionLogic;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
-public class WebSocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<WebSocketConnector> {
-	
-	public WebSocketXmppSessionLogic(WebSocketConnector connector, XmppModulesManager modulesManager, Context context) {
-		super(connector, modulesManager, context);
-	}
-	
+/**
+ * New Reader class replaces standard InputStreamReader as it cannot read from
+ * InflaterInputStream.
+ *
+ * @author andrzej
+ */
+public interface Reader {
+
+	int read(char[] cbuf) throws IOException;
+
 }

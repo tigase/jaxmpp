@@ -1,6 +1,6 @@
 /*
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2014 Tigase, Inc.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,12 +15,15 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
-package tigase.jaxmpp.gwt.client.connectors;
+package tigase.jaxmpp.core.client.connector;
 
-/**
- *
- * @author andrzej
- */
-public interface SeeOtherHostHandler extends tigase.jaxmpp.core.client.connector.SeeOtherHostHandler {
+import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.XmppModulesManager;
 
+public class WebSocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<AbstractWebSocketConnector> {
+	
+	public WebSocketXmppSessionLogic(AbstractWebSocketConnector connector, XmppModulesManager modulesManager, Context context) {
+		super(connector, modulesManager, context);
+	}
+	
 }

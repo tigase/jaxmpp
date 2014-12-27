@@ -141,197 +141,14 @@ public class SocketConnector implements Connector {
 		void onHostChanged(SessionObject sessionObject);
 	}
 
-	/**
-	 * OutputStreamFlushWrap class is wrapper class used to wrap
-	 * DeflaterOutputStream to force flushing every time data is written to
-	 * output stream
-	 */
-	private class OutputStreamFlushWrap extends OutputStream {
-
-		private final OutputStream outputStream;
-
-		public OutputStreamFlushWrap(OutputStream outputStream) {
-			this.outputStream = outputStream;
-		}
-
-		@Override
-		public void close() throws IOException {
-			outputStream.close();
-		}
-
-		@Override
-		public void flush() throws IOException {
-			outputStream.flush();
-		}
-
-		@Override
-		public void write(byte[] b) throws IOException {
-			outputStream.write(b);
-			outputStream.flush();
-		}
-
-		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
-			outputStream.write(b, off, len);
-			outputStream.flush();
-		}
-
-		@Override
-		public void write(int b) throws IOException {
-			outputStream.write(b);
-			outputStream.flush();
-		}
-
-	}
-
-	/**
-	 * New Reader class replaces standard InputStreamReader as it cannot read
-	 * from InflaterInputStream.
-	 */
-	private class Reader {
-
-		private final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
-
-		private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-
-		private final InputStream inputStream;
-
-		public Reader(InputStream inputStream) {
-			this.inputStream = inputStream;
-		}
-
-		public int read(char[] cbuf) throws IOException {
-			byte[] arr = buf.array();
-			int read = inputStream.read(arr, 0, arr.length);
-			buf.position(read);
-			buf.flip();
-
-			CharBuffer cb = CharBuffer.wrap(cbuf);
-			decoder.decode(buf, cb, false);
-			buf.clear();
-			cb.flip();
-
-			return cb.remaining();
-		}
-
-		// Below are alternative read methods which can be used if above method
-		// will be causing performance issues
-		// public int read3(char[] cbuf) throws IOException {
-		// byte[] arr = new byte[2048];
-		// int read = inputStream.read(arr, 0, arr.length);
-		//
-		// CharBuffer cb = CharBuffer.wrap(cbuf);
-		// decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
-		// cb.flip();
-		//
-		// return cb.remaining();
-		// }
-		//
-		// public int read2(char[] cbuf) throws IOException {
-		// byte[] arr = new byte[2048];
-		// int read = inputStream.read(arr, 0, arr.length);
-		//
-		// CharBuffer cb = CharBuffer.allocate(2048);
-		// decoder.decode(ByteBuffer.wrap(arr, 0, read), cb, false);
-		// cb.flip();
-		//
-		// int got = cb.remaining();
-		// cb.get(cbuf, 0, got);
-		//
-		// return got;
-		// }
-
-	}
-
-	private class Worker extends Thread {
-
-		private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
-
-		private SocketConnector connector;
-
-		private final XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListener() {
-
-			@Override
-			public void nextElement(tigase.xml.Element element) {
-				try {
-					processElement(element);
-				} catch (JaxmppException e) {
-					log.log(Level.SEVERE, "Error on processing element", e);
-				}
-			}
-
-			@Override
-			public void xmppStreamClosed() {
-				try {
-					if (log.isLoggable(Level.FINEST))
-						log.finest("xmppStreamClosed()");
-					SocketConnector.this.onStreamTerminate();
-				} catch (JaxmppException e) {
-					e.printStackTrace();
-				}
-			}
-
-			@Override
-			public void xmppStreamOpened(Map<String, String> attribs) {
-				if (log.isLoggable(Level.FINEST))
-					log.finest("xmppStreamOpened()");
-				SocketConnector.this.onStreamStart(attribs);
-			}
-		});
-
-		private final SimpleParser parser = SingletonFactory.getParserInstance();
-
-		public Worker(SocketConnector connector) {
-			this.connector = connector;
-		}
-
-		@Override
-		public void interrupt() {
-			super.interrupt();
-			log.fine("Worker Interrupted");
-		}
-
-		@Override
-		public void run() {
-			super.run();
-			log.finest(hashCode() + " Starting " + this);
-
-			int r = -2;
-			try {
-				while (connector.reader != null && !isInterrupted() && (r = connector.reader.read(buffer)) != -1
-						&& connector.getState() != Connector.State.disconnected) {
-					parser.parse(domHandler, buffer, 0, r);
-				}
-				// if (log.isLoggable(Level.FINEST))
-				log.finest(hashCode() + "Disconnecting: state=" + connector.getState() + "; buffer=" + r + "   " + this);
-				if (!isInterrupted())
-					connector.onStreamTerminate();
-			} catch (Exception e) {
-				if (SocketConnector.this.getState() != Connector.State.disconnecting
-						&& SocketConnector.this.getState() != Connector.State.disconnected) {
-					log.log(Level.WARNING, "Exception in worker", e);
-					try {
-						onErrorInThread(e);
-					} catch (JaxmppException e1) {
-						e1.printStackTrace();
-					}
-				}
-			} finally {
-				interrupt();
-				log.finest("Worker2 is interrupted");
-				connector.workerTerminated(this);
-			}
-		}
-	}
-
 	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
 
-	private final static HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
+	public final static HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
 	/**
 	 * Default size of buffer used to decode data before parsing
 	 */
-	private final static int DEFAULT_SOCKET_BUFFER_SIZE = 2048;
+	public final static int DEFAULT_SOCKET_BUFFER_SIZE = 2048;
 
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
@@ -344,7 +161,7 @@ public class SocketConnector implements Connector {
 
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
 
-	private final static String RECONNECTING_KEY = "s:reconnecting";
+	public final static String RECONNECTING_KEY = "s:reconnecting";
 
 	public static final String SASL_EXTERNAL_ENABLED_KEY = "SASL_EXTERNAL_ENABLED_KEY";
 
@@ -419,7 +236,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Socket timeout.
 	 */
-	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
+	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
 
 	private Timer timer;
 
@@ -566,7 +383,7 @@ public class SocketConnector implements Connector {
 
 	}
 
-	public void onTLSStanza(tigase.xml.Element elem) throws JaxmppException {
+	public void onTLSStanza(Element elem) throws JaxmppException {
 		if (elem.getName().equals("proceed")) {
 			proceedTLS();
 		} else if (elem.getName().equals("failure")) {
@@ -580,7 +397,7 @@ public class SocketConnector implements Connector {
 	 * @param elem
 	 * @throws JaxmppException
 	 */
-	public void onZLibStanza(tigase.xml.Element elem) throws JaxmppException {
+	public void onZLibStanza(Element elem) throws JaxmppException {
 		if (elem.getName().equals("compressed") && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
 			proceedZLib();
 		} else if (elem.getName().equals("failure")) {
@@ -653,7 +470,7 @@ public class SocketConnector implements Connector {
 
 			socket = s1;
 			writer = socket.getOutputStream();
-			reader = new Reader(socket.getInputStream());
+			reader = new TextStreamReader(socket.getInputStream());
 			restartStream();
 		} catch (javax.net.ssl.SSLHandshakeException e) {
 			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
@@ -726,7 +543,7 @@ public class SocketConnector implements Connector {
 
 			Inflater decompressor = new Inflater(false);
 			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
-			reader = new Reader(is);
+			reader = new TextStreamReader(is);
 
 			context.getSessionObject().setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
 			log.info("ZLIB compression started");
@@ -740,19 +557,16 @@ public class SocketConnector implements Connector {
 		}
 	}
 
-	public void processElement(tigase.xml.Element elem) throws JaxmppException {
+	public void processElement(Element elem) throws JaxmppException {
 		if (log.isLoggable(Level.FINEST))
 			log.finest("RECV: " + elem.toString());
 		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
 			onTLSStanza(elem);
 		} else if (elem != null && elem.getXMLNS() != null && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
 			onZLibStanza(elem);
-		} else
-			try {
-				onResponse(new J2seElement(elem));
-			} catch (JaxmppException e) {
-				onErrorInThread(e);
-			}
+		} else {
+			onResponse(elem);
+		}
 	}
 
 	private void reconnect(final String newHost) {
@@ -921,8 +735,40 @@ public class SocketConnector implements Connector {
 			socket.setTcpNoDelay(true);
 			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
-			reader = new Reader(socket.getInputStream());
-			worker = new Worker(this);
+			reader = new TextStreamReader(socket.getInputStream());
+			worker = new Worker(this) {
+
+				@Override
+				protected void processElement(Element elem) throws JaxmppException {
+					SocketConnector.this.processElement(elem);
+				}
+
+				@Override
+				protected Reader getReader() {
+					return reader;
+				}
+
+				@Override
+				protected void onStreamStart(Map<String, String> attribs) {
+					SocketConnector.this.onStreamStart(attribs);
+				}
+
+				@Override
+				protected void onStreamTerminate() throws JaxmppException {
+					SocketConnector.this.onStreamTerminate();
+				}
+
+				@Override
+				protected void onErrorInThread(Exception e) throws JaxmppException {
+					SocketConnector.this.onErrorInThread(e);
+				}
+
+				@Override
+				protected void workerTerminated() {
+					SocketConnector.this.workerTerminated(this);
+				}
+				
+			};
 			log.finest("Starting worker...");
 			worker.start();
 

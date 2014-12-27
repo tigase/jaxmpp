@@ -33,7 +33,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
-import tigase.jaxmpp.gwt.client.connectors.SeeOtherHostHandler;
+import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
 
 /**

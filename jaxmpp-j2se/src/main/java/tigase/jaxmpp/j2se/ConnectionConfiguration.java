@@ -29,7 +29,8 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 
 	public static enum ConnectionType {
 		bosh,
-		socket
+		socket,
+		websocket
 	}
 
 	ConnectionConfiguration(SessionObject sessionObject) {

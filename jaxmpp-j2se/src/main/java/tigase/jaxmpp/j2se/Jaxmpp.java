@@ -40,6 +40,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
+import tigase.jaxmpp.j2se.connectors.websocket.WebSocketConnector;
 import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 
@@ -114,6 +115,9 @@ public class Jaxmpp extends JaxmppCore {
 		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using BOSHConnector");
 			return new BoshConnector(context);
+		} else if ("websocket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using WebSocketConnector");
+			return new WebSocketConnector(context);
 		} else
 			throw new JaxmppException("Unknown connector type");
 	}
