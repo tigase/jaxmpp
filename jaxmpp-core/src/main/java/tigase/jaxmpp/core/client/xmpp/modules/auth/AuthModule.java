@@ -140,6 +140,8 @@ public class AuthModule implements XmppModule, ContextAware, InitializingModule 
 	 */
 	public static final String FORCE_NON_SASL = "jaxmpp#forceNonSASL";
 
+	public static final String LOGIN_USER_NAME_KEY = "LOGIN_USER_NAME";
+
 	public static boolean isAuthAvailable(final SessionObject sessionObject) throws XMLException {
 		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 

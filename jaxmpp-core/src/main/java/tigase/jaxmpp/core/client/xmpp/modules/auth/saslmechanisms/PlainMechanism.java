@@ -37,7 +37,15 @@ public class PlainMechanism extends AbstractSaslMechanism {
 			if (callback == null)
 				callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
 			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-			String lreq = userJID.toString() + NULL + userJID.getLocalpart() + NULL + callback.getCredential();
+
+			String authcid;
+			if (sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY) != null) {
+				authcid = sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY);
+			} else {
+				authcid = userJID.getLocalpart();
+			}
+
+			String lreq = NULL + authcid + NULL + callback.getCredential();
 
 			String base64 = Base64.encode(lreq.getBytes());
 			setComplete(sessionObject, true);
