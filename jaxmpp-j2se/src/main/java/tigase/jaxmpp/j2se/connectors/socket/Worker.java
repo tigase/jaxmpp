@@ -95,8 +95,8 @@ public abstract class Worker extends Thread {
 
 		int r = -2;
 		try {
-			Reader reader = getReader();
-			while (reader != null && !isInterrupted() && (r = reader.read(buffer)) != -1
+			Reader reader;// = getReader();
+			while ((reader = getReader()) != null && !isInterrupted() && (r = reader.read(buffer)) != -1
 					&& connector.getState() != Connector.State.disconnected) {
 				parser.parse(domHandler, buffer, 0, r);
 			}

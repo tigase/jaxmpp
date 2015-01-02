@@ -52,6 +52,8 @@ public class WebSocketReader implements Reader {
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
 		int read = inputStream.read(arr, buf.position(), buf.remaining());
+		if (read == -1)
+			return -1;		
 		buf.position(read);
 		buf.flip();
 		

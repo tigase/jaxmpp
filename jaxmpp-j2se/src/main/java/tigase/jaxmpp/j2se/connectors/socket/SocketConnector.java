@@ -745,7 +745,7 @@ public class SocketConnector implements Connector {
 
 				@Override
 				protected Reader getReader() {
-					return reader;
+					return SocketConnector.this.reader;
 				}
 
 				@Override

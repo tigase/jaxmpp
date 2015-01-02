@@ -43,9 +43,12 @@ public class TextStreamReader implements Reader {
 		this.inputStream = inputStream;
 	}
 
+	@Override
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
 		int read = inputStream.read(arr, 0, arr.length);
+		if (read == -1)
+			return -1;
 		buf.position(read);
 		buf.flip();
 
