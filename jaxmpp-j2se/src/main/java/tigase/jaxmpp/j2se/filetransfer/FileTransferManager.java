@@ -474,5 +474,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 			// maybe we should not send this event every time?
 			fireOnProgress(ft);
 		}
+		
+		out.flush();
 	}
 }
