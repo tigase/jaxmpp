@@ -239,6 +239,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		}
 		setStage(State.disconnected);
 		socket.close();
+		super.terminateAllWorkers();
 	}
 
 }

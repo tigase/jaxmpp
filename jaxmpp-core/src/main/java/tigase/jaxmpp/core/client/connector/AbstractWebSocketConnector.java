@@ -309,6 +309,6 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 	
 	protected void terminateAllWorkers() throws JaxmppException {
-		
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 }
