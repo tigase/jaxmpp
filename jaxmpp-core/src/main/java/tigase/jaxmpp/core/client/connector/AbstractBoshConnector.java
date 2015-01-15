@@ -293,6 +293,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		if (log.isLoggable(Level.FINER))
 			log.log(Level.FINER, "responseCode=" + responseCode, caught);
 		setStage(State.disconnected);
+		terminateAllWorkers();
 		fireOnError(responseCode, responseData, response, caught, context.getSessionObject());
 	}
 
