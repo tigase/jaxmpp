@@ -18,16 +18,11 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
@@ -77,15 +72,14 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
-import tigase.jaxmpp.j2se.xml.J2seElement;
-import tigase.xml.SimpleParser;
-import tigase.xml.SingletonFactory;
 
 /**
- * 
+ *
  */
 public class SocketConnector implements Connector {
 
@@ -169,6 +163,11 @@ public class SocketConnector implements Connector {
 
 	public static final String SERVER_PORT = "socket#ServerPort";
 
+	/**
+	 * Socket timeout.
+	 */
+	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
+
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
 
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
@@ -184,7 +183,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Returns true if server send stream features in which it advertises
 	 * support for stream compression using ZLIB
-	 * 
+	 *
 	 * @param sessionObject
 	 * @return
 	 * @throws XMLException
@@ -233,11 +232,6 @@ public class SocketConnector implements Connector {
 
 	private Socket socket;
 
-	/**
-	 * Socket timeout.
-	 */
-	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
-
 	private Timer timer;
 
 	private Worker worker;
@@ -280,7 +274,7 @@ public class SocketConnector implements Connector {
 		context.getEventBus().fire(new ErrorEvent(sessionObject, streamError, caught));
 	}
 
-	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
+	protected void fireOnStanzaReceived(StreamPacket response, SessionObject sessionObject) throws JaxmppException {
 		context.getEventBus().fire(new StanzaReceivedEvent(sessionObject, response));
 	}
 
@@ -313,7 +307,7 @@ public class SocketConnector implements Connector {
 
 	/**
 	 * Returns true when stream is compressed
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -361,7 +355,14 @@ public class SocketConnector implements Connector {
 					&& response.getXMLNS().equals("http://etherx.jabber.org/streams")) {
 				onError(response, null);
 			} else {
-				fireOnStanzaReceived(response, context.getSessionObject());
+				StreamPacket p;
+				if (Stanza.canBeConverted(response)) {
+					p = Stanza.create(response);
+				} else {
+					p = new StreamPacket(response) {
+					};
+				}
+				fireOnStanzaReceived(p, context.getSessionObject());
 			}
 		}
 	}
@@ -393,7 +394,7 @@ public class SocketConnector implements Connector {
 
 	/**
 	 * Handles result of requesting stream compression
-	 * 
+	 *
 	 * @param elem
 	 * @throws JaxmppException
 	 */
@@ -486,7 +487,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Method activates stream compression by replacing reader and writer fields
 	 * values and restarting XMPP stream
-	 * 
+	 *
 	 * @throws JaxmppException
 	 */
 	protected void proceedZLib() throws JaxmppException {
@@ -739,13 +740,13 @@ public class SocketConnector implements Connector {
 			worker = new Worker(this) {
 
 				@Override
-				protected void processElement(Element elem) throws JaxmppException {
-					SocketConnector.this.processElement(elem);
+				protected Reader getReader() {
+					return SocketConnector.this.reader;
 				}
 
 				@Override
-				protected Reader getReader() {
-					return SocketConnector.this.reader;
+				protected void onErrorInThread(Exception e) throws JaxmppException {
+					SocketConnector.this.onErrorInThread(e);
 				}
 
 				@Override
@@ -759,15 +760,15 @@ public class SocketConnector implements Connector {
 				}
 
 				@Override
-				protected void onErrorInThread(Exception e) throws JaxmppException {
-					SocketConnector.this.onErrorInThread(e);
+				protected void processElement(Element elem) throws JaxmppException {
+					SocketConnector.this.processElement(elem);
 				}
 
 				@Override
 				protected void workerTerminated() {
 					SocketConnector.this.workerTerminated(this);
 				}
-				
+
 			};
 			log.finest("Starting worker...");
 			worker.start();
@@ -823,7 +824,7 @@ public class SocketConnector implements Connector {
 
 	/**
 	 * Sends <compress/> stanza to start stream compression using ZLIB
-	 * 
+	 *
 	 * @throws JaxmppException
 	 */
 	public void startZLib() throws JaxmppException {

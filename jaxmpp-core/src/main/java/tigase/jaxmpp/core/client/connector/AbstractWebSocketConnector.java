@@ -21,11 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
-import static tigase.jaxmpp.core.client.Connector.CONNECTOR_STAGE_KEY;
-import static tigase.jaxmpp.core.client.Connector.DISABLE_KEEPALIVE_KEY;
-import static tigase.jaxmpp.core.client.Connector.SEE_OTHER_HOST_KEY;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -34,6 +32,8 @@ import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 
 /**
@@ -41,44 +41,22 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
  * @author andrzej
  */
 public abstract class AbstractWebSocketConnector implements Connector {
-	
+
 	protected final Context context;
 	protected final Logger log;
-	
+
 	protected Boolean rfcCompatible = null;
-	
-	protected boolean isRfc() {
-		return rfcCompatible;
-	}
-	
+
 	protected AbstractWebSocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());
 		this.context = context;
 	}
-	
-	@Override
-	public Connector.State getState() {
-		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
-	}
-
-	@Override
-	public boolean isCompressed() {
-		return false;
-	}
-
-	@Override
-	public void keepalive() throws JaxmppException {
-		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
-			return;
-		if (getState() == Connector.State.connected)
-			send(" ");
-	}	
 
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
 		return new WebSocketXmppSessionLogic(this, modulesManager, context);
-	}	
-	
+	}
+
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected) {
 			return;
@@ -102,7 +80,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		context.getEventBus().fire(new ErrorHandler.ErrorEvent(sessionObject, condition, caught));
 	}
 
-	protected void fireOnStanzaReceived(Element response, SessionObject sessionObject) throws JaxmppException {
+	protected void fireOnStanzaReceived(StreamPacket response, SessionObject sessionObject) throws JaxmppException {
 		StanzaReceivedHandler.StanzaReceivedEvent event = new StanzaReceivedHandler.StanzaReceivedEvent(sessionObject, response);
 		context.getEventBus().fire(event);
 	}
@@ -112,52 +90,13 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		context.getEventBus().fire(event);
 	}
 
-	protected void onError(Element response, Throwable ex) {		
-		try {
-			if (response != null) {
-				if (handleSeeOtherHost(response)) 
-					return;
-			}
-			stop();
-			fireOnError(null, ex, AbstractWebSocketConnector.this.context.getSessionObject());
-		} catch (JaxmppException ex1) {
-			log.log(Level.SEVERE, null, ex1);
-		}
+	@Override
+	public Connector.State getState() {
+		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 	}
 
-	protected void processElement(Element child) throws JaxmppException {
-		boolean isRfc = isRfc();
-		if (isRfc && "urn:ietf:params:xml:ns:xmpp-framing".equals(child.getXMLNS())) {
-			if ("close".equals(child.getName())) {
-				if (child.getAttribute("see-other-uri") != null) {
-						// received new version of see-other-host called see-other-uri 
-					// designed just for XMPP over WebSocket
-					String uri = child.getAttribute("see-other-uri");
-					handleSeeOtherUri(uri);
-					return;
-				}
-				log.finest("received <close/> stanza, so we need to close this connection..");
-				//stop();
-				this.onStreamTerminate();
-			}
-			if ("open".equals(child.getName())) {
-				// received <open/> stanza should be ignored
-				this.onStreamStart(child.getAttributes());
-				return;
-			}
-		}
-
-		if (("error".equals(child.getName()) && child.getXMLNS() != null
-				&& child.getXMLNS().equals("http://etherx.jabber.org/streams"))
-				|| "stream:error".equals(child.getName())) {
-			onError(child, null);
-		} else {
-			fireOnStanzaReceived(child, context.getSessionObject());
-		}
-	}	
-	
 	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
-		if (response == null) 
+		if (response == null)
 			return false;
 
 		Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
@@ -167,28 +106,111 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				log.fine("Received see-other-host=" + seeHost);
 			}
 			MutableBoolean handled = new MutableBoolean();
-			context.getEventBus().fire(
-					new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+			context.getEventBus().fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
 
 			return false;
 		}
 		return false;
-	}		
-	
+	}
+
 	protected boolean handleSeeOtherUri(String seeOtherUri) throws JaxmppException {
 		try {
 			stop();
-			fireOnError(null, null, AbstractWebSocketConnector.this.context.getSessionObject());		
+			fireOnError(null, null, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "could not properly handle see-other-host", ex);
 		}
 		MutableBoolean handled = new MutableBoolean();
-		context.getEventBus().fire(
-				new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeOtherUri, handled));
+		context.getEventBus().fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeOtherUri, handled));
 
 		return false;
 	}
-	
+
+	@Override
+	public boolean isCompressed() {
+		return false;
+	}
+
+	protected boolean isRfc() {
+		return rfcCompatible;
+	}
+
+	@Override
+	public void keepalive() throws JaxmppException {
+		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
+			return;
+		if (getState() == Connector.State.connected)
+			send(" ");
+	}
+
+	protected void onError(Element response, Throwable ex) {
+		try {
+			if (response != null) {
+				if (handleSeeOtherHost(response))
+					return;
+			}
+			stop();
+			fireOnError(null, ex, AbstractWebSocketConnector.this.context.getSessionObject());
+		} catch (JaxmppException ex1) {
+			log.log(Level.SEVERE, null, ex1);
+		}
+	}
+
+	protected void onStreamStart(Map<String, String> attribs) {
+		// TODO Auto-generated method stub
+	}
+
+	protected void onStreamTerminate() throws JaxmppException {
+		if (getState() == State.disconnected)
+			return;
+		setStage(State.disconnected);
+
+		if (log.isLoggable(Level.FINE))
+			log.fine("Stream terminated");
+
+		terminateAllWorkers();
+		fireOnTerminate(context.getSessionObject());
+	}
+
+	protected void processElement(Element child) throws JaxmppException {
+		boolean isRfc = isRfc();
+		if (isRfc && "urn:ietf:params:xml:ns:xmpp-framing".equals(child.getXMLNS())) {
+			if ("close".equals(child.getName())) {
+				if (child.getAttribute("see-other-uri") != null) {
+					// received new version of see-other-host called
+					// see-other-uri
+					// designed just for XMPP over WebSocket
+					String uri = child.getAttribute("see-other-uri");
+					handleSeeOtherUri(uri);
+					return;
+				}
+				log.finest("received <close/> stanza, so we need to close this connection..");
+				// stop();
+				this.onStreamTerminate();
+			}
+			if ("open".equals(child.getName())) {
+				// received <open/> stanza should be ignored
+				this.onStreamStart(child.getAttributes());
+				return;
+			}
+		}
+
+		if (("error".equals(child.getName()) && child.getXMLNS() != null && child.getXMLNS().equals(
+				"http://etherx.jabber.org/streams"))
+				|| "stream:error".equals(child.getName())) {
+			onError(child, null);
+		} else {
+			StreamPacket p;
+			if (Stanza.canBeConverted(child)) {
+				p = Stanza.create(child);
+			} else {
+				p = new StreamPacket(child) {
+				};
+			}
+			fireOnStanzaReceived(p, context.getSessionObject());
+		}
+	}
+
 	@Override
 	public void restartStream() throws XMLException, JaxmppException {
 		StringBuilder sb = new StringBuilder();
@@ -213,7 +235,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		}
 
 		sb.append("version='1.0' ");
-		
+
 		if (isRfc()) {
 			sb.append("xmlns='urn:ietf:params:xml:ns:xmpp-framing'/>");
 		} else {
@@ -238,24 +260,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		}
 		send(stanza.getAsString());
 	}
-	
-	@Override
-	public void stop() throws JaxmppException {
-		if (getState() == State.disconnected)
-			return;
-		terminateStream();
-		setStage(State.disconnecting);
-		terminateAllWorkers();		
-	}
 
-	@Override
-	public void stop(boolean terminate) throws JaxmppException {
-		if (terminate)
-			this.onStreamTerminate();
-		else
-			this.stop();
-	}	
-	
 	protected abstract void send(String data) throws JaxmppException;
 
 	protected void setStage(State state) throws JaxmppException {
@@ -281,6 +286,27 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		}
 	}
 
+	@Override
+	public void stop() throws JaxmppException {
+		if (getState() == State.disconnected)
+			return;
+		terminateStream();
+		setStage(State.disconnecting);
+		terminateAllWorkers();
+	}
+
+	@Override
+	public void stop(boolean terminate) throws JaxmppException {
+		if (terminate)
+			this.onStreamTerminate();
+		else
+			this.stop();
+	}
+
+	protected void terminateAllWorkers() throws JaxmppException {
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
+	}
+
 	protected void terminateStream() throws JaxmppException {
 		final State state = getState();
 		if (state == State.connected || state == State.connecting) {
@@ -290,25 +316,5 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		} else {
 			log.fine("Stream terminate not sent, because of connection state==" + state);
 		}
-	}	
-	
-	protected void onStreamStart(Map<String, String> attribs) {
-		// TODO Auto-generated method stub
-	}
-
-	protected void onStreamTerminate() throws JaxmppException {
-		if (getState() == State.disconnected)
-			return;
-		setStage(State.disconnected);
-
-		if (log.isLoggable(Level.FINE))
-			log.fine("Stream terminated");
-
-		terminateAllWorkers();
-		fireOnTerminate(context.getSessionObject());
-	}
-	
-	protected void terminateAllWorkers() throws JaxmppException {
-		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 }

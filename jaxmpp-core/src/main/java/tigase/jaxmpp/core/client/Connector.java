@@ -22,6 +22,7 @@ import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 
 /**
  * Main Connector interface.
@@ -51,7 +52,7 @@ public interface Connector {
 
 		/**
 		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -80,7 +81,7 @@ public interface Connector {
 
 		/**
 		 * Called when {@linkplain DisconnectedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -112,7 +113,7 @@ public interface Connector {
 		/**
 		 * Called when {@linkplain EncryptionEstablishedEvent
 		 * EncryptionEstablishedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -156,7 +157,7 @@ public interface Connector {
 
 		/**
 		 * Called when {@linkplain ErrorEvent ErrorEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param condition
@@ -180,9 +181,9 @@ public interface Connector {
 		 */
 		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
 
-			private Element stanza;
+			private StreamPacket stanza;
 
-			public StanzaReceivedEvent(SessionObject sessionObject, Element stanza) {
+			public StanzaReceivedEvent(SessionObject sessionObject, StreamPacket stanza) {
 				super(sessionObject);
 				this.stanza = stanza;
 			}
@@ -192,7 +193,7 @@ public interface Connector {
 				handler.onStanzaReceived(sessionObject, stanza);
 			}
 
-			public Element getStanza() {
+			public StreamPacket getStanza() {
 				return stanza;
 			}
 
@@ -201,7 +202,7 @@ public interface Connector {
 		/**
 		 * Called when {@linkplain StanzaReceivedEvent StanzaReceivedEvent} is
 		 * fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param stanza
@@ -246,7 +247,7 @@ public interface Connector {
 		/**
 		 * Called when {@linkplain StanzaSendingEvent StanzaSendingEvent} is
 		 * fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param stanza
@@ -319,7 +320,7 @@ public interface Connector {
 		/**
 		 * Called when {@linkplain StateChangedEvent StateChangedEvent} is
 		 * fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param oldState
@@ -355,7 +356,7 @@ public interface Connector {
 		/**
 		 * Called when when {@linkplain StreamTerminatedEvent
 		 * StreamTerminatedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -410,7 +411,7 @@ public interface Connector {
 	/**
 	 * Returns instance of {@linkplain XmppSessionLogic} to work with this
 	 * connector.
-	 * 
+	 *
 	 * @param modulesManager
 	 *            module manager
 	 * @param writer
@@ -421,21 +422,21 @@ public interface Connector {
 
 	/**
 	 * Returns current {@linkplain State State} of connector.
-	 * 
+	 *
 	 * @return {@linkplain State State} of connector.
 	 */
 	public State getState();
 
 	/**
 	 * Returns XML Stream compression state.
-	 * 
+	 *
 	 * @return <code>true> if XML Stream is compressed.
 	 */
 	boolean isCompressed();
 
 	/**
 	 * Returns connection security state.
-	 * 
+	 *
 	 * @return <code>true> if connection is secured and encrypted.
 	 */
 	boolean isSecure();
@@ -452,7 +453,7 @@ public interface Connector {
 
 	/**
 	 * Sends given XML Element to server.
-	 * 
+	 *
 	 * @param stanza
 	 *            XML element to send.
 	 */
@@ -471,7 +472,7 @@ public interface Connector {
 
 	/**
 	 * Stops connector.
-	 * 
+	 *
 	 * @param terminate
 	 *            if
 	 *            <code>true<code> then connection will be terminated immediatelly and connector will be stopped.

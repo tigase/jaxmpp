@@ -43,6 +43,8 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 
 /**
  * Abstract class for implementing BOSH connector.
@@ -95,7 +97,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		/**
 		 * Called when {@linkplain BoshPacketReceivedEvent
 		 * BoshPacketReceivedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param responseCode
@@ -142,7 +144,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		/**
 		 * Called when {@linkplain BoshPacketSendingEvent
 		 * BoshPacketSendingEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 * @param packet
@@ -232,7 +234,15 @@ public abstract class AbstractBoshConnector implements Connector {
 			if (response != null) {
 				List<Element> c = response.getChildren();
 				for (Element ch : c) {
-					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, ch);
+					StreamPacket p;
+					if (Stanza.canBeConverted(ch)) {
+						p = Stanza.create(ch);
+					} else {
+						p = new StreamPacket(ch) {
+						};
+					}
+
+					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, p);
 					context.getEventBus().fire(event, this);
 				}
 			}

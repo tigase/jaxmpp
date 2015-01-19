@@ -25,14 +25,13 @@ import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
-import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Abstract representation of Stanza.
- * 
+ *
  */
-public abstract class Stanza extends ElementWrapper {
+public abstract class Stanza extends StreamPacket {
 
 	public static class UnkownStanzaTypeException extends JaxmppException {
 
@@ -67,7 +66,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Creates new stanza.
-	 * 
+	 *
 	 * @param element
 	 *            element containing stanza.
 	 * @return specific implementation od Stanza: {@linkplain IQ},
@@ -107,7 +106,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns {@linkplain ErrorCondition} element.
-	 * 
+	 *
 	 * @return {@linkplain ErrorCondition}. <code>null</code> is element not
 	 *         present.
 	 */
@@ -131,7 +130,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns 'from' attribute.
-	 * 
+	 *
 	 * @return {@linkplain JID}
 	 */
 	public JID getFrom() throws XMLException {
@@ -141,7 +140,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns id of stanza.
-	 * 
+	 *
 	 * @return id of stanza
 	 */
 	public String getId() throws XMLException {
@@ -150,7 +149,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns 'to' attribute.
-	 * 
+	 *
 	 * @return {@linkplain JID}
 	 */
 	public JID getTo() throws XMLException {
@@ -160,7 +159,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns type of stanza.
-	 * 
+	 *
 	 * @return {@linkplain StanzaType}. <code>null</code> if type not present.
 	 */
 	public StanzaType getType() throws XMLException {
@@ -169,7 +168,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Returns type of stanza.
-	 * 
+	 *
 	 * @param defaultValue
 	 *            default value. Will be returned if type of stanza id
 	 *            <code>null</code>.
@@ -189,7 +188,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Sets 'from' attribute.
-	 * 
+	 *
 	 * @param jid
 	 *            {@linkplain JID}
 	 */
@@ -202,7 +201,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Sets id of stanza
-	 * 
+	 *
 	 * @param id
 	 *            id
 	 * @throws XMLException
@@ -213,7 +212,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Sets 'to' attribute.
-	 * 
+	 *
 	 * @param jid
 	 *            {@linkplain JID}
 	 */
@@ -226,7 +225,7 @@ public abstract class Stanza extends ElementWrapper {
 
 	/**
 	 * Sets type of stanza.
-	 * 
+	 *
 	 * @param type
 	 *            {@linkplain StanzaType}
 	 */
