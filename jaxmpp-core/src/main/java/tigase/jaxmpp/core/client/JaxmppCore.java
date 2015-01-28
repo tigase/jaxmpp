@@ -36,6 +36,7 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.DefaultXMPPStream;
 import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
 import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
@@ -55,11 +56,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.S
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
+import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
 
 /**
  * Base abstract class for implementation platform-specific jaxmpp clients.
- * 
- * 
+ *
+ *
  */
 public abstract class JaxmppCore {
 	/**
@@ -85,7 +88,7 @@ public abstract class JaxmppCore {
 
 		/**
 		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -95,7 +98,7 @@ public abstract class JaxmppCore {
 	/**
 	 * Implemented by handlers of {@linkplain DisconnectedEvent
 	 * DisconnectedEvent}.
-	 * 
+	 *
 	 */
 	public interface DisconnectedHandler extends EventHandler {
 
@@ -118,7 +121,7 @@ public abstract class JaxmppCore {
 		/**
 		 * Called when {@linkplain DisconnectedEvent DisconnectedEvent} is
 		 * fired.
-		 * 
+		 *
 		 * @param sessionObject
 		 *            session object related to connection.
 		 */
@@ -133,6 +136,14 @@ public abstract class JaxmppCore {
 
 	protected Context context;
 
+	protected DefaultXMPPStream defaultXMPPStream = new DefaultXMPPStream() {
+
+		@Override
+		public void write(Element stanza) throws JaxmppException {
+			connector.send(stanza);
+		}
+	};
+
 	protected EventBus eventBus;
 
 	protected final Logger log;
@@ -146,6 +157,8 @@ public abstract class JaxmppCore {
 	protected XmppSessionLogic sessionLogic;
 
 	protected SessionObject sessionObject;
+
+	protected XmppStreamsManager streamsManager;
 
 	protected PacketWriter writer = new PacketWriter() {
 
@@ -164,7 +177,8 @@ public abstract class JaxmppCore {
 					stanza.setAttribute("id", UIDGenerator.next());
 				}
 
-				connector.send(stanza);
+				context.getStreamsManager().writeToStream(stanza);
+
 			} catch (XMLException e) {
 				throw new JaxmppException(e);
 			}
@@ -184,14 +198,14 @@ public abstract class JaxmppCore {
 
 	};
 
-	public JaxmppCore() {
-		this.log = Logger.getLogger(this.getClass().getName());
-	}
-
 	// public Chat createChat(JID jid) throws JaxmppException {
 	// return
 	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
 	// }
+
+	public JaxmppCore() {
+		this.log = Logger.getLogger(this.getClass().getName());
+	}
 
 	protected EventBus createEventBus() {
 		return new DefaultEventBus();
@@ -204,7 +218,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Executes task in executor. Used to handle received stanzas.
-	 * 
+	 *
 	 * @param runnable
 	 *            task to execute.
 	 */
@@ -216,16 +230,16 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns configurator.
-	 * 
+	 *
 	 * This wrapper for SessionObject.
-	 * 
+	 *
 	 * @return configuration
 	 */
 	public abstract <T extends ConnectionConfiguration> T getConnectionConfiguration();
 
 	/**
 	 * Returns connector.
-	 * 
+	 *
 	 * @return {@link Connector} used by jaxmpp.
 	 */
 	public Connector getConnector() {
@@ -234,7 +248,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns {@link Context} of this JaXMPP instance.
-	 * 
+	 *
 	 * @return {@link Context}.
 	 */
 	public Context getContext() {
@@ -243,7 +257,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns {@link EventBus} of this JaXMPP instance.
-	 * 
+	 *
 	 * @return {@link EventBus}.
 	 */
 	public EventBus getEventBus() {
@@ -253,22 +267,13 @@ public abstract class JaxmppCore {
 	/**
 	 * Return module implementation by module class. This method calls
 	 * {@linkplain XmppModulesManager#getModule(Class)}.
-	 * 
+	 *
 	 * @param moduleClass
 	 *            module class
 	 * @return module implementation
 	 */
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
 		return modulesManager.getModule(moduleClass);
-	}
-
-	/**
-	 * Returns {@link XmppModulesManager ModuleManager}.
-	 * 
-	 * @return {@link XmppModulesManager}.
-	 */
-	public XmppModulesManager getModulesManager() {
-		return modulesManager;
 	}
 
 	// /**
@@ -281,12 +286,12 @@ public abstract class JaxmppCore {
 	// }
 
 	/**
-	 * Returns {@link UserProperties}.
-	 * 
-	 * @return {@link UserProperties}.
+	 * Returns {@link XmppModulesManager ModuleManager}.
+	 *
+	 * @return {@link XmppModulesManager}.
 	 */
-	public UserProperties getProperties() {
-		return sessionObject;
+	public XmppModulesManager getModulesManager() {
+		return modulesManager;
 	}
 
 	// /**
@@ -299,8 +304,17 @@ public abstract class JaxmppCore {
 	// }
 
 	/**
+	 * Returns {@link UserProperties}.
+	 *
+	 * @return {@link UserProperties}.
+	 */
+	public UserProperties getProperties() {
+		return sessionObject;
+	}
+
+	/**
 	 * Returns {@link SessionObject}.
-	 * 
+	 *
 	 * @return {@link SessionObject}.
 	 */
 	public SessionObject getSessionObject() {
@@ -320,6 +334,8 @@ public abstract class JaxmppCore {
 		// throw new RuntimeException("RosterModule cannot be null!");
 		// if (PresenceModule.getPresenceStore(sessionObject) == null)
 		// throw new RuntimeException("PresenceModule cannot be null!");
+
+		sessionObject.setProperty(XmppStreamsManager.DEFAULT_XMPP_STREAM_KEY, defaultXMPPStream);
 
 		if (this.sessionObject instanceof EventBusAware) {
 			((EventBusAware) this.sessionObject).setEventBus(eventBus);
@@ -347,10 +363,19 @@ public abstract class JaxmppCore {
 			}
 
 			@Override
+			public XmppStreamsManager getStreamsManager() {
+				return streamsManager;
+			}
+
+			@Override
 			public PacketWriter getWriter() {
 				return JaxmppCore.this.writer;
 			}
 		};
+
+		this.streamsManager = new XmppStreamsManager();
+		this.streamsManager.setContext(context);
+		XmppStreamsManager.setStreamsManager(sessionObject, streamsManager);
 
 		modulesManager = new XmppModulesManager(context);
 
@@ -389,7 +414,7 @@ public abstract class JaxmppCore {
 		eventBus.addHandler(StanzaReceivedHandler.StanzaReceivedEvent.class, new StanzaReceivedHandler() {
 
 			@Override
-			public void onStanzaReceived(SessionObject sessionObject, Element stanza) {
+			public void onStanzaReceived(SessionObject sessionObject, StreamPacket stanza) {
 				JaxmppCore.this.onStanzaReceived(stanza);
 			}
 		});
@@ -414,7 +439,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns connection state.
-	 * 
+	 *
 	 * @return <code>true</code> if XMPP connection is established.
 	 */
 	public boolean isConnected() {
@@ -424,7 +449,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns connection security state.
-	 * 
+	 *
 	 * @return <code>true</code> if connection is established and secured.
 	 */
 	public boolean isSecure() {
@@ -433,7 +458,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Whitespace ping.
-	 * 
+	 *
 	 * @throws JaxmppException
 	 */
 	public void keepalive() throws JaxmppException {
@@ -480,7 +505,7 @@ public abstract class JaxmppCore {
 
 	protected abstract void onResourceBindSuccess(JID bindedJID) throws JaxmppException;
 
-	protected void onStanzaReceived(Element stanza) {
+	protected void onStanzaReceived(StreamPacket stanza) {
 		final Runnable r = this.processor.process(stanza);
 		try {
 			if (ackModule.processIncomingStanza(stanza))
@@ -523,7 +548,7 @@ public abstract class JaxmppCore {
 	/**
 	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
 	 * connection.
-	 * 
+	 *
 	 * @param stanza
 	 *            IQ stanza to send.
 	 * @param asyncCallback
@@ -536,7 +561,7 @@ public abstract class JaxmppCore {
 	/**
 	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
 	 * connection.
-	 * 
+	 *
 	 * @param stanza
 	 *            IQ stanza to send.
 	 * @param timeout
@@ -550,7 +575,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Sends stanza to XMPP Server in current connection.
-	 * 
+	 *
 	 * @param stanza
 	 *            stanza to send.
 	 */

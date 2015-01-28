@@ -362,6 +362,7 @@ public class SocketConnector implements Connector {
 					p = new StreamPacket(response) {
 					};
 				}
+				p.setXmppStream(context.getStreamsManager().getDefaultStream());
 				fireOnStanzaReceived(p, context.getSessionObject());
 			}
 		}

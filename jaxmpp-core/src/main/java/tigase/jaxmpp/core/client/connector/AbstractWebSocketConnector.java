@@ -207,6 +207,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				p = new StreamPacket(child) {
 				};
 			}
+			p.setXmppStream(context.getStreamsManager().getDefaultStream());
 			fireOnStanzaReceived(p, context.getSessionObject());
 		}
 	}

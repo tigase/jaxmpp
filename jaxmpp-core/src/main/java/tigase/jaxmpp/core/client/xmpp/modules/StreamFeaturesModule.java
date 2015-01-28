@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -31,6 +30,9 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler.StreamFeaturesReceivedEvent;
+import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
+import tigase.jaxmpp.core.client.xmpp.stream.XMPPStream;
+import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
 
 /**
  * Module for <a href=
@@ -74,14 +76,9 @@ public class StreamFeaturesModule implements XmppModule, ContextAware {
 	private final static Criteria CRIT = new Or(new Criteria[] { ElementCriteria.name("stream:features"),
 			ElementCriteria.name("features") });
 
-	private static final String STREAM_FEATURES_ELEMENT_KEY = "StreamFeaturesModule#STREAM_FEATURES_ELEMENT";
-
 	public static Element getStreamFeatures(SessionObject sessionObject) {
-		return sessionObject.getProperty(STREAM_FEATURES_ELEMENT_KEY);
-	}
-
-	static void setStreamFeatures(SessionObject sessionObject, Element element) {
-		sessionObject.setProperty(Scope.stream, STREAM_FEATURES_ELEMENT_KEY, element);
+		XmppStreamsManager sm = XmppStreamsManager.getStreamsManager(sessionObject);
+		return sm == null ? null : sm.getDefaultStream().getFeatures();
 	}
 
 	private Context context;
@@ -106,13 +103,12 @@ public class StreamFeaturesModule implements XmppModule, ContextAware {
 		return null;
 	}
 
-	public Element getStreamFeatures() {
-		return getStreamFeatures(context.getSessionObject());
-	}
-
 	@Override
 	public void process(Element element) throws JaxmppException {
-		setStreamFeatures(context.getSessionObject(), element);
+		if (element instanceof StreamPacket) {
+			XMPPStream xmppStream = ((StreamPacket) element).getXmppStream();
+			xmppStream.setFeatures(element);
+		}
 		context.getEventBus().fire(new StreamFeaturesReceivedEvent(context.getSessionObject(), element), this);
 	}
 

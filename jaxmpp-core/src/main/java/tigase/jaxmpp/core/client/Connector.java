@@ -208,7 +208,7 @@ public interface Connector {
 		 * @param stanza
 		 *            received stanza.
 		 */
-		void onStanzaReceived(SessionObject sessionObject, Element stanza);
+		void onStanzaReceived(SessionObject sessionObject, StreamPacket stanza);
 	}
 
 	/**

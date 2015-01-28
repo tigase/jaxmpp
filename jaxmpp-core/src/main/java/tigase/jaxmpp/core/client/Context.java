@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client;
 
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
+import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
 
 /**
  * Interface for information about XMPP connection context. It provides access
@@ -28,30 +29,31 @@ public interface Context {
 
 	/**
 	 * Returns {@link EventBus}.
-	 * 
+	 *
 	 * @return {@link EventBus} instance.
 	 */
 	EventBus getEventBus();
 
 	/**
+	 * Returns {@link ModuleProvider}
+	 *
+	 * @return {@link ModuleProvider} instance.
+	 */
+	ModuleProvider getModuleProvider();
+
+	/**
 	 * Returns {@link SessionObject}.
-	 * 
+	 *
 	 * @return {@link SessionObject} instance.
 	 */
 	SessionObject getSessionObject();
 
+	XmppStreamsManager getStreamsManager();
+
 	/**
 	 * Returns {@link PacketWriter}
-	 * 
+	 *
 	 * @return {@link PacketWriter} instance.
 	 */
 	PacketWriter getWriter();
-
-	
-	/**
-	 * Returns {@link ModuleProvider}
-	 * 
-	 * @return {@link ModuleProvider} instance.
-	 */
-	ModuleProvider getModuleProvider();
 }

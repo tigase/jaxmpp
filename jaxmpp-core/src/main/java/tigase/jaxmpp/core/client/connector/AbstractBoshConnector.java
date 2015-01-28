@@ -242,6 +242,7 @@ public abstract class AbstractBoshConnector implements Connector {
 						};
 					}
 
+					p.setXmppStream(context.getStreamsManager().getDefaultStream());
 					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, p);
 					context.getEventBus().fire(event, this);
 				}
