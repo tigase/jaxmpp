@@ -561,7 +561,7 @@ public class SocketConnector implements Connector {
 
 	public void processElement(Element elem) throws JaxmppException {
 		if (log.isLoggable(Level.FINEST))
-			log.finest("RECV: " + elem.toString());
+			log.finest("RECV: " + elem.getAsString());
 		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
 			onTLSStanza(elem);
 		} else if (elem != null && elem.getXMLNS() != null && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
