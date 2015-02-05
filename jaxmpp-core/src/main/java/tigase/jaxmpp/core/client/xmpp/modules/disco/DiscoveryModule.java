@@ -193,6 +193,12 @@ public class DiscoveryModule extends AbstractIQModule {
 		public void setNode(String node) {
 			this.node = node;
 		}
+
+		@Override
+		public String toString() {
+			return "Item{" + "jid=" + jid + ", name=" + name + ", node=" + node + '}';
+		}
+
 	}
 
 	public interface ServerFeaturesReceivedHandler extends EventHandler {
