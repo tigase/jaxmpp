@@ -132,7 +132,8 @@ public class J2seElement implements Element {
 
 	@Override
 	public Element getFirstChild( String name ) throws XMLException {
-		return new J2seElement(this.xmlElement.getChild( name ));
+		tigase.xml.Element child = this.xmlElement.getChild( name );
+		return (child != null) ? new J2seElement(child, this) : null;
 	}
 
 	@Override
