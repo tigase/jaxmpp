@@ -70,9 +70,6 @@ public class FlexibleOfflineMessageRetrieval extends AbstractIQModule {
 
 	public void getOfflineMessages( ArrayList<Item> items, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
-		JID user = JID.jidInstance( context.getSessionObject().getUserBareJid() );
-		iq.setFrom( user);
-		iq.setTo( user);
 		iq.setType( StanzaType.get );
 		Element query = ElementFactory.create( "offline", null, FLEXIBLE_OFFLINE_XMLNS );
 		if ( items == null ){
@@ -94,15 +91,12 @@ public class FlexibleOfflineMessageRetrieval extends AbstractIQModule {
 
 	public void getOfflineMessagesInfo( AsyncCallback asyncCallback ) throws JaxmppException {
 		DiscoveryModule module = context.getModuleProvider().getModule( DiscoveryModule.class );
-
-		module.getInfo( JID.jidInstance( context.getSessionObject().getUserBareJid() ), FLEXIBLE_OFFLINE_XMLNS, asyncCallback );
-
+		module.getInfo(null, FLEXIBLE_OFFLINE_XMLNS, asyncCallback );
 	}
 
 	public void getOfflineMessagesItems( AsyncCallback asyncCallback ) throws JaxmppException {
 		DiscoveryModule module = context.getModuleProvider().getModule( DiscoveryModule.class );
-
-		module.getItems( JID.jidInstance( context.getSessionObject().getUserBareJid() ), FLEXIBLE_OFFLINE_XMLNS, asyncCallback );
+		module.getItems( null, FLEXIBLE_OFFLINE_XMLNS, asyncCallback );
 
 	}
 	public void purgeOfflineMessages( AsyncCallback asyncCallback ) throws JaxmppException {
@@ -111,9 +105,6 @@ public class FlexibleOfflineMessageRetrieval extends AbstractIQModule {
 
 	public void removeOfflineMessages( ArrayList<Item> items, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
-		JID user = JID.jidInstance( context.getSessionObject().getUserBareJid() );
-		iq.setFrom( user);
-		iq.setTo( user);
 		iq.setType( StanzaType.get );
 		Element query = ElementFactory.create( "offline", null, FLEXIBLE_OFFLINE_XMLNS );
 		if ( items == null ){
