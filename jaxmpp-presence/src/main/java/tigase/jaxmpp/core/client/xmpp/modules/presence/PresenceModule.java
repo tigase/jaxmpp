@@ -46,6 +46,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.logging.Level;
+
 /**
  * Module for handling presence information.
  */
@@ -385,6 +387,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
 	public static final String PRESENCE_STORE_KEY = "PresenceModule#PRESENCE_STORE";
+	public static final String INITIAL_PRESENCE_ENABLED_KEY = "INITIAL_PRESENCE_ENABLED";
 
 	public static PresenceStore getPresenceStore(SessionObject sessionObject) {
 		return sessionObject.getProperty(PRESENCE_STORE_KEY);
@@ -424,8 +427,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 	@Override
 	public void afterRegister() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -488,7 +489,14 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 	@Override
 	public void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException {
-		sendInitialPresence();
+		Boolean initial_presence_enabled = sessionObject.getProperty(INITIAL_PRESENCE_ENABLED_KEY);
+		if ( initial_presence_enabled == null ){
+			sendInitialPresence();
+		} else if (initial_presence_enabled) {
+			sendInitialPresence();
+		} else if (log.isLoggable( Level.INFO )) {
+			log.log( Level.INFO, "Skipping sending initial presence");
+		}
 	}
 
 	@Override
@@ -570,6 +578,10 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	public void setInitialPresence(boolean enabled) {
+		context.getSessionObject().setProperty( INITIAL_PRESENCE_ENABLED_KEY, enabled);
 	}
 
 	/**
