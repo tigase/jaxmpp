@@ -33,12 +33,22 @@ import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
  */
 public abstract class AbstractSessionObject implements SessionObject, EventBusAware {
 
+	@Override
+	public String toString() {
+		return "AbstractSessionObject{" + "properties=" + properties + '}';
+	}
+
 	public static class Entry {
 
 		public Entry() {
 		}
 		public Scope scope;
 		public Object value;
+
+		@Override
+		public String toString() {
+			return "Entry{" + "scope=" + scope + ", value=" + value + '}';
+		}
 	}
 
 	private EventBus eventBus;
