@@ -137,7 +137,21 @@ public class JabberDataElement extends ElementWrapper {
 	 * @return {@linkplain FixedField}
 	 */
 	public final FixedField addFixedField(String value) throws XMLException {
+		return addFixedField( null, value);
+	}
+
+	/**
+	 * Adds fixed field to form.
+	 *
+	 * @param value
+	 *            value of field
+	 * @return {@linkplain FixedField}
+	 */
+	public final FixedField addFixedField(String var, String value) throws XMLException {
 		FixedField result = new FixedField(ElementFactory.create("field"));
+		if ( null != var ) {
+			result.setVar(var);
+		}
 		result.setFieldValue(value);
 		addField(result);
 		return result;
