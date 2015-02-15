@@ -65,7 +65,7 @@ public class RSM {
 	 *
 	 * @return
 	 */
-	public int getMax() {
+	public Integer getMax() {
 		return max;
 	}
 
@@ -119,6 +119,10 @@ public class RSM {
 
 	public void setIndex(Integer index) {
 		this.index = index;
+	}
+	
+	public void setMax(Integer max) {
+		this.max = max;
 	}
 	
 	//~--- methods --------------------------------------------------------------

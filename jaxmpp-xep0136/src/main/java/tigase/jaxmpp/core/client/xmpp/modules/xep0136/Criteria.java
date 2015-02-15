@@ -124,6 +124,15 @@ public class Criteria {
 		return this;
 	}	
 	
+	public Integer getLimit() {
+		return rsm.getMax();
+	}
+	
+	public Criteria setLimit(Integer limit) {
+		rsm.setMax(limit);
+		return this;
+	}
+	
 	public void toElement(Element e) throws XMLException {
 		if (with != null)
 			e.setAttribute("with", with.toString());
