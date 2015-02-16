@@ -6,7 +6,7 @@
 		<version>3.0.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-all</artifactId>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 
 	<name>Java XMPP Library - All modules</name>
 
@@ -43,6 +43,11 @@
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-deliveryreceipts</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-pubsub</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -75,7 +80,12 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-xep0136</artifactId>
 			<version>${project.version}</version>
-		</dependency>						
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-xep0013_flexible_offline</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
