@@ -98,7 +98,6 @@
 			<id>docs</id>
 			<properties>
 				<maven.javadoc.skip>false</maven.javadoc.skip>
-				<additionalparam>-Xdoclint:none</additionalparam>
 			</properties>
 			<modules>
 				<module>jaxmpp-documentation</module>
