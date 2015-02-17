@@ -1,0 +1,16 @@
+image::images/tiger-looking-left-small.png[]
+
+[[ACS_DesignAndImplementation]]
+== Design and implementation
+
+=== Tigase JaXMPP
+
+*JaXMPP* is an extensible XMPP client library
+
+=== Design
+
+image::images/architecture.png[]
+
+== Usage
+
+Currently available on link::https://projects.tigase.org/projects/jaxmpp2/wiki[Projects wiki page]
