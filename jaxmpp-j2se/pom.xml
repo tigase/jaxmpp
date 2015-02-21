@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>tigase</groupId>
 		<artifactId>tigase-jaxmpp</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.0.0</version>
 	</parent>
 	<artifactId>jaxmpp-j2se</artifactId>
 	<packaging>jar</packaging>
@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>tigase</groupId>
 			<artifactId>tigase-xmltools</artifactId>
-			<version>3.4.5-SNAPSHOT</version>
+			<version>3.4.5</version>
 		</dependency>
 		<dependency>
 			<groupId>dnsjava</groupId>
