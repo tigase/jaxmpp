@@ -31,6 +31,7 @@ import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
+import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
 import tigase.jaxmpp.core.client.xmpp.modules.xep0136.ChatItem.Type;
@@ -137,18 +138,69 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 
 		public abstract void onSuccess(boolean autoArchive);
 
+		public void onSuccess(Settings pref) throws JaxmppException {
+			onSuccess(pref.getAutoSave());			
+		}
+		
 		@Override
 		public void onSuccess(Stanza stanza) throws JaxmppException {
 			Element pref = stanza.getChildrenNS("pref", ARCHIVE_XMLNS);
-			List<Element> children = pref.getChildren("auto");
-			boolean auto = false;
-			if (children != null && !children.isEmpty()) {
-				auto = Boolean.parseBoolean(children.get(0).getAttribute("save"));
-			}
-			onSuccess(auto);
+			onSuccess(new Settings(pref));
 		}
 	}
 
+	public static class Settings extends ElementWrapper {
+
+		public Settings() throws XMLException {
+			this(ElementFactory.create("pref", null, ARCHIVE_XMLNS));
+		}
+		
+		public Settings(Element element) {
+			super(element);
+		}
+		
+		public boolean getAutoSave() throws XMLException {
+			return Boolean.parseBoolean(getChildAttr("auto", "save"));
+		}
+		
+		public Settings setAutoSave(boolean value) throws XMLException {
+			return setChildAttr("auto", "save", Boolean.toString(value));
+		}
+		
+		public Long getExpire() throws XMLException {
+			return Long.parseLong(getChildAttr("default", "expire"));
+		}
+		
+		public Settings setExpire(Long value) throws XMLException {
+			return setChildAttr("default", "expire", value.toString());
+		}
+		
+		public SaveMode getSaveMode() throws XMLException {
+			return SaveMode.valueof(getChildAttr("default", "save"));
+		}
+		
+		public Settings setSaveMode(SaveMode mode) throws XMLException {
+			return setChildAttr("default", "save", mode.toString());
+		} 
+		
+		public String getChildAttr(String childName, String attr) throws XMLException {
+			Element def = getFirstChild(childName);
+			return def == null ? null : def.getAttribute(attr);
+		}
+		
+		public Settings setChildAttr(String childName, String attr, String value) throws XMLException {
+			Element child = getFirstChild(childName);
+			
+			if (child == null) {
+				child = ElementFactory.create(childName);
+				addChild(child);
+			}
+			child.setAttribute(attr, value);
+			
+			return this;
+		}
+	}
+	
 	private static final String ARCHIVE_XMLNS = "urn:xmpp:archive";
 
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.xmlns(ARCHIVE_XMLNS));
@@ -237,6 +289,15 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 		writer.write(iq, null, callback);
 	}
 
+	public void setSettings(Settings settings, final AsyncCallback callback) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.set);
+		
+		iq.addChild(settings);
+		
+		writer.write(iq, null, callback);
+	}
+	
 	@Override
 	public void setPacketWriter(PacketWriter packetWriter) {
 		this.writer = packetWriter;
