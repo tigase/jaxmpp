@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-xep0013_flexible_offline</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - XEP-0013-Flexible Offline Message Retrieval</name>
+	<name>Tigase XMPP Client Library - XEP-0013-Flexible Offline Message Retrieval</name>
 
 	<build>
 		<pluginManagement>

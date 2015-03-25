@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-pubsub</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - PubSub</name>
+	<name>Tigase XMPP Client Library - PubSub</name>
 
 	<build>
 		<pluginManagement>

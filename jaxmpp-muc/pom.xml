@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-muc</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - MUC</name>
+	<name>Tigase XMPP Client Library - MUC</name>
 
 	<build>
 		<pluginManagement>

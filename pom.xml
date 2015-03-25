@@ -103,6 +103,21 @@
 				<module>jaxmpp-documentation</module>
 			</modules>
 		</profile>
+		<profile>
+			<id>dist</id>
+			<properties>
+				<maven.javadoc.skip>false</maven.javadoc.skip>
+			</properties>
+			<modules>
+				<module>jaxmpp-android</module>
+				<module>jaxmpp-all</module>
+				<module>jaxmpp-all-singlejar</module>
+				<module>jaxmpp-gwt</module>
+				<module>jaxmpp-gwt-singlejar</module>
+				<module>jaxmpp-documentation</module>
+				<module>jaxmpp-dist</module>
+			</modules>
+		</profile>
 	</profiles>
 
 	<scm>

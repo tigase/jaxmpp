@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-adhoc</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - AdHoc</name>
+	<name>Tigase XMPP Client Library - AdHoc</name>
 
 	<build>
 		<pluginManagement>

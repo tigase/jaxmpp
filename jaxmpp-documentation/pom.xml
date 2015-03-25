@@ -15,7 +15,7 @@
 		<guide_filename>index</guide_filename>
 	</properties>
 
-	<name>Java XMPP Library - Documentation</name>
+	<name>Tigase XMPP Client Library - Documentation</name>
 
 	<build>
 

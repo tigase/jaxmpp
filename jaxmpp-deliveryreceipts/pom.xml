@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-deliveryreceipts</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Message Delivery Receipts</name>
+	<name>Tigase XMPP Client Library - Message Delivery Receipts</name>
 
 	<build>
 		<pluginManagement>

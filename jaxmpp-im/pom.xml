@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-im</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - IM </name>
+	<name>Tigase XMPP Client Library - IM </name>
 
 	<dependencies>
 		<dependency>

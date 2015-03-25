@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+	<id>dist</id>
+	<formats>
+		<format>zip</format>
+		<format>tar.gz</format>
+	</formats>
+
+	<fileSets>
+		<fileSet>
+			<directory>../docs</directory>
+			<outputDirectory>docs</outputDirectory>
+			<includes>
+				<include>Tigase_JaXMPP_Guide/html_chunk/**/*</include>
+				<include>Tigase_JaXMPP_Guide/pdf/**/*</include>
+				<include>javadoc/**/*</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+
+	<dependencySets>
+		<dependencySet>
+			<unpack>false</unpack>
+			<scope>runtime</scope>
+			<outputFileNameMapping>
+				${artifact.artifactId}.${artifact.extension}
+			</outputFileNameMapping>
+			<useProjectArtifact>false</useProjectArtifact>
+		</dependencySet>
+	</dependencySets>
+</assembly>

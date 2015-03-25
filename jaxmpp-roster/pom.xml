@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-roster</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Roster</name>
+	<name>Tigase XMPP Client Library - Roster</name>
 
 	<build>
 		<pluginManagement>

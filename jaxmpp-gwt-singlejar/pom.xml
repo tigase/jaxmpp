@@ -5,10 +5,10 @@
 		<artifactId>tigase-jaxmpp</artifactId>
 		<version>3.1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>jaxmpp-gwt</artifactId>
+	<artifactId>jaxmpp-gwt-singlejar</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Tigase XMPP Client Library for GWT</name>
+	<name>Tigase XMPP Client Library for GWT (singlejar)</name>
 
 	<properties>
 		<gwt.version>2.6.1</gwt.version>
@@ -45,39 +45,37 @@
 			<version>${gwt.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-gwt</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>gwt-maven-plugin</artifactId>
-				<version>${gwt.version}</version>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.5.3</version>
 				<executions>
 					<execution>
-						<phase>prepare-package</phase>
+						<id>make-assembly</id>
+						<phase>package</phase>
 						<goals>
-							<goal>compile</goal>
+							<goal>single</goal>
 						</goals>
+						<configuration>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<finalName>${project.artifactId}-singlejar</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+							<!--<attach>true</attach>-->
+						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-
-
-			<!-- Add source folders to test classpath in order to run gwt-tests as 
-				normal junit-tests -->
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.18</version>
-				<configuration>
-					<additionalClasspathElements>
-						<additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
-						<additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
-					</additionalClasspathElements>
-					<useManifestOnlyJar>false</useManifestOnlyJar>
-					<forkMode>always</forkMode>
-				</configuration>
-			</plugin>
+			</plugin>	
 
 		</plugins>
 		<resources>

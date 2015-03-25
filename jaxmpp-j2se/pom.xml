@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-j2se</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library for J2SE</name>
+	<name>Tigase XMPP Client Library for J2SE</name>
 
 	<dependencies>
 		<dependency>

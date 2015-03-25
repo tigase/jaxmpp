@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-socks5</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Socks5</name>
+	<name>Tigase XMPP Client Library - Socks5</name>
 
 	<build>
 		<pluginManagement>

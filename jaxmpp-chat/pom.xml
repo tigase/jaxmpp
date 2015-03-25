@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-chat</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Chat</name>
+	<name>Tigase XMPP Client Library - Chat</name>
 
 	<build>
 		<pluginManagement>

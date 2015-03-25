@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-registration</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Registration</name>
+	<name>Tigase XMPP Client Library - Registration</name>
 
 	<build>
 		<pluginManagement>

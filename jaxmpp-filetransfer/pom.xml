@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-filetransfer</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - FileTransfer</name>
+	<name>Tigase XMPP Client Library - FileTransfer</name>
 
 	<build>
 		<pluginManagement>

@@ -5,10 +5,10 @@
 		<artifactId>tigase-jaxmpp</artifactId>
 		<version>3.1.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>jaxmpp-all</artifactId>
-	<packaging>jar</packaging>
+	<artifactId>jaxmpp-dist</artifactId>
+	<packaging>pom</packaging>
 
-	<name>Tigase XMPP Client Library - ALL modules</name>
+	<name>Tigase XMPP Client Library - Distribution module</name>
 
 	<dependencies>
 		<dependency>
@@ -86,6 +86,41 @@
 			<artifactId>jaxmpp-xep0013_flexible_offline</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-android</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+			<type>apklib</type>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-gwt</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-gwt-singlejar</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-all</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-all-singlejar</artifactId>
+			<version>${project.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+
+
+
 	</dependencies>
 
 	<build>
@@ -98,6 +133,28 @@
 						<testFailureIgnore>false</testFailureIgnore>
 					</configuration>
 				</plugin>
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.5.3</version>
+					<executions>
+						<execution>
+							<id>dist</id>
+							<phase>package</phase>
+							<goals>
+								<goal>single</goal>
+							</goals>
+							<configuration>
+								<descriptors>
+									<descriptor>src/main/assembly/dist.xml</descriptor>
+								</descriptors>
+								<tarLongFileMode>gnu</tarLongFileMode>
+								<finalName>${project.artifactId}-${project.version}</finalName>
+								<outputDirectory>dist</outputDirectory>
+								<appendAssemblyId>false</appendAssemblyId>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>				
 			</plugins>
 	</build>
 

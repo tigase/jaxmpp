@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-jingle</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - Jingle</name>
+	<name>Tigase XMPP Client Library - Jingle</name>
 
 	<build>
 		<pluginManagement>

@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-core</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library Core</name>
+	<name>Tigase XMPP Client Library Core</name>
 
 	<build>
 		<pluginManagement>

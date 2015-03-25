@@ -8,7 +8,7 @@
 	<artifactId>jaxmpp-vcard</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Java XMPP Library - VCard</name>
+	<name>Tigase XMPP Client Library - VCard</name>
 
 	<build>
 		<pluginManagement>
