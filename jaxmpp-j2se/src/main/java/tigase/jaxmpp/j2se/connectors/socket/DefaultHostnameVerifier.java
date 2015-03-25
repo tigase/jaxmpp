@@ -3,6 +3,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
@@ -87,16 +88,20 @@ public class DefaultHostnameVerifier implements HostnameVerifier {
 
 	protected boolean verifyHostname(String hostname, X509Certificate x509Certificate) throws CertificateParsingException {
 		boolean altNamePresents = false;
-		for (List<?> entry : x509Certificate.getSubjectAlternativeNames()) {
-			Integer altNameType = (Integer) entry.get(0);
-			if (altNameType != 2)
-				continue;
-			altNamePresents = true;
-			String altName = (String) entry.get(1);
-			if (match(hostname, altName)) {
-				return true;
+		final Collection<List<?>> subjectAlternativeNames = x509Certificate.getSubjectAlternativeNames();
+		if (subjectAlternativeNames != null)
+			for (List<?> entry : subjectAlternativeNames) {
+				if (entry == null)
+					continue;
+				Integer altNameType = (Integer) entry.get(0);
+				if (altNameType != 2)
+					continue;
+				altNamePresents = true;
+				String altName = (String) entry.get(1);
+				if (match(hostname, altName)) {
+					return true;
+				}
 			}
-		}
 
 		if (!altNamePresents) {
 			X500Principal principal = x509Certificate.getSubjectX500Principal();
