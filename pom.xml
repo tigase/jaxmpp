@@ -106,10 +106,10 @@
 		<profile>
 			<id>dist</id>
 			<properties>
-				<!--<maven.javadoc.skip>false</maven.javadoc.skip>-->
+				<maven.javadoc.skip>false</maven.javadoc.skip>
 			</properties>
 			<modules>
-				<!--<module>jaxmpp-android</module>-->
+				<module>jaxmpp-android</module>
 				<module>jaxmpp-all</module>
 				<module>jaxmpp-all-singlejar</module>
 				<module>jaxmpp-gwt</module>
@@ -177,6 +177,7 @@
 							<aggregate>true</aggregate>
 							<reportOutputDirectory>docs/javadoc</reportOutputDirectory>
 							<destDir>docs/javadoc</destDir>
+							<additionalparam>-Xdoclint:none</additionalparam>
 						</configuration>
 					</execution>
 				</executions>
