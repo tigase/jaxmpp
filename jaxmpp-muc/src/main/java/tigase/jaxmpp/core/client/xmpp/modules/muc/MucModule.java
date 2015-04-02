@@ -878,22 +878,12 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			private String nickname;
 
-			private Occupant occupant;
-
-			private Presence presence;
-
 			private Room room;
 
-			private XMucUserElement xUserElement;
-
-			public YouJoinedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant, String nickname,
-					XMucUserElement xUser) {
+			public YouJoinedEvent(SessionObject sessionObject, Room room, String nickname) {
 				super(sessionObject);
 				this.room = room;
-				this.presence = element;
-				this.occupant = occupant;
 				this.nickname = nickname;
-				this.xUserElement = xUser;
 			}
 
 			@Override
@@ -1263,13 +1253,10 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			MessageErrorEvent event = new MessageErrorEvent(context.getSessionObject(), message, room, nickname, delayTime);
 			fireEvent(event);
 		} else {
-			// Disabled, because XEP says that status=110 must be sent with
-			// presence
-			// if (room.getState() != State.joined) {
-			// room.setState(State.joined);
-			// fireEvent(new YouJoinedEvent(context.getSessionObject(), element,
-			// room, occupant, nickname, xUser));
-			// }
+			if (room.getState() != State.joined) {
+				room.setState(State.joined);
+				fireEvent(new YouJoinedEvent(context.getSessionObject(), room, nickname));
+			}
 			MucMessageReceivedEvent event = new MucMessageReceivedEvent(context.getSessionObject(), message, room, nickname,
 					delayTime);
 			fireEvent(event);
@@ -1327,7 +1314,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			log.finer(element.getFrom() + " wants to change nickname to " + newNickName);
 		} else if (room.getState() != State.joined && xUser != null && xUser.getStatuses().contains(110)) {
 			room.setState(State.joined);
-			fireEvent(new YouJoinedEvent(context.getSessionObject(), element, room, occupant, nickname, xUser));
+			fireEvent(new YouJoinedEvent(context.getSessionObject(), room, nickname));
 			occupant.setPresence(element);
 			room.add(occupant);
 		} else if ((presOld == null || presOld.getType() == StanzaType.unavailable) && presNew.getType() == null) {
