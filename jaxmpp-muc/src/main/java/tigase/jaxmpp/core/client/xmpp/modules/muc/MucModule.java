@@ -1263,9 +1263,13 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			MessageErrorEvent event = new MessageErrorEvent(context.getSessionObject(), message, room, nickname, delayTime);
 			fireEvent(event);
 		} else {
-			if (room.getState() != State.joined) {
-				room.setState(State.joined);
-			}
+			// Disabled, because XEP says that status=110 must be sent with
+			// presence
+			// if (room.getState() != State.joined) {
+			// room.setState(State.joined);
+			// fireEvent(new YouJoinedEvent(context.getSessionObject(), element,
+			// room, occupant, nickname, xUser));
+			// }
 			MucMessageReceivedEvent event = new MucMessageReceivedEvent(context.getSessionObject(), message, room, nickname,
 					delayTime);
 			fireEvent(event);
