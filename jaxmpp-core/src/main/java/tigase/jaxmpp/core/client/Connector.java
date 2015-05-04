@@ -142,8 +142,10 @@ public interface Connector {
 
 			@Override
 			public String toString() {
-				return "ErrorEvent{" + "caught=" + caught + ", condition=" + condition + '}';
+				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject
+							 + ", caught=" + caught + '}';
 			}
+
 
 			@Override
 			protected void dispatch(ErrorHandler handler) throws JaxmppException {
@@ -319,7 +321,8 @@ public interface Connector {
 
 			@Override
 			public String toString() {
-				return "StateChangedEvent{" + "newState=" + newState + ", oldState=" + oldState + '}';
+				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState
+							 + ", sessionObject=" + sessionObject + '}';
 			}
 
 			@Override
