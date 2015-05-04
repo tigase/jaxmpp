@@ -141,6 +141,11 @@ public interface Connector {
 			}
 
 			@Override
+			public String toString() {
+				return "ErrorEvent{" + "caught=" + caught + ", condition=" + condition + '}';
+			}
+
+			@Override
 			protected void dispatch(ErrorHandler handler) throws JaxmppException {
 				handler.onError(sessionObject, condition, caught);
 			}
@@ -189,6 +194,11 @@ public interface Connector {
 			}
 
 			@Override
+			public String toString() {
+				return "StanzaReceivedEvent{" + "stanza=" + stanza + '}';
+			}
+
+			@Override
 			protected void dispatch(StanzaReceivedHandler handler) {
 				handler.onStanzaReceived(sessionObject, stanza);
 			}
@@ -227,6 +237,11 @@ public interface Connector {
 			public StanzaSendingEvent(SessionObject sessionObject, Element stanza) {
 				super(sessionObject);
 				this.stanza = stanza;
+			}
+
+			@Override
+			public String toString() {
+				return "StanzaSendingEvent{" + "stanza=" + stanza + '}';
 			}
 
 			@Override
@@ -300,6 +315,11 @@ public interface Connector {
 				super(sessionObject);
 				this.oldState = oldState;
 				this.newState = newState;
+			}
+
+			@Override
+			public String toString() {
+				return "StateChangedEvent{" + "newState=" + newState + ", oldState=" + oldState + '}';
 			}
 
 			@Override
