@@ -38,8 +38,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
  * @author andrzej
  */
 public class WebSocketConnector extends AbstractWebSocketConnector {
-
-	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
 	
 	private Timer pingTimer = null;
 	private WebSocket socket = null;
@@ -199,11 +197,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	
 	@Override
 	public void start() throws XMLException, JaxmppException {
-		if (rfcCompatible == null) {
-			rfcCompatible = context.getSessionObject().getProperty(WebSocketConnector.FORCE_RFC_KEY);
-		}
-		if (rfcCompatible == null)
-			rfcCompatible = false;
+		super.start();
+		
 		String url = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 		setStage(State.connecting);
 		// maybe we should add other "protocols" to indicate which version of xmpp-over-websocket is used?

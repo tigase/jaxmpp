@@ -42,6 +42,8 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
  */
 public abstract class AbstractWebSocketConnector implements Connector {
 
+	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
+	
 	protected final Context context;
 	protected final Logger log;
 
@@ -287,6 +289,15 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		}
 	}
 
+	@Override
+	public void start() throws XMLException, JaxmppException {
+		if (rfcCompatible == null) {
+			rfcCompatible = context.getSessionObject().getProperty(AbstractWebSocketConnector.FORCE_RFC_KEY);
+		}
+		if (rfcCompatible == null)
+			rfcCompatible = false;
+	}
+	
 	@Override
 	public void stop() throws JaxmppException {
 		if (getState() == State.disconnected)

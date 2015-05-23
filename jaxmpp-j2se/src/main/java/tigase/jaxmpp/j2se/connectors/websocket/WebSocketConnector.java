@@ -172,6 +172,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	@Override
 	public void start() throws XMLException, JaxmppException {
 		log.fine("Start connector.");
+		super.start();
 		if (timer != null) {
 			try {
 				timer.cancel();
