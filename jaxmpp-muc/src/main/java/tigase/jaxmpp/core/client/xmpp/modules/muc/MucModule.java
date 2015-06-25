@@ -66,6 +66,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
+import java.util.logging.Level;
+
 public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public static final String OWNER_XMLNS = "http://jabber.org/protocol/muc#owner";
@@ -1233,7 +1235,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 	protected void processMessage(Message message) throws JaxmppException {
 		final JID from = message.getFrom();
 		final BareJID roomJid = from.getBareJid();
-		final String nickname = from.getResource();
+		String nickname = from.getResource();
 
 		Room room = this.roomsManager.get(roomJid);
 		if (room == null)
@@ -1255,6 +1257,11 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 		} else {
 			if (room.getState() != State.joined) {
 				room.setState(State.joined);
+				log.log( Level.FINEST, "Message while not joined in room: " + room
+															 + " with nickname: " + nickname);
+				if (nickname == null ) {
+					nickname = room.getNickname();
+				}
 				fireEvent(new YouJoinedEvent(context.getSessionObject(), room, nickname));
 			}
 			MucMessageReceivedEvent event = new MucMessageReceivedEvent(context.getSessionObject(), message, room, nickname,

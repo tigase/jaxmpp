@@ -38,6 +38,11 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class Room {
 
+	@Override
+	public String toString() {
+		return "Room{" + "id=" + id + ", nickname=" + nickname + ", roomJid=" + roomJid + ", state=" + state + '}';
+	}
+
 	public static enum State {
 		joined,
 		not_joined,
