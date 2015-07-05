@@ -51,14 +51,20 @@ public class WebSocketReader implements Reader {
 	@Override
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
-		int read = inputStream.read(arr, buf.position(), buf.remaining());
-		if (read == -1)
-			return -1;		
-		buf.position(read);
+		int startBufPos = buf.position();
+		int read = inputStream.read(arr, startBufPos, buf.remaining());
+		if (read == -1) {
+			if (!buf.hasRemaining())
+				return -1;		
+			else
+				read = 0;
+		}
+		buf.position(startBufPos + read);
 		buf.flip();
 		
 		CharBuffer cb = CharBuffer.wrap(cbuf);
-		while (buf.hasRemaining()) {
+		//while (buf.hasRemaining()) {
+		while (buf.hasRemaining() && cb.hasRemaining()) {
 			if (remaining == 0) {
 				boolean reset = false;
 				int position = buf.position();
@@ -71,7 +77,7 @@ public class WebSocketReader implements Reader {
 					long len = buf.get() & 0x7f;
 					if (len == 126) {
 						if (buf.remaining() >= 2)
-							remaining = buf.getShort();
+							remaining = buf.getShort() & 0xffff;
 						else 
 							reset = true;
 					} else if (len == 127) {
@@ -94,10 +100,11 @@ public class WebSocketReader implements Reader {
 				long waiting = (remaining <= buf.remaining()) ? remaining : buf.remaining();
 				// decode what is waiting
 				int limit = buf.limit();
+				int rem = buf.remaining();
 				buf.limit((int) (buf.position() + waiting));
 				decoder.decode(buf, cb, false);
 				buf.limit(limit);
-				remaining -= waiting;
+				remaining -= (rem - buf.remaining());
 				if (remaining < 0) 
 					remaining = 0;
 			}
