@@ -22,7 +22,6 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.connector.AbstractSocketXmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<SocketConnector> {
 
@@ -32,24 +31,20 @@ public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<Socke
 
 	@Override
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
-		try {
-			final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
-			final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
-			final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
-			final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
+		final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
+		final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
+		final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
+		final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
 
-			final boolean isConnectionSecure = connector.isSecure();
-			final boolean isConnectionCompressed = connector.isCompressed();
+		final boolean isConnectionSecure = connector.isSecure();
+		final boolean isConnectionCompressed = connector.isCompressed();
 
-			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
-				connector.startTLS();
-			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
-				connector.startZLib();
-			} else {
-				super.processStreamFeatures(featuresElement);
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
+			connector.startTLS();
+		} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
+			connector.startZLib();
+		} else {
+			super.processStreamFeatures(featuresElement);
 		}
 	}
 }

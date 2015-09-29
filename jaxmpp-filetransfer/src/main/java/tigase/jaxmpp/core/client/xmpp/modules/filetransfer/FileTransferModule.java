@@ -50,7 +50,8 @@ public class FileTransferModule implements XmppModule {
 
 			private List<String> streamMethods;
 
-			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id, List<String> streamMethods) {
+			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id,
+					List<String> streamMethods) {
 				super(sessionObject);
 				this.fileTransfer = ft;
 				this.id = id;
@@ -88,7 +89,8 @@ public class FileTransferModule implements XmppModule {
 
 		}
 
-		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer, String id, List<String> streamMethods);
+		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer, String id,
+				List<String> streamMethods);
 	}
 
 	public static final String XMLNS_SI = "http://jabber." + "org/protocol/si";
@@ -140,17 +142,6 @@ public class FileTransferModule implements XmppModule {
 	public Criteria getCriteria() {
 		return CRIT;
 	}
-
-	// public void fileTransferProgressUpdated(FileTransfer ft) {
-	// FileTransferEvent event = new
-	// FileTransferProgressEvent(ProgressEventType, session, ft);
-	// try {
-	// observable.fireEvent(event);
-	// } catch (JaxmppException e) {
-	// // TODO - check - should not happen
-	// e.printStackTrace();
-	// }
-	// }
 
 	@Override
 	public String[] getFeatures() {
@@ -251,8 +242,9 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	public void sendNoValidStreams(FileTransferRequestEvent be) throws JaxmppException {
-		returnError(be.getFileTransfer().getPeer().toString(), be.getId(), "cancel", new String[] { "bad-request",
-				"no-valid-streams" }, new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas", XMLNS_SI });
+		returnError(be.getFileTransfer().getPeer().toString(), be.getId(), "cancel",
+				new String[] { "bad-request", "no-valid-streams" },
+				new String[] { "urn:ietf:params:xml:ns:xmpp-stanzas", XMLNS_SI });
 	}
 
 	public void sendStreamInitiationOffer(FileTransfer ft, String[] streamMethods, AsyncCallback callback)
@@ -265,9 +257,9 @@ public class FileTransferModule implements XmppModule {
 		si.setAttribute("profile", XMLNS_SI_FILE);
 		String sid = ft.getSid();
 		si.setAttribute("id", sid);
-//		if (callback != null) {
-//			callback.setSid(sid);
-//		}
+		// if (callback != null) {
+		// callback.setSid(sid);
+		// }
 
 		if (ft.getFileMimeType() != null) {
 			si.setAttribute("mime-type", ft.getFileMimeType());

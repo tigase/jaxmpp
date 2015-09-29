@@ -17,13 +17,15 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
+
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
@@ -34,8 +36,6 @@ import tigase.xml.SingletonFactory;
  */
 public abstract class Worker extends Thread {
 
-	private final Logger log = Logger.getLogger(Worker.class.getCanonicalName());
-	
 	private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
 
 	private final Connector connector;
@@ -63,7 +63,7 @@ public abstract class Worker extends Thread {
 				}
 				onStreamTerminate();
 			} catch (JaxmppException e) {
-				e.printStackTrace();
+				log.log(Level.WARNING, "Error on processing Stream Closed", e);
 			}
 		}
 
@@ -76,17 +76,29 @@ public abstract class Worker extends Thread {
 		}
 	});
 
+	private final Logger log = Logger.getLogger(Worker.class.getCanonicalName());
+
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
 	public Worker(Connector connector) {
 		this.connector = connector;
 	}
 
+	protected abstract Reader getReader();
+
 	@Override
 	public void interrupt() {
 		super.interrupt();
 		log.fine("Worker Interrupted");
 	}
+
+	protected abstract void onErrorInThread(Exception e) throws JaxmppException;
+
+	protected abstract void onStreamStart(Map<String, String> attribs);
+
+	protected abstract void onStreamTerminate() throws JaxmppException;
+
+	protected abstract void processElement(Element elem) throws JaxmppException;
 
 	@Override
 	public void run() {
@@ -106,13 +118,12 @@ public abstract class Worker extends Thread {
 				onStreamTerminate();
 			}
 		} catch (Exception e) {
-			if (connector.getState() != Connector.State.disconnecting
-					&& connector.getState() != Connector.State.disconnected) {
+			if (connector.getState() != Connector.State.disconnecting && connector.getState() != Connector.State.disconnected) {
 				log.log(Level.WARNING, "Exception in worker", e);
 				try {
 					onErrorInThread(e);
 				} catch (JaxmppException e1) {
-					e1.printStackTrace();
+					log.log(Level.WARNING, "Error on handling another exception", e);
 				}
 			}
 		} finally {
@@ -121,11 +132,6 @@ public abstract class Worker extends Thread {
 			workerTerminated();
 		}
 	}
-	
-	protected abstract void processElement(Element elem) throws JaxmppException;
-	protected abstract Reader getReader();
-	protected abstract void onStreamStart(Map<String, String> attribs);
-	protected abstract void onStreamTerminate() throws JaxmppException;
-	protected abstract void onErrorInThread(Exception e) throws JaxmppException;
+
 	protected abstract void workerTerminated();
 }

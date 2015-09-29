@@ -157,12 +157,11 @@ public abstract class BoshWorker implements BoshRequest {
 					return;
 				onError(0, null, null, e);
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.log(Level.WARNING, "Connection error ", e);
 				onError(0, null, null, e);
 			}
 		} catch (JaxmppException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			log.log(Level.SEVERE, "What a Terrible Failure?", e1);
 		}
 	}
 

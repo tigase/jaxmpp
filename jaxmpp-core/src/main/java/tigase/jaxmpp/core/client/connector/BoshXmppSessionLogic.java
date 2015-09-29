@@ -27,7 +27,6 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindErrorHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
@@ -50,7 +49,7 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	private final Connector connector;
 
 	private final Context context;
-	
+
 	private StreamFeaturesModule featuresModule;
 
 	private final XmppModulesManager modulesManager;
@@ -133,28 +132,19 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 	}
 
 	protected void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-		try {
-			DiscoveryModule discovery = this.modulesManager.getModule(DiscoveryModule.class);
-			if (discovery != null) {
-				discovery.discoverServerFeatures(null);
-			}
-
-			context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
-			
-		} catch (XMLException e) {
-			e.printStackTrace();
+		DiscoveryModule discovery = this.modulesManager.getModule(DiscoveryModule.class);
+		if (discovery != null) {
+			discovery.discoverServerFeatures(null);
 		}
+
+		context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 	}
 
 	protected void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
-		try {
-			if (sessionObject.getProperty(AuthModule.AUTHORIZED) != Boolean.TRUE) {
-				authModule.login();
-			} else if (sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE) {
-				resourceBinder.bind();
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		if (sessionObject.getProperty(AuthModule.AUTHORIZED) != Boolean.TRUE) {
+			authModule.login();
+		} else if (sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE) {
+			resourceBinder.bind();
 		}
 	}
 

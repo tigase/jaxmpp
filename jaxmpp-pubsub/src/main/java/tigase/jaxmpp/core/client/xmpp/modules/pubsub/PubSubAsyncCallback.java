@@ -53,7 +53,7 @@ public abstract class PubSubAsyncCallback implements AsyncCallback {
 			try {
 				pubSubErrorCondition = PubSubErrorCondition.valueOf(c.replace("-", "_"));
 			} catch (Exception e) {
-				e.printStackTrace();
+				log.warning("Unrecognized PubSubErrorCondition: " + c);
 			}
 		}
 

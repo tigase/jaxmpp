@@ -19,10 +19,10 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import java.util.Iterator;
 import java.util.List;
+
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -190,13 +190,13 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 	private final AbstractChatManager chatManager;
 
-	public MessageModule(AbstractChatManager chatManager) {
-		this.chatManager = chatManager;
-	}
-
 	public MessageModule() {
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
+	}
+
+	public MessageModule(AbstractChatManager chatManager) {
+		this.chatManager = chatManager;
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 	/**
 	 * Destroy chat object.
-	 * 
+	 *
 	 * @param chat
 	 *            chat object
 	 */
@@ -220,13 +220,19 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 	/**
 	 * Creates new chat object.
-	 * 
+	 *
 	 * @param jid
 	 *            destination JID
 	 * @return chat object
 	 */
 	public Chat createChat(JID jid) throws JaxmppException {
 		return this.chatManager.createChat(jid, generateThreadID());
+	}
+
+	public Chat createChatInstance(Message message, final JID interlocutorJid) throws JaxmppException {
+		Chat chat = chatManager.createChat(interlocutorJid, message.getThread());
+		fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
+		return chat;
 	}
 
 	protected Message executeBeforeMessageProcess(final Message element, Chat chat) {
@@ -238,18 +244,11 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 				try {
 					e = ((MessageModuleExtension) x).beforeMessageProcess(element, chat);
 				} catch (Exception ex) {
-					ex.printStackTrace();
 					log.warning("Problem on calling executeBeforeMessageProcess: " + ex.getMessage());
 				}
 			}
 		}
 		return e;
-	}
-
-	public Chat createChatInstance(Message message, final JID interlocutorJid) throws JaxmppException {
-		Chat chat = chatManager.createChat(interlocutorJid, message.getThread());
-		fireEvent(new ChatCreatedHandler.ChatCreatedEvent(context.getSessionObject(), chat, message));
-		return chat;
 	}
 
 	protected String generateThreadID() {
@@ -262,7 +261,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 	/**
 	 * Returns all chat objects.
-	 * 
+	 *
 	 * @return collection of chat objects.
 	 */
 	public List<Chat> getChats() {
@@ -330,8 +329,40 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	}
 
 	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 *
+	 * @param body
+	 *            message to send.
+	 * @return
+	 */
+	public void sendMessage(Chat chat, String body) throws XMLException, JaxmppException {
+		Message msg = chat.sendMessage(body);
+		write(msg);
+	}
+
+	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 *
+	 * @param body
+	 *            message to send.
+	 * @return
+	 */
+	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems)
+			throws XMLException, JaxmppException {
+		Message msg = chat.sendMessage(body);
+		if (additionalElems != null) {
+			for (Element child : additionalElems) {
+				msg.addChild(child);
+			}
+		}
+		write(msg);
+	}
+
+	/**
 	 * Sends message. It does not create chat object.
-	 * 
+	 *
 	 * @param toJID
 	 *            recipient's JID
 	 * @param subject
@@ -346,38 +377,6 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		msg.setTo(toJID);
 		msg.setId(UIDGenerator.next());
 
-		write(msg);
-	}
-
-	/**
-	 * Sends message in passed chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 * 
-	 * @param body
-	 *            message to send.
-	 * @return
-	 */
-	public void sendMessage(Chat chat, String body) throws XMLException, JaxmppException {
-		Message msg = chat.sendMessage(body);
-		write(msg);
-	}
-
-	/**
-	 * Sends message in passed chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 * 
-	 * @param body
-	 *            message to send.
-	 * @return
-	 */
-	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws XMLException,
-			JaxmppException {
-		Message msg = chat.sendMessage(body);
-		if (additionalElems != null) {
-			for (Element child : additionalElems) {
-				msg.addChild(child);
-			}
-		}
 		write(msg);
 	}
 

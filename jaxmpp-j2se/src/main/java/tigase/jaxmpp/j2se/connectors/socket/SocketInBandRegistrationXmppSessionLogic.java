@@ -24,7 +24,6 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule.StreamFeaturesReceivedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule;
@@ -106,19 +105,15 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 	}
 
 	protected void processStreamFeatures(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
-		try {
-			final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
-			final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
+		final Boolean tlsDisabled = sessionObject.getProperty(SocketConnector.TLS_DISABLED_KEY);
+		final boolean tlsAvailable = SocketConnector.isTLSAvailable(sessionObject);
 
-			final boolean isConnectionSecure = connector.isSecure();
+		final boolean isConnectionSecure = connector.isSecure();
 
-			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
-				connector.startTLS();
-			} else {
-				registrationModule.start();
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
+			connector.startTLS();
+		} else {
+			registrationModule.start();
 		}
 	}
 

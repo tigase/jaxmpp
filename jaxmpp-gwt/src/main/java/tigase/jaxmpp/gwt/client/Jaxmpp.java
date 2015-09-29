@@ -20,6 +20,12 @@ package tigase.jaxmpp.gwt.client;
 import java.util.Date;
 import java.util.logging.Level;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.user.client.Cookies;
+
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
@@ -40,19 +46,13 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
+import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.user.client.Cookies;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 
 public class Jaxmpp extends JaxmppCore {
 
@@ -69,9 +69,11 @@ public class Jaxmpp extends JaxmppCore {
 	{
 		DateTimeFormat.setProvider(new DateTimeFormatProvider() {
 
-			private final com.google.gwt.i18n.client.DateTimeFormat df1 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+			private final com.google.gwt.i18n.client.DateTimeFormat df1 = com.google.gwt.i18n.client.DateTimeFormat.getFormat(
+					"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-			private final com.google.gwt.i18n.client.DateTimeFormat df2 = com.google.gwt.i18n.client.DateTimeFormat.getFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			private final com.google.gwt.i18n.client.DateTimeFormat df2 = com.google.gwt.i18n.client.DateTimeFormat.getFormat(
+					"yyyy-MM-dd'T'HH:mm:ssZ");
 
 			@Override
 			public String format(Date date) {
@@ -123,28 +125,27 @@ public class Jaxmpp extends JaxmppCore {
 							modulesManager.getModule(PingModule.class).ping(JID.jidInstance(jid.getDomain()),
 									new AsyncCallback() {
 
-										@Override
-										public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
-										}
+								@Override
+								public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
+								}
 
-										@Override
-										public void onSuccess(Stanza responseStanza) throws XMLException {
-										}
+								@Override
+								public void onSuccess(Stanza responseStanza) throws XMLException {
+								}
 
-										@Override
-										public void onTimeout() throws JaxmppException {
-											try {
-												disconnect();
-											} catch (JaxmppException e) {
-												onException(e);
-											}
-										}
-									});
+								@Override
+								public void onTimeout() throws JaxmppException {
+									try {
+										disconnect();
+									} catch (JaxmppException e) {
+										onException(e);
+									}
+								}
+							});
 						} catch (Exception e) {
 							try {
 								onException(new JaxmppException(e));
 							} catch (JaxmppException e1) {
-								e1.printStackTrace();
 							}
 						}
 					}
@@ -174,7 +175,7 @@ public class Jaxmpp extends JaxmppCore {
 			throw new JaxmppException(e);
 		} finally {
 			StreamManagementModule.reset(sessionObject);
-			sessionObject.clear(SessionObject.Scope.session);				
+			sessionObject.clear(SessionObject.Scope.session);
 		}
 	}
 

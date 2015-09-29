@@ -591,7 +591,7 @@ public class SocketConnector implements Connector {
 
 			// start();
 		} catch (JaxmppException e) {
-			e.printStackTrace();
+			log.log(Level.WARNING, "Error on recconnect", e);
 		}
 	}
 
@@ -658,9 +658,9 @@ public class SocketConnector implements Connector {
 				}
 		}
 		try {
-			Thread.sleep((2));
+			Thread.sleep(2);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			log.warning("Thread can't sleep. Insomnia?");
 		}
 	}
 
@@ -911,7 +911,7 @@ public class SocketConnector implements Connector {
 				context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warning("Problem : " + e.getMessage());
 		}
 	}
 

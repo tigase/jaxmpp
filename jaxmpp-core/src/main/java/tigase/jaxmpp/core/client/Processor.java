@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client;
 
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -32,7 +33,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 /**
  * Class for process incoming stanza. This clas produces {@linkplain Runnable}
  * that can be started by {@linkplain Executor}.
- * 
+ *
  */
 public class Processor {
 
@@ -51,6 +52,8 @@ public class Processor {
 		}
 
 	}
+
+	private static final Logger log = Logger.getLogger(Processor.class.getName());
 
 	public static Element createError(final Element stanza, Throwable caught) {
 		try {
@@ -80,8 +83,8 @@ public class Processor {
 			result.addChild(error);
 
 			return result;
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (XMLException e) {
+			log.log(Level.WARNING, "Cannot create error element", e);
 			return null;
 		}
 	}
@@ -102,7 +105,7 @@ public class Processor {
 	/**
 	 * Produces {@link Runnable} that must be run to fully process received
 	 * stanza.
-	 * 
+	 *
 	 * @param element
 	 *            received stanza
 	 * @return {@linkplain Runnable}

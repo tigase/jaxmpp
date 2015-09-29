@@ -17,30 +17,20 @@
  */
 package tigase.jaxmpp.gwt.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import java.util.HashMap;
-
-import tigase.jaxmpp.core.client.AbstractSessionObject;
-import tigase.jaxmpp.core.client.JID;
-
-import com.google.gwt.json.client.JSONObject;
-import com.google.gwt.json.client.JSONValue;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.jaxmpp.core.client.BareJID;
+
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.json.client.JSONObject;
+
+import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.MutableLong;
-import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 public class GwtSessionObject extends AbstractSessionObject {
 
@@ -50,6 +40,20 @@ public class GwtSessionObject extends AbstractSessionObject {
 		}
 	}
 
+	private static Logger log = Logger.getLogger(GwtSessionObject.class.getName());
+
+	private static native JavaScriptObject decodeJson(String str) /*-{
+																	try {
+																	return JSON.parse(str);
+																	} catch (ex) {
+																	return {};
+																	}
+																	}-*/;
+
+	private static native String encodeJson(JavaScriptObject obj) /*-{
+																	return JSON.stringify(obj);
+																	}-*/;
+
 	private static JID getJID(JSONObject object, String key) {
 		try {
 			String v = getString(object, key);
@@ -57,7 +61,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 				return JID.jidInstance(v);
 			return null;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warning("Can't create JID instance: " + e.getMessage());
 			return null;
 		}
 	}
@@ -69,7 +73,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 				return Long.valueOf(v);
 			return null;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warning("Can't create Long instance: " + e.getMessage());
 			return null;
 		}
 	}
@@ -82,7 +86,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 			}
 			return null;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.warning("Can't create String instance: " + e.getMessage());
 			return null;
 		}
 	}
@@ -104,8 +108,8 @@ public class GwtSessionObject extends AbstractSessionObject {
 	public void restore(final String value) throws RestoringSessionException {
 		JavaScriptObject jsObject = decodeJson(value);
 		JsonSerializationHelper helper = new JsonSerializationHelper(this, properties);
-		try {		
-			Map<String,Entry> map = (Map) helper.fromJSON(jsObject);
+		try {
+			Map<String, Entry> map = (Map) helper.fromJSON(jsObject);
 			for (String key : map.keySet()) {
 				properties.put(key, map.get(key));
 			}
@@ -118,7 +122,7 @@ public class GwtSessionObject extends AbstractSessionObject {
 	public String serialize() {
 		try {
 			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
-			//log("serialized object = ", jsObject);
+			// log("serialized object = ", jsObject);
 			return encodeJson(jsObject);
 		} catch (XMLException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
@@ -126,54 +130,45 @@ public class GwtSessionObject extends AbstractSessionObject {
 
 		return null;
 	}
-	
-	private static native String encodeJson(JavaScriptObject obj) /*-{
-		return JSON.stringify(obj);
-	}-*/;
-	
-	private static native JavaScriptObject decodeJson(String str) /*-{
-		try {
-			return JSON.parse(str);
-		} catch (ex) {
-			return {};
-		}
-	}-*/;
-	
+
 	public void test() {
 		try {
 			JavaScriptObject jsObject = JsonSerializationHelper.toJSON(properties);
-			//log("serialized object = ", jsObject);
+			// log("serialized object = ", jsObject);
 			JsonSerializationHelper helper = new JsonSerializationHelper(this, properties);
-			Map<String,Entry> map = (Map) helper.fromJSON(jsObject);
-			
+			Map<String, Entry> map = (Map) helper.fromJSON(jsObject);
+
 			Set<String> allKeys = new HashSet<String>(properties.keySet());
 			allKeys.removeAll(map.keySet());
-			
-			//log("not serialized/deserialized keys", "" + allKeys.size());
+
+			// log("not serialized/deserialized keys", "" + allKeys.size());
 			for (String key : allKeys) {
 				Entry e = properties.get(key);
 				if (e.scope == Scope.stream)
-					continue;				
+					continue;
 				Object val = e.value;
-				//log(key, e.scope.name(), val != null ? val.getClass().toString() : "null", val != null ? val.toString() : "null");
+				// log(key, e.scope.name(), val != null ?
+				// val.getClass().toString() : "null", val != null ?
+				// val.toString() : "null");
 			}
 		} catch (XMLException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (JaxmppException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
-		}				
+		}
 	}
-	
-//	public static native void log(String key, String scope, String cls, String val) /*-{
-//		console.log(key, scope, cls, val);
-//	}-*/;
-//
-//	public static native void log(String cls, String val) /*-{
-//		console.log(cls, val);
-//	}-*/;	
-//
-//	public static native void log(String cls, JavaScriptObject val) /*-{
-//		console.log(cls, val);
-//	}-*/;	
-	
+
+	// public static native void log(String key, String scope, String cls,
+	// String val) /*-{
+	// console.log(key, scope, cls, val);
+	// }-*/;
+	//
+	// public static native void log(String cls, String val) /*-{
+	// console.log(cls, val);
+	// }-*/;
+	//
+	// public static native void log(String cls, JavaScriptObject val) /*-{
+	// console.log(cls, val);
+	// }-*/;
+
 }

@@ -21,6 +21,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.Context;
@@ -57,39 +58,17 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 	public static final String VERIFICATION_STRING_KEY = "XEP115VerificationString";
 
-	public static String generateVerificationString(String[] identities, String[] features) {
-		try {
-			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
-
-			for (String id : identities) {
-				md.update(id.getBytes());
-				md.update((byte) '<');
-			}
-
-			Arrays.sort(features);
-
-			for (String f : features) {
-				md.update(f.getBytes());
-				md.update((byte) '<');
-			}
-
-			byte[] digest = md.digest();
-			return Base64.encode(digest);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
 	private CapabilitiesCache cache;
 
 	private Context context;
 
 	private DiscoveryModule discoveryModule;
 
-	// private final XmppModulesManager modulesManager;
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	private NodeDetailsCallback nodeDetailsCallback;
+
+	// private final XmppModulesManager modulesManager;
 
 	public CapabilitiesModule() {
 	}
@@ -169,6 +148,30 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 		discoveryModule.setNodeCallback(getNodeName() + "#" + ver, nodeDetailsCallback);
 
 		return ver;
+	}
+
+	public final String generateVerificationString(String[] identities, String[] features) {
+		try {
+			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
+
+			for (String id : identities) {
+				md.update(id.getBytes());
+				md.update((byte) '<');
+			}
+
+			Arrays.sort(features);
+
+			for (String f : features) {
+				md.update(f.getBytes());
+				md.update((byte) '<');
+			}
+
+			byte[] digest = md.digest();
+			return Base64.encode(digest);
+		} catch (NoSuchAlgorithmException e) {
+			log.warning("Cannot calculate verification string.");
+		}
+		return null;
 	}
 
 	public CapabilitiesCache getCache() {

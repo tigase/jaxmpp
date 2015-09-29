@@ -21,19 +21,19 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.connector.BoshRequest;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.gwt.client.xml.GwtElement;
-
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.xml.client.XMLParser;
+
+import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.connector.BoshRequest;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
 public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 
@@ -152,7 +152,7 @@ public abstract class BoshWorker implements BoshRequest, ScheduledCommand {
 			// System.out.println(">> " + x);
 			request = requestBuilder.sendRequest(x, callback);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.log(Level.WARNING, "Error in BoshWorker", e);
 			try {
 				onError(-1, null, null, e);
 			} catch (JaxmppException e1) {

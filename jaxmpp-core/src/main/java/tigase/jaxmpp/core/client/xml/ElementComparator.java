@@ -52,7 +52,6 @@ public class ElementComparator implements Comparator<Element> {
 
 			return 0;
 		} catch (Exception e) {
-			e.printStackTrace();
 			return -1000;
 		}
 	}

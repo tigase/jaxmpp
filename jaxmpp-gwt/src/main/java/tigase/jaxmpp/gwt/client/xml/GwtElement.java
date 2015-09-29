@@ -23,15 +23,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.ElementComparator;
-import tigase.jaxmpp.core.client.xml.XMLException;
-
-import java.util.Arrays;
-
 import com.google.gwt.xml.client.Node;
 import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
+
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementComparator;
+import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class GwtElement implements Element {
 
@@ -43,8 +41,6 @@ public class GwtElement implements Element {
 	private final com.google.gwt.xml.client.Element xmlElement;
 
 	public GwtElement(com.google.gwt.xml.client.Element xmlElement) {
-		if (xmlElement == null)
-			(new Exception("DEBUG 1")).printStackTrace();
 		this.xmlElement = xmlElement;
 	}
 
@@ -67,24 +63,24 @@ public class GwtElement implements Element {
 	}
 
 	@Override
-	public Element findChild( String[] elemPath ) throws XMLException {
-		if ( elemPath[0].isEmpty() ){
+	public Element findChild(String[] elemPath) throws XMLException {
+		if (elemPath[0].isEmpty()) {
 			final int len = elemPath.length - 1;
-			String[] tmp = new String[ len ];
-			System.arraycopy( elemPath, 1, tmp, 1, len );
+			String[] tmp = new String[len];
+			System.arraycopy(elemPath, 1, tmp, 1, len);
 			elemPath = tmp;
 		}
-		if ( !elemPath[0].equals( getName() ) ){
+		if (!elemPath[0].equals(getName())) {
 			return null;
 		}
 
 		Element child = this;
 
 		// we must start with 1 not 0 as 0 is name of parent element
-		for ( int i = 1 ; ( i < elemPath.length ) && ( child != null ) ; i++ ) {
+		for (int i = 1; (i < elemPath.length) && (child != null); i++) {
 			String str = elemPath[i];
 
-			child = child.getFirstChild( str );
+			child = child.getFirstChild(str);
 		}
 
 		return child;
@@ -203,11 +199,11 @@ public class GwtElement implements Element {
 	}
 
 	@Override
-	public Element getFirstChild( String name ) throws XMLException {
+	public Element getFirstChild(String name) throws XMLException {
 		NodeList nodes = this.xmlElement.getChildNodes();
 		for (int i = 0; i < nodes.getLength(); i++) {
 			Node node = nodes.item(i);
-			if (node instanceof com.google.gwt.xml.client.Element && node.getNodeName().equals( name)) {
+			if (node instanceof com.google.gwt.xml.client.Element && node.getNodeName().equals(name)) {
 				return new GwtElement((com.google.gwt.xml.client.Element) node);
 			}
 		}

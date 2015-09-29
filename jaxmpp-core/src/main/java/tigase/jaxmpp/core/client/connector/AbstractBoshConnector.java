@@ -68,7 +68,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 			private int responseCode;
 
-			public BoshPacketReceivedEvent(SessionObject sessionObject, int responseCode, Element response, String responseData) {
+			public BoshPacketReceivedEvent(SessionObject sessionObject, int responseCode, Element response,
+					String responseData) {
 				super(sessionObject);
 				this.responseCode = responseCode;
 				this.response = response;
@@ -311,21 +312,17 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void onResponse(BoshRequest request, final int responseCode, String responseData, final Element response)
 			throws JaxmppException {
 		removeFromRequests(request);
-		try {
-			if (response != null && getState() == State.connecting) {
-				setSid(response.getAttribute("sid"));
-				setStage(State.connected);
-				fireOnConnected(context.getSessionObject());
-			}
-			if (response != null)
-				fireOnStanzaReceived(responseCode, responseData, response, context.getSessionObject());
+		if (response != null && getState() == State.connecting) {
+			setSid(response.getAttribute("sid"));
+			setStage(State.connected);
+			fireOnConnected(context.getSessionObject());
+		}
+		if (response != null)
+			fireOnStanzaReceived(responseCode, responseData, response, context.getSessionObject());
 
-			if (getState() == State.connected && countActiveRequests() == 0) {
-				final Element body = prepareBody((Element) null);
-				processSendData(body);
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		if (getState() == State.connected && countActiveRequests() == 0) {
+			final Element body = prepareBody((Element) null);
+			processSendData(body);
 		}
 	}
 

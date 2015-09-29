@@ -17,6 +17,13 @@
  */
 package tigase.jaxmpp.j2se.connectors.websocket;
 
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_HOSTNAME_VERIFIER;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_DISABLED_KEY;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_KEY;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.KEY_MANAGERS_KEY;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SOCKET_TIMEOUT;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SSL_SOCKET_FACTORY_KEY;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,6 +43,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.logging.Level;
+
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.KeyManager;
@@ -44,11 +52,8 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
 import tigase.jaxmpp.core.client.Base64;
-import static tigase.jaxmpp.core.client.Connector.DISABLE_KEEPALIVE_KEY;
-import static tigase.jaxmpp.core.client.Connector.ENCRYPTED_KEY;
-import static tigase.jaxmpp.core.client.Connector.EXTERNAL_KEEPALIVE_KEY;
-import static tigase.jaxmpp.core.client.Connector.TRUST_MANAGERS_KEY;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -60,12 +65,6 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.j2se.connectors.socket.Reader;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_HOSTNAME_VERIFIER;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_DISABLED_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.KEY_MANAGERS_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SOCKET_TIMEOUT;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SSL_SOCKET_FACTORY_KEY;
 import tigase.jaxmpp.j2se.connectors.socket.Worker;
 
 /**
@@ -73,7 +72,12 @@ import tigase.jaxmpp.j2se.connectors.socket.Worker;
  * @author andrzej
  */
 public class WebSocketConnector extends AbstractWebSocketConnector {
-	
+
+	private static final String EOL = "\r\n";
+
+	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes();
+
+	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
 		@Override
@@ -89,16 +93,17 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			return null;
 		}
 	};
-	
 	private final Object ioMutex = new Object();
-	
+	private TimerTask pingTask;
 	private Reader reader = null;
 	private Socket socket = null;
+
 	private Timer timer = null;
+
 	private Worker worker = null;
+
 	private OutputStream writer = null;
-	private TimerTask pingTask;
-	
+
 	public WebSocketConnector(Context context) {
 		super(context);
 		context.getEventBus().addHandler(SeeOtherHostHandler.SeeOtherHostEvent.class, new SeeOtherHostHandler() {
@@ -106,7 +111,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			@Override
 			public void onSeeOtherHost(String seeHost, MutableBoolean handled) {
 				try {
-					WebSocketConnector.this.context.getSessionObject().setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
+					WebSocketConnector.this.context.getSessionObject().setUserProperty(
+							AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
 					start();
 				} catch (JaxmppException ex) {
 					log.log(Level.SEVERE, "exception on see-other-host reconnection", ex);
@@ -115,27 +121,118 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		});
 	}
 
+	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
+		KeyManager[] result = context.getSessionObject().getProperty(KEY_MANAGERS_KEY);
+		return result == null ? new KeyManager[0] : result;
+	}
+
+	private void handshake(URI uri) throws IOException {
+		String wskey = UUID.randomUUID().toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append("GET ").append(uri.getPath() != null ? uri.getPath() : "/").append(" HTTP/1.1").append(EOL);
+		sb.append("Host: ").append(uri.getHost());
+		if (uri.getPort() != -1)
+			sb.append(":").append(uri.getPort());
+		sb.append(EOL);
+		sb.append("Connection: Upgrade").append(EOL);
+		sb.append("Upgrade: websocket").append(EOL);
+		sb.append("Sec-WebSocket-Key: ").append(wskey).append(EOL);
+		sb.append("Sec-WebSocket-Protocol: ").append("xmpp").append(",").append("xmpp-framing").append(EOL);
+		sb.append("Sec-WebSocket-Version: 13").append(EOL);
+		sb.append(EOL);
+		byte[] buffer = sb.toString().getBytes();
+
+		socket.getOutputStream().write(buffer);
+		buffer = new byte[4096];
+		int read = 0;
+		Map<String, String> headers = new HashMap<String, String>();
+		sb = new StringBuilder();
+		boolean eol = false;
+		boolean httpResponseOk = false;
+		String key = null;
+		while ((read = socket.getInputStream().read(buffer, 0, buffer.length)) != -1) {
+			if (!httpResponseOk) {
+				for (int i = 0; i < HTTP_RESPONSE_101.length; i++) {
+					if (buffer[i] != HTTP_RESPONSE_101[i])
+						throw new IOException("Wrong HTTP response, got: " + new String(buffer));
+				}
+			}
+			boolean headersRead = false;
+			for (int i = 0; i < read; i++) {
+				byte b = buffer[i];
+				switch (b) {
+				case ':':
+					if (key == null) {
+						key = sb.toString();
+						sb = new StringBuilder(64);
+						i++;
+					} else {
+						sb.append((char) b);
+					}
+					eol = false;
+					break;
+				case '\n':
+					break;
+				case '\r':
+					if (eol) {
+						headersRead = true;
+						break;
+					}
+					if (key != null) {
+						headers.put(key.trim(), sb.toString().trim());
+						key = null;
+					}
+					sb = new StringBuilder(64);
+					eol = true;
+					break;
+				default:
+					sb.append((char) b);
+					eol = false;
+					break;
+				}
+				if (headersRead)
+					break;
+			}
+			if (headersRead)
+				break;
+		}
+		// if (!"websocket".equals(headers.get("Upgrade"))) {
+		// throw new IOException("Bad upgrade header in HTTP response");
+		// }
+		try {
+			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes()));
+			if (!accept.equals(headers.get("Sec-WebSocket-Accept")))
+				throw new IOException("Invalid Sec-WebSocket-Accept header value");
+		} catch (NoSuchAlgorithmException ex) {
+			throw new IOException("Could not validate 'Sec-WebSocket-Accept' header", ex);
+		}
+		String protocol = headers.get("Sec-WebSocket-Protocol");
+		if ("xmpp-framing".equals(protocol)) {
+			rfcCompatible = true;
+		} else if (!"xmpp".equals(protocol)) {
+			throw new IOException("Established unsupported WebSocket protocol: " + protocol);
+		}
+	}
+
 	@Override
 	public boolean isSecure() {
 		return ((Boolean) context.getSessionObject().getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
 	}
 
-	@Override
-	public void send(final String data) throws JaxmppException {
-		if (getState() == State.connected || getState() == State.connecting) {
-			send(data.getBytes());
-		} else {
-			throw new JaxmppException("Not connected");
-		}
+	protected void onErrorInThread(Exception e) throws JaxmppException {
+		if (getState() == State.disconnected)
+			return;
+		terminateAllWorkers();
+		fireOnError(null, e, context.getSessionObject());
 	}
-	
+
 	protected void send(byte[] buffer) throws JaxmppException {
 		synchronized (ioMutex) {
 			if (writer != null)
 				try {
 					if (log.isLoggable(Level.FINEST))
 						log.finest("Send: " + new String(buffer));
-					
+
 					// prepare WebSocket header according to Hybi specification
 					int size = buffer.length;
 					ByteBuffer bbuf = ByteBuffer.allocate(12);
@@ -147,7 +244,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						bbuf.putShort((short) size);
 					} else {
 						bbuf.put((byte) 0x7F);
-						bbuf.putLong((long) size);
+						bbuf.putLong(size);
 					}
 					bbuf.flip();
 					writer.write(bbuf.array(), 0, bbuf.remaining());
@@ -167,7 +264,16 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			if (writer != null)
 				super.send(stanza);
 		}
-	}	
+	}
+
+	@Override
+	public void send(final String data) throws JaxmppException {
+		if (getState() == State.connected || getState() == State.connecting) {
+			send(data.getBytes());
+		} else {
+			throw new JaxmppException("Not connected");
+		}
+	}
 
 	@Override
 	public void start() throws XMLException, JaxmppException {
@@ -204,7 +310,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				log.finer("Preparing connection to " + uri.getHost());
 
 			int port = uri.getPort() == -1 ? (isSecure ? 443 : 80) : uri.getPort();
-			
+
 			log.info("Opening connection to " + x + ":" + port);
 			if (!isSecure) {
 				socket = new Socket(x, port);
@@ -223,14 +329,15 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					factory = ctx.getSocketFactory();
 				}
 
-				socket = (SSLSocket) factory.createSocket();
+				socket = factory.createSocket();
 				((SSLSocket) socket).setUseClientMode(true);
 				((SSLSocket) socket).addHandshakeCompletedListener(new HandshakeCompletedListener() {
 					@Override
 					public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 						log.info("TLS completed " + arg0);
 						context.getSessionObject().setProperty(SessionObject.Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
-						context.getEventBus().fire(new EncryptionEstablishedHandler.EncryptionEstablishedEvent(context.getSessionObject()));
+						context.getEventBus().fire(
+								new EncryptionEstablishedHandler.EncryptionEstablishedEvent(context.getSessionObject()));
 					}
 				});
 			}
@@ -253,13 +360,13 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			worker = new Worker(this) {
 
 				@Override
-				protected void processElement(Element elem) throws JaxmppException {
-					WebSocketConnector.this.processElement(elem);
+				protected Reader getReader() {
+					return reader;
 				}
 
 				@Override
-				protected Reader getReader() {
-					return reader;
+				protected void onErrorInThread(Exception e) throws JaxmppException {
+					WebSocketConnector.this.onErrorInThread(e);
 				}
 
 				@Override
@@ -273,20 +380,20 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				}
 
 				@Override
-				protected void onErrorInThread(Exception e) throws JaxmppException {
-					WebSocketConnector.this.onErrorInThread(e);
+				protected void processElement(Element elem) throws JaxmppException {
+					WebSocketConnector.this.processElement(elem);
 				}
 
 				@Override
 				protected void workerTerminated() {
 					WebSocketConnector.this.workerTerminated(this);
 				}
-				
+
 			};
 
 			log.finest("Starting WebSocket handshake...");
 			handshake(uri);
-			
+
 			reader = new WebSocketReader(new BufferedInputStream(socket.getInputStream()));
 			log.finest("Starting worker...");
 			worker.start();
@@ -329,18 +436,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		}
 	}
 
-	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
-		KeyManager[] result = context.getSessionObject().getProperty(KEY_MANAGERS_KEY);
-		return result == null ? new KeyManager[0] : result;
-	}	
-	
-	protected void onErrorInThread(Exception e) throws JaxmppException {
-		if (getState() == State.disconnected)
-			return;
-		terminateAllWorkers();
-		fireOnError(null, e, context.getSessionObject());
-	}	
-	
 	@Override
 	protected void terminateAllWorkers() throws JaxmppException {
 		log.finest("Terminating all workers");
@@ -369,8 +464,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		} finally {
 			timer = null;
 		}
-	}	
-	
+	}
+
 	private void workerTerminated(final Worker worker) {
 		try {
 			setStage(State.disconnected);
@@ -387,98 +482,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}	
-	
-	private static final String EOL = "\r\n";
-	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes();
-	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-	
-	private void handshake(URI uri) throws IOException {
-		String wskey = UUID.randomUUID().toString();
-		StringBuilder sb = new StringBuilder();
-		sb.append("GET ").append(uri.getPath() != null ? uri.getPath() : "/").append(" HTTP/1.1").append(EOL);
-		sb.append("Host: ").append(uri.getHost());
-		if (uri.getPort() != -1) sb.append(":").append(uri.getPort());
-		sb.append(EOL);
-		sb.append("Connection: Upgrade").append(EOL);
-		sb.append("Upgrade: websocket").append(EOL);
-		sb.append("Sec-WebSocket-Key: ").append(wskey).append(EOL);
-		sb.append("Sec-WebSocket-Protocol: ").append("xmpp").append(",").append("xmpp-framing").append(EOL);
-		sb.append("Sec-WebSocket-Version: 13").append(EOL);
-		sb.append(EOL);
-		byte[] buffer = sb.toString().getBytes();
-
-		socket.getOutputStream().write(buffer);
-		buffer = new byte[4096];
-		int read = 0;
-		Map<String,String> headers = new HashMap<String,String>();
-		sb = new StringBuilder();
-		boolean eol = false;
-		boolean httpResponseOk = false;
-		String key = null;
-		while ((read = socket.getInputStream().read(buffer, 0, buffer.length)) != -1) {
-			if (!httpResponseOk) {
-				for (int i=0; i<HTTP_RESPONSE_101.length; i++) {
-					if (buffer[i] != HTTP_RESPONSE_101[i])
-						throw new IOException("Wrong HTTP response, got: " + new String(buffer));
-				}
-			}
-			boolean headersRead = false;
-			for (int i = 0; i < read; i++) {
-				byte b = (byte) buffer[i];
-				switch (b) {
-					case ':':
-						if (key == null) {
-							key = sb.toString();
-							sb = new StringBuilder(64);
-							i++;
-						} else {
-							sb.append((char) b);
-						}
-						eol = false;
-						break;
-					case '\n':
-						break;
-					case '\r':
-						if (eol) {
-							headersRead = true;
-							break;
-						}
-						if (key != null) {
-							headers.put(key.trim(), sb.toString().trim());
-							key = null;
-						}
-						sb = new StringBuilder(64);
-						eol = true;
-						break;
-					default:
-						sb.append((char) b);
-						eol = false;
-						break;
-				}
-				if (headersRead)
-					break;
-			}
-			if (headersRead)
-				break;
-		}
-//		if (!"websocket".equals(headers.get("Upgrade"))) {
-//			throw new IOException("Bad upgrade header in HTTP response");
-//		}
-		try {
-			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes()));
-			if (!accept.equals(headers.get("Sec-WebSocket-Accept")))
-				throw new IOException("Invalid Sec-WebSocket-Accept header value");
-		} catch (NoSuchAlgorithmException ex) {
-			throw new IOException("Could not validate 'Sec-WebSocket-Accept' header", ex);
-		}
-		String protocol = headers.get("Sec-WebSocket-Protocol");
-		if ("xmpp-framing".equals(protocol)) {
-			rfcCompatible = true;
-		} else if (!"xmpp".equals(protocol)) {
-			throw new IOException("Established unsupported WebSocket protocol: " + protocol);
+			log.log(Level.WARNING, "Cannot terminate worker correctly", e);
 		}
 	}
 }

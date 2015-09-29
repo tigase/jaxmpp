@@ -27,7 +27,6 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
@@ -154,9 +153,10 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 
 			@Override
 			public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
-				//sessionObject.clear(Scope.session);
-				//resourceBinder.bind();
-				AbstractSocketXmppSessionLogic.this.context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
+				// sessionObject.clear(Scope.session);
+				// resourceBinder.bind();
+				AbstractSocketXmppSessionLogic.this.context.getEventBus().fire(
+						new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 			}
 		};
 	}
@@ -201,56 +201,54 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 	}
 
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
-		try {
-//			final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
-			final boolean authAvailable = AuthModule.isAuthAvailable(context.getSessionObject());
-//			final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
-//			final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
-//			final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
+		// final Boolean tlsDisabled =
+		// context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
+		final boolean authAvailable = AuthModule.isAuthAvailable(context.getSessionObject());
+		// final boolean tlsAvailable =
+		// SocketConnector.isTLSAvailable(context.getSessionObject());
+		// final Boolean compressionDisabled =
+		// context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
+		// final boolean zlibAvailable =
+		// SocketConnector.isZLibAvailable(context.getSessionObject());
 
-			final boolean isAuthorized = context.getSessionObject().getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
-			final boolean isConnectionSecure = connector.isSecure();
-			final boolean isConnectionCompressed = connector.isCompressed();
+		final boolean isAuthorized = context.getSessionObject().getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE;
+		final boolean isConnectionSecure = connector.isSecure();
+		final boolean isConnectionCompressed = connector.isCompressed();
 
-			final boolean resumption = StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())
-					&& StreamManagementModule.isResumptionEnabled(context.getSessionObject());
+		final boolean resumption = StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())
+				&& StreamManagementModule.isResumptionEnabled(context.getSessionObject());
 
-//			if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null || !tlsDisabled)) {
-//				connector.startTLS();
-//			} else if (!isConnectionCompressed && zlibAvailable && (compressionDisabled == null || !compressionDisabled)) {
-//				connector.startZLib();
-//			} else 
-			if (!isAuthorized && authAvailable) {
-				authModule.login();
-			} else if (isAuthorized && resumption) {
-				streamManaegmentModule.resume();
-			} else if (isAuthorized) {
-				resourceBinder.bind();
-			}
-		} catch (XMLException e) {
-			e.printStackTrace();
+		// if (!isConnectionSecure && tlsAvailable && (tlsDisabled == null ||
+		// !tlsDisabled)) {
+		// connector.startTLS();
+		// } else if (!isConnectionCompressed && zlibAvailable &&
+		// (compressionDisabled == null || !compressionDisabled)) {
+		// connector.startZLib();
+		// } else
+		if (!isAuthorized && authAvailable) {
+			authModule.login();
+		} else if (isAuthorized && resumption) {
+			streamManaegmentModule.resume();
+		} else if (isAuthorized) {
+			resourceBinder.bind();
 		}
 	}
 
 	private void sessionBindedAndEstablished(SessionObject sessionObject) throws JaxmppException {
-		try {
-			DiscoveryModule discoInfo = this.modulesManager.getModule(DiscoveryModule.class);
-			if (discoInfo != null) {
-				discoInfo.discoverServerFeatures(null);
-			}
+		DiscoveryModule discoInfo = this.modulesManager.getModule(DiscoveryModule.class);
+		if (discoInfo != null) {
+			discoInfo.discoverServerFeatures(null);
+		}
 
-			context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
-			
-			if (StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())) {
-				if (context.getSessionObject().getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
-						|| !((Boolean) context.getSessionObject().getProperty(
-								StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
-					StreamManagementModule streamManagement = this.modulesManager.getModule(StreamManagementModule.class);
-					streamManagement.enable();
-				}
+		context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
+
+		if (StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())) {
+			if (context.getSessionObject().getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
+					|| !((Boolean) context.getSessionObject().getProperty(
+							StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
+				StreamManagementModule streamManagement = this.modulesManager.getModule(StreamManagementModule.class);
+				streamManagement.enable();
 			}
-		} catch (XMLException e) {
-			e.printStackTrace();
 		}
 	}
 

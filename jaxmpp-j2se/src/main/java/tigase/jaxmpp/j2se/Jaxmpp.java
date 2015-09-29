@@ -199,7 +199,7 @@ public class Jaxmpp extends JaxmppCore {
 				try {
 					checkTimeouts();
 				} catch (JaxmppException e) {
-					e.printStackTrace();
+					log.warning("Problem on checking timeouts");
 				}
 			}
 		};
@@ -259,7 +259,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	/**
-	 * Connects to server in sync mode. 
+	 * Connects to server in sync mode.
 	 */
 	public void login() throws JaxmppException {
 		login(true);
@@ -267,7 +267,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	/**
 	 * Connects to server.
-	 * 
+	 *
 	 * @param sync
 	 *            <code>true</code> to start method in sync mode. In sync mode
 	 *            whole connecting process will be done in this method.
@@ -353,7 +353,6 @@ public class Jaxmpp extends JaxmppCore {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
 		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
@@ -379,7 +378,6 @@ public class Jaxmpp extends JaxmppCore {
 	@Override
 	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
 		synchronized (Jaxmpp.this) {
-			// (new Exception("DEBUG")).printStackTrace();
 			Jaxmpp.this.notify();
 		}
 		eventBus.fire(new ConnectedEvent(sessionObject));
@@ -396,7 +394,7 @@ public class Jaxmpp extends JaxmppCore {
 	/**
 	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
 	 * modules.
-	 * 
+	 *
 	 * @param executor
 	 *            executor
 	 */
