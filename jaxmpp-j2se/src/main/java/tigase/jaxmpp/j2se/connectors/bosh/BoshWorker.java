@@ -134,22 +134,25 @@ public abstract class BoshWorker implements BoshRequest {
 
 				// System.out.println("R: " + sb.toString());
 
-				parser.parse(domHandler, responseData.toCharArray(), 0, responseData.length());
+				synchronized (domHandler) {
+					parser.parse(domHandler, responseData.toCharArray(), 0, responseData.length());
 
-				Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
+					Queue<tigase.xml.Element> elems = domHandler.getParsedElements();
 
-				tigase.xml.Element elem;
-				while ((elem = elems.poll()) != null) {
-					final String type = elem.getAttribute("type");
-					Element response = new J2seElement(elem);
-					if (type != null && "terminate".equals(type)) {
-						onTerminate(responseCode, responseData, response);
-					} else if (type != null && "error".equals(type)) {
-						onError(responseCode, responseData, response, null);
-					} else if (type == null) {
-						onSuccess(responseCode, responseData, response);
-					} else
-						throw new RuntimeException("Unknown response type '" + type + "'");
+					tigase.xml.Element elem;
+					while ((elem = elems.poll()) != null) {
+						final String type = elem.getAttribute("type");
+						Element response = new J2seElement(elem);
+						if (type != null && "terminate".equals(type)) {
+							onTerminate(responseCode, responseData, response);
+						} else if (type != null && "error".equals(type)) {
+							onError(responseCode, responseData, response, null);
+						} else if (type == null) {
+							onSuccess(responseCode, responseData, response);
+						} else {
+							throw new RuntimeException("Unknown response type '" + type + "'");
+						}
+					}
 				}
 
 			} catch (SocketException e) {
