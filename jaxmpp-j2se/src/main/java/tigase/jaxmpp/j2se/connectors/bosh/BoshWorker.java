@@ -18,6 +18,7 @@
 package tigase.jaxmpp.j2se.connectors.bosh;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
@@ -102,6 +103,14 @@ public abstract class BoshWorker implements BoshRequest {
 			try {
 				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
 				this.conn = (HttpURLConnection) (url.openConnection());
+				// force to use POST method
+				this.conn.setRequestMethod("POST");
+				// added as per comment at
+				// http://stackoverflow.com/questions/941628/urlconnection-filenotfoundexception-for-non-standard-http-port-sources/2274535#2274535
+				// related to server not returning data when request are not on default HTTP port
+				conn.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
+				conn.setRequestProperty("Accept","*/*");
+				
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
@@ -111,16 +120,29 @@ public abstract class BoshWorker implements BoshRequest {
 				wr.write(b);
 				wr.flush();
 
-				final int responseCode = conn.getResponseCode();
+				Integer responseCode;
+				String responseData;
+				try {
+					responseCode = conn.getResponseCode();
 
-				StringBuilder sb = new StringBuilder();
-				BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-				String line;
-				while ((line = rd.readLine()) != null) {
-					sb.append(line);
+					StringBuilder sb = new StringBuilder();
+					InputStream is = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
+					BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+					String line;
+					while ((line = rd.readLine()) != null) {
+						sb.append(line);
+					}
+					responseData = sb.toString();
+				} catch (RuntimeException ex) {
+					// in case of server not returning any data we need to handle
+					// exception properly as conn.getResponseCode() may return
+					// exception wrapped in RuntimeException
+					responseCode = 500;
+					responseData = "Server returned no data";
+					if (log.isLoggable(Level.FINEST)) {
+						log.log(Level.FINEST, "got exception while reading data from socket", ex);
+					}
 				}
-
-				final String responseData = sb.toString();
 
 				if (log.isLoggable(Level.FINEST))
 					log.finest("Received: " + responseData);
