@@ -191,11 +191,15 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void addToRequests(final BoshRequest worker) {
-		this.requests.add(worker);
+		synchronized (requests) {
+			this.requests.add(worker);
+		}
 	}
 
 	protected int countActiveRequests() {
-		return this.requests.size();
+		synchronized (this.requests) {
+			return this.requests.size();
+		}
 	}
 
 	@Override
@@ -417,7 +421,9 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected abstract void processSendData(final Element element) throws XMLException, JaxmppException;
 
 	protected void removeFromRequests(final BoshRequest ack) {
-		this.requests.remove(ack);
+		synchronized (this.requests) {
+			this.requests.remove(ack);		
+		}
 	}
 
 	@Override
@@ -499,19 +505,25 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public void stop(boolean terminate) throws XMLException, JaxmppException {
+		State oldState = getState();
+
 		setStage(State.disconnecting);
 		if (terminate)
 			terminateAllWorkers();
-		else if (getState() != State.disconnected) {
+		else if (getState() != State.disconnected && oldState != State.disconnecting) {
+			// if we already are in disconnecting state then we should not send termination
+			// of stream as it was already sent
 			processSendData(prepareTerminateBody(null));
 		}
 	}
 
 	protected void terminateAllWorkers() {
-		for (BoshRequest w : this.requests) {
-			w.terminate();
+		synchronized (this.requests) {
+			for (BoshRequest w : this.requests) {
+				w.terminate();
+			}
+			this.requests.clear();
 		}
-		this.requests.clear();
 
 		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
