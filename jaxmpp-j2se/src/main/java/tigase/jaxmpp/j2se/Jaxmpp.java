@@ -50,6 +50,19 @@ import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
  */
 public class Jaxmpp extends JaxmppCore {
 
+	private class CheckTimeoutsTask extends TimerTask {
+
+		@Override
+		public void run() {
+			try {
+				checkTimeouts();
+			} catch (JaxmppException e) {
+				log.warning("Problem on checking timeouts");
+			}
+		}
+		
+	}
+	
 	private class LoginTimeoutTask extends TimerTask {
 
 		@Override
@@ -87,8 +100,8 @@ public class Jaxmpp extends JaxmppCore {
 	// private FileTransferManager fileTransferManager;
 
 	private TimerTask loginTimeoutTask;
-
-	private final Timer timer = new Timer(true);
+	
+	private Timer timer = null;
 
 	public Jaxmpp() {
 		super();
@@ -192,18 +205,6 @@ public class Jaxmpp extends JaxmppCore {
 		super.init();
 
 		setExecutor(DEFAULT_EXECUTOR);
-		TimerTask checkTimeouts = new TimerTask() {
-
-			@Override
-			public void run() {
-				try {
-					checkTimeouts();
-				} catch (JaxmppException e) {
-					log.warning("Problem on checking timeouts");
-				}
-			}
-		};
-		timer.schedule(checkTimeouts, 30 * 1000, 30 * 1000);
 
 		this.connector = this.connectorWrapper;
 
@@ -273,6 +274,13 @@ public class Jaxmpp extends JaxmppCore {
 	 *            whole connecting process will be done in this method.
 	 */
 	public void login(boolean sync) throws JaxmppException {
+		synchronized (this) {
+			if (timer != null)
+				timer.cancel();
+			
+			timer = new Timer(true);
+			timer.schedule(new CheckTimeoutsTask(), 30 * 1000, 30 * 1000);
+		}
 		this.modulesManager.initIfRequired();
 
 		final Connector.State state = sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY);
@@ -344,6 +352,16 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	@Override
+	protected void onConnectorStopped() {
+		super.onConnectorStopped();
+		synchronized (this) {
+			if (timer != null)
+				timer.cancel();
+			timer = null;
+		}
+	}
+	
+	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(Level.FINE, "Catching exception", e);
 		sessionObject.setProperty(EXCEPTION_KEY, e);
@@ -354,6 +372,10 @@ public class Jaxmpp extends JaxmppCore {
 		}
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
+			if (timer != null) {
+				timer.cancel();
+				timer = null;
+			}
 		}
 		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
 	}
