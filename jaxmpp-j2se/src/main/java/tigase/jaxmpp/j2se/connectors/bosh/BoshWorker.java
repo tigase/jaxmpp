@@ -102,6 +102,8 @@ public abstract class BoshWorker implements BoshRequest {
 		try {
 			try {
 				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
+				if (url == null)
+					throw new JaxmppException(BoshConnector.URL_KEY + " is not set!");
 				this.conn = (HttpURLConnection) (url.openConnection());
 				// force to use POST method
 				this.conn.setRequestMethod("POST");
