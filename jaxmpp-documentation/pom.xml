@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>tigase</groupId>
 		<artifactId>tigase-jaxmpp</artifactId>
-		<version>3.1.0-SNAPSHOT</version>
+		<version>3.0.1</version>
 	</parent>
 	<artifactId>jaxmpp-documentaion</artifactId>
 	<packaging>pom</packaging>
@@ -113,10 +113,10 @@
 							<ignoreImageScaling>true</ignoreImageScaling>
 							<postProcess>
 								<copy todir="${guide_path}/webhelp/css">
-									<fileset dir="src/main/asciidoc/css"></fileset>
+									<fileset dir="src/main/asciidoc/css" />
 								</copy>
 								<copy todir="${guide_path}/webhelp/images">
-									<fileset dir="src/main/asciidoc/images"></fileset>
+									<fileset dir="src/main/asciidoc/images" />
 								</copy>
 							</postProcess>
 
@@ -156,10 +156,10 @@
 							<htmlStylesheet>css/docbook-xsl.css</htmlStylesheet>
 							<postProcess>
 								<copy todir="${guide_path}/html_chunk/css">
-									<fileset dir="src/main/asciidoc/css"></fileset>
+									<fileset dir="src/main/asciidoc/css" />
 								</copy>
 								<copy todir="${guide_path}/html_chunk/images">
-									<fileset dir="src/main/asciidoc/images"></fileset>
+									<fileset dir="src/main/asciidoc/images" />
 								</copy>
 							</postProcess>
 						</configuration>
