@@ -92,7 +92,7 @@
 			<artifactId>jaxmpp-android</artifactId>
 			<version>${project.version}</version>
 			<scope>runtime</scope>
-			<type>apklib</type>
+			<type>aar</type>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
