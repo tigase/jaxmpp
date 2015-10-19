@@ -133,15 +133,17 @@ public class DefaultHostnameVerifier implements HostnameVerifier {
 			log.warning("Certificate is NULL! Can't validate hostname.");
 			return false;
 		}
-		for (List<?> entry : x509Certificate.getSubjectAlternativeNames()) {
-			Integer altNameType = (Integer) entry.get(0);
-			if (altNameType != 7)
-				continue;
-			String altName = (String) entry.get(1);
-			if (ipAddr.equalsIgnoreCase(altName)) {
-				return true;
+		final Collection<List<?>> subjectAlternativeNames = x509Certificate.getSubjectAlternativeNames();
+		if (subjectAlternativeNames != null)
+			for (List<?> entry : x509Certificate.getSubjectAlternativeNames()) {
+				Integer altNameType = (Integer) entry.get(0);
+				if (altNameType != 7)
+					continue;
+				String altName = (String) entry.get(1);
+				if (ipAddr.equalsIgnoreCase(altName)) {
+					return true;
+				}
 			}
-		}
 		return false;
 	}
 
