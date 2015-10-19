@@ -3,6 +3,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -74,6 +75,15 @@ public class DefaultHostnameVerifier implements HostnameVerifier {
 		try {
 			Certificate[] certificates = session.getPeerCertificates();
 
+			if (certificates == null || certificates.length == 0) {
+				log.warning("There is no Peer Certificate (The server does not provides it). Cannot validate hostname.");
+				return false;
+			}
+
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("Peer certificates: " + Arrays.toString(certificates));
+			}
+
 			if (hostname.matches(IPv4_IPv6_PATTERN)) {
 				return verifyIp(hostname, (X509Certificate) certificates[0]);
 			} else {
@@ -87,6 +97,10 @@ public class DefaultHostnameVerifier implements HostnameVerifier {
 	}
 
 	protected boolean verifyHostname(String hostname, X509Certificate x509Certificate) throws CertificateParsingException {
+		if (x509Certificate == null) {
+			log.warning("Certificate is NULL! Can't validate hostname.");
+			return false;
+		}
 		boolean altNamePresents = false;
 		final Collection<List<?>> subjectAlternativeNames = x509Certificate.getSubjectAlternativeNames();
 		if (subjectAlternativeNames != null)
@@ -115,6 +129,10 @@ public class DefaultHostnameVerifier implements HostnameVerifier {
 	}
 
 	protected boolean verifyIp(String ipAddr, X509Certificate x509Certificate) throws CertificateParsingException {
+		if (x509Certificate == null) {
+			log.warning("Certificate is NULL! Can't validate hostname.");
+			return false;
+		}
 		for (List<?> entry : x509Certificate.getSubjectAlternativeNames()) {
 			Integer altNameType = (Integer) entry.get(0);
 			if (altNameType != 7)
