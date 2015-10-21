@@ -17,12 +17,7 @@
  */
 package tigase.jaxmpp.j2se.connectors.websocket;
 
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_HOSTNAME_VERIFIER;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_DISABLED_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.KEY_MANAGERS_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SOCKET_TIMEOUT;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SSL_SOCKET_FACTORY_KEY;
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -35,23 +30,10 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
-import javax.net.ssl.HandshakeCompletedEvent;
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.Context;
@@ -78,21 +60,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes();
 
 	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
-		@Override
-		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return null;
-		}
-	};
 	private final Object ioMutex = new Object();
 	private TimerTask pingTask;
 	private Reader reader = null;
@@ -286,9 +254,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		}
 		timer = new Timer(true);
-
-		if (context.getSessionObject().getProperty(TRUST_MANAGERS_KEY) == null)
-			context.getSessionObject().setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
 
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);

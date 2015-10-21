@@ -25,8 +25,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -38,30 +36,16 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-import javax.net.ssl.HandshakeCompletedEvent;
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.EncryptionEstablishedHandler.EncryptionEstablishedEvent;
 import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaSendingHandler.StanzaSendingEvent;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -83,94 +67,43 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.H
  */
 public class SocketConnector implements Connector {
 
-	public static interface DnsResolver {
-
-		List<Entry> resolve(String hostname);
-	}
-
-	public final static class Entry {
-
-		private final String hostname;
-
-		private final Integer port;
-
-		public Entry(String host, Integer port) {
-			this.hostname = host;
-			this.port = port;
-		}
-
-		public String getHostname() {
-			return hostname;
-		}
-
-		public Integer getPort() {
-			return port;
-		}
-
-		@Override
-		public String toString() {
-			return hostname + ":" + port;
-		}
-
-	}
-
-	/**
-	 * see-other-host
-	 */
-	public interface HostChangedHandler extends EventHandler {
-
-		public static class HostChangedEvent extends JaxmppEvent<HostChangedHandler> {
-
-			public HostChangedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(HostChangedHandler handler) {
-				handler.onHostChanged(sessionObject);
-			}
-
-		}
-
-		void onHostChanged(SessionObject sessionObject);
-	}
-
 	public final static String COMPRESSION_DISABLED_KEY = "COMPRESSION_DISABLED";
-
 	public final static HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
-
 	/**
 	 * Default size of buffer used to decode data before parsing
 	 */
 	public final static int DEFAULT_SOCKET_BUFFER_SIZE = 2048;
-
-	/**
-	 * Instance of empty byte array used to force flush of compressed stream
-	 */
-	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
-
 	public static final String HOSTNAME_VERIFIER_DISABLED_KEY = "HOSTNAME_VERIFIER_DISABLED_KEY";
-
 	public static final String HOSTNAME_VERIFIER_KEY = "HOSTNAME_VERIFIER_KEY";
-
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
-
 	public final static String RECONNECTING_KEY = "s:reconnecting";
-
 	public static final String SASL_EXTERNAL_ENABLED_KEY = "SASL_EXTERNAL_ENABLED_KEY";
-
 	public static final String SERVER_HOST = "socket#ServerHost";
-
 	public static final String SERVER_PORT = "socket#ServerPort";
-
 	/**
 	 * Socket timeout.
 	 */
 	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
-
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
-
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
+	/**
+	 * Instance of empty byte array used to force flush of compressed stream
+	 */
+	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
+	private final Object ioMutex = new Object();
+	private final Logger log;
+	private Context context;
+	private TimerTask pingTask;
+	private volatile Reader reader;
+	private Socket socket;
+	private Timer timer;
+	private Worker worker;
+	private OutputStream writer;
+
+	public SocketConnector(Context context) {
+		this.log = Logger.getLogger(this.getClass().getName());
+		this.context = context;
+	}
 
 	public static boolean isTLSAvailable(SessionObject sessionObject) throws XMLException {
 		final Element sf = StreamFeaturesModule.getStreamFeatures(sessionObject);
@@ -202,45 +135,6 @@ public class SocketConnector implements Connector {
 		}
 
 		return false;
-	}
-
-	private Context context;
-
-	private final TrustManager dummyTrustManager = new X509TrustManager() {
-
-		@Override
-		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return null;
-		}
-	};
-
-	private final Object ioMutex = new Object();
-
-	private final Logger log;
-
-	private TimerTask pingTask;
-
-	private volatile Reader reader;
-
-	private Socket socket;
-
-	private Timer timer;
-
-	private Worker worker;
-
-	private OutputStream writer;
-
-	public SocketConnector(Context context) {
-		this.log = Logger.getLogger(this.getClass().getName());
-		this.context = context;
 	}
 
 	@Override
@@ -687,9 +581,6 @@ public class SocketConnector implements Connector {
 		}
 		timer = new Timer(true);
 
-		if (context.getSessionObject().getProperty(TRUST_MANAGERS_KEY) == null)
-			context.getSessionObject().setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
-
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
 		} else if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY) == null) {
@@ -913,6 +804,58 @@ public class SocketConnector implements Connector {
 		} catch (Exception e) {
 			log.warning("Problem : " + e.getMessage());
 		}
+	}
+
+	public static interface DnsResolver {
+
+		List<Entry> resolve(String hostname);
+	}
+
+	/**
+	 * see-other-host
+	 */
+	public interface HostChangedHandler extends EventHandler {
+
+		void onHostChanged(SessionObject sessionObject);
+
+		public static class HostChangedEvent extends JaxmppEvent<HostChangedHandler> {
+
+			public HostChangedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(HostChangedHandler handler) {
+				handler.onHostChanged(sessionObject);
+			}
+
+		}
+	}
+
+	public final static class Entry {
+
+		private final String hostname;
+
+		private final Integer port;
+
+		public Entry(String host, Integer port) {
+			this.hostname = host;
+			this.port = port;
+		}
+
+		public String getHostname() {
+			return hostname;
+		}
+
+		public Integer getPort() {
+			return port;
+		}
+
+		@Override
+		public String toString() {
+			return hostname + ":" + port;
+		}
+
 	}
 
 }

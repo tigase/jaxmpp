@@ -30,404 +30,44 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 public interface Connector {
 
 	/**
-	 * Implemented by handlers of {@linkplain ConnectedEvent ConnectedEvent}.
-	 */
-	public interface ConnectedHandler extends EventHandler {
-
-		/**
-		 * Fired after creates XMPP Stream
-		 */
-		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
-
-			public ConnectedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(ConnectedHandler handler) {
-				handler.onConnected(sessionObject);
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onConnected(SessionObject sessionObject);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain DisconnectedEvent}.
-	 */
-	public interface DisconnectedHandler extends EventHandler {
-
-		/**
-		 * Fired when Connector is permanently stopped.
-		 */
-		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
-
-			public DisconnectedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(DisconnectedHandler handler) throws Exception {
-				handler.onDisconnected(sessionObject);
-			}
-		}
-
-		/**
-		 * Called when {@linkplain DisconnectedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onDisconnected(SessionObject sessionObject);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain EncryptionEstablishedEvent
-	 * EncryptionEstablishedEvent}.
-	 */
-	public interface EncryptionEstablishedHandler extends EventHandler {
-
-		/**
-		 * Fired after encrypted connection is established.
-		 */
-		public static class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
-
-			public EncryptionEstablishedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(EncryptionEstablishedHandler handler) {
-				handler.onEncryptionEstablished(sessionObject);
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain EncryptionEstablishedEvent
-		 * EncryptionEstablishedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onEncryptionEstablished(SessionObject sessionObject);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain ErrorEvent ErrorEvent}.
-	 */
-	public interface ErrorHandler extends EventHandler {
-
-		/**
-		 * Fired on connection error.
-		 */
-		public static class ErrorEvent extends JaxmppEvent<ErrorHandler> {
-
-			private Throwable caught;
-
-			private StreamError condition;
-
-			public ErrorEvent(SessionObject sessionObject, StreamError condition, Throwable caught) {
-				super(sessionObject);
-				this.condition = condition;
-				this.caught = caught;
-			}
-
-			@Override
-			public String toString() {
-				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject
-							 + ", caught=" + caught + '}';
-			}
-
-
-			@Override
-			protected void dispatch(ErrorHandler handler) throws JaxmppException {
-				handler.onError(sessionObject, condition, caught);
-			}
-
-			public Throwable getCaught() {
-				return caught;
-			}
-
-			public StreamError getCondition() {
-				return condition;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain ErrorEvent ErrorEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param condition
-		 *            XMPP error condition. <code>null</code> if error is not
-		 *            caused by stream.
-		 * @param caught
-		 *            exception. <cude>null</code> if error was caused by
-		 *            stream.
-		 */
-		void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException;
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain StanzaReceivedEvent
-	 * StanzaReceivedEvent}.
-	 */
-	public interface StanzaReceivedHandler extends EventHandler {
-
-		/**
-		 * Fired when stanza is received.
-		 */
-		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
-
-			private StreamPacket stanza;
-
-			public StanzaReceivedEvent(SessionObject sessionObject, StreamPacket stanza) {
-				super(sessionObject);
-				this.stanza = stanza;
-			}
-
-			@Override
-			public String toString() {
-				return "StanzaReceivedEvent{" + "stanza=" + stanza + '}';
-			}
-
-			@Override
-			protected void dispatch(StanzaReceivedHandler handler) {
-				handler.onStanzaReceived(sessionObject, stanza);
-			}
-
-			public StreamPacket getStanza() {
-				return stanza;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain StanzaReceivedEvent StanzaReceivedEvent} is
-		 * fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param stanza
-		 *            received stanza.
-		 */
-		void onStanzaReceived(SessionObject sessionObject, StreamPacket stanza);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain StanzaSendingEvent
-	 * StanzaSendingEvent}.
-	 */
-	public interface StanzaSendingHandler extends EventHandler {
-
-		/**
-		 * Fired when stanza is sending.
-		 */
-		public static class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
-
-			private Element stanza;
-
-			public StanzaSendingEvent(SessionObject sessionObject, Element stanza) {
-				super(sessionObject);
-				this.stanza = stanza;
-			}
-
-			@Override
-			public String toString() {
-				return "StanzaSendingEvent{" + "stanza=" + stanza + '}';
-			}
-
-			@Override
-			protected void dispatch(StanzaSendingHandler handler) throws JaxmppException {
-				handler.onStanzaSending(sessionObject, stanza);
-			}
-
-			public Element getStanza() {
-				return stanza;
-			}
-
-			public void setStanza(Element stanza) {
-				this.stanza = stanza;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain StanzaSendingEvent StanzaSendingEvent} is
-		 * fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param stanza
-		 *            stanza to be sent.
-		 */
-		void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException;
-	}
-
-	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
-	// "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
-
-	/**
-	 * States of Connector.
-	 */
-	public static enum State {
-		/**
-		 * Connection is established.
-		 */
-		connected,
-		/**
-		 * Connector started establishing connection.
-		 */
-		connecting,
-		/**
-		 * Connector is disconnected.
-		 */
-		disconnected,
-		/**
-		 * Connector is closing connection and stopping workers.
-		 */
-		disconnecting
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain StateChangedEvent
-	 * StateChangedEvent}.
-	 */
-	public interface StateChangedHandler extends EventHandler {
-
-		/**
-		 * Fired after connection state is changed.
-		 */
-		public static class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
-
-			private State newState;
-
-			private State oldState;
-
-			public StateChangedEvent(SessionObject sessionObject, State oldState, State newState) {
-				super(sessionObject);
-				this.oldState = oldState;
-				this.newState = newState;
-			}
-
-			@Override
-			public String toString() {
-				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState
-							 + ", sessionObject=" + sessionObject + '}';
-			}
-
-			@Override
-			protected void dispatch(StateChangedHandler handler) throws JaxmppException {
-				handler.onStateChanged(sessionObject, oldState, newState);
-			}
-
-			public State getNewState() {
-				return newState;
-			}
-
-			public State getOldState() {
-				return oldState;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain StateChangedEvent StateChangedEvent} is
-		 * fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param oldState
-		 *            previous connector state.
-		 * @param newState
-		 *            new connector state.
-		 */
-		void onStateChanged(SessionObject sessionObject, State oldState, State newState) throws JaxmppException;
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain StreamTerminatedEvent
-	 * StreamTerminatedEvent}.
-	 */
-	public interface StreamTerminatedHandler extends EventHandler {
-
-		/**
-		 * Fired after XMPP Stream is terminated.
-		 */
-		public static class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
-
-			public StreamTerminatedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
-				handler.onStreamTerminated(sessionObject);
-			}
-
-		}
-
-		/**
-		 * Called when when {@linkplain StreamTerminatedEvent
-		 * StreamTerminatedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onStreamTerminated(SessionObject sessionObject) throws JaxmppException;
-	}
-
-	/**
 	 * Name of property that specify if connection is already compressed. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String COMPRESSED_KEY = "CONNECTOR#COMPRESSED_KEY";
-
 	/**
 	 * Name of property that specify current state of connector. <br/>
 	 * Type: {@linkplain State State}.
 	 */
 	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
-
 	/**
 	 * Name of property that allows disable keep alive feature. Keep alive is
 	 * turned on by default. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
-
 	/**
 	 * Name of property that specify if connection is encrypted. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
-
 	/**
 	 * <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
-
 	/**
 	 * <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
 
+	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
+	// "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
 	/**
 	 * Name of property to define
 	 * {@linkplain SessionObject#setUserProperty(String, Object) property}.
-	 * Custom array of {@link TrustManager TrustManagers[]} instead of dummy
-	 * (accepts all certificates) builded in.
+	 * Custom array of {@link javax.net.ssl.TrustManager TrustManagers[]}
+	 * instead of default Java TrustManager.
 	 */
 	public static final String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
 
@@ -497,9 +137,362 @@ public interface Connector {
 	 * Stops connector.
 	 *
 	 * @param terminate
-	 *            if
-	 *            <code>true<code> then connection will be terminated immediatelly and connector will be stopped.
+	 *            if <code>true<code> then connection will be terminated
+	 *            immediatelly and connector will be stopped.
 	 */
 	public void stop(boolean terminate) throws JaxmppException;
+
+	/**
+	 * States of Connector.
+	 */
+	public static enum State {
+		/**
+		 * Connection is established.
+		 */
+		connected,
+		/**
+		 * Connector started establishing connection.
+		 */
+		connecting,
+		/**
+		 * Connector is disconnected.
+		 */
+		disconnected,
+		/**
+		 * Connector is closing connection and stopping workers.
+		 */
+		disconnecting
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain ConnectedEvent ConnectedEvent}.
+	 */
+	public interface ConnectedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onConnected(SessionObject sessionObject);
+
+		/**
+		 * Fired after creates XMPP Stream
+		 */
+		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
+
+			public ConnectedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(ConnectedHandler handler) {
+				handler.onConnected(sessionObject);
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain DisconnectedEvent}.
+	 */
+	public interface DisconnectedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain DisconnectedEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onDisconnected(SessionObject sessionObject);
+
+		/**
+		 * Fired when Connector is permanently stopped.
+		 */
+		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
+
+			public DisconnectedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(DisconnectedHandler handler) throws Exception {
+				handler.onDisconnected(sessionObject);
+			}
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain EncryptionEstablishedEvent
+	 * EncryptionEstablishedEvent}.
+	 */
+	public interface EncryptionEstablishedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain EncryptionEstablishedEvent
+		 * EncryptionEstablishedEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onEncryptionEstablished(SessionObject sessionObject);
+
+		/**
+		 * Fired after encrypted connection is established.
+		 */
+		public static class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
+
+			public EncryptionEstablishedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(EncryptionEstablishedHandler handler) {
+				handler.onEncryptionEstablished(sessionObject);
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain ErrorEvent ErrorEvent}.
+	 */
+	public interface ErrorHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain ErrorEvent ErrorEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param condition
+		 *            XMPP error condition. <code>null</code> if error is not
+		 *            caused by stream.
+		 * @param caught
+		 *            exception. <cude>null</code> if error was caused by
+		 *            stream.
+		 */
+		void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException;
+
+		/**
+		 * Fired on connection error.
+		 */
+		public static class ErrorEvent extends JaxmppEvent<ErrorHandler> {
+
+			private Throwable caught;
+
+			private StreamError condition;
+
+			public ErrorEvent(SessionObject sessionObject, StreamError condition, Throwable caught) {
+				super(sessionObject);
+				this.condition = condition;
+				this.caught = caught;
+			}
+
+			@Override
+			public String toString() {
+				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject + ", caught=" + caught
+						+ '}';
+			}
+
+			@Override
+			protected void dispatch(ErrorHandler handler) throws JaxmppException {
+				handler.onError(sessionObject, condition, caught);
+			}
+
+			public Throwable getCaught() {
+				return caught;
+			}
+
+			public StreamError getCondition() {
+				return condition;
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain StanzaReceivedEvent
+	 * StanzaReceivedEvent}.
+	 */
+	public interface StanzaReceivedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain StanzaReceivedEvent StanzaReceivedEvent} is
+		 * fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param stanza
+		 *            received stanza.
+		 */
+		void onStanzaReceived(SessionObject sessionObject, StreamPacket stanza);
+
+		/**
+		 * Fired when stanza is received.
+		 */
+		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
+
+			private StreamPacket stanza;
+
+			public StanzaReceivedEvent(SessionObject sessionObject, StreamPacket stanza) {
+				super(sessionObject);
+				this.stanza = stanza;
+			}
+
+			@Override
+			public String toString() {
+				return "StanzaReceivedEvent{" + "stanza=" + stanza + '}';
+			}
+
+			@Override
+			protected void dispatch(StanzaReceivedHandler handler) {
+				handler.onStanzaReceived(sessionObject, stanza);
+			}
+
+			public StreamPacket getStanza() {
+				return stanza;
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain StanzaSendingEvent
+	 * StanzaSendingEvent}.
+	 */
+	public interface StanzaSendingHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain StanzaSendingEvent StanzaSendingEvent} is
+		 * fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param stanza
+		 *            stanza to be sent.
+		 */
+		void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException;
+
+		/**
+		 * Fired when stanza is sending.
+		 */
+		public static class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
+
+			private Element stanza;
+
+			public StanzaSendingEvent(SessionObject sessionObject, Element stanza) {
+				super(sessionObject);
+				this.stanza = stanza;
+			}
+
+			@Override
+			public String toString() {
+				return "StanzaSendingEvent{" + "stanza=" + stanza + '}';
+			}
+
+			@Override
+			protected void dispatch(StanzaSendingHandler handler) throws JaxmppException {
+				handler.onStanzaSending(sessionObject, stanza);
+			}
+
+			public Element getStanza() {
+				return stanza;
+			}
+
+			public void setStanza(Element stanza) {
+				this.stanza = stanza;
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain StateChangedEvent
+	 * StateChangedEvent}.
+	 */
+	public interface StateChangedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain StateChangedEvent StateChangedEvent} is
+		 * fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param oldState
+		 *            previous connector state.
+		 * @param newState
+		 *            new connector state.
+		 */
+		void onStateChanged(SessionObject sessionObject, State oldState, State newState) throws JaxmppException;
+
+		/**
+		 * Fired after connection state is changed.
+		 */
+		public static class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
+
+			private State newState;
+
+			private State oldState;
+
+			public StateChangedEvent(SessionObject sessionObject, State oldState, State newState) {
+				super(sessionObject);
+				this.oldState = oldState;
+				this.newState = newState;
+			}
+
+			@Override
+			public String toString() {
+				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState + ", sessionObject="
+						+ sessionObject + '}';
+			}
+
+			@Override
+			protected void dispatch(StateChangedHandler handler) throws JaxmppException {
+				handler.onStateChanged(sessionObject, oldState, newState);
+			}
+
+			public State getNewState() {
+				return newState;
+			}
+
+			public State getOldState() {
+				return oldState;
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain StreamTerminatedEvent
+	 * StreamTerminatedEvent}.
+	 */
+	public interface StreamTerminatedHandler extends EventHandler {
+
+		/**
+		 * Called when when {@linkplain StreamTerminatedEvent
+		 * StreamTerminatedEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onStreamTerminated(SessionObject sessionObject) throws JaxmppException;
+
+		/**
+		 * Fired after XMPP Stream is terminated.
+		 */
+		public static class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
+
+			public StreamTerminatedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
+				handler.onStreamTerminated(sessionObject);
+			}
+
+		}
+	}
 
 }
