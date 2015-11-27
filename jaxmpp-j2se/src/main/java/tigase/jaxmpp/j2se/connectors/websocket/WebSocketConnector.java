@@ -22,10 +22,7 @@ import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URI;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -36,6 +33,7 @@ import java.util.logging.Level;
 import javax.net.ssl.*;
 
 import tigase.jaxmpp.core.client.Base64;
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -277,9 +275,39 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			int port = uri.getPort() == -1 ? (isSecure ? 443 : 80) : uri.getPort();
 
 			log.info("Opening connection to " + x + ":" + port);
-			if (!isSecure) {
-				socket = new Socket(x, port);
+
+			if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
+				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
+				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
+				Proxy.Type proxyType = Proxy.Type.SOCKS;
+
+				String proxyTypeString = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+
+				if (proxyTypeString != null && "SOCKS".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.SOCKS;
+				} else if (proxyTypeString != null && "HTTP".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.HTTP;
+				} else if (proxyTypeString != null && "DIRECT".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.DIRECT;
+				} else if (proxyTypeString != null) {
+					throw new JaxmppException("Unknown proxy type. Available types: SOCKS, HTTP, DIRECT.");
+				}
+
+				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+				SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+				Proxy proxy = new Proxy(proxyType, addr);
+				socket = new Socket(proxy);
 			} else {
+				socket = new Socket();
+			}
+
+			socket.setSoTimeout(SOCKET_TIMEOUT);
+			socket.setKeepAlive(false);
+			socket.setTcpNoDelay(true);
+			socket.connect(new InetSocketAddress(x, port));
+
+			if (isSecure) {
 				TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
 				final SSLSocketFactory factory;
 				if (trustManagers == null) {
@@ -294,7 +322,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					factory = ctx.getSocketFactory();
 				}
 
-				socket = factory.createSocket();
+				socket = factory.createSocket(socket, x.getHostAddress(), port, true);
 				((SSLSocket) socket).setUseClientMode(true);
 				((SSLSocket) socket).addHandshakeCompletedListener(new HandshakeCompletedListener() {
 					@Override
@@ -314,12 +342,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			// {
 			// socket.setSoTimeout(SOCKET_TIMEOUT);
 			// }
-			socket.setSoTimeout(SOCKET_TIMEOUT);
-			socket.setKeepAlive(false);
-			socket.setTcpNoDelay(true);
-			if (isSecure) {
-				socket.connect(new InetSocketAddress(x, port));
-			}
 			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
 			worker = new Worker(this) {

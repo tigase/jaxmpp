@@ -71,6 +71,12 @@ public interface Connector {
 	 */
 	public static final String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
 
+	String PROXY_HOST = "PROXY_HOST_KEY";
+
+	String PROXY_PORT = "PROXY_PORT_KEY";
+
+	String PROXY_TYPE = "PROXY_TYPE_KEY";
+
 	/**
 	 * Returns instance of {@linkplain XmppSessionLogic} to work with this
 	 * connector.

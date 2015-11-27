@@ -21,13 +21,12 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.SocketException;
-import java.net.URL;
+import java.net.*;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -40,19 +39,12 @@ import tigase.xml.SimpleParser;
 public abstract class BoshWorker implements BoshRequest {
 
 	private final Element body;
-
-	private HttpURLConnection conn;
-
 	private final DomBuilderHandler domHandler;
-
-	private Logger log;
-
 	private final SimpleParser parser;
-
 	private final String rid;
-
 	private final SessionObject sessionObject;
-
+	private HttpURLConnection conn;
+	private Logger log;
 	private boolean terminated = false;
 
 	public BoshWorker(DomBuilderHandler domHandler, SimpleParser parser, SessionObject sessionObject, Element body)
@@ -104,15 +96,42 @@ public abstract class BoshWorker implements BoshRequest {
 				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
 				if (url == null)
 					throw new JaxmppException(BoshConnector.URL_KEY + " is not set!");
-				this.conn = (HttpURLConnection) (url.openConnection());
+
+				if (sessionObject.getProperty(Connector.PROXY_HOST) != null) {
+					final String proxyHost = sessionObject.getProperty(Connector.PROXY_HOST);
+					final int proxyPort = sessionObject.getProperty(Connector.PROXY_PORT);
+					Proxy.Type proxyType = Proxy.Type.HTTP;
+
+					String proxyTypeString = sessionObject.getProperty(Connector.PROXY_TYPE);
+
+					if (proxyTypeString != null && "SOCKS".equals(proxyTypeString)) {
+						proxyType = Proxy.Type.SOCKS;
+					} else if (proxyTypeString != null && "HTTP".equals(proxyTypeString)) {
+						proxyType = Proxy.Type.HTTP;
+					} else if (proxyTypeString != null && "DIRECT".equals(proxyTypeString)) {
+						proxyType = Proxy.Type.DIRECT;
+					} else if (proxyTypeString != null) {
+						throw new JaxmppException("Unknown proxy type. Available types: SOCKS, HTTP, DIRECT.");
+					}
+
+					log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+					SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+					Proxy proxy = new Proxy(proxyType, addr);
+					this.conn = (HttpURLConnection) (url.openConnection(proxy));
+				} else {
+					this.conn = (HttpURLConnection) (url.openConnection());
+				}
+
 				// force to use POST method
 				this.conn.setRequestMethod("POST");
 				// added as per comment at
 				// http://stackoverflow.com/questions/941628/urlconnection-filenotfoundexception-for-non-standard-http-port-sources/2274535#2274535
-				// related to server not returning data when request are not on default HTTP port
-				conn.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
-				conn.setRequestProperty("Accept","*/*");
-				
+				// related to server not returning data when request are not on
+				// default HTTP port
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0 ( compatible ) ");
+				conn.setRequestProperty("Accept", "*/*");
+
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
@@ -136,7 +155,8 @@ public abstract class BoshWorker implements BoshRequest {
 					}
 					responseData = sb.toString();
 				} catch (RuntimeException ex) {
-					// in case of server not returning any data we need to handle
+					// in case of server not returning any data we need to
+					// handle
 					// exception properly as conn.getResponseCode() may return
 					// exception wrapped in RuntimeException
 					responseCode = 500;

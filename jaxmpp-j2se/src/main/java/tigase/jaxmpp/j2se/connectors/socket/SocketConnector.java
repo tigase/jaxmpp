@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
@@ -614,7 +613,33 @@ public class SocketConnector implements Connector {
 
 			InetAddress x = InetAddress.getByName(serverHost.getHostname());
 			log.info("Opening connection to " + x + ":" + serverHost.getPort());
-			socket = new Socket(x, serverHost.getPort());
+
+			if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
+				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
+				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
+				Proxy.Type proxyType = Proxy.Type.SOCKS;
+
+				String proxyTypeString = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+
+				if (proxyTypeString != null && "SOCKS".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.SOCKS;
+				} else if (proxyTypeString != null && "HTTP".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.HTTP;
+				} else if (proxyTypeString != null && "DIRECT".equals(proxyTypeString)) {
+					proxyType = Proxy.Type.DIRECT;
+				} else if (proxyTypeString != null) {
+					throw new JaxmppException("Unknown proxy type. Available types: SOCKS, HTTP, DIRECT.");
+				}
+
+				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+				SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+				Proxy proxy = new Proxy(proxyType, addr);
+				socket = new Socket(proxy);
+			} else {
+				socket = new Socket();
+			}
+
 			// if
 			// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
 			// == null
@@ -627,6 +652,7 @@ public class SocketConnector implements Connector {
 			socket.setKeepAlive(false);
 			socket.setTcpNoDelay(true);
 			// writer = new BufferedOutputStream(socket.getOutputStream());
+			socket.connect(new InetSocketAddress(x, serverHost.getPort()));
 			writer = socket.getOutputStream();
 			reader = new TextStreamReader(socket.getInputStream());
 			worker = new Worker(this) {
