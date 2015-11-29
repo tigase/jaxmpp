@@ -122,10 +122,10 @@ public class MessageArchivingModule implements XmppModule, PacketWriterAware {
 				}
 
 				if ("from".equals(item.getName())) {
-					ChatItem it = new ChatItem(Type.FROM, time, body);
+					ChatItem it = new ChatItem(Type.FROM, time, body, item);
 					resultItems.add(it);
 				} else if ("to".equals(item.getName())) {
-					ChatItem it = new ChatItem(Type.TO, time, body);
+					ChatItem it = new ChatItem(Type.TO, time, body, item);
 					resultItems.add(it);
 				}
 			}

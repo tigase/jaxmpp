@@ -18,6 +18,7 @@
 package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
 import java.util.Date;
+import tigase.jaxmpp.core.client.xml.Element;
 
 public class ChatItem {
 
@@ -27,23 +28,20 @@ public class ChatItem {
 	}
 
 	public static enum Type {
-
 		FROM,
 		TO
 	}
 
-	private String body;
-	private Date date;
+	private final String body;
+	private final Date date;
 	private final Type type;
+	private final Element item;
 
-	public ChatItem(Type type) {
-		this.type = type;
-	}
-
-	public ChatItem(final Type type, final Date date, final String body) {
+	public ChatItem(final Type type, final Date date, final String body, final Element item) {
 		this.type = type;
 		this.date = date;
 		this.body = body;
+		this.item = item;
 	}
 
 	public String getBody() {
@@ -54,7 +52,12 @@ public class ChatItem {
 		return date;
 	}
 
+	public Element getItem() {
+		return item;
+	}
+	
 	public Type getType() {
 		return type;
 	}
+	
 }
