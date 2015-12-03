@@ -278,14 +278,6 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				setStage(State.disconnected);
 				fireOnTerminate(context.getSessionObject());
 			}
-
-			if (state == State.disconnecting) {
-				try {
-					throw new JaxmppException("disconnecting!!!");
-				} catch (Exception ex) {
-					log.log(Level.WARNING, "DISCONNECTING!!", ex);
-				}
-			}
 		}
 	}
 
