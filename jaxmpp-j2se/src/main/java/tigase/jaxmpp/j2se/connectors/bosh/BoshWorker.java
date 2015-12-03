@@ -31,7 +31,6 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
@@ -48,7 +47,7 @@ public abstract class BoshWorker implements BoshRequest {
 	private boolean terminated = false;
 
 	public BoshWorker(DomBuilderHandler domHandler, SimpleParser parser, SessionObject sessionObject, Element body)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		this.domHandler = domHandler;
 		this.parser = parser;
 		this.sessionObject = sessionObject;
@@ -62,12 +61,7 @@ public abstract class BoshWorker implements BoshRequest {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (!(obj instanceof BoshWorker))
-			return false;
-
-		return ((BoshWorker) obj).rid.equals(rid);
+		return obj == this || obj instanceof BoshWorker && ((BoshWorker) obj).rid.equals(rid);
 	}
 
 	@Override
@@ -191,7 +185,7 @@ public abstract class BoshWorker implements BoshRequest {
 
 					tigase.xml.Element elem;
 					while ((elem = elems.poll()) != null) {
-						final String type = elem.getAttribute("type");
+						final String type = elem.getAttributeStaticStr("type");
 						Element response = new J2seElement(elem);
 						if (type != null && "terminate".equals(type)) {
 							onTerminate(responseCode, responseData, response);
