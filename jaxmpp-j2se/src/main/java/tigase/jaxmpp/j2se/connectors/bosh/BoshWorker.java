@@ -154,15 +154,21 @@ public abstract class BoshWorker implements BoshRequest {
 						sb.append(line);
 					}
 					responseData = sb.toString();
-				} catch (RuntimeException ex) {
+				} catch (Exception ex) {
 					// in case of server not returning any data we need to
 					// handle
 					// exception properly as conn.getResponseCode() may return
 					// exception wrapped in RuntimeException
-					responseCode = 500;
-					responseData = "Server returned no data";
-					if (log.isLoggable(Level.FINEST)) {
-						log.log(Level.FINEST, "got exception while reading data from socket", ex);
+
+					if (sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY) == Connector.State.disconnected) {
+						responseCode = 500;
+						responseData = "Client is disconnected.";
+					} else {
+						responseCode = 500;
+						responseData = "Server returned no data.";
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST, "Got exception while reading data from socket", ex);
+						}
 					}
 				}
 
