@@ -331,7 +331,7 @@ public class Jaxmpp extends JaxmppCore {
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 				JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
-				throw e;
+				throw r;
 			}
 		} catch (JaxmppException e) {
 			// onException(e);

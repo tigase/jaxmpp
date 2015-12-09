@@ -115,7 +115,11 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 
 			@Override
 			public void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException {
-				AbstractSocketXmppSessionLogic.this.processAuthFailed(error);
+				try {
+					AbstractSocketXmppSessionLogic.this.processAuthFailed(error);
+				} catch (JaxmppException e) {
+					processException(e);
+				}
 			}
 		};
 		this.authSuccessHandler = new AuthSuccessHandler() {
