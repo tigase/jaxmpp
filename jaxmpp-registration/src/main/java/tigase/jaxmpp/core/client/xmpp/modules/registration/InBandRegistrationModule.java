@@ -17,11 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.registration;
 
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -41,111 +37,13 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class InBandRegistrationModule extends AbstractIQModule {
 
-	public interface NotSupportedErrorHandler extends EventHandler {
-
-		public static class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
-
-			public NotSupportedErrorEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(NotSupportedErrorHandler handler) throws JaxmppException {
-				handler.onNotSupportedError(sessionObject);
-			}
-
-		}
-
-		void onNotSupportedError(SessionObject sessionObject) throws JaxmppException;
-	}
-
-	public interface ReceivedErrorHandler extends EventHandler {
-
-		public static class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
-
-			private ErrorCondition errorCondition;
-
-			private IQ responseStanza;
-
-			public ReceivedErrorEvent(SessionObject sessionObject, IQ responseStanza, ErrorCondition error) {
-				super(sessionObject);
-				this.responseStanza = responseStanza;
-				this.errorCondition = error;
-			}
-
-			@Override
-			protected void dispatch(ReceivedErrorHandler handler) throws JaxmppException {
-				handler.onReceivedError(sessionObject, responseStanza, errorCondition);
-			}
-
-			public ErrorCondition getErrorCondition() {
-				return errorCondition;
-			}
-
-			public IQ getResponseStanza() {
-				return responseStanza;
-			}
-
-			public void setErrorCondition(ErrorCondition errorCondition) {
-				this.errorCondition = errorCondition;
-			}
-
-			public void setResponseStanza(IQ responseStanza) {
-				this.responseStanza = responseStanza;
-			}
-
-		}
-
-		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
-				throws JaxmppException;
-	}
-
-	public interface ReceivedRequestedFieldsHandler extends EventHandler {
-
-		public static class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
-
-			private IQ responseStanza;
-
-			public ReceivedRequestedFieldsEvent(SessionObject sessionObject, IQ responseStanza) {
-				super(sessionObject);
-				this.responseStanza = responseStanza;
-			}
-
-			@Override
-			protected void dispatch(ReceivedRequestedFieldsHandler handler) {
-				handler.onReceivedRequestedFields(sessionObject, responseStanza);
-			}
-
-			public IQ getResponseStanza() {
-				return responseStanza;
-			}
-
-			public void setResponseStanza(IQ responseStanza) {
-				this.responseStanza = responseStanza;
-			}
-
-		}
-
-		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza);
-	}
-
-	public interface ReceivedTimeoutHandler extends EventHandler {
-
-		public static class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
-
-			public ReceivedTimeoutEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(ReceivedTimeoutHandler handler) throws JaxmppException {
-				handler.onReceivedTimeout(sessionObject);
-			}
-
-		}
-
-		void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException;
-	}
+	/**
+	 * Duplicate of
+	 * {@link tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule#BINDED_RESOURCE_JID
+	 * ResourceBinderModule#BINDED_RESOURCE_JID} to avoid dependency between
+	 * modules.
+	 */
+	public static final String BINDED_RESOURCE_JID = "BINDED_RESOURCE_JID";
 
 	public static final String IN_BAND_REGISTRATION_MODE_KEY = "IN_BAND_REGISTRATION_MODE_KEY";
 
@@ -201,7 +99,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	public void register(String username, String password, String email, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+
+		JID userJID = context.getSessionObject().getProperty(BINDED_RESOURCE_JID);
+		if (userJID != null) {
+			iq.setTo(JID.jidInstance(userJID.getDomain()));
+		} else {
+			iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+		}
 
 		Element q = ElementFactory.create("query", null, "jabber:iq:register");
 		iq.addChild(q);
@@ -219,7 +123,12 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	public void removeAccount(AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+		JID userJID = context.getSessionObject().getProperty(BINDED_RESOURCE_JID);
+		if (userJID != null) {
+			iq.setTo(JID.jidInstance(userJID.getDomain()));
+		} else {
+			iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+		}
 
 		Element q = ElementFactory.create("query", null, "jabber:iq:register");
 		iq.addChild(q);
@@ -250,7 +159,12 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		} else {
 			IQ iq = IQ.create();
 			iq.setType(StanzaType.get);
-			iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+			JID userJID = context.getSessionObject().getProperty(BINDED_RESOURCE_JID);
+			if (userJID != null) {
+				iq.setTo(JID.jidInstance(userJID.getDomain()));
+			} else {
+				iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+			}
 
 			iq.addChild(ElementFactory.create("query", null, "jabber:iq:register"));
 
@@ -271,6 +185,112 @@ public class InBandRegistrationModule extends AbstractIQModule {
 					fireEvent(new ReceivedTimeoutEvent(context.getSessionObject()));
 				}
 			});
+		}
+	}
+
+	public interface NotSupportedErrorHandler extends EventHandler {
+
+		void onNotSupportedError(SessionObject sessionObject) throws JaxmppException;
+
+		public static class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
+
+			public NotSupportedErrorEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(NotSupportedErrorHandler handler) throws JaxmppException {
+				handler.onNotSupportedError(sessionObject);
+			}
+
+		}
+	}
+
+	public interface ReceivedErrorHandler extends EventHandler {
+
+		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
+				throws JaxmppException;
+
+		public static class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
+
+			private ErrorCondition errorCondition;
+
+			private IQ responseStanza;
+
+			public ReceivedErrorEvent(SessionObject sessionObject, IQ responseStanza, ErrorCondition error) {
+				super(sessionObject);
+				this.responseStanza = responseStanza;
+				this.errorCondition = error;
+			}
+
+			@Override
+			protected void dispatch(ReceivedErrorHandler handler) throws JaxmppException {
+				handler.onReceivedError(sessionObject, responseStanza, errorCondition);
+			}
+
+			public ErrorCondition getErrorCondition() {
+				return errorCondition;
+			}
+
+			public void setErrorCondition(ErrorCondition errorCondition) {
+				this.errorCondition = errorCondition;
+			}
+
+			public IQ getResponseStanza() {
+				return responseStanza;
+			}
+
+			public void setResponseStanza(IQ responseStanza) {
+				this.responseStanza = responseStanza;
+			}
+
+		}
+	}
+
+	public interface ReceivedRequestedFieldsHandler extends EventHandler {
+
+		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza);
+
+		public static class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
+
+			private IQ responseStanza;
+
+			public ReceivedRequestedFieldsEvent(SessionObject sessionObject, IQ responseStanza) {
+				super(sessionObject);
+				this.responseStanza = responseStanza;
+			}
+
+			@Override
+			protected void dispatch(ReceivedRequestedFieldsHandler handler) {
+				handler.onReceivedRequestedFields(sessionObject, responseStanza);
+			}
+
+			public IQ getResponseStanza() {
+				return responseStanza;
+			}
+
+			public void setResponseStanza(IQ responseStanza) {
+				this.responseStanza = responseStanza;
+			}
+
+		}
+	}
+
+	public interface ReceivedTimeoutHandler extends EventHandler {
+
+		void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException;
+
+		public static class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
+
+			public ReceivedTimeoutEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(ReceivedTimeoutHandler handler) throws JaxmppException {
+				handler.onReceivedTimeout(sessionObject);
+			}
+
 		}
 	}
 
