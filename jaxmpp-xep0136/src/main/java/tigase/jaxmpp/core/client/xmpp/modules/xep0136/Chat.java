@@ -26,10 +26,15 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class Chat {
 
+	private Element elem;
 	private Date start;
 	private String subject;
 	private JID withJid;
 
+	public Element getChat() {
+		return elem;
+	}
+	
 	public Date getStart() {
 		return start;
 	}
@@ -48,6 +53,7 @@ public class Chat {
 	}
 
 	void process(Element chat, DateTimeFormat df1) throws XMLException {
+		this.elem = chat;
 		setWithJid(JID.jidInstance(chat.getAttribute("with")));
 		setStart(df1.parse(chat.getAttribute("start")));
 		setSubject(chat.getAttribute("subject"));
