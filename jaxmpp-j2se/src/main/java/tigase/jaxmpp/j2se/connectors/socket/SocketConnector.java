@@ -617,19 +617,9 @@ public class SocketConnector implements Connector {
 			if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
 				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
 				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
-				Proxy.Type proxyType = Proxy.Type.SOCKS;
-
-				String proxyTypeString = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
-
-				if (proxyTypeString != null && "SOCKS".equals(proxyTypeString)) {
-					proxyType = Proxy.Type.SOCKS;
-				} else if (proxyTypeString != null && "HTTP".equals(proxyTypeString)) {
+				Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+				if (proxyType == null)
 					proxyType = Proxy.Type.HTTP;
-				} else if (proxyTypeString != null && "DIRECT".equals(proxyTypeString)) {
-					proxyType = Proxy.Type.DIRECT;
-				} else if (proxyTypeString != null) {
-					throw new JaxmppException("Unknown proxy type. Available types: SOCKS, HTTP, DIRECT.");
-				}
 
 				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
 

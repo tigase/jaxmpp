@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.j2se;
 
+import java.net.Proxy;
+
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -73,6 +75,30 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	}
 
 	/**
+	 * Set connection proxy.
+	 *
+	 * @param host
+	 *            proxy host or {@code null} for direct connection.
+	 * @param port
+	 *            proxy port.
+	 */
+	public void setProxy(String host, int port) {
+		sessionObject.setUserProperty(Connector.PROXY_HOST, host);
+		sessionObject.setUserProperty(Connector.PROXY_PORT, port);
+	}
+
+	/**
+	 * Set proxy type.
+	 *
+	 * @param type
+	 *            type of proxy. Available values: {@code HTTP} and
+	 *            {@code SOCKS}.
+	 */
+	public void setProxyType(Proxy.Type type) {
+		sessionObject.setUserProperty(Connector.PROXY_TYPE, type);
+	}
+
+	/**
 	 * Set server hostname. Not needed if it is equals to hostname of JID.
 	 *
 	 * @param server
@@ -92,30 +118,6 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	public void setUseSASL(boolean useSASL) {
 		sessionObject.setUserProperty(AuthModule.FORCE_NON_SASL, !useSASL);
 
-	}
-
-	/**
-	 * Set connection proxy.
-	 * 
-	 * @param host
-	 *            proxy host or {@code null} for direct connection.
-	 * @param port
-	 *            proxy port.
-	 */
-	public void setProxy(String host, int port) {
-		sessionObject.setUserProperty(Connector.PROXY_HOST, host);
-		sessionObject.setUserProperty(Connector.PROXY_PORT, port);
-	}
-
-	/**
-	 * Set proxy type.
-	 * 
-	 * @param type
-	 *            type of proxy. Available values: {@code HTTP} and
-	 *            {@code SOCKS}.
-	 */
-	public void setProxyType(String type) {
-		sessionObject.setUserProperty(Connector.PROXY_TYPE, type);
 	}
 
 	public static enum ConnectionType {

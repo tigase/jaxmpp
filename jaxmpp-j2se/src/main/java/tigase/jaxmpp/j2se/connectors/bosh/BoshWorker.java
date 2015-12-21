@@ -94,19 +94,9 @@ public abstract class BoshWorker implements BoshRequest {
 				if (sessionObject.getProperty(Connector.PROXY_HOST) != null) {
 					final String proxyHost = sessionObject.getProperty(Connector.PROXY_HOST);
 					final int proxyPort = sessionObject.getProperty(Connector.PROXY_PORT);
-					Proxy.Type proxyType = Proxy.Type.HTTP;
-
-					String proxyTypeString = sessionObject.getProperty(Connector.PROXY_TYPE);
-
-					if (proxyTypeString != null && "SOCKS".equals(proxyTypeString)) {
-						proxyType = Proxy.Type.SOCKS;
-					} else if (proxyTypeString != null && "HTTP".equals(proxyTypeString)) {
+					Proxy.Type proxyType = sessionObject.getProperty(Connector.PROXY_TYPE);
+					if (proxyType == null)
 						proxyType = Proxy.Type.HTTP;
-					} else if (proxyTypeString != null && "DIRECT".equals(proxyTypeString)) {
-						proxyType = Proxy.Type.DIRECT;
-					} else if (proxyTypeString != null) {
-						throw new JaxmppException("Unknown proxy type. Available types: SOCKS, HTTP, DIRECT.");
-					}
 
 					log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
 
