@@ -92,9 +92,10 @@ public class ResponseManager {
 		while (it.hasNext()) {
 			java.util.Map.Entry<String, tigase.jaxmpp.core.client.ResponseManager.Entry> e = it.next();
 			if (e.getValue().timestamp + e.getValue().timeout < now) {
+				tigase.jaxmpp.core.client.ResponseManager.Entry entry = e.getValue();
 				it.remove();
 				try {
-					e.getValue().callback.onTimeout();
+					entry.callback.onTimeout();
 				} catch (XMLException e1) {
 				}
 			}
