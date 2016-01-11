@@ -161,7 +161,7 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 				webDnsCallback.onUrlFailed();
 			}
 			else {
-				if (seeHostIsUri) {
+				if (!seeHostIsUri) {
 					MatchResult result = URL_PARSER.exec(boshUrl);
 					String newBoshUrl = result.getGroup(1) + "://" + seeHost
 							+ (result.getGroup(3) != null ? result.getGroup(3) : "")
