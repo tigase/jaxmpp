@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -51,6 +52,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class CapabilitiesModule implements XmppModule, ContextAware, InitializingModule {
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	private final static String ALGORITHM = "SHA-1";
 
@@ -155,14 +158,14 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
 
 			for (String id : identities) {
-				md.update(id.getBytes());
+				md.update(id.getBytes(UTF_CHARSET));
 				md.update((byte) '<');
 			}
 
 			Arrays.sort(features);
 
 			for (String f : features) {
-				md.update(f.getBytes());
+				md.update(f.getBytes(UTF_CHARSET));
 				md.update((byte) '<');
 			}
 

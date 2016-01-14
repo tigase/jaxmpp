@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -65,6 +66,8 @@ import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
  * @author andrzej
  */
 public abstract class Socks5ConnectionManager implements ConnectionManager {
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	private class IncomingConnectionHandlerThread extends Thread {
 
@@ -223,7 +226,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() : sid
 					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
-			md.update(data.getBytes());
+			md.update(data.getBytes(UTF_CHARSET));
 			byte[] buff = md.digest();
 			StringBuilder enc = new StringBuilder();
 			for (byte b : buff) {
@@ -429,7 +432,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			// auth type
 			out.put((byte) 0x03);
 
-			byte[] hexHash = generateHash(ft).getBytes();
+			byte[] hexHash = generateHash(ft).getBytes(UTF_CHARSET);
 
 			out.put((byte) hexHash.length);
 			out.put(hexHash);

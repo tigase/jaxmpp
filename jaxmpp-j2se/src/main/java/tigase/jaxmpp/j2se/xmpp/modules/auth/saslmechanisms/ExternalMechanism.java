@@ -17,7 +17,7 @@ public class ExternalMechanism extends AbstractSaslMechanism {
 		if (jid == null) {
 			return "=";
 		} else {
-			return Base64.encode(jid.toString().getBytes());
+			return Base64.encode(jid.toString().getBytes(UTF_CHARSET));
 		}
 	}
 

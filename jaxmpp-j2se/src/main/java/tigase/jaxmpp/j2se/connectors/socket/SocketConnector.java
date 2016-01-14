@@ -22,6 +22,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.List;
@@ -91,6 +92,7 @@ public class SocketConnector implements Connector {
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
 	private final Object ioMutex = new Object();
 	private final Logger log;
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	private Context context;
 	private TimerTask pingTask;
 	private volatile Reader reader;
@@ -513,7 +515,7 @@ public class SocketConnector implements Connector {
 
 		if (log.isLoggable(Level.FINEST))
 			log.finest("Restarting XMPP Stream");
-		send(sb.toString().getBytes());
+		send(sb.toString().getBytes(UTF_CHARSET));
 	}
 
 	public void send(byte[] buffer) throws JaxmppException {
@@ -544,7 +546,7 @@ public class SocketConnector implements Connector {
 						context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
 					} catch (Exception e) {
 					}
-					writer.write(t.getBytes());
+					writer.write(t.getBytes(UTF_CHARSET));
 				} catch (IOException e) {
 					terminateAllWorkers();
 					throw new JaxmppException(e);
@@ -724,7 +726,7 @@ public class SocketConnector implements Connector {
 			try {
 				log.fine("Start TLS");
 				Element e = ElementFactory.create("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
-				send(e.getAsString().getBytes());
+				send(e.getAsString().getBytes(UTF_CHARSET));
 			} catch (Exception e) {
 				throw new JaxmppException(e);
 			}
@@ -741,7 +743,7 @@ public class SocketConnector implements Connector {
 				log.fine("Start ZLIB");
 				Element e = ElementFactory.create("compress", null, "http://jabber.org/protocol/compress");
 				e.addChild(ElementFactory.create("method", "zlib", null));
-				send(e.getAsString().getBytes());
+				send(e.getAsString().getBytes(UTF_CHARSET));
 			} catch (Exception e) {
 				throw new JaxmppException(e);
 			}
@@ -796,7 +798,7 @@ public class SocketConnector implements Connector {
 		if (state == State.connected || state == State.connecting || state == State.disconnecting) {
 			String x = "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
-			send(x.getBytes());
+			send(x.getBytes(UTF_CHARSET));
 			System.out.println(x);
 		} else
 			log.fine("Stream terminate not sent, because of connection state==" + state);

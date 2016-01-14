@@ -24,25 +24,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.XOAuth2TokenCallback;
 
 public class XOAuth2Mechanism extends AbstractSaslMechanism {
 
-	private class DefaultXOAuth2TokenCallback implements XOAuth2TokenCallback {
-
-		private SessionObject sessionObject;
-
-		public DefaultXOAuth2TokenCallback(SessionObject sessionObject) {
-			this.sessionObject = sessionObject;
-		}
-
-		@Override
-		public String getCredential() {
-			return sessionObject.getProperty(X_OAUTH2_TOKEN_KEY);
-		}
-	}
-
-	private static final String NULL = String.valueOf((char) 0);
-
 	public static final String X_OAUTH2_TOKEN_CALLBACK_KEY = "X_OAUTH2_TOKEN_CALLBACK";
-
 	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
+	private static final String NULL = String.valueOf((char) 0);
 
 	public XOAuth2Mechanism() {
 	}
@@ -56,7 +40,7 @@ public class XOAuth2Mechanism extends AbstractSaslMechanism {
 			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
 
-			String base64 = Base64.encode(lreq.getBytes());
+			String base64 = Base64.encode(lreq.getBytes(UTF_CHARSET));
 			setComplete(sessionObject, true);
 			return base64;
 		} else
@@ -65,12 +49,27 @@ public class XOAuth2Mechanism extends AbstractSaslMechanism {
 
 	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
-		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null || sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
+		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null
+				|| sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
 	}
 
 	@Override
 	public String name() {
 		return "X-OAUTH2";
+	}
+
+	private class DefaultXOAuth2TokenCallback implements XOAuth2TokenCallback {
+
+		private SessionObject sessionObject;
+
+		public DefaultXOAuth2TokenCallback(SessionObject sessionObject) {
+			this.sessionObject = sessionObject;
+		}
+
+		@Override
+		public String getCredential() {
+			return sessionObject.getProperty(X_OAUTH2_TOKEN_KEY);
+		}
 	}
 }

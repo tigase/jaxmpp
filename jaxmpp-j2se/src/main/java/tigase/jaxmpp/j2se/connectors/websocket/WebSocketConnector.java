@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -53,9 +54,11 @@ import tigase.jaxmpp.j2se.connectors.socket.Worker;
  */
 public class WebSocketConnector extends AbstractWebSocketConnector {
 
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+
 	private static final String EOL = "\r\n";
 
-	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes();
+	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes(UTF_CHARSET);
 
 	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
@@ -106,7 +109,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		sb.append("Sec-WebSocket-Protocol: ").append("xmpp").append(",").append("xmpp-framing").append(EOL);
 		sb.append("Sec-WebSocket-Version: 13").append(EOL);
 		sb.append(EOL);
-		byte[] buffer = sb.toString().getBytes();
+		byte[] buffer = sb.toString().getBytes(UTF_CHARSET);
 
 		socket.getOutputStream().write(buffer);
 		buffer = new byte[4096];
@@ -166,7 +169,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		// throw new IOException("Bad upgrade header in HTTP response");
 		// }
 		try {
-			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes()));
+			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes(UTF_CHARSET)));
 			if (!accept.equals(headers.get("Sec-WebSocket-Accept")))
 				throw new IOException("Invalid Sec-WebSocket-Accept header value");
 		} catch (NoSuchAlgorithmException ex) {
@@ -235,7 +238,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	@Override
 	public void send(final String data) throws JaxmppException {
 		if (getState() == State.connected || getState() == State.connecting) {
-			send(data.getBytes());
+			send(data.getBytes(UTF_CHARSET));
 		} else {
 			throw new JaxmppException("Not connected");
 		}

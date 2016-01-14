@@ -17,9 +17,13 @@
  */
 package tigase.jaxmp.j2se.connectors.websocket;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Map;
 import java.util.Queue;
@@ -27,10 +31,9 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static org.junit.Assert.*;
 
 import org.junit.Test;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -46,71 +49,15 @@ import tigase.xml.SingletonFactory;
  * @author andrzej
  */
 public class WebSocketReaderTest {
-	
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+
 	private static final Logger log = Logger.getLogger(WebSocketReaderTest.class.getCanonicalName());
-	
+
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
-	
-	private void initLoggers() {
-		Handler handler = new ConsoleHandler();
-		handler.setLevel(Level.ALL);
-		
-		String[] list = {
-			WebSocketReader.class.getCanonicalName(),
-			"tigase.jaxmp.j2se.connectors.websocket.WebSocketReaderTest"
-		};
-		
-//		for (String x : list) {
-//			Logger logger = Logger.getLogger(x);
-//			logger.addHandler(handler);
-//			logger.setLevel(Level.FINEST);
-//		}
-	}
-	
-	@Test
-	public void testReadingDataBiggerThanBuffer() throws XMLException, IOException {
-		initLoggers();
-		testReadingData(10, 10);
-		testReadingData(100, 100);
-		testReadingData(100, 10);
-		testReadingData(1000, 100);
-		testReadingData(10000, 100);
-	}
-	
-	private void testReadingData(int noOfSubelements, int sizeOfBuffer) throws XMLException, IOException {
-		Element data = generateData(noOfSubelements);
-		byte[] inData = convertToFrame(data);
-		log.log(Level.FINEST, "got websocket data {0} bytes", inData.length);
-		
-		WebSocketReader reader = new WebSocketReader(new ByteArrayInputStream(inData));
-		
-		Queue<Element> outQueue = new ArrayDeque<Element>();
-		XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListenerImpl(outQueue));	
-		char[] cbuf = new char[sizeOfBuffer];
-		int r;
-		int maxIter = (inData.length / cbuf.length) * 2;
-		int iter = 0;
-		while (((r = reader.read(cbuf)) != -1) && iter < maxIter) {
-			iter++;
-			parser.parse(domHandler, cbuf, 0, r);
-		}
-		log.log(Level.FINEST, "decoded in {0} iterations", iter);
-		
-		assertTrue(!outQueue.isEmpty());
-		Element outData = outQueue.poll();
-		assertEquals(data.getAsString(), outData.getAsString());		
-	}
-	
-	private Element generateData(int count) throws XMLException {
-		Element el = ElementFactory.create("test");
-		for (int i=0; i<count; i++) {
-			el.addChild(ElementFactory.create("test-" + i, "val-" + i, "http://test.org/xmlns"));
-		}
-		return el;
-	}
-	
+
 	private byte[] convertToFrame(Element data) throws XMLException {
-		byte[] dataByteStr = data.getAsString().getBytes();
+		byte[] dataByteStr = data.getAsString().getBytes(UTF_CHARSET);
 		int size = dataByteStr.length;
 		ByteBuffer bbuf = ByteBuffer.allocate(12 + size);
 		bbuf.put((byte) 0x00);
@@ -130,10 +77,66 @@ public class WebSocketReaderTest {
 		return out;
 	}
 
+	private Element generateData(int count) throws XMLException {
+		Element el = ElementFactory.create("test");
+		for (int i = 0; i < count; i++) {
+			el.addChild(ElementFactory.create("test-" + i, "val-" + i, "http://test.org/xmlns"));
+		}
+		return el;
+	}
+
+	private void initLoggers() {
+		Handler handler = new ConsoleHandler();
+		handler.setLevel(Level.ALL);
+
+		String[] list = { WebSocketReader.class.getCanonicalName(),
+				"tigase.jaxmp.j2se.connectors.websocket.WebSocketReaderTest" };
+
+		// for (String x : list) {
+		// Logger logger = Logger.getLogger(x);
+		// logger.addHandler(handler);
+		// logger.setLevel(Level.FINEST);
+		// }
+	}
+
+	private void testReadingData(int noOfSubelements, int sizeOfBuffer) throws XMLException, IOException {
+		Element data = generateData(noOfSubelements);
+		byte[] inData = convertToFrame(data);
+		log.log(Level.FINEST, "got websocket data {0} bytes", inData.length);
+
+		WebSocketReader reader = new WebSocketReader(new ByteArrayInputStream(inData));
+
+		Queue<Element> outQueue = new ArrayDeque<Element>();
+		XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListenerImpl(outQueue));
+		char[] cbuf = new char[sizeOfBuffer];
+		int r;
+		int maxIter = (inData.length / cbuf.length) * 2;
+		int iter = 0;
+		while (((r = reader.read(cbuf)) != -1) && iter < maxIter) {
+			iter++;
+			parser.parse(domHandler, cbuf, 0, r);
+		}
+		log.log(Level.FINEST, "decoded in {0} iterations", iter);
+
+		assertTrue(!outQueue.isEmpty());
+		Element outData = outQueue.poll();
+		assertEquals(data.getAsString(), outData.getAsString());
+	}
+
+	@Test
+	public void testReadingDataBiggerThanBuffer() throws XMLException, IOException {
+		initLoggers();
+		testReadingData(10, 10);
+		testReadingData(100, 100);
+		testReadingData(100, 10);
+		testReadingData(1000, 100);
+		testReadingData(10000, 100);
+	}
+
 	static class StreamListenerImpl implements StreamListener {
 
 		private Queue<Element> queue;
-		
+
 		public StreamListenerImpl(Queue<Element> queue) {
 			this.queue = queue;
 		}

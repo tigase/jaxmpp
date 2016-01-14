@@ -3,6 +3,7 @@ package tigase.jaxmpp.core.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.Charset;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
@@ -10,6 +11,8 @@ import java.util.Random;
 import org.junit.Test;
 
 public class Base64Test {
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	@Test
 	public void testDecode() {
@@ -65,7 +68,7 @@ public class Base64Test {
 				+ "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQ==\n\n\n\n\n\n\n\n";
 		byte[] d = Base64.decode(e);
 		assertEquals("Wrong result size!", m.length(), d.length);
-		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(), d));
+		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(UTF_CHARSET), d));
 	}
 
 	@Test
@@ -104,7 +107,7 @@ public class Base64Test {
 				+ "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQ==";
 		byte[] d = Base64.decode(e);
 		assertEquals("Wrong result size!", m.length(), d.length);
-		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(), d));
+		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(UTF_CHARSET), d));
 	}
 
 	@Test
@@ -123,7 +126,7 @@ public class Base64Test {
 				+ "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYQ==\n\n\n\n\n\n\n\n";
 		byte[] d = Base64.decode(e);
 		assertEquals("Wrong result size!", m.length(), d.length);
-		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(), d));
+		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(UTF_CHARSET), d));
 	}
 
 	@Test
@@ -143,18 +146,18 @@ public class Base64Test {
 
 		byte[] d = Base64.decode(e);
 		assertEquals("Wrong result size!", m.length(), d.length);
-		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(), d));
+		assertTrue("Buffers are not identical", Arrays.equals(m.getBytes(UTF_CHARSET), d));
 
 	}
 
 	@Test
 	public void testEncode() {
-		assertEquals("Zg==", Base64.encode("f".getBytes()));
-		assertEquals("Zm8=", Base64.encode("fo".getBytes()));
-		assertEquals("Zm9v", Base64.encode("foo".getBytes()));
-		assertEquals("Zm9vYg==", Base64.encode("foob".getBytes()));
-		assertEquals("Zm9vYmE=", Base64.encode("fooba".getBytes()));
-		assertEquals("Zm9vYmFy", Base64.encode("foobar".getBytes()));
+		assertEquals("Zg==", Base64.encode("f".getBytes(UTF_CHARSET)));
+		assertEquals("Zm8=", Base64.encode("fo".getBytes(UTF_CHARSET)));
+		assertEquals("Zm9v", Base64.encode("foo".getBytes(UTF_CHARSET)));
+		assertEquals("Zm9vYg==", Base64.encode("foob".getBytes(UTF_CHARSET)));
+		assertEquals("Zm9vYmE=", Base64.encode("fooba".getBytes(UTF_CHARSET)));
+		assertEquals("Zm9vYmFy", Base64.encode("foobar".getBytes(UTF_CHARSET)));
 	}
 
 	@Test

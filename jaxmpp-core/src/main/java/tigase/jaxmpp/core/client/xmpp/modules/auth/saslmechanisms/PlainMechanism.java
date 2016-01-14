@@ -23,9 +23,13 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
 
+import java.nio.charset.Charset;
+
 public class PlainMechanism extends AbstractSaslMechanism {
 
 	private static final String NULL = String.valueOf((char) 0);
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	public PlainMechanism() {
 	}
@@ -47,7 +51,7 @@ public class PlainMechanism extends AbstractSaslMechanism {
 
 			String lreq = NULL + authcid + NULL + callback.getCredential();
 
-			String base64 = Base64.encode(lreq.getBytes());
+			String base64 = Base64.encode(lreq.getBytes(UTF_CHARSET));
 			setComplete(sessionObject, true);
 			return base64;
 		} else
