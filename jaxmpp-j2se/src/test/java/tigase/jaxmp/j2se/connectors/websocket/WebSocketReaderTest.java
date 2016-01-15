@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
@@ -50,14 +51,14 @@ import tigase.xml.SingletonFactory;
  */
 public class WebSocketReaderTest {
 
-	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+
 
 	private static final Logger log = Logger.getLogger(WebSocketReaderTest.class.getCanonicalName());
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
-	private byte[] convertToFrame(Element data) throws XMLException {
-		byte[] dataByteStr = data.getAsString().getBytes(UTF_CHARSET);
+	private byte[] convertToFrame(Element data) throws XMLException, UnsupportedEncodingException {
+		byte[] dataByteStr = data.getAsString().getBytes("UTF-8");
 		int size = dataByteStr.length;
 		ByteBuffer bbuf = ByteBuffer.allocate(12 + size);
 		bbuf.put((byte) 0x00);

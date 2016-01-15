@@ -4,11 +4,7 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslMechanism;
 
-import java.nio.charset.Charset;
-
 public abstract class AbstractSaslMechanism implements SaslMechanism {
-
-	protected final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	public static final String SASL_COMPLETE_KEY = "SASL_COMPLETE_KEY";
 

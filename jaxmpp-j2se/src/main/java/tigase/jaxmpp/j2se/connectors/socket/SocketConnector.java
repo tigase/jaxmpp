@@ -86,13 +86,14 @@ public class SocketConnector implements Connector {
 	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
 	private final Object ioMutex = new Object();
 	private final Logger log;
-	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+
 	private Context context;
 	private TimerTask pingTask;
 	private volatile Reader reader;

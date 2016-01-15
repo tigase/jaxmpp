@@ -17,25 +17,24 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 
+import java.io.UnsupportedEncodingException;
+
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.ClientSaslException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
-
-import java.nio.charset.Charset;
 
 public class PlainMechanism extends AbstractSaslMechanism {
 
 	private static final String NULL = String.valueOf((char) 0);
 
-	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
-
 	public PlainMechanism() {
 	}
 
 	@Override
-	public String evaluateChallenge(String input, SessionObject sessionObject) {
+	public String evaluateChallenge(String input, SessionObject sessionObject) throws ClientSaslException {
 		if (!isComplete(sessionObject)) {
 			CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
 			if (callback == null)
@@ -51,16 +50,21 @@ public class PlainMechanism extends AbstractSaslMechanism {
 
 			String lreq = NULL + authcid + NULL + callback.getCredential();
 
-			String base64 = Base64.encode(lreq.getBytes(UTF_CHARSET));
-			setComplete(sessionObject, true);
-			return base64;
+			try {
+				String base64 = Base64.encode(lreq.getBytes("UTF-8"));
+				setComplete(sessionObject, true);
+				return base64;
+			} catch (UnsupportedEncodingException e) {
+				throw new ClientSaslException(e);
+			}
 		} else
 			return null;
 	}
 
 	@Override
 	public boolean isAllowedToUse(final SessionObject sessionObject) {
-		return (sessionObject.getProperty(SessionObject.PASSWORD) != null || sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
+		return (sessionObject.getProperty(SessionObject.PASSWORD) != null
+				|| sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
 				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
 	}
 

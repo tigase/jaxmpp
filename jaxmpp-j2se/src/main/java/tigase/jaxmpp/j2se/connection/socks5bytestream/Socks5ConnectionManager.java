@@ -27,24 +27,12 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
@@ -67,143 +55,20 @@ import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
  */
 public abstract class Socks5ConnectionManager implements ConnectionManager {
 
-	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
-
-	private class IncomingConnectionHandlerThread extends Thread {
-
-		private final SocketChannel socketChannel;
-
-		private IncomingConnectionHandlerThread(SocketChannel channel) {
-			this.socketChannel = channel;
-		}
-
-		@Override
-		public void run() {
-			try {
-				handleConnection(null, socketChannel.socket(), true);
-			} catch (IOException ex) {
-				log.log(Level.SEVERE, null, ex);
-			}
-		}
-	}
-
-	public static enum State {
-
-		Active,
-		ActiveServ,
-		Auth,
-		AuthResp,
-		Closed,
-		Command,
-		Welcome,
-		WelcomeResp,
-		WelcomeServ
-	}
-
-	/**
-	 * Internal TCP connection manager
-	 */
-	private class TcpServerThread extends Thread {
-
-		// private ConnectionSession session = null;
-		private ServerSocketChannel serverSocket = null;
-		private boolean shutdown = false;
-
-		private TimerTask shutdownTask = null;
-		private long timeout = TIMEOUT;
-
-		public TcpServerThread(int port /* , long timeout */) throws IOException {
-			serverSocket = ServerSocketChannel.open();
-			serverSocket.socket().bind(null);
-			setDaemon(true);
-			// serverSocket = new ServerSocket(port);
-			// if (timeout != 0) {
-			// this.timeout = timeout;
-			// }
-		}
-
-		public int getPort() {
-			if (shutdownTask != null) {
-				shutdownTask.cancel();
-				shutdownTask = null;
-			}
-
-			shutdownTask = new TimerTask() {
-				@Override
-				public void run() {
-					try {
-						synchronized (TcpServerThread.class) {
-							if (shutdownTask == null) {
-								return;
-							}
-
-							clearSessions();
-						}
-					} catch (Exception ex) {
-						log.log(Level.WARNING, "problem with closing server socket", ex);
-					}
-				}
-			};
-			timer.schedule(shutdownTask, timeout);
-
-			return serverSocket.socket().getLocalPort();
-		}
-
-		@Override
-		public void run() {
-			while (serverSocket.socket().isBound() && !shutdown) {
-				try {
-					SocketChannel socketChannel = serverSocket.accept();
-					new IncomingConnectionHandlerThread(socketChannel).start();
-				} catch (ClosedChannelException ex) {
-					log.log(Level.SEVERE, null, ex);
-					// break;
-				} catch (IOException ex) {
-					log.log(Level.SEVERE, null, ex);
-				}
-			}
-		}
-
-		// public void setConnectionSession(ConnectionSession session) {
-		// this.session = session;
-		// }
-
-		public void shutdown() {
-			synchronized (TcpServerThread.class) {
-				if (shutdownTask != null) {
-					shutdownTask.cancel();
-					shutdownTask = null;
-				}
-
-				shutdown = true;
-				try {
-					serverSocket.close();
-				} catch (IOException ex) {
-					log.log(Level.WARNING, "problem with closing server socket", ex);
-				}
-			}
-		}
-	}
-
-	protected static final String JAXMPP_KEY = "jaxmpp";
-	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class.getCanonicalName());
 	public static final String PACKET_ID = "packet-id";
+	protected static final String JAXMPP_KEY = "jaxmpp";
 	protected static final String PROXY_JID_KEY = "proxy-jid";
-
 	protected static final String PROXY_JID_USED_KEY = "proxy-jid-used";
-
-	private static TcpServerThread server = null;
-
-	private static final Map<String, ConnectionSession> sessions = new HashMap<String, ConnectionSession>();
-
 	protected static final String SID_KEY = "socks5-sid";
-
 	protected static final String STREAMHOST_KEY = "streamhost";
-
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class.getCanonicalName());
+	private static final Map<String, ConnectionSession> sessions = new HashMap<String, ConnectionSession>();
 	private static final long TIMEOUT = 15 * 60 * 1000;
-
+	private static TcpServerThread server = null;
 	// ---------------------------------------------------------------------------------------
 	private static Timer timer = new Timer();
+	protected Context context;
 
 	protected static boolean checkHash(String data, ConnectionSession session) {
 		return data.equals(generateHash(session));
@@ -222,9 +87,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected static String generateHash(ConnectionSession session) {
 		try {
 			String sid = session.getData(SID_KEY);
-			String data = session.isIncoming() ? sid + session.getPeer().toString()
-					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() : sid
-					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
+			String data = session.isIncoming()
+					? sid + session.getPeer().toString()
+							+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString()
+					: sid + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 			md.update(data.getBytes(UTF_CHARSET));
 			byte[] buff = md.digest();
@@ -340,7 +206,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					try {
 						// small delay to workaround issue with Psi+
 						Thread.sleep(100);
-					} catch (Exception ex) {}
+					} catch (Exception ex) {
+					}
 					if (!socket.socket().isClosed()) {
 						synchronized (ft) {
 							List<Socket> sockets = ft.getData("sockets");
@@ -351,8 +218,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 							sockets.add(socket.socket());
 						}
 						state = State.ActiveServ;
-					}
-					else
+					} else
 						return State.Closed;
 				}
 				break;
@@ -473,8 +339,6 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		}
 	}
 
-	protected Context context;
-
 	protected void connectToProxy(JaxmppCore jaxmpp, ConnectionSession session, String sid, ConnectionEndpoint host)
 			throws IOException, JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
@@ -573,13 +437,14 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			try {
 				socket.getInputStream().read(new byte[0]);
 				socket.getOutputStream().write(new byte[0]);
-			} catch (Exception ex) {}
+			} catch (Exception ex) {
+			}
 			if (socket.isClosed())
 				continue;
 			fireOnConnected(session, socket);
 		}
 	}
-	
+
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
 			context.getEventBus().fire(
@@ -602,7 +467,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 	protected List<Streamhost> getLocalStreamHosts(ConnectionSession session, String sid) throws JaxmppException {
 		try {
-			StreamhostsResolver streamhostsResolver = UniversalFactory.createInstance(StreamhostsResolver.class.getCanonicalName());
+			StreamhostsResolver streamhostsResolver = UniversalFactory.createInstance(
+					StreamhostsResolver.class.getCanonicalName());
 			// TcpServerThread server = new TcpServerThread(0, TIMEOUT);
 			// server.setConnectionSession(session);
 			// server.start();
@@ -703,7 +569,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		buf.clear();
 	}
 
-	protected void proxyDiscoveryError(JaxmppCore jaxmpp, ConnectionSession ft, InitializedCallback callback, String errorText) {
+	protected void proxyDiscoveryError(JaxmppCore jaxmpp, ConnectionSession ft, InitializedCallback callback,
+			String errorText) {
 		log.log(Level.WARNING, "error during Socks5 proxy discovery = {0}", errorText);
 		ft.setData(PROXY_JID_KEY, null);
 		callback.initialized(jaxmpp, ft);
@@ -741,26 +608,140 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 						fireOnFailure(session);
 					}
 				});
-	};
+	}
 
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class, 
+		this.context.getEventBus().addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class,
 				new FileTransferManager.FileTransferSuccessHandler() {
-			@Override
-			public void onFileTransferSuccess(SessionObject sessionObject,
-					FileTransfer fileTransfer) {
-				unregisterSession(fileTransfer);
-			}			
-		});
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class, 
+					@Override
+					public void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer) {
+						unregisterSession(fileTransfer);
+					}
+				});
+		this.context.getEventBus().addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class,
 				new FileTransferManager.FileTransferFailureHandler() {
-			@Override
-			public void onFileTransferFailure(SessionObject sessionObject,
-					FileTransfer fileTransfer) {
-				unregisterSession(fileTransfer);
-			}			
-		});
+					@Override
+					public void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer) {
+						unregisterSession(fileTransfer);
+					}
+				});
+	}
+
+	public static enum State {
+
+		Active,
+		ActiveServ,
+		Auth,
+		AuthResp,
+		Closed,
+		Command,
+		Welcome,
+		WelcomeResp,
+		WelcomeServ
+	}
+
+	private class IncomingConnectionHandlerThread extends Thread {
+
+		private final SocketChannel socketChannel;
+
+		private IncomingConnectionHandlerThread(SocketChannel channel) {
+			this.socketChannel = channel;
+		}
+
+		@Override
+		public void run() {
+			try {
+				handleConnection(null, socketChannel.socket(), true);
+			} catch (IOException ex) {
+				log.log(Level.SEVERE, null, ex);
+			}
+		}
+	};
+
+	/**
+	 * Internal TCP connection manager
+	 */
+	private class TcpServerThread extends Thread {
+
+		// private ConnectionSession session = null;
+		private ServerSocketChannel serverSocket = null;
+		private boolean shutdown = false;
+
+		private TimerTask shutdownTask = null;
+		private long timeout = TIMEOUT;
+
+		public TcpServerThread(int port /* , long timeout */) throws IOException {
+			serverSocket = ServerSocketChannel.open();
+			serverSocket.socket().bind(null);
+			setDaemon(true);
+			// serverSocket = new ServerSocket(port);
+			// if (timeout != 0) {
+			// this.timeout = timeout;
+			// }
+		}
+
+		public int getPort() {
+			if (shutdownTask != null) {
+				shutdownTask.cancel();
+				shutdownTask = null;
+			}
+
+			shutdownTask = new TimerTask() {
+				@Override
+				public void run() {
+					try {
+						synchronized (TcpServerThread.class) {
+							if (shutdownTask == null) {
+								return;
+							}
+
+							clearSessions();
+						}
+					} catch (Exception ex) {
+						log.log(Level.WARNING, "problem with closing server socket", ex);
+					}
+				}
+			};
+			timer.schedule(shutdownTask, timeout);
+
+			return serverSocket.socket().getLocalPort();
+		}
+
+		@Override
+		public void run() {
+			while (serverSocket.socket().isBound() && !shutdown) {
+				try {
+					SocketChannel socketChannel = serverSocket.accept();
+					new IncomingConnectionHandlerThread(socketChannel).start();
+				} catch (ClosedChannelException ex) {
+					log.log(Level.SEVERE, null, ex);
+					// break;
+				} catch (IOException ex) {
+					log.log(Level.SEVERE, null, ex);
+				}
+			}
+		}
+
+		// public void setConnectionSession(ConnectionSession session) {
+		// this.session = session;
+		// }
+
+		public void shutdown() {
+			synchronized (TcpServerThread.class) {
+				if (shutdownTask != null) {
+					shutdownTask.cancel();
+					shutdownTask = null;
+				}
+
+				shutdown = true;
+				try {
+					serverSocket.close();
+				} catch (IOException ex) {
+					log.log(Level.WARNING, "problem with closing server socket", ex);
+				}
+			}
+		}
 	}
 }
