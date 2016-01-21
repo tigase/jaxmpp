@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.j2se;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 
 import tigase.jaxmpp.core.client.Connector;
@@ -96,6 +98,33 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	 */
 	public void setProxyType(Proxy.Type type) {
 		sessionObject.setUserProperty(Connector.PROXY_TYPE, type);
+	}
+
+	/**
+	 * Set proxy authentication credentials.
+	 * 
+	 * @param username
+	 *            proxy username.
+	 * @param password
+	 *            proxy password.
+	 */
+	public void setProxyUsernamePassword(final String username, final String password) {
+		Authenticator.setDefault(new Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				if (getRequestorType() == RequestorType.PROXY) {
+					String host = "" + sessionObject.getProperty(Connector.PROXY_HOST);
+					String port = "" + sessionObject.getProperty(Connector.PROXY_PORT);
+
+					if (getRequestingHost().equalsIgnoreCase(host)) {
+						if (Integer.parseInt(port) == getRequestingPort()) {
+							return new PasswordAuthentication(username, password.toCharArray());
+						}
+					}
+				}
+				return null;
+			}
+		});
 	}
 
 	/**
