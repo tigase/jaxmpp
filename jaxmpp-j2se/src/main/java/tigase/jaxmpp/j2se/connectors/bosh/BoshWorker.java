@@ -130,14 +130,18 @@ public abstract class BoshWorker implements BoshRequest {
 				try {
 					responseCode = conn.getResponseCode();
 
-					StringBuilder sb = new StringBuilder();
-					InputStream is = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
-					BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-					String line;
-					while ((line = rd.readLine()) != null) {
-						sb.append(line);
+					if (responseCode == 407) {
+						responseData = "Proxy Authentication Required";
+					} else {
+						StringBuilder sb = new StringBuilder();
+						InputStream is = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
+						BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+						String line;
+						while ((line = rd.readLine()) != null) {
+							sb.append(line);
+						}
+						responseData = sb.toString();
 					}
-					responseData = sb.toString();
 				} catch (Exception ex) {
 					// in case of server not returning any data we need to
 					// handle

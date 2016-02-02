@@ -112,14 +112,12 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 		Authenticator.setDefault(new Authenticator() {
 			@Override
 			protected PasswordAuthentication getPasswordAuthentication() {
-				if (getRequestorType() == RequestorType.PROXY) {
-					String host = "" + sessionObject.getProperty(Connector.PROXY_HOST);
-					String port = "" + sessionObject.getProperty(Connector.PROXY_PORT);
+				final String host = "" + sessionObject.getProperty(Connector.PROXY_HOST);
+				final int port = sessionObject.getProperty(Connector.PROXY_PORT);
 
-					if (getRequestingHost().equalsIgnoreCase(host)) {
-						if (Integer.parseInt(port) == getRequestingPort()) {
-							return new PasswordAuthentication(username, password.toCharArray());
-						}
+				if (getRequestingHost().equalsIgnoreCase(host)) {
+					if (port == getRequestingPort()) {
+						return new PasswordAuthentication(username, password.toCharArray());
 					}
 				}
 				return null;
