@@ -316,6 +316,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				}
 
 				socket = factory.createSocket(socket, x.getHostAddress(), port, true);
+				socket.setSoTimeout(0);
+				socket.setKeepAlive(false);
+				socket.setTcpNoDelay(true);
 				((SSLSocket) socket).setUseClientMode(true);
 				((SSLSocket) socket).addHandshakeCompletedListener(new HandshakeCompletedListener() {
 					@Override
