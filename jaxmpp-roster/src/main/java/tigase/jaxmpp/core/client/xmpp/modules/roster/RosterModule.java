@@ -492,7 +492,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	protected void remove(BareJID jid) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query", null, "jabber:iq:roster"));
 		Element item = query.addChild(ElementFactory.create("item"));
 		item.setAttribute("jid", jid.toString());
 		item.setAttribute("subscription", Subscription.remove.name());
@@ -566,7 +566,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	protected void update(RosterItem item) throws XMLException, JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
 		write(iq, new AsyncCallback() {
