@@ -205,7 +205,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					// prepare WebSocket header according to Hybi specification
 					int size = buffer.length;
 					ByteBuffer bbuf = ByteBuffer.allocate(12);
-					bbuf.put((byte) 0x00);
+					bbuf.put((byte) 0x81);
 					if (size <= 125) {
 						bbuf.put((byte) size);
 					} else if (size <= 0xFFFF) {
