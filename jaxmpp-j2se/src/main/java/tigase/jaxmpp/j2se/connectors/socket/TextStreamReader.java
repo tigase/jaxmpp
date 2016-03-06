@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
 /**
@@ -46,19 +47,19 @@ public class TextStreamReader implements Reader {
 	@Override
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
-		int read = inputStream.read(arr, 0, arr.length);
-		if (read == -1)
-			return -1;
-		buf.position(read);
+		int read = inputStream.read(arr, buf.position(), buf.remaining());
+		if (read >= 0) {
+			buf.position(buf.position() + read);
+		}
 		buf.flip();
 
 		CharBuffer cb = CharBuffer.wrap(cbuf);
 		decoder.decode(buf, cb, false);
-		buf.clear();
+		buf.compact();
 		cb.flip();
 
-		return cb.remaining();
-	}	
+		return cb.hasRemaining() ? cb.remaining() : (read < 0 ? -1 : 0);
+	}
 
 	// Below are alternative read methods which can be used if above method
 	// will be causing performance issues
