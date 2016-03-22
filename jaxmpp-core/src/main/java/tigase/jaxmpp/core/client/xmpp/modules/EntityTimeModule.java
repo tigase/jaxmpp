@@ -103,7 +103,7 @@ public class EntityTimeModule extends AbstractIQModule {
 		result.addChild(time);
 
 		int offset = TimeZone.getDefault().getRawOffset();
-		String tz = String.format("%s%02d%02d", offset >= 0 ? "+" : "-", offset / 3600000, (offset / 60000) % 60);
+		String tz = String.format("%s%02d:%02d", offset >= 0 ? "+" : "-", offset / 3600000, (offset / 60000) % 60);
 		String tm = format.format(new Date());
 
 		time.addChild(ElementFactory.create("tzo", tz, null));
