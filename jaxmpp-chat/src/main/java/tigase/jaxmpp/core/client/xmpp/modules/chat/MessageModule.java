@@ -206,9 +206,10 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 *            message to send.
 	 * @return
 	 */
-	public void sendMessage(Chat chat, String body) throws XMLException, JaxmppException {
+	public Message sendMessage(Chat chat, String body) throws JaxmppException {
 		Message msg = chat.sendMessage(body);
 		write(msg);
+		return msg;
 	}
 
 	/**
@@ -219,8 +220,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 *            message to send.
 	 * @return
 	 */
-	public void sendMessage(Chat chat, String body, List<? extends Element> additionalElems)
-			throws XMLException, JaxmppException {
+	public Message sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws JaxmppException {
 		Message msg = chat.sendMessage(body);
 		if (additionalElems != null) {
 			for (Element child : additionalElems) {
@@ -228,6 +228,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			}
 		}
 		write(msg);
+		return msg;
 	}
 
 	/**
@@ -240,7 +241,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 * @param message
 	 *            message
 	 */
-	public void sendMessage(JID toJID, String subject, String message) throws XMLException, JaxmppException {
+	public Message sendMessage(JID toJID, String subject, String message) throws JaxmppException {
 		Message msg = Message.create();
 		msg.setSubject(subject);
 		msg.setBody(message);
@@ -248,6 +249,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 		msg.setId(UIDGenerator.next());
 
 		write(msg);
+		return msg;
 	}
 
 	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
@@ -280,7 +282,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		void onChatClosed(SessionObject sessionObject, Chat chat);
 
-		public static class ChatClosedEvent extends JaxmppEvent<ChatClosedHandler> {
+		class ChatClosedEvent extends JaxmppEvent<ChatClosedHandler> {
 
 			private Chat chat;
 
@@ -309,7 +311,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		void onChatCreated(SessionObject sessionObject, Chat chat, Message message);
 
-		public static class ChatCreatedEvent extends JaxmppEvent<ChatCreatedHandler> {
+		class ChatCreatedEvent extends JaxmppEvent<ChatCreatedHandler> {
 
 			private Chat chat;
 
@@ -349,7 +351,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		void onChatUpdated(SessionObject sessionObject, Chat chat);
 
-		public static class ChatUpdatedEvent extends JaxmppEvent<ChatUpdatedHandler> {
+		class ChatUpdatedEvent extends JaxmppEvent<ChatUpdatedHandler> {
 
 			private Chat chat;
 
@@ -378,7 +380,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 
 		void onMessageReceived(SessionObject sessionObject, Chat chat, Message stanza);
 
-		public static class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
+		class MessageReceivedEvent extends JaxmppEvent<MessageReceivedHandler> {
 
 			private final Chat chat;
 
