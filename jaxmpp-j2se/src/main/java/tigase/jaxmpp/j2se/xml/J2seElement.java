@@ -27,9 +27,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 public class J2seElement implements Element {
 
-	private J2seElement parent;
-
 	private final tigase.xml.Element xmlElement;
+	private J2seElement parent;
 
 	public J2seElement(tigase.xml.Element xmlElement) {
 		this(xmlElement, null);
@@ -46,10 +45,10 @@ public class J2seElement implements Element {
 	}
 
 	@Override
-	public Element findChild( String[] elemPath ) throws XMLException {
-		final tigase.xml.Element child = this.xmlElement.findChild( elemPath );
-		if ( child != null ){
-			return new J2seElement( child );
+	public Element findChild(String[] elemPath) throws XMLException {
+		final tigase.xml.Element child = this.xmlElement.findChild(elemPath);
+		if (child != null) {
+			return new J2seElement(child);
 		} else {
 			return null;
 		}
@@ -68,6 +67,11 @@ public class J2seElement implements Element {
 	@Override
 	public Map<String, String> getAttributes() throws XMLException {
 		return this.xmlElement.getAttributes();
+	}
+
+	@Override
+	public void setAttributes(Map<String, String> attrs) throws XMLException {
+		this.setAttributes(attrs);
 	}
 
 	@Override
@@ -106,11 +110,13 @@ public class J2seElement implements Element {
 	@Override
 	public List<Element> getChildrenNS(String xmlns) throws XMLException {
 		ArrayList<Element> result = new ArrayList<Element>();
-		for (tigase.xml.Element e : this.xmlElement.getChildren()) {
-			String x = e.getXMLNS();
-			if (x != null && x.equals(xmlns))
-				result.add(new J2seElement(e, this));
-		}
+		List<tigase.xml.Element> children = this.xmlElement.getChildren();
+		if (children != null)
+			for (tigase.xml.Element e : children) {
+				String x = e.getXMLNS();
+				if (x != null && x.equals(xmlns))
+					result.add(new J2seElement(e, this));
+			}
 		return result;
 	}
 
@@ -131,8 +137,8 @@ public class J2seElement implements Element {
 	}
 
 	@Override
-	public Element getFirstChild( String name ) throws XMLException {
-		tigase.xml.Element child = this.xmlElement.getChild( name );
+	public Element getFirstChild(String name) throws XMLException {
+		tigase.xml.Element child = this.xmlElement.getChild(name);
 		return (child != null) ? new J2seElement(child, this) : null;
 	}
 
@@ -154,13 +160,28 @@ public class J2seElement implements Element {
 	}
 
 	@Override
+	public void setParent(Element parent) throws XMLException {
+		throw new RuntimeException("Not implemented in J2seElement");
+	}
+
+	@Override
 	public String getValue() throws XMLException {
 		return this.xmlElement.getCData();
 	}
 
 	@Override
+	public void setValue(String value) throws XMLException {
+		this.xmlElement.setCData(value);
+	}
+
+	@Override
 	public String getXMLNS() throws XMLException {
 		return getAttribute("xmlns");
+	}
+
+	@Override
+	public void setXMLNS(String xmlns) throws XMLException {
+		setAttribute("xmlns", xmlns);
 	}
 
 	private int indexOf(final Element child) {
@@ -195,26 +216,6 @@ public class J2seElement implements Element {
 	@Override
 	public void setAttribute(String key, String value) throws XMLException {
 		this.xmlElement.setAttribute(key, value);
-	}
-
-	@Override
-	public void setAttributes(Map<String, String> attrs) throws XMLException {
-		this.setAttributes(attrs);
-	}
-
-	@Override
-	public void setParent(Element parent) throws XMLException {
-		throw new RuntimeException("Not implemented in J2seElement");
-	}
-
-	@Override
-	public void setValue(String value) throws XMLException {
-		this.xmlElement.setCData(value);
-	}
-
-	@Override
-	public void setXMLNS(String xmlns) throws XMLException {
-		setAttribute("xmlns", xmlns);
 	}
 
 }
