@@ -17,24 +17,18 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
+
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -152,7 +146,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 					return;
 			}
 			stop();
-			fireOnError(null, ex, AbstractWebSocketConnector.this.context.getSessionObject());
+			fireOnError(response, ex, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (JaxmppException ex1) {
 			log.log(Level.SEVERE, null, ex1);
 		}

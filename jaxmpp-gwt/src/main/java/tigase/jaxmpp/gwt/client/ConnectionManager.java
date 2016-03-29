@@ -20,21 +20,22 @@ package tigase.jaxmpp.gwt.client;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.user.client.Timer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
+import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
-import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
