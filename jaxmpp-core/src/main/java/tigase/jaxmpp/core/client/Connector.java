@@ -55,6 +55,9 @@ public interface Connector {
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
 	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
+
+	public final static String RECONNECTING_KEY = "s:reconnecting";
+
 	/**
 	 * <br/>
 	 * Type: {@linkplain Boolean Boolean}.

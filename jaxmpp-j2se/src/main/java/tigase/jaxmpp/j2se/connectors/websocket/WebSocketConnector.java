@@ -33,7 +33,6 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.socket.Worker;
 
 import javax.net.ssl.*;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
@@ -74,6 +73,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	private Random random = new SecureRandom();
 	private byte[] mask = new byte[4];
+	private Timer closeTimer;
 
 	public WebSocketConnector(Context context) {
 		super(context);
@@ -389,7 +389,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			log.finest("Starting WebSocket handshake...");
 			handshake(uri);
 
-			reader = new WebSocketReader(new BufferedInputStream(socket.getInputStream()));
+			//reader = new WebSocketReader(new BufferedInputStream(socket.getInputStream()));
+			reader = new WebSocketReader(socket.getInputStream());
 			log.finest("Starting worker...");
 			worker.start();
 
@@ -438,22 +439,32 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			this.pingTask.cancel();
 			this.pingTask = null;
 		}
-		setStage(State.disconnected);
-		try {
-			if (socket != null && socket.isConnected()) {
-				// sending websocket close
-				writer.write(new byte[] { (byte) 0x88, (byte) 0x00 });
-				socket.close();
+//		setStage(State.disconnected);
+		if (socket != null && socket.isConnected()) {
+			if (closeTimer != null) {
+				closeTimer.cancel();
 			}
-		} catch (IOException e) {
-			log.log(Level.FINEST, "Problem with closing socket", e);
+			closeTimer = new Timer();
+			closeTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					closeSocket();
+					closeTimer.cancel();
+					closeTimer = null;
+				}
+			}, 3 * 1000);
+			// sending websocket close
+
+			//socket.close();
 		}
-		try {
-			if (worker != null)
-				worker.interrupt();
-		} catch (Exception e) {
-			log.log(Level.FINEST, "Problem with interrupting w2", e);
-		}
+
+		// it there a need for this?
+//		try {
+//			if (worker != null)
+//				worker.interrupt();
+//		} catch (Exception e) {
+//			log.log(Level.FINEST, "Problem with interrupting w2", e);
+//		}
 		try {
 			if (timer != null)
 				timer.cancel();
@@ -466,6 +477,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	private void workerTerminated(final Worker worker) {
 		try {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+				closeTimer = null;
+			}
 			setStage(State.disconnected);
 		} catch (JaxmppException e) {
 		}
@@ -481,6 +496,17 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Cannot terminate worker correctly", e);
+		}
+	}
+
+	private void closeSocket() {
+		if (socket.isConnected()) {
+			try {
+				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
+				socket.close();
+			} catch (IOException ex) {
+				log.log(Level.FINEST, "Problem with closing socket", ex);
+			}
 		}
 	}
 }

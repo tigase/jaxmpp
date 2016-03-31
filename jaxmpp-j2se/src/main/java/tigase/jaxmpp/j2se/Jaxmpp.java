@@ -17,18 +17,8 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executor;
-import java.util.logging.Level;
-
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
-import tigase.jaxmpp.core.client.Processor;
-import tigase.jaxmpp.core.client.ResponseManager;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
@@ -43,6 +33,11 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.websocket.WebSocketConnector;
 import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
+
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
 
 /**
  * Main library class for using in standalone, Android and other J2SE compatible
@@ -147,18 +142,35 @@ public class Jaxmpp extends JaxmppCore {
 	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
+				Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
+				sync = snc || (sync != null && sync);
+				Connector.DisconnectedHandler handler = null;
+				if (sync) {
+					handler = new Connector.DisconnectedHandler() {
+						@Override
+						public void onDisconnected(SessionObject sessionObject) {
+							synchronized (Jaxmpp.this) {
+								Jaxmpp.this.notifyAll();
+							}
+						}
+					};
+					this.eventBus.addHandler(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
+				}
 				try {
 					this.connector.stop();
 				} catch (XMLException e) {
 					throw new JaxmppException(e);
 				}
-				Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
-				if (snc || sync != null && sync) {
+				if (sync) {
 					synchronized (Jaxmpp.this) {
-						// Jaxmpp.this.wait();
+						if (getConnector().getState() != Connector.State.disconnected)
+							Jaxmpp.this.wait();
 					}
+					this.eventBus.remove(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
 				}
 			}
+		} catch (InterruptedException e) {
+			throw new JaxmppException(e);
 		} finally {
 			if (resetStreamManagement) {
 				StreamManagementModule.reset(sessionObject);
@@ -407,8 +419,10 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
+		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) == null || !(Boolean) sessionObject.getProperty(Connector.RECONNECTING_KEY)) {
+			synchronized (Jaxmpp.this) {
+				Jaxmpp.this.notify();
+			}
 		}
 		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
 	}

@@ -17,27 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.net.*;
-import java.nio.charset.Charset;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
-
-import javax.net.ssl.*;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.EncryptionEstablishedHandler.EncryptionEstablishedEvent;
@@ -62,6 +41,26 @@ import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
 
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.net.*;
+import java.nio.charset.Charset;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+
 /**
  *
  */
@@ -76,7 +75,6 @@ public class SocketConnector implements Connector {
 	public static final String HOSTNAME_VERIFIER_DISABLED_KEY = "HOSTNAME_VERIFIER_DISABLED_KEY";
 	public static final String HOSTNAME_VERIFIER_KEY = "HOSTNAME_VERIFIER_KEY";
 	public static final String KEY_MANAGERS_KEY = "KEY_MANAGERS_KEY";
-	public final static String RECONNECTING_KEY = "s:reconnecting";
 	public static final String SASL_EXTERNAL_ENABLED_KEY = "SASL_EXTERNAL_ENABLED_KEY";
 	public static final String SERVER_HOST = "socket#ServerHost";
 	public static final String SERVER_PORT = "socket#ServerPort";
@@ -101,6 +99,7 @@ public class SocketConnector implements Connector {
 	private Timer timer;
 	private Worker worker;
 	private OutputStream writer;
+	private Timer closeTimer;
 
 	public SocketConnector(Context context) {
 		this.log = Logger.getLogger(this.getClass().getName());
@@ -470,6 +469,7 @@ public class SocketConnector implements Connector {
 	private void reconnect(final String newHost) {
 		log.info("See other host: " + newHost);
 		try {
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			terminateAllWorkers();
 
 			Object x1 = this.context.getSessionObject().getProperty(Jaxmpp.SYNCHRONIZED_MODE);
@@ -771,19 +771,29 @@ public class SocketConnector implements Connector {
 			this.pingTask.cancel();
 			this.pingTask = null;
 		}
-		setStage(State.disconnected);
-		try {
-			if (socket != null)
-				socket.close();
-		} catch (IOException e) {
-			log.log(Level.FINEST, "Problem with closing socket", e);
+		//setStage(State.disconnected);
+		if (socket != null && socket.isConnected()) {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+			}
+			closeTimer = new Timer();
+			closeTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					closeSocket();
+					closeTimer.cancel();
+					closeTimer = null;
+				}
+			}, 3 * 1000);
 		}
-		try {
-			if (worker != null)
-				worker.interrupt();
-		} catch (Exception e) {
-			log.log(Level.FINEST, "Problem with interrupting w2", e);
-		}
+
+		// is there a need for this?
+//		try {
+//			if (worker != null)
+//				worker.interrupt();
+//		} catch (Exception e) {
+//			log.log(Level.FINEST, "Problem with interrupting w2", e);
+//		}
 		try {
 			if (timer != null)
 				timer.cancel();
@@ -807,6 +817,10 @@ public class SocketConnector implements Connector {
 
 	private void workerTerminated(final Worker worker) {
 		try {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+				closeTimer = null;
+			}
 			setStage(State.disconnected);
 		} catch (JaxmppException e) {
 		}
@@ -822,6 +836,16 @@ public class SocketConnector implements Connector {
 			}
 		} catch (Exception e) {
 			log.warning("Problem : " + e.getMessage());
+		}
+	}
+
+	private void closeSocket() {
+		if (socket.isConnected()) {
+			try {
+				socket.close();
+			} catch (IOException ex) {
+				log.log(Level.FINEST, "Problem with closing socket", ex);
+			}
 		}
 	}
 

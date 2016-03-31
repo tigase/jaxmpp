@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 public abstract class AbstractWebSocketConnector implements Connector {
 
 	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
-	
+
 	protected final Context context;
 	protected final Logger log;
 
@@ -97,6 +97,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 		Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
 		if (seeOtherHost != null) {
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			String seeHost = seeOtherHost.getValue();
 			if (log.isLoggable(Level.FINE)) {
 				log.fine("Received see-other-host=" + seeHost);
@@ -111,6 +112,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	protected boolean handleSeeOtherUri(String seeOtherUri) throws JaxmppException {
 		try {
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			stop();
 			fireOnError(null, null, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (Exception ex) {
@@ -157,9 +159,10 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	protected void onStreamTerminate() throws JaxmppException {
-		if (getState() == State.disconnected)
+		if (getState() == State.disconnecting)
 			return;
-		setStage(State.disconnected);
+		terminateStream();
+		setStage(State.disconnecting);
 
 		if (log.isLoggable(Level.FINE))
 			log.fine("Stream terminated");
@@ -183,6 +186,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				log.finest("received <close/> stanza, so we need to close this connection..");
 				// stop();
 				this.onStreamTerminate();
+				return;
 			}
 			if ("open".equals(child.getName())) {
 				// received <open/> stanza should be ignored
@@ -301,9 +305,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			this.stop();
 	}
 
-	protected void terminateAllWorkers() throws JaxmppException {
-		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
-	}
+	protected abstract void terminateAllWorkers() throws JaxmppException;
 
 	protected void terminateStream() throws JaxmppException {
 		final State state = getState();

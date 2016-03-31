@@ -25,7 +25,6 @@ import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -37,6 +36,8 @@ import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static tigase.jaxmpp.core.client.Connector.RECONNECTING_KEY;
+
 /**
  *
  * @author andrzej
@@ -45,6 +46,7 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 
 	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
 
+	private static final String SEE_OTHER_HOST_URI = "see-other-host-uri";
 	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 	
 	private Jaxmpp jaxmpp;
@@ -119,6 +121,17 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 				timer.schedule(10);
 			} else if (oldState == Connector.State.connected) {
 				log.log(Level.WARNING, "Disconnected after being fully connected");
+				if (sessionObject.getProperty(RECONNECTING_KEY) == Boolean.TRUE) {
+					sessionObject.setProperty(RECONNECTING_KEY, null);
+					final String uri = sessionObject.getProperty(SEE_OTHER_HOST_URI);
+					Timer timer = new Timer() {
+						@Override
+						public void run() {
+							connectionFailure(uri, true);
+						}
+					};
+					timer.schedule(10);
+				}
 //				connectionFailure(null, false);
 			}
 		}
@@ -128,15 +141,17 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 	@Override
 	public void onSeeOtherHost(final String seeHost, MutableBoolean handled) {
 		handled.setValue(true);
-		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
-		Timer timer = new Timer() {
-			@Override
-			public void run() {
-				log.log(Level.SEVERE, "reconnecting");
-				connectionFailure(seeHost, true);
-			}
-		};
-		timer.schedule(10);
+		context.getSessionObject().setProperty(RECONNECTING_KEY, true);
+		context.getSessionObject().setProperty(SEE_OTHER_HOST_URI, seeHost);
+//		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
+//		Timer timer = new Timer() {
+//			@Override
+//			public void run() {
+//				log.log(Level.SEVERE, "reconnecting");
+//				connectionFailure(seeHost, true);
+//			}
+//		};
+//		timer.schedule(10);
 	}	
 
 	public void connectionFailure(String seeHost, boolean hostFailure) {

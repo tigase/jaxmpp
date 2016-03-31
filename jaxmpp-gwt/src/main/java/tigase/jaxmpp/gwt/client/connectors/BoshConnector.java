@@ -17,22 +17,21 @@
  */
 package tigase.jaxmpp.gwt.client.connectors;
 
-import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
-import java.util.logging.Level;
-
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
-import java.util.List;
+import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
+import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
+
+import java.util.List;
+import java.util.logging.Level;
 
 public class BoshConnector extends AbstractBoshConnector {
 
@@ -180,6 +179,7 @@ public class BoshConnector extends AbstractBoshConnector {
 				MutableBoolean handled = new MutableBoolean();
 				context.getEventBus().fire(
 						new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+				setStage(State.disconnecting);
 
 				return false;//handled.isValue();
 			}
