@@ -17,22 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connectors.websocket;
 
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.logging.Level;
-
-import javax.net.ssl.*;
-
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
@@ -47,6 +31,21 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.j2se.connectors.socket.Reader;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.socket.Worker;
+
+import javax.net.ssl.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.logging.Level;
+
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
 
 /**
  *
@@ -72,6 +71,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	private Worker worker = null;
 
 	private OutputStream writer = null;
+
+	private Random random = new SecureRandom();
+	private byte[] mask = new byte[4];
 
 	public WebSocketConnector(Context context) {
 		super(context);
@@ -204,19 +206,29 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 					// prepare WebSocket header according to Hybi specification
 					int size = buffer.length;
+					random.nextBytes(mask);
+					byte maskedLen = (byte) 0x80;
 					ByteBuffer bbuf = ByteBuffer.allocate(12);
 					bbuf.put((byte) 0x81);
 					if (size <= 125) {
-						bbuf.put((byte) size);
+						maskedLen |= (byte) size;
+						bbuf.put(maskedLen);
 					} else if (size <= 0xFFFF) {
-						bbuf.put((byte) 0x7E);
+						maskedLen |= (byte) 0x7E;
+						bbuf.put(maskedLen);
 						bbuf.putShort((short) size);
 					} else {
-						bbuf.put((byte) 0x7F);
+						maskedLen |= (byte) 0x7F;
+						bbuf.put(maskedLen);
 						bbuf.putLong(size);
 					}
 					bbuf.flip();
 					writer.write(bbuf.array(), 0, bbuf.remaining());
+					writer.write(mask, 0, 4);
+
+					for (int i=0; i<buffer.length; i++) {
+						buffer[i] = (byte) (buffer[i] ^ mask[i % 4]);
+					}
 					// send actual data
 					writer.write(buffer);
 					writer.flush();
@@ -428,8 +440,11 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		}
 		setStage(State.disconnected);
 		try {
-			if (socket != null)
+			if (socket != null && socket.isConnected()) {
+				// sending websocket close
+				writer.write(new byte[] { (byte) 0x88, (byte) 0x00 });
 				socket.close();
+			}
 		} catch (IOException e) {
 			log.log(Level.FINEST, "Problem with closing socket", e);
 		}
