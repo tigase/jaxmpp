@@ -17,46 +17,21 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Property;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Storage for keeping roster.
  */
 public abstract class RosterStore implements Property {
 
-	static interface Handler {
-
-		void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
-				JaxmppException;
-
-		void cleared();
-
-		void remove(BareJID jid) throws XMLException, JaxmppException;
-
-		void update(RosterItem item) throws XMLException, JaxmppException;
-	}
-
-	public static interface Predicate {
-		boolean match(RosterItem item);
-	}
-
-	private Handler handler;
 	protected SessionObject sessionObject;
+	private Handler handler;
 
 	/**
 	 * Adds new contact to roster.
@@ -68,7 +43,7 @@ public abstract class RosterStore implements Property {
 	 * @param asyncCallback
 	 *            callback
 	 */
-	public void add(BareJID jid, String name, AsyncCallback asyncCallback) throws XMLException, JaxmppException {
+	public void add(BareJID jid, String name, AsyncCallback asyncCallback) throws JaxmppException {
 		add(jid, name, new ArrayList<String>(), asyncCallback);
 	}
 
@@ -84,8 +59,7 @@ public abstract class RosterStore implements Property {
 	 * @param asyncCallback
 	 *            callback
 	 */
-	public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
-			JaxmppException {
+	public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws JaxmppException {
 		if (this.handler != null)
 			this.handler.add(jid, name, groups, asyncCallback);
 	}
@@ -102,8 +76,7 @@ public abstract class RosterStore implements Property {
 	 * @param asyncCallback
 	 *            callback
 	 */
-	public void add(BareJID jid, String name, String[] groups, AsyncCallback asyncCallback) throws XMLException,
-			JaxmppException {
+	public void add(BareJID jid, String name, String[] groups, AsyncCallback asyncCallback) throws JaxmppException {
 		ArrayList<String> x = new ArrayList<String>();
 		if (groups != null)
 			for (String string : groups) {
@@ -115,7 +88,7 @@ public abstract class RosterStore implements Property {
 	protected abstract Set<String> addItem(RosterItem item);
 
 	protected abstract Set<String> calculateModifiedGroups(final HashSet<String> groupsOld);
-	
+
 	/**
 	 * Clears storage.
 	 */
@@ -190,6 +163,10 @@ public abstract class RosterStore implements Property {
 		this.handler = handler;
 	}
 
+	public void setSessionObject(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
+
 	/**
 	 * Sends changed RosterItem to server.
 	 * 
@@ -202,7 +179,18 @@ public abstract class RosterStore implements Property {
 
 	}
 
-	public void setSessionObject(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
+	interface Handler {
+
+		void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws JaxmppException;
+
+		void cleared();
+
+		void remove(BareJID jid) throws JaxmppException;
+
+		void update(RosterItem item) throws JaxmppException;
+	}
+
+	public interface Predicate {
+		boolean match(RosterItem item);
 	}
 }
