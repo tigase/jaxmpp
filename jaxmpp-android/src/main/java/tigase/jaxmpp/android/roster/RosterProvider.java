@@ -66,7 +66,6 @@ public class RosterProvider implements RosterCacheProvider {
 
 			// in most of cases we will already have this record
 			if (rosterItem.getId() == -1) {
-				v.put(RosterItemsCacheTableMetaData.FIELD_ID, rosterItem.getId());
 				long id = db.insertWithOnConflict(RosterItemsCacheTableMetaData.TABLE_NAME, null, v,
 						SQLiteDatabase.CONFLICT_REPLACE); // CONFLICT_REPLACE?
 				Log.d("RosterProvider", "Added item " + rosterItem.getJid().toString() + " with id=" + id);
