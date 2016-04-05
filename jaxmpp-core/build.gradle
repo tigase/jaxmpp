@@ -1,0 +1,14 @@
+apply plugin: 'java'
+
+sourceCompatibility = defaultSourceCompatibility
+targetCompatibility = defaultTargetCompatibility
+
+jar {
+    from('src/main/java') {
+        include '**/*'
+    }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+}

@@ -1,0 +1,17 @@
+apply plugin: 'java'
+
+sourceCompatibility = defaultSourceCompatibility
+targetCompatibility = defaultTargetCompatibility
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile project(':jaxmpp-core')
+    compile project(':jaxmpp-socks5')
+    compile project(':jaxmpp-jingle')
+    compile project(':jaxmpp-filetransfer')
+    compile project(':jaxmpp-roster')
+    compile project(':jaxmpp-presence')
+    compile project(':jaxmpp-registration')
+    compile 'tigase:tigase-xmltools:3.4.5'
+    compile 'dnsjava:dnsjava:2.1.7'
+}

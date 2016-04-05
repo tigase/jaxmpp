@@ -69,7 +69,7 @@
 				<artifactId>android-maven-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<androidManifestFile>${project.basedir}/AndroidManifest.xml</androidManifestFile>
+					<androidManifestFile>${project.basedir}/src/main/AndroidManifest.xml</androidManifestFile>
 					<assetsDirectory>${project.basedir}/assets</assetsDirectory>
 					<resourceDirectory>${project.basedir}/res</resourceDirectory>
 					<nativeLibrariesDirectory>${project.basedir}/src/main/native</nativeLibrariesDirectory>
