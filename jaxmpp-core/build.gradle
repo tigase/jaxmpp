@@ -9,6 +9,14 @@ jar {
     }
 }
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
 dependencies {
     testCompile 'junit:junit:4.12'
 }

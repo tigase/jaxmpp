@@ -8,6 +8,17 @@ buildscript {
     }
 }
 
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifact "${project.buildDir}/outputs/aar/${project.name}-release.aar"
+            artifactId = 'jaxmpp-android'
+            groupId = 'tigase'
+            version = jaxmppVersion
+        }
+    }
+}
+
 apply plugin: 'com.android.library'
 
 android {
@@ -21,7 +32,6 @@ android {
 }
 
 dependencies {
-
     testCompile 'junit:junit:4.12'
     compile 'dnsjava:dnsjava:2.1.7'
     compile project(':jaxmpp-core')

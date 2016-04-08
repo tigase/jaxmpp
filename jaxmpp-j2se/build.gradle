@@ -3,6 +3,14 @@ apply plugin: 'java'
 sourceCompatibility = defaultSourceCompatibility
 targetCompatibility = defaultTargetCompatibility
 
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
 dependencies {
     testCompile 'junit:junit:4.12'
     compile project(':jaxmpp-core')
