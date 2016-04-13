@@ -18,7 +18,7 @@
 package tigase.jaxmpp.j2se;
 
 import tigase.jaxmpp.core.client.*;
-import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.JaxmppCore.LoggedInHandler.LoggedInEvent;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
@@ -80,7 +80,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 
-	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";;
+	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
 
 	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 
@@ -142,7 +142,7 @@ public class Jaxmpp extends JaxmppCore {
 	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
-				Boolean sync = (Boolean) this.sessionObject.getProperty(SYNCHRONIZED_MODE);
+				Boolean sync = this.sessionObject.getProperty(SYNCHRONIZED_MODE);
 				sync = snc || (sync != null && sync);
 				Connector.DisconnectedHandler handler = null;
 				if (sync) {
@@ -341,7 +341,7 @@ public class Jaxmpp extends JaxmppCore {
 				}
 			}
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
-				JaxmppException r = (JaxmppException) sessionObject.getProperty(EXCEPTION_KEY);
+				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
 				throw r;
 			}
@@ -389,7 +389,7 @@ public class Jaxmpp extends JaxmppCore {
 				timer = null;
 			}
 		}
-		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
@@ -397,7 +397,7 @@ public class Jaxmpp extends JaxmppCore {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
-		eventBus.fire(new ConnectedEvent(sessionObject));
+		eventBus.fire(new LoggedInEvent(sessionObject));
 	}
 
 	@Override
@@ -406,7 +406,7 @@ public class Jaxmpp extends JaxmppCore {
 			Jaxmpp.this.notify();
 		}
 
-		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
@@ -414,7 +414,7 @@ public class Jaxmpp extends JaxmppCore {
 		synchronized (Jaxmpp.this) {
 			Jaxmpp.this.notify();
 		}
-		eventBus.fire(new ConnectedEvent(sessionObject));
+		eventBus.fire(new LoggedInHandler.LoggedInEvent(sessionObject));
 	}
 
 	@Override
@@ -424,7 +424,7 @@ public class Jaxmpp extends JaxmppCore {
 				Jaxmpp.this.notify();
 			}
 		}
-		// XXX eventBus.fire(new DisconnectedEvent(sessionObject));
+		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	/**

@@ -33,36 +33,36 @@ public interface Connector {
 	 * Name of property that specify if connection is already compressed. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
-	public final static String COMPRESSED_KEY = "CONNECTOR#COMPRESSED_KEY";
+	String COMPRESSED_KEY = "CONNECTOR#COMPRESSED_KEY";
 	/**
 	 * Name of property that specify current state of connector. <br/>
 	 * Type: {@linkplain State State}.
 	 */
-	public final static String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
+	String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
 	/**
 	 * Name of property that allows disable keep alive feature. Keep alive is
 	 * turned on by default. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
-	public final static String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
+	String DISABLE_KEEPALIVE_KEY = "CONNECTOR#DISABLEKEEPALIVE";
 	/**
 	 * Name of property that specify if connection is encrypted. <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
-	public final static String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
+	String ENCRYPTED_KEY = "CONNECTOR#ENCRYPTED_KEY";
 	/**
 	 * <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
-	public final static String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
+	String EXTERNAL_KEEPALIVE_KEY = "CONNECTOR#EXTERNAL_KEEPALIVE_KEY";
 
-	public final static String RECONNECTING_KEY = "s:reconnecting";
+	String RECONNECTING_KEY = "s:reconnecting";
 
 	/**
 	 * <br/>
 	 * Type: {@linkplain Boolean Boolean}.
 	 */
-	public static final String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
+	String SEE_OTHER_HOST_KEY = "BOSH#SEE_OTHER_HOST_KEY";
 
 	// public final static String DISABLE_SOCKET_TIMEOUT_KEY =
 	// "CONNECTOR#DISABLE_SOCKET_TIMEOUT_KEY";
@@ -72,7 +72,7 @@ public interface Connector {
 	 * Custom array of {@link javax.net.ssl.TrustManager TrustManagers[]}
 	 * instead of default Java TrustManager.
 	 */
-	public static final String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
+	String TRUST_MANAGERS_KEY = "TRUST_MANAGERS_KEY";
 
 	String PROXY_HOST = "PROXY_HOST_KEY";
 
@@ -90,14 +90,14 @@ public interface Connector {
 	 *            writer
 	 * @return {@linkplain XmppSessionLogic}
 	 */
-	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
+	XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer);
 
 	/**
 	 * Returns current {@linkplain State State} of connector.
 	 *
 	 * @return {@linkplain State State} of connector.
 	 */
-	public State getState();
+	State getState();
 
 	/**
 	 * Returns XML Stream compression state.
@@ -116,12 +116,12 @@ public interface Connector {
 	/**
 	 * Whitespace ping.
 	 */
-	public void keepalive() throws JaxmppException;
+	void keepalive() throws JaxmppException;
 
 	/**
 	 * Sends new XML Stream header.
 	 */
-	public void restartStream() throws JaxmppException;
+	void restartStream() throws JaxmppException;
 
 	/**
 	 * Sends given XML Element to server.
@@ -129,18 +129,18 @@ public interface Connector {
 	 * @param stanza
 	 *            XML element to send.
 	 */
-	public void send(final Element stanza) throws JaxmppException;
+	void send(final Element stanza) throws JaxmppException;
 
 	/**
 	 * Starts connector. If connector is properly configured it will tries to
 	 * establsh connection with server.
 	 */
-	public void start() throws JaxmppException;
+	void start() throws JaxmppException;
 
 	/**
 	 * Stops connector and closes connections.
 	 */
-	public void stop() throws JaxmppException;
+	void stop() throws JaxmppException;
 
 	/**
 	 * Stops connector.
@@ -149,12 +149,12 @@ public interface Connector {
 	 *            if <code>true<code> then connection will be terminated
 	 *            immediatelly and connector will be stopped.
 	 */
-	public void stop(boolean terminate) throws JaxmppException;
+	void stop(boolean terminate) throws JaxmppException;
 
 	/**
 	 * States of Connector.
 	 */
-	public static enum State {
+	enum State {
 		/**
 		 * Connection is established.
 		 */
@@ -174,12 +174,12 @@ public interface Connector {
 	}
 
 	/**
-	 * Implemented by handlers of {@linkplain ConnectedEvent ConnectedEvent}.
+	 * Implemented by handlers of {@linkplain ConnectedEvent LoggedInEvent}.
 	 */
-	public interface ConnectedHandler extends EventHandler {
+	interface ConnectedHandler extends EventHandler {
 
 		/**
-		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
+		 * Called when {@linkplain ConnectedEvent LoggedInEvent} is fired.
 		 *
 		 * @param sessionObject
 		 *            session object related to connection.
@@ -189,7 +189,7 @@ public interface Connector {
 		/**
 		 * Fired after creates XMPP Stream
 		 */
-		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
+		class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
 
 			public ConnectedEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -206,7 +206,7 @@ public interface Connector {
 	/**
 	 * Implemented by handlers of {@linkplain DisconnectedEvent}.
 	 */
-	public interface DisconnectedHandler extends EventHandler {
+	interface DisconnectedHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain DisconnectedEvent} is fired.
@@ -219,7 +219,7 @@ public interface Connector {
 		/**
 		 * Fired when Connector is permanently stopped.
 		 */
-		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
+		class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
 
 			public DisconnectedEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -236,7 +236,7 @@ public interface Connector {
 	 * Implemented by handlers of {@linkplain EncryptionEstablishedEvent
 	 * EncryptionEstablishedEvent}.
 	 */
-	public interface EncryptionEstablishedHandler extends EventHandler {
+	interface EncryptionEstablishedHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain EncryptionEstablishedEvent
@@ -250,7 +250,7 @@ public interface Connector {
 		/**
 		 * Fired after encrypted connection is established.
 		 */
-		public static class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
+		class EncryptionEstablishedEvent extends JaxmppEvent<EncryptionEstablishedHandler> {
 
 			public EncryptionEstablishedEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -267,7 +267,7 @@ public interface Connector {
 	/**
 	 * Implemented by handlers of {@linkplain ErrorEvent ErrorEvent}.
 	 */
-	public interface ErrorHandler extends EventHandler {
+	interface ErrorHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain ErrorEvent ErrorEvent} is fired.
@@ -286,7 +286,7 @@ public interface Connector {
 		/**
 		 * Fired on connection error.
 		 */
-		public static class ErrorEvent extends JaxmppEvent<ErrorHandler> {
+		class ErrorEvent extends JaxmppEvent<ErrorHandler> {
 
 			private Throwable caught;
 
@@ -324,7 +324,7 @@ public interface Connector {
 	 * Implemented by handlers of {@linkplain StanzaReceivedEvent
 	 * StanzaReceivedEvent}.
 	 */
-	public interface StanzaReceivedHandler extends EventHandler {
+	interface StanzaReceivedHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain StanzaReceivedEvent StanzaReceivedEvent} is
@@ -340,7 +340,7 @@ public interface Connector {
 		/**
 		 * Fired when stanza is received.
 		 */
-		public static class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
+		class StanzaReceivedEvent extends JaxmppEvent<StanzaReceivedHandler> {
 
 			private StreamPacket stanza;
 
@@ -370,7 +370,7 @@ public interface Connector {
 	 * Implemented by handlers of {@linkplain StanzaSendingEvent
 	 * StanzaSendingEvent}.
 	 */
-	public interface StanzaSendingHandler extends EventHandler {
+	interface StanzaSendingHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain StanzaSendingEvent StanzaSendingEvent} is
@@ -386,7 +386,7 @@ public interface Connector {
 		/**
 		 * Fired when stanza is sending.
 		 */
-		public static class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
+		class StanzaSendingEvent extends JaxmppEvent<StanzaSendingHandler> {
 
 			private Element stanza;
 
@@ -420,7 +420,7 @@ public interface Connector {
 	 * Implemented by handlers of {@linkplain StateChangedEvent
 	 * StateChangedEvent}.
 	 */
-	public interface StateChangedHandler extends EventHandler {
+	interface StateChangedHandler extends EventHandler {
 
 		/**
 		 * Called when {@linkplain StateChangedEvent StateChangedEvent} is
@@ -438,7 +438,7 @@ public interface Connector {
 		/**
 		 * Fired after connection state is changed.
 		 */
-		public static class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
+		class StateChangedEvent extends JaxmppEvent<StateChangedHandler> {
 
 			private State newState;
 
@@ -476,7 +476,7 @@ public interface Connector {
 	 * Implemented by handlers of {@linkplain StreamTerminatedEvent
 	 * StreamTerminatedEvent}.
 	 */
-	public interface StreamTerminatedHandler extends EventHandler {
+	interface StreamTerminatedHandler extends EventHandler {
 
 		/**
 		 * Called when when {@linkplain StreamTerminatedEvent
@@ -490,7 +490,7 @@ public interface Connector {
 		/**
 		 * Fired after XMPP Stream is terminated.
 		 */
-		public static class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
+		class StreamTerminatedEvent extends JaxmppEvent<StreamTerminatedHandler> {
 
 			public StreamTerminatedEvent(SessionObject sessionObject) {
 				super(sessionObject);

@@ -30,7 +30,7 @@ import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.JaxmppCore.ConnectedHandler.ConnectedEvent;
+import tigase.jaxmpp.core.client.JaxmppCore.LoggedInHandler.LoggedInEvent;
 import tigase.jaxmpp.core.client.PacketWriter;
 import tigase.jaxmpp.core.client.Processor;
 import tigase.jaxmpp.core.client.ResponseManager;
@@ -60,7 +60,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	private final ConnectionManager connectionManager = new ConnectionManager();
 
-	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();;
+	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
 
 	private Object lastRid;
 
@@ -309,27 +309,27 @@ public class Jaxmpp extends JaxmppCore {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 
-		// eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
 	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
-		eventBus.fire(new ConnectedEvent(sessionObject));
+		eventBus.fire(new LoggedInEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
-		// eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
-		eventBus.fire(new ConnectedEvent(sessionObject));
+		eventBus.fire(new LoggedInHandler.LoggedInEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		// eventBus.fire(new DisconnectedEvent(sessionObject));
+		// eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	public void storeSession() {
