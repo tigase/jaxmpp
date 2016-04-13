@@ -22,10 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
@@ -43,7 +40,7 @@ public class Room {
 		return "Room{" + "id=" + id + ", nickname=" + nickname + ", roomJid=" + roomJid + ", state=" + state + '}';
 	}
 
-	public static enum State {
+	public enum State {
 		joined,
 		not_joined,
 		requested
@@ -144,13 +141,16 @@ public class Room {
 		this.presences.remove(occupant.getNickname());
 	}
 
-	public void sendMessage(String body) throws XMLException, JaxmppException {
+	public Message sendMessage(String body) throws JaxmppException {
 		Message msg = Message.create();
+		msg.setId(UIDGenerator.next());
 		msg.setTo(JID.jidInstance(roomJid));
 		msg.setType(StanzaType.groupchat);
 		msg.setBody(body);
 
 		this.context.getWriter().write(msg);
+
+		return msg;
 	}
 
 	public void setLastMessageDate(Date date) {
