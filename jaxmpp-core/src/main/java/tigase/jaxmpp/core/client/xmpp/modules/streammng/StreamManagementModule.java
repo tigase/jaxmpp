@@ -255,7 +255,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 
 		List<Element> notSentElements = null;
 		synchronized (this.outgoingQueue) {
-			notSentElements = new ArrayList<Element>(notSentElements);
+			notSentElements = new ArrayList<Element>(this.outgoingQueue);
 			outgoingQueue.clear();
 		}
 
