@@ -207,7 +207,19 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 * @return
 	 */
 	public Message sendMessage(Chat chat, String body) throws JaxmppException {
-		Message msg = chat.sendMessage(body);
+		Message msg = chat.createMessage(body);
+		write(msg);
+		return msg;
+	}
+
+	/**
+	 * Sends message in passed chat.
+	 *
+	 * @param msg
+	 *            message stanza to send.
+	 * @return
+	 */
+	public Message sendMessage(Message msg) throws JaxmppException {
 		write(msg);
 		return msg;
 	}
@@ -221,7 +233,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 	 * @return
 	 */
 	public Message sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws JaxmppException {
-		Message msg = chat.sendMessage(body);
+		Message msg = chat.createMessage(body);
 		if (additionalElems != null) {
 			for (Element child : additionalElems) {
 				msg.addChild(child);

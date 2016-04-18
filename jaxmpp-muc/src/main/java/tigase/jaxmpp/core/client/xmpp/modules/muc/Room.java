@@ -35,36 +35,16 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
 public class Room {
 
-	@Override
-	public String toString() {
-		return "Room{" + "id=" + id + ", nickname=" + nickname + ", roomJid=" + roomJid + ", state=" + state + '}';
-	}
-
-	public enum State {
-		joined,
-		not_joined,
-		requested
-	}
-
-	private Context context;
-
 	private final long id;
-
-	private Date lastMessageDate;
-
 	private final Logger log = Logger.getLogger(this.getClass().getName());
-
-	private String nickname;
-
-	private String password;
-
 	private final Map<String, Occupant> presences = new HashMap<String, Occupant>();
-
 	private final BareJID roomJid;
-
-	private State state = State.not_joined;
-
 	private final Map<String, Occupant> tempOccupants = new HashMap<String, Occupant>();
+	private Context context;
+	private Date lastMessageDate;
+	private String nickname;
+	private String password;
+	private State state = State.not_joined;
 
 	public Room(long id, Context context, BareJID roomJid, String nickname) {
 		this.id = id;
@@ -78,6 +58,16 @@ public class Room {
 		this.presences.put(occupant.getNickname(), occupant);
 	}
 
+	public Message createMessage(String body) throws JaxmppException {
+		Message msg = Message.create();
+		msg.setId(UIDGenerator.next());
+		msg.setTo(JID.jidInstance(roomJid));
+		msg.setType(StanzaType.groupchat);
+		msg.setBody(body);
+
+		return msg;
+	}
+
 	public long getId() {
 		return id;
 	}
@@ -86,12 +76,22 @@ public class Room {
 		return lastMessageDate;
 	}
 
+	public void setLastMessageDate(Date date) {
+		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
+			this.lastMessageDate = date;
+		}
+	}
+
 	public String getNickname() {
 		return nickname;
 	}
 
 	public String getPassword() {
 		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
 	}
 
 	public Map<String, Occupant> getPresences() {
@@ -108,6 +108,13 @@ public class Room {
 
 	public State getState() {
 		return state;
+	}
+
+	void setState(State state) {
+		State oldState = this.state;
+		this.state = state;
+		StateChangeEvent e = new StateChangeEvent(context.getSessionObject(), this, oldState, state);
+		context.getEventBus().fire(e);
 	}
 
 	public Map<String, Occupant> getTempOccupants() {
@@ -142,32 +149,24 @@ public class Room {
 	}
 
 	public Message sendMessage(String body) throws JaxmppException {
-		Message msg = Message.create();
-		msg.setId(UIDGenerator.next());
-		msg.setTo(JID.jidInstance(roomJid));
-		msg.setType(StanzaType.groupchat);
-		msg.setBody(body);
-
+		Message msg = createMessage(body);
 		this.context.getWriter().write(msg);
-
 		return msg;
 	}
 
-	public void setLastMessageDate(Date date) {
-		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
-			this.lastMessageDate = date;
-		}
+	public void sendMessage(Message msg) throws JaxmppException {
+		this.context.getWriter().write(msg);
 	}
 
-	public void setPassword(String password) {
-		this.password = password;
+	@Override
+	public String toString() {
+		return "Room{" + "id=" + id + ", nickname=" + nickname + ", roomJid=" + roomJid + ", state=" + state + '}';
 	}
 
-	void setState(State state) {
-		State oldState = this.state;
-		this.state = state;
-		StateChangeEvent e = new StateChangeEvent(context.getSessionObject(), this, oldState, state);
-		context.getEventBus().fire(e);
+	public enum State {
+		joined,
+		not_joined,
+		requested
 	}
 
 }

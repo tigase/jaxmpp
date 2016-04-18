@@ -117,7 +117,7 @@ public class Chat {
 	 *            message to send.
 	 * @return
 	 */
-	protected Message sendMessage(String body) throws JaxmppException {
+	public Message createMessage(String body) throws JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(jid);
 		msg.setType(StanzaType.chat);
