@@ -17,6 +17,12 @@
  */
 package tigase.jaxmpp.j2se;
 
+import java.util.Timer;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
+
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.JaxmppCore.LoggedInHandler.LoggedInEvent;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
@@ -34,42 +40,16 @@ import tigase.jaxmpp.j2se.connectors.websocket.WebSocketConnector;
 import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executor;
-import java.util.logging.Level;
-
 /**
  * Main library class for using in standalone, Android and other J2SE compatible
  * application.
  */
 public class Jaxmpp extends JaxmppCore {
 
-	private class CheckTimeoutsTask extends TimerTask {
-
-		@Override
-		public void run() {
-			try {
-				checkTimeouts();
-			} catch (JaxmppException e) {
-				log.warning("Problem on checking timeouts");
-			}
-		}
-		
-	}
-	
-	private class LoginTimeoutTask extends TimerTask {
-
-		@Override
-		public void run() {
-			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.notify();
-			}
-		}
-	}
-
 	public static final String CONNECTOR_TYPE = "connectorType";
-
+	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
+	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
+	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
 	private static final Executor DEFAULT_EXECUTOR = new Executor() {
 
 		@Override
@@ -78,25 +58,16 @@ public class Jaxmpp extends JaxmppCore {
 		}
 	};
 
-	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
-
-	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
-
-	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
-
 	static {
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
 
 	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
-
 	private Executor executor;
+	private TimerTask loginTimeoutTask;
+	private Timer timer = null;
 
 	// private FileTransferManager fileTransferManager;
-
-	private TimerTask loginTimeoutTask;
-	
-	private Timer timer = null;
 
 	public Jaxmpp() {
 		super();
@@ -198,9 +169,19 @@ public class Jaxmpp extends JaxmppCore {
 		return executor;
 	}
 
-	// public FileTransferManager getFileTransferManager() {
-	// return fileTransferManager;
-	// }
+	/**
+	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
+	 * modules.
+	 *
+	 * @param executor
+	 *            executor
+	 */
+	public void setExecutor(Executor executor) {
+		if (executor == null)
+			this.executor = DEFAULT_EXECUTOR;
+		else
+			this.executor = executor;
+	}
 
 	@Override
 	protected void init() {
@@ -223,6 +204,18 @@ public class Jaxmpp extends JaxmppCore {
 		this.processor = new Processor(this.modulesManager, context);
 
 		modulesInit();
+	}
+
+	// public FileTransferManager getFileTransferManager() {
+	// return fileTransferManager;
+	// }
+
+	@Override
+	/**
+	 * Connects to server in sync mode.
+	 */
+	public void login() throws JaxmppException {
+		login(true);
 	}
 
 	// public void initFileTransferManager(boolean experimental) throws
@@ -270,14 +263,6 @@ public class Jaxmpp extends JaxmppCore {
 	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	// }
 
-	@Override
-	/**
-	 * Connects to server in sync mode.
-	 */
-	public void login() throws JaxmppException {
-		login(true);
-	}
-
 	/**
 	 * Connects to server.
 	 *
@@ -289,7 +274,7 @@ public class Jaxmpp extends JaxmppCore {
 		synchronized (this) {
 			if (timer != null)
 				timer.cancel();
-			
+
 			timer = new Timer(true);
 			timer.schedule(new CheckTimeoutsTask(), 30 * 1000, 30 * 1000);
 		}
@@ -308,7 +293,19 @@ public class Jaxmpp extends JaxmppCore {
 			this.sessionLogic = null;
 		}
 
-		this.connectorWrapper.setConnector(createConnector());
+		synchronized (this.connectorWrapper) {
+			if (this.connectorWrapper.getConnector() != null) {
+				log.info("Found previous instance of Connector. Killing!");
+				try {
+					this.connectorWrapper.stop(true);
+					Thread.sleep(1000);
+				} catch (Exception e) {
+					log.log(Level.WARNING, "Something goes wrong during killing previous connector!", e);
+				}
+				this.connectorWrapper.setConnector(null);
+			}
+			this.connectorWrapper.setConnector(createConnector());
+		}
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
 		this.sessionLogic.setSessionListener(new SessionListener() {
@@ -372,7 +369,7 @@ public class Jaxmpp extends JaxmppCore {
 			timer = null;
 		}
 	}
-	
+
 	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(Level.FINE, "Catching exception", e);
@@ -419,7 +416,8 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) == null || !(Boolean) sessionObject.getProperty(Connector.RECONNECTING_KEY)) {
+		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) == null
+				|| !(Boolean) sessionObject.getProperty(Connector.RECONNECTING_KEY)) {
 			synchronized (Jaxmpp.this) {
 				Jaxmpp.this.notify();
 			}
@@ -427,18 +425,27 @@ public class Jaxmpp extends JaxmppCore {
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
-	/**
-	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
-	 * modules.
-	 *
-	 * @param executor
-	 *            executor
-	 */
-	public void setExecutor(Executor executor) {
-		if (executor == null)
-			this.executor = DEFAULT_EXECUTOR;
-		else
-			this.executor = executor;
+	private class CheckTimeoutsTask extends TimerTask {
+
+		@Override
+		public void run() {
+			try {
+				checkTimeouts();
+			} catch (JaxmppException e) {
+				log.warning("Problem on checking timeouts");
+			}
+		}
+
+	}
+
+	private class LoginTimeoutTask extends TimerTask {
+
+		@Override
+		public void run() {
+			synchronized (Jaxmpp.this) {
+				Jaxmpp.this.notify();
+			}
+		}
 	}
 
 }
