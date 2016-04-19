@@ -768,8 +768,14 @@ public class SocketConnector implements Connector {
 		if (getState() == State.disconnected)
 			return;
 		setStage(State.disconnecting);
-		terminateStream();
-		terminateAllWorkers();
+		try {
+			terminateStream();
+		} catch (Exception e) {
+			log.log(Level.WARNING, "Problem on terminating stream", e);
+			setStage(State.disconnected);
+		} finally {
+			terminateAllWorkers();
+		}
 	}
 
 	@Override
@@ -787,8 +793,9 @@ public class SocketConnector implements Connector {
 				setStage(State.disconnected);
 				context = null;
 			}
-		} else
+		} else {
 			stop();
+		}
 	}
 
 	private void terminateAllWorkers() throws JaxmppException {
@@ -810,7 +817,8 @@ public class SocketConnector implements Connector {
 						setStage(State.disconnected);
 					} catch (JaxmppException e) {
 					}
-					context = null;closeSocket();
+					context = null;
+					closeSocket();
 					closeTimer.cancel();
 					closeTimer = null;
 				}

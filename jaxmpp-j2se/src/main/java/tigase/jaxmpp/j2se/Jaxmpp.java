@@ -18,7 +18,6 @@
 package tigase.jaxmpp.j2se;
 
 import java.util.Timer;
-import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
