@@ -17,14 +17,8 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -41,53 +35,23 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 
 public class AbstractSocketXmppSessionLogic<T extends Connector> implements XmppSessionLogic {
 
-	static Throwable extractCauseException(Throwable ex) {
-		Throwable th = ex.getCause();
-		if (th == null)
-			return ex;
-
-		for (int i = 0; i < 4; i++) {
-			if (!(th instanceof JaxmppException))
-				return th;
-			if (th.getCause() == null)
-				return th;
-			th = th.getCause();
-		}
-		return ex;
-	}
-
-	private final AuthFailedHandler authFailedHandler;
-
-	private AuthModule authModule;
-
-	private final AuthSuccessHandler authSuccessHandler;
-
 	protected final T connector;
-
-	private final Connector.ErrorHandler connectorListener;
-
 	protected final Context context;
-
-	private StreamFeaturesModule featuresModule;
-
+	private final StreamManagementModule.StreamManagementFailedHandler streamResumeFailedHandler;
+	private final AuthFailedHandler authFailedHandler;
+	private final AuthSuccessHandler authSuccessHandler;
+	private final Connector.ErrorHandler connectorListener;
 	private final XmppModulesManager modulesManager;
-
-	private ResourceBinderModule resourceBinder;
-
-	private ResourceBindSuccessHandler resourceBindListener;
-
 	private final SessionEstablishmentModule.SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
-
-	private SessionEstablishmentModule sessionEstablishmentModule;
-
 	private final SessionEstablishmentModule.SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
-
-	private SessionListener sessionListener;
-
 	private final StreamManagementModule.StreamResumedHandler smResumedListener;
-
 	private final StreamFeaturesReceivedHandler streamFeaturesEventListener;
-
+	private AuthModule authModule;
+	private StreamFeaturesModule featuresModule;
+	private ResourceBinderModule resourceBinder;
+	private ResourceBindSuccessHandler resourceBindListener;
+	private SessionEstablishmentModule sessionEstablishmentModule;
+	private SessionListener sessionListener;
 	private StreamManagementModule streamManaegmentModule;
 
 	protected AbstractSocketXmppSessionLogic(T connector, XmppModulesManager modulesManager, Context context) {
@@ -136,6 +100,16 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 				AbstractSocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
 			}
 		};
+		this.streamResumeFailedHandler = new StreamManagementModule.StreamManagementFailedHandler() {
+			@Override
+			public void onStreamManagementFailed(SessionObject sessionObject, ErrorCondition condition) {
+				try {
+					resourceBinder.bind();
+				} catch (JaxmppException e) {
+					e.printStackTrace();
+				}
+			}
+		};
 
 		this.sessionEstablishmentErrorHandler = new SessionEstablishmentModule.SessionEstablishmentErrorHandler() {
 
@@ -163,6 +137,21 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 						new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 			}
 		};
+	}
+
+	static Throwable extractCauseException(Throwable ex) {
+		Throwable th = ex.getCause();
+		if (th == null)
+			return ex;
+
+		for (int i = 0; i < 4; i++) {
+			if (!(th instanceof JaxmppException))
+				return th;
+			if (th.getCause() == null)
+				return th;
+			th = th.getCause();
+		}
+		return ex;
 	}
 
 	@Override
@@ -275,6 +264,9 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		this.sessionEstablishmentModule.addSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
 
 		this.streamManaegmentModule.addStreamResumedHandler(smResumedListener);
+		this.context.getEventBus().addHandler(
+				StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent.class,
+				streamResumeFailedHandler);
 	}
 
 	@Override
@@ -289,6 +281,7 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		this.sessionEstablishmentModule.removeSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
 
 		this.streamManaegmentModule.removeStreamResumedHandler(smResumedListener);
+		this.context.getEventBus().remove(streamResumeFailedHandler);
 	}
 
 }
