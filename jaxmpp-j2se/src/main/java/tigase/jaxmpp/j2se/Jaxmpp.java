@@ -270,7 +270,7 @@ public class Jaxmpp extends JaxmppCore {
 	 *            <code>true</code> to start method in sync mode. In sync mode
 	 *            whole connecting process will be done in this method.
 	 */
-	public void login(boolean sync) throws JaxmppException {
+	public synchronized void login(boolean sync) throws JaxmppException {
 		synchronized (this) {
 			if (timer != null)
 				timer.cancel();

@@ -207,6 +207,8 @@ public class SocketConnector implements Connector {
 	 */
 	@Override
 	public State getState() {
+		if (this.context == null)
+			return State.disconnected;
 		State st = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		return st == null ? State.disconnected : st;
 	}
@@ -773,7 +775,20 @@ public class SocketConnector implements Connector {
 	@Override
 	@Deprecated
 	public void stop(boolean terminate) throws JaxmppException {
-
+		if (terminate) {
+			log.finest("Terminating all workers immediatelly (oid=" + SocketConnector.this.hashCode() + ")");
+			try {
+				if (this.pingTask != null) {
+					this.pingTask.cancel();
+					this.pingTask = null;
+				}
+				closeSocket();
+			} finally {
+				setStage(State.disconnected);
+				context = null;
+			}
+		} else
+			stop();
 	}
 
 	private void terminateAllWorkers() throws JaxmppException {
@@ -791,7 +806,11 @@ public class SocketConnector implements Connector {
 			closeTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					closeSocket();
+					try {
+						setStage(State.disconnected);
+					} catch (JaxmppException e) {
+					}
+					context = null;closeSocket();
 					closeTimer.cancel();
 					closeTimer = null;
 				}
