@@ -25,10 +25,7 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.Deflater;
@@ -577,6 +574,7 @@ public class SocketConnector implements Connector {
 		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
+			this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_TIMESTAMP_KEY, new Date());
 			log.fine("Connector (oid=" + SocketConnector.this.hashCode() + ") state changed: " + s + "->" + state);
 			context.getEventBus().fire(new StateChangedEvent(context.getSessionObject(), s, state));
 			if (state == State.disconnected) {
@@ -823,6 +821,11 @@ public class SocketConnector implements Connector {
 					closeTimer = null;
 				}
 			}, 3 * 1000);
+		} else {
+			try {
+				setStage(State.disconnected);
+			} catch (JaxmppException e) {
+			}
 		}
 
 		// is there a need for this?

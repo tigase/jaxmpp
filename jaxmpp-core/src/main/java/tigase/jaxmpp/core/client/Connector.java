@@ -39,6 +39,13 @@ public interface Connector {
 	 * Type: {@linkplain State State}.
 	 */
 	String CONNECTOR_STAGE_KEY = "CONNECTOR#STAGE_KEY";
+
+	/**
+	 * Name of property that specify timestamp (type: {@link java.util.Date}) of
+	 * last state change.
+	 */
+	String CONNECTOR_STAGE_TIMESTAMP_KEY = "CONNECTOR#CONNECTOR_STAGE_TIMESTAMP_KEY";
+
 	/**
 	 * Name of property that allows disable keep alive feature. Keep alive is
 	 * turned on by default. <br/>
