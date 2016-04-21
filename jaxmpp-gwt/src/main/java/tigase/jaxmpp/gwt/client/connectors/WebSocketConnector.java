@@ -17,21 +17,20 @@
  */
 package tigase.jaxmpp.gwt.client.connectors;
 
-import java.util.List;
-import java.util.logging.Level;
-
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.xml.client.XMLParser;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
+import tigase.jaxmpp.core.client.connector.AbstractWebSocketConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.xml.client.XMLParser;
 import java.util.ArrayList;
-import tigase.jaxmpp.core.client.connector.AbstractWebSocketConnector;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
+import java.util.List;
+import java.util.logging.Level;
 
 /**
  * 
@@ -44,7 +43,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
 	private final WebSocketCallback socketCallback;
-	
+	private Timer closeTimer;
+
 	public WebSocketConnector(Context context) {
 		super(context);
 
@@ -62,7 +62,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						start();
 						return;
 					}			
-					if (getState() != State.disconnected && getState() == State.disconnecting) {
+					if (getState() != State.disconnected && getState() != State.disconnecting) {
 						if (pingTimer != null) {
 							pingTimer.cancel();
 							pingTimer = null;
@@ -73,6 +73,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					}
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
+				} finally {
+					workerTerminated();
 				}
 			}
 
@@ -214,7 +216,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	@Override
 	public void stop() throws XMLException, JaxmppException {
 		super.stop();
-		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
+		//context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
 	}
 
 	@Override
@@ -232,9 +234,33 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			this.pingTimer.cancel();
 			this.pingTimer = null;
 		}
-		setStage(State.disconnected);
-		socket.close();
-		super.terminateAllWorkers();
+
+		if (closeTimer != null) {
+			closeTimer.cancel();
+		}
+		final WebSocket socket = this.socket;
+		closeTimer = new Timer() {
+			@Override
+			public void run() {
+				socket.close();
+				workerTerminated();
+			}
+		};
+		closeTimer.schedule(3 * 1000);
+		//setStage(State.disconnected);
+		//socket.close();
+		//super.terminateAllWorkers();
 	}
 
+	protected void workerTerminated() {
+		try {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+				closeTimer = null;
+			}
+			setStage(State.disconnected);
+		} catch (JaxmppException ex) {
+		}
+		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
+	}
 }

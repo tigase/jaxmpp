@@ -37,20 +37,12 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.DefaultXMPPStream;
-import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
-import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
-import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.*;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule.ResourceBindSuccessHandler;
-import tigase.jaxmpp.core.client.xmpp.modules.SessionEstablishmentModule;
-import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.NonSaslAuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
-//import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
-//import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler;
@@ -59,83 +51,19 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
 
+//import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
+//import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
+
 /**
  * Base abstract class for implementation platform-specific jaxmpp clients.
  *
  *
  */
 public abstract class JaxmppCore {
-	/**
-	 * Implemented by handlers of {@linkplain ConnectedEvent ConnectedEvent}.
-	 */
-	public interface ConnectedHandler extends EventHandler {
-
-		/**
-		 * Fired when connection is fully established.
-		 */
-		public static class ConnectedEvent extends JaxmppEvent<ConnectedHandler> {
-
-			public ConnectedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(ConnectedHandler handler) {
-				handler.onConnected(sessionObject);
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain ConnectedEvent ConnectedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onConnected(SessionObject sessionObject);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain DisconnectedEvent
-	 * DisconnectedEvent}.
-	 *
-	 */
-	public interface DisconnectedHandler extends EventHandler {
-
-		/**
-		 * Fired when jaxmpp is disconnected.
-		 */
-		public static class DisconnectedEvent extends JaxmppEvent<DisconnectedHandler> {
-
-			public DisconnectedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(DisconnectedHandler handler) {
-				handler.onDisconnected(sessionObject);
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain DisconnectedEvent DisconnectedEvent} is
-		 * fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 */
-		void onDisconnected(SessionObject sessionObject);
-	}
-
 	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
-
-	private StreamManagementModule ackModule;
-
+	protected final Logger log;
 	protected Connector connector;
-
 	protected Context context;
-
 	protected DefaultXMPPStream defaultXMPPStream = new DefaultXMPPStream() {
 
 		@Override
@@ -143,23 +71,13 @@ public abstract class JaxmppCore {
 			connector.send(stanza);
 		}
 	};
-
 	protected EventBus eventBus;
-
-	protected final Logger log;
-
 	protected XmppModulesManager modulesManager;
-
 	protected Processor processor;
-
 	protected Map<Class<Property>, Property> properties = new HashMap<Class<Property>, Property>();
-
 	protected XmppSessionLogic sessionLogic;
-
 	protected SessionObject sessionObject;
-
 	protected XmppStreamsManager streamsManager;
-
 	protected PacketWriter writer = new PacketWriter() {
 
 		@Override
@@ -172,7 +90,6 @@ public abstract class JaxmppCore {
 				}
 
 				final Boolean autoId = sessionObject.getProperty(AUTOADD_STANZA_ID_KEY);
-
 				if (autoId != null && autoId.booleanValue() && !stanza.getAttributes().containsKey("id")) {
 					stanza.setAttribute("id", UIDGenerator.next());
 				}
@@ -197,11 +114,7 @@ public abstract class JaxmppCore {
 		}
 
 	};
-
-	// public Chat createChat(JID jid) throws JaxmppException {
-	// return
-	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
-	// }
+	private StreamManagementModule ackModule;
 
 	public JaxmppCore() {
 		this.log = Logger.getLogger(this.getClass().getName());
@@ -210,6 +123,11 @@ public abstract class JaxmppCore {
 	protected EventBus createEventBus() {
 		return new DefaultEventBus();
 	}
+
+	// public Chat createChat(JID jid) throws JaxmppException {
+	// return
+	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	// }
 
 	/**
 	 * Closes XMPP session.
@@ -276,15 +194,6 @@ public abstract class JaxmppCore {
 		return modulesManager.getModule(moduleClass);
 	}
 
-	// /**
-	// * Returns {@link PresenceStore}.
-	// *
-	// * @return {@link PresenceStore}.
-	// */
-	// public PresenceStore getPresence() {
-	// return PresenceModule.getPresenceStore(sessionObject);
-	// }
-
 	/**
 	 * Returns {@link XmppModulesManager ModuleManager}.
 	 *
@@ -293,15 +202,6 @@ public abstract class JaxmppCore {
 	public XmppModulesManager getModulesManager() {
 		return modulesManager;
 	}
-
-	// /**
-	// * Returns {@link RosterStore}.
-	// *
-	// * @return {@link RosterStore}.
-	// */
-	// public RosterStore getRoster() {
-	// return RosterModule.getRosterStore(sessionObject);
-	// }
 
 	/**
 	 * Returns {@link UserProperties}.
@@ -312,6 +212,15 @@ public abstract class JaxmppCore {
 		return sessionObject;
 	}
 
+	// /**
+	// * Returns {@link PresenceStore}.
+	// *
+	// * @return {@link PresenceStore}.
+	// */
+	// public PresenceStore getPresence() {
+	// return PresenceModule.getPresenceStore(sessionObject);
+	// }
+
 	/**
 	 * Returns {@link SessionObject}.
 	 *
@@ -320,6 +229,15 @@ public abstract class JaxmppCore {
 	public SessionObject getSessionObject() {
 		return sessionObject;
 	}
+
+	// /**
+	// * Returns {@link RosterStore}.
+	// *
+	// * @return {@link RosterStore}.
+	// */
+	// public RosterStore getRoster() {
+	// return RosterModule.getRosterStore(sessionObject);
+	// }
 
 	protected void init() {
 		if (this.eventBus == null)
@@ -498,7 +416,7 @@ public abstract class JaxmppCore {
 	}
 
 	protected void onConnectorStopped() {
-		eventBus.fire(new DisconnectedHandler.DisconnectedEvent(sessionObject));
+		eventBus.fire(new LoggedOutHandler.LoggedOutEvent(sessionObject));
 	}
 
 	protected abstract void onException(JaxmppException e) throws JaxmppException;
@@ -585,6 +503,67 @@ public abstract class JaxmppCore {
 
 	public <T extends Property> T set(T property) {
 		return (T) this.properties.put((Class<Property>) property.getPropertyClass(), property);
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain LoggedInEvent LoggedInEvent}.
+	 */
+	public interface LoggedInHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain LoggedInEvent LoggedInEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onLoggedIn(SessionObject sessionObject);
+
+		/**
+		 * Fired when connection is fully established.
+		 */
+		class LoggedInEvent extends JaxmppEvent<LoggedInHandler> {
+
+			public LoggedInEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(LoggedInHandler handler) {
+				handler.onLoggedIn(sessionObject);
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain LoggedOutEvent LoggedOutEvent}.
+	 *
+	 */
+	public interface LoggedOutHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain LoggedOutEvent LoggedOutEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 */
+		void onLoggedOut(SessionObject sessionObject);
+
+		/**
+		 * Fired when jaxmpp is disconnected.
+		 */
+		class LoggedOutEvent extends JaxmppEvent<LoggedOutHandler> {
+
+			public LoggedOutEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			protected void dispatch(LoggedOutHandler handler) {
+				handler.onLoggedOut(sessionObject);
+			}
+
+		}
 	}
 	// /**
 	// * Sends Message stanza to recipient.

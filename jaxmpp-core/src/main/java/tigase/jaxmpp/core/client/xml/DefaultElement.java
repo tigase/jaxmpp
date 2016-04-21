@@ -287,6 +287,9 @@ public class DefaultElement implements Element {
 
 	@Override
 	public void removeAttribute(String key) throws XMLException {
+		if ("xmlns".equals(key)) {
+			setXMLNS(null);
+		}
 		synchronized (attributes) {
 			attributes.remove(key);
 		}
@@ -303,8 +306,12 @@ public class DefaultElement implements Element {
 	public void setAttribute(String key, String value) throws XMLException {
 		if (key == null || value == null)
 			return;
-		synchronized (attributes) {
-			attributes.put(key, value);
+		if (key.equals("xmlns")) {
+			setXMLNS(value);
+		} else {
+			synchronized (attributes) {
+				attributes.put(key, value);
+			}
 		}
 	}
 
@@ -314,6 +321,10 @@ public class DefaultElement implements Element {
 			return;
 		synchronized (attributes) {
 			attributes.putAll(attrs);
+			if (attrs.containsKey("xmlns")) {
+				String xmlns = attributes.remove("xmlns");
+				setXMLNS(xmlns);
+			}
 		}
 	}
 

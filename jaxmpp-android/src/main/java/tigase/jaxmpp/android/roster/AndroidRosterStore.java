@@ -23,19 +23,17 @@ import java.util.List;
 import java.util.Set;
 
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;
 
 public class AndroidRosterStore extends RosterStore {
-	
+
 	private final RosterProvider provider;
-	
+
 	public AndroidRosterStore(RosterProvider provider) {
 		this.provider = provider;
 	}
-	
+
 	@Override
 	protected Set<String> addItem(RosterItem item) {
 		return this.provider.addItem(sessionObject, item);

@@ -33,7 +33,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  *
  * @author andrzej
  */
-public class ChatStateExtension implements Extension, ContextAware, MessageModule.ChatClosedHandler, JaxmppCore.DisconnectedHandler {
+public class ChatStateExtension
+		implements Extension, ContextAware, MessageModule.ChatClosedHandler, JaxmppCore.LoggedOutHandler {
 
 	private static final Logger log = Logger.getLogger(ChatStateExtension.class.getCanonicalName());
 
@@ -41,7 +42,7 @@ public class ChatStateExtension implements Extension, ContextAware, MessageModul
 	
 	public interface ChatStateChangedHandler extends EventHandler {
 
-		public static class ChatStateChangedEvent extends JaxmppEvent<ChatStateChangedHandler> {
+		class ChatStateChangedEvent extends JaxmppEvent<ChatStateChangedHandler> {
 
 			private final Chat chat;
 			private final ChatState chatState;
@@ -58,7 +59,7 @@ public class ChatStateExtension implements Extension, ContextAware, MessageModul
 			}
 		}
 
-		public void onChatStateChanged(SessionObject sessionObject, Chat chat, ChatState state);
+		void onChatStateChanged(SessionObject sessionObject, Chat chat, ChatState state);
 	}
 	
 	private class StateHolder {
@@ -190,7 +191,7 @@ public class ChatStateExtension implements Extension, ContextAware, MessageModul
 	}
 
 	@Override
-	public void onDisconnected(SessionObject sessionObject) {
+	public void onLoggedOut(SessionObject sessionObject) {
 		for (Chat chat : chatManager.getChats()) {
 			StateHolder holder;
 			synchronized (chatStates) {
@@ -220,7 +221,7 @@ public class ChatStateExtension implements Extension, ContextAware, MessageModul
 	public void setContext(Context context) {
 		this.context = context;
 		context.getEventBus().addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, this);
-		context.getEventBus().addHandler(JaxmppCore.DisconnectedHandler.DisconnectedEvent.class, this);
+		context.getEventBus().addHandler(LoggedOutEvent.class, this);
 	}
 	
 	public void setDisabled(boolean disabled) {

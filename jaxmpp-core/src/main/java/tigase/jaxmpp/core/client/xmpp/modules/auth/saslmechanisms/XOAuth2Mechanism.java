@@ -17,12 +17,54 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms;
 
+import java.io.UnsupportedEncodingException;
+
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.ClientSaslException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.XOAuth2TokenCallback;
 
 public class XOAuth2Mechanism extends AbstractSaslMechanism {
+
+	public static final String X_OAUTH2_TOKEN_CALLBACK_KEY = "X_OAUTH2_TOKEN_CALLBACK";
+	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
+	private static final String NULL = String.valueOf((char) 0);
+
+	public XOAuth2Mechanism() {
+	}
+
+	@Override
+	public String evaluateChallenge(String input, SessionObject sessionObject) throws ClientSaslException {
+		if (!isComplete(sessionObject)) {
+			XOAuth2TokenCallback callback = sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY);
+			if (callback == null)
+				callback = new DefaultXOAuth2TokenCallback(sessionObject);
+			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
+			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
+
+			try {
+				String base64 = Base64.encode(lreq.getBytes("UTF-8"));
+				setComplete(sessionObject, true);
+				return base64;
+			} catch (UnsupportedEncodingException e) {
+				throw new ClientSaslException(e);
+			}
+		} else
+			return null;
+	}
+
+	@Override
+	public boolean isAllowedToUse(final SessionObject sessionObject) {
+		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null
+				|| sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
+				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
+	}
+
+	@Override
+	public String name() {
+		return "X-OAUTH2";
+	}
 
 	private class DefaultXOAuth2TokenCallback implements XOAuth2TokenCallback {
 
@@ -36,41 +78,5 @@ public class XOAuth2Mechanism extends AbstractSaslMechanism {
 		public String getCredential() {
 			return sessionObject.getProperty(X_OAUTH2_TOKEN_KEY);
 		}
-	}
-
-	private static final String NULL = String.valueOf((char) 0);
-
-	public static final String X_OAUTH2_TOKEN_CALLBACK_KEY = "X_OAUTH2_TOKEN_CALLBACK";
-
-	public static final String X_OAUTH2_TOKEN_KEY = "X_OAUTH2_TOKEN";
-
-	public XOAuth2Mechanism() {
-	}
-
-	@Override
-	public String evaluateChallenge(String input, SessionObject sessionObject) {
-		if (!isComplete(sessionObject)) {
-			XOAuth2TokenCallback callback = sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY);
-			if (callback == null)
-				callback = new DefaultXOAuth2TokenCallback(sessionObject);
-			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
-			String lreq = NULL + userJID.getLocalpart() + NULL + callback.getCredential();
-
-			String base64 = Base64.encode(lreq.getBytes());
-			setComplete(sessionObject, true);
-			return base64;
-		} else
-			return null;
-	}
-
-	@Override
-	public boolean isAllowedToUse(final SessionObject sessionObject) {
-		return (sessionObject.getProperty(X_OAUTH2_TOKEN_KEY) != null || sessionObject.getProperty(X_OAUTH2_TOKEN_CALLBACK_KEY) != null)
-				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
-	}
-
-	@Override
-	public String name() {
-		return "X-OAUTH2";
 	}
 }

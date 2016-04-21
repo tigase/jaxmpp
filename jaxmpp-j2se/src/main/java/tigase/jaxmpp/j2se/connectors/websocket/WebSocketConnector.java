@@ -17,43 +17,8 @@
  */
 package tigase.jaxmpp.j2se.connectors.websocket;
 
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_HOSTNAME_VERIFIER;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_DISABLED_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.KEY_MANAGERS_KEY;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SOCKET_TIMEOUT;
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.SSL_SOCKET_FACTORY_KEY;
-
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.logging.Level;
-
-import javax.net.ssl.HandshakeCompletedEvent;
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
 import tigase.jaxmpp.core.client.Base64;
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -67,32 +32,34 @@ import tigase.jaxmpp.j2se.connectors.socket.Reader;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.socket.Worker;
 
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.logging.Level;
+
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
+
 /**
  *
  * @author andrzej
  */
 public class WebSocketConnector extends AbstractWebSocketConnector {
 
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
+
 	private static final String EOL = "\r\n";
 
-	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes();
+	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes(UTF_CHARSET);
 
 	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-	private final TrustManager dummyTrustManager = new X509TrustManager() {
 
-		@Override
-		public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-		}
-
-		@Override
-		public X509Certificate[] getAcceptedIssuers() {
-			return null;
-		}
-	};
 	private final Object ioMutex = new Object();
 	private TimerTask pingTask;
 	private Reader reader = null;
@@ -103,6 +70,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	private Worker worker = null;
 
 	private OutputStream writer = null;
+
+	private Random random = new SecureRandom();
+	private byte[] mask = new byte[4];
+	private Timer closeTimer;
 
 	public WebSocketConnector(Context context) {
 		super(context);
@@ -140,7 +111,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		sb.append("Sec-WebSocket-Protocol: ").append("xmpp").append(",").append("xmpp-framing").append(EOL);
 		sb.append("Sec-WebSocket-Version: 13").append(EOL);
 		sb.append(EOL);
-		byte[] buffer = sb.toString().getBytes();
+		byte[] buffer = sb.toString().getBytes(UTF_CHARSET);
 
 		socket.getOutputStream().write(buffer);
 		buffer = new byte[4096];
@@ -200,7 +171,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		// throw new IOException("Bad upgrade header in HTTP response");
 		// }
 		try {
-			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes()));
+			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes(UTF_CHARSET)));
 			if (!accept.equals(headers.get("Sec-WebSocket-Accept")))
 				throw new IOException("Invalid Sec-WebSocket-Accept header value");
 		} catch (NoSuchAlgorithmException ex) {
@@ -235,19 +206,29 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 					// prepare WebSocket header according to Hybi specification
 					int size = buffer.length;
+					random.nextBytes(mask);
+					byte maskedLen = (byte) 0x80;
 					ByteBuffer bbuf = ByteBuffer.allocate(12);
-					bbuf.put((byte) 0x00);
+					bbuf.put((byte) 0x81);
 					if (size <= 125) {
-						bbuf.put((byte) size);
+						maskedLen |= (byte) size;
+						bbuf.put(maskedLen);
 					} else if (size <= 0xFFFF) {
-						bbuf.put((byte) 0x7E);
+						maskedLen |= (byte) 0x7E;
+						bbuf.put(maskedLen);
 						bbuf.putShort((short) size);
 					} else {
-						bbuf.put((byte) 0x7F);
+						maskedLen |= (byte) 0x7F;
+						bbuf.put(maskedLen);
 						bbuf.putLong(size);
 					}
 					bbuf.flip();
 					writer.write(bbuf.array(), 0, bbuf.remaining());
+					writer.write(mask, 0, 4);
+
+					for (int i=0; i<buffer.length; i++) {
+						buffer[i] = (byte) (buffer[i] ^ mask[i % 4]);
+					}
 					// send actual data
 					writer.write(buffer);
 					writer.flush();
@@ -269,7 +250,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	@Override
 	public void send(final String data) throws JaxmppException {
 		if (getState() == State.connected || getState() == State.connecting) {
-			send(data.getBytes());
+			send(data.getBytes(UTF_CHARSET));
 		} else {
 			throw new JaxmppException("Not connected");
 		}
@@ -286,9 +267,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		}
 		timer = new Timer(true);
-
-		if (context.getSessionObject().getProperty(TRUST_MANAGERS_KEY) == null)
-			context.getSessionObject().setProperty(TRUST_MANAGERS_KEY, new TrustManager[] { dummyTrustManager });
 
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
@@ -312,9 +290,29 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			int port = uri.getPort() == -1 ? (isSecure ? 443 : 80) : uri.getPort();
 
 			log.info("Opening connection to " + x + ":" + port);
-			if (!isSecure) {
-				socket = new Socket(x, port);
+
+			if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
+				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
+				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
+				Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+				if (proxyType == null)
+					proxyType = Proxy.Type.HTTP;
+
+				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+				SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+				Proxy proxy = new Proxy(proxyType, addr);
+				socket = new Socket(proxy);
 			} else {
+				socket = new Socket();
+			}
+
+			socket.setSoTimeout(SOCKET_TIMEOUT);
+			socket.setKeepAlive(false);
+			socket.setTcpNoDelay(true);
+			socket.connect(new InetSocketAddress(x, port));
+
+			if (isSecure) {
 				TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
 				final SSLSocketFactory factory;
 				if (trustManagers == null) {
@@ -329,7 +327,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					factory = ctx.getSocketFactory();
 				}
 
-				socket = factory.createSocket();
+				socket = factory.createSocket(socket, x.getHostAddress(), port, true);
+				socket.setSoTimeout(0);
+				socket.setKeepAlive(false);
+				socket.setTcpNoDelay(true);
 				((SSLSocket) socket).setUseClientMode(true);
 				((SSLSocket) socket).addHandshakeCompletedListener(new HandshakeCompletedListener() {
 					@Override
@@ -349,12 +350,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			// {
 			// socket.setSoTimeout(SOCKET_TIMEOUT);
 			// }
-			socket.setSoTimeout(SOCKET_TIMEOUT);
-			socket.setKeepAlive(false);
-			socket.setTcpNoDelay(true);
-			if (isSecure) {
-				socket.connect(new InetSocketAddress(x, port));
-			}
 			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
 			worker = new Worker(this) {
@@ -394,7 +389,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			log.finest("Starting WebSocket handshake...");
 			handshake(uri);
 
-			reader = new WebSocketReader(new BufferedInputStream(socket.getInputStream()));
+			//reader = new WebSocketReader(new BufferedInputStream(socket.getInputStream()));
+			reader = new WebSocketReader(socket.getInputStream());
 			log.finest("Starting worker...");
 			worker.start();
 
@@ -443,19 +439,32 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			this.pingTask.cancel();
 			this.pingTask = null;
 		}
-		setStage(State.disconnected);
-		try {
-			if (socket != null)
-				socket.close();
-		} catch (IOException e) {
-			log.log(Level.FINEST, "Problem with closing socket", e);
+//		setStage(State.disconnected);
+		if (socket != null && socket.isConnected()) {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+			}
+			closeTimer = new Timer();
+			closeTimer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					closeSocket();
+					closeTimer.cancel();
+					closeTimer = null;
+				}
+			}, 3 * 1000);
+			// sending websocket close
+
+			//socket.close();
 		}
-		try {
-			if (worker != null)
-				worker.interrupt();
-		} catch (Exception e) {
-			log.log(Level.FINEST, "Problem with interrupting w2", e);
-		}
+
+		// it there a need for this?
+//		try {
+//			if (worker != null)
+//				worker.interrupt();
+//		} catch (Exception e) {
+//			log.log(Level.FINEST, "Problem with interrupting w2", e);
+//		}
 		try {
 			if (timer != null)
 				timer.cancel();
@@ -468,6 +477,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	private void workerTerminated(final Worker worker) {
 		try {
+			if (closeTimer != null) {
+				closeTimer.cancel();
+				closeTimer = null;
+			}
 			setStage(State.disconnected);
 		} catch (JaxmppException e) {
 		}
@@ -483,6 +496,17 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Cannot terminate worker correctly", e);
+		}
+	}
+
+	private void closeSocket() {
+		if (socket.isConnected()) {
+			try {
+				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
+				socket.close();
+			} catch (IOException ex) {
+				log.log(Level.FINEST, "Problem with closing socket", ex);
+			}
 		}
 	}
 }

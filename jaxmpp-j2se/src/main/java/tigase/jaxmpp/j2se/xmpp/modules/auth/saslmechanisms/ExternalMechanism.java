@@ -8,7 +8,11 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AbstractSaslMechanism;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
+import java.nio.charset.Charset;
+
 public class ExternalMechanism extends AbstractSaslMechanism {
+
+	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
 	@Override
 	public String evaluateChallenge(String input, SessionObject sessionObject) {
@@ -17,7 +21,7 @@ public class ExternalMechanism extends AbstractSaslMechanism {
 		if (jid == null) {
 			return "=";
 		} else {
-			return Base64.encode(jid.toString().getBytes());
+			return Base64.encode(jid.toString().getBytes(UTF_CHARSET));
 		}
 	}
 

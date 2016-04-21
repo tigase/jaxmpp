@@ -1,17 +1,8 @@
 package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore.Predicate;
 
 public class DefaultRosterStore extends RosterStore {
 
@@ -21,9 +12,11 @@ public class DefaultRosterStore extends RosterStore {
 
 	@Override
 	protected Set<String> addItem(RosterItem item) {
+		item.setData(RosterItem.ID_KEY, createItemId(item.getJid()));
 		synchronized (this.roster) {
 			this.roster.put(item.getJid(), item);
 		}
+
 		final HashSet<String> addedGroups = new HashSet<String>();
 		synchronized (this.groups) {
 			for (String g : item.getGroups()) {
@@ -35,7 +28,7 @@ public class DefaultRosterStore extends RosterStore {
 		}
 		return addedGroups;
 	}
-	
+
 	@Override
 	protected Set<String> calculateModifiedGroups(final HashSet<String> groupsOld) {
 		reloadGroups();
@@ -59,20 +52,25 @@ public class DefaultRosterStore extends RosterStore {
 		return modifiedGroups;
 	}
 
+	protected int createItemId(BareJID jid) {
+		int id = (sessionObject.getUserBareJid() + "::" + jid).hashCode();
+		return Math.abs(id);
+	}
+
 	/**
 	 * Returns {@linkplain RosterItem} of given bare JID.
 	 * 
 	 * @param jid
 	 *            bare JID.
 	 * @return roster item.
-	 */	
+	 */
 	@Override
 	public RosterItem get(BareJID jid) {
 		synchronized (this.roster) {
 			return this.roster.get(jid);
 		}
-	}	
-	
+	}
+
 	/**
 	 * Returns all roster items selected by selector.
 	 * 
@@ -123,7 +121,7 @@ public class DefaultRosterStore extends RosterStore {
 			}
 		}
 	}
-	
+
 	public void removeAll() {
 		synchronized (this.roster) {
 			roster.clear();
@@ -138,5 +136,5 @@ public class DefaultRosterStore extends RosterStore {
 		synchronized (this.roster) {
 			this.roster.remove(jid);
 		}
-	}	
+	}
 }

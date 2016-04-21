@@ -17,24 +17,18 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
+
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -43,7 +37,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 public abstract class AbstractWebSocketConnector implements Connector {
 
 	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
-	
+
 	protected final Context context;
 	protected final Logger log;
 
@@ -103,6 +97,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 		Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
 		if (seeOtherHost != null) {
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			String seeHost = seeOtherHost.getValue();
 			if (log.isLoggable(Level.FINE)) {
 				log.fine("Received see-other-host=" + seeHost);
@@ -117,6 +112,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	protected boolean handleSeeOtherUri(String seeOtherUri) throws JaxmppException {
 		try {
+			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			stop();
 			fireOnError(null, null, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (Exception ex) {
@@ -152,7 +148,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 					return;
 			}
 			stop();
-			fireOnError(null, ex, AbstractWebSocketConnector.this.context.getSessionObject());
+			fireOnError(response, ex, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (JaxmppException ex1) {
 			log.log(Level.SEVERE, null, ex1);
 		}
@@ -163,9 +159,10 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	protected void onStreamTerminate() throws JaxmppException {
-		if (getState() == State.disconnected)
+		if (getState() == State.disconnecting)
 			return;
-		setStage(State.disconnected);
+		terminateStream();
+		setStage(State.disconnecting);
 
 		if (log.isLoggable(Level.FINE))
 			log.fine("Stream terminated");
@@ -189,6 +186,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				log.finest("received <close/> stanza, so we need to close this connection..");
 				// stop();
 				this.onStreamTerminate();
+				return;
 			}
 			if ("open".equals(child.getName())) {
 				// received <open/> stanza should be ignored
@@ -278,14 +276,6 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				setStage(State.disconnected);
 				fireOnTerminate(context.getSessionObject());
 			}
-
-			if (state == State.disconnecting) {
-				try {
-					throw new JaxmppException("disconnecting!!!");
-				} catch (Exception ex) {
-					log.log(Level.WARNING, "DISCONNECTING!!", ex);
-				}
-			}
 		}
 	}
 
@@ -315,9 +305,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			this.stop();
 	}
 
-	protected void terminateAllWorkers() throws JaxmppException {
-		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
-	}
+	protected abstract void terminateAllWorkers() throws JaxmppException;
 
 	protected void terminateStream() throws JaxmppException {
 		final State state = getState();

@@ -5,7 +5,7 @@
 	<artifactId>tigase-jaxmpp</artifactId>
 	<packaging>pom</packaging>
 	<name>Tigase XMPP Client Library</name>
-	<version>3.0.2-SNAPSHOT</version>
+	<version>3.1.0</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -124,7 +124,7 @@
 
 	<scm>
 		<developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>3.1.0</tag>
   </scm>
 
 	<build>
@@ -134,6 +134,8 @@
 				<version>2.5.2</version>
 				<configuration>
 				  <releaseProfiles>dist,docs</releaseProfiles>
+				  <tagNameFormat>@{project.version}</tagNameFormat>
+				  <autoVersionSubmodules>true</autoVersionSubmodules>
 				</configuration>				
 			</plugin>
 			<plugin>
@@ -170,7 +172,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.1</version>
+				<version>2.10.3</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>

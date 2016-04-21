@@ -23,7 +23,7 @@ public class RosterDbHelper {
 
 	private static final String CREATE_ITEMS_TABLE = 
 			"CREATE TABLE " + RosterItemsCacheTableMetaData.TABLE_NAME + " ("
-			+ RosterItemsCacheTableMetaData.FIELD_ID + " INTEGER PRIMARY KEY, "
+			+ RosterItemsCacheTableMetaData.FIELD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "
 			+ RosterItemsCacheTableMetaData.FIELD_ACCOUNT + " TEXT, "
 			+ RosterItemsCacheTableMetaData.FIELD_JID + " TEXT, "
 			+ RosterItemsCacheTableMetaData.FIELD_NAME + " TEXT, "

@@ -17,19 +17,15 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.Base64;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -52,20 +48,13 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public class CapabilitiesModule implements XmppModule, ContextAware, InitializingModule {
 
-	private final static String ALGORITHM = "SHA-1";
-
 	public final static String NODE_NAME_KEY = "NODE_NAME_KEY";
-
 	public static final String VERIFICATION_STRING_KEY = "XEP115VerificationString";
-
-	private CapabilitiesCache cache;
-
-	private Context context;
-
-	private DiscoveryModule discoveryModule;
-
+	private final static String ALGORITHM = "SHA-1";
 	private final Logger log = Logger.getLogger(this.getClass().getName());
-
+	private CapabilitiesCache cache;
+	private Context context;
+	private DiscoveryModule discoveryModule;
 	private NodeDetailsCallback nodeDetailsCallback;
 
 	// private final XmppModulesManager modulesManager;
@@ -155,14 +144,14 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
 
 			for (String id : identities) {
-				md.update(id.getBytes());
+				md.update(id.getBytes("UTF-8"));
 				md.update((byte) '<');
 			}
 
 			Arrays.sort(features);
 
 			for (String f : features) {
-				md.update(f.getBytes());
+				md.update(f.getBytes("UTF-8"));
 				md.update((byte) '<');
 			}
 
@@ -170,12 +159,18 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 			return Base64.encode(digest);
 		} catch (NoSuchAlgorithmException e) {
 			log.warning("Cannot calculate verification string.");
+		} catch (UnsupportedEncodingException e) {
+			log.warning("Cannot calculate verification string.");
 		}
 		return null;
 	}
 
 	public CapabilitiesCache getCache() {
 		return cache;
+	}
+
+	public void setCache(CapabilitiesCache cache) {
+		this.cache = cache;
 	}
 
 	@Override
@@ -267,10 +262,6 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 	@Override
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
-	}
-
-	public void setCache(CapabilitiesCache cache) {
-		this.cache = cache;
 	}
 
 	@Override

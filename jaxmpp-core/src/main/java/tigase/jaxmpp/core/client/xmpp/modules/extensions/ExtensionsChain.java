@@ -1,10 +1,6 @@
 package tigase.jaxmpp.core.client.xmpp.modules.extensions;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,14 +58,14 @@ public class ExtensionsChain {
 			Extension x = it.next();
 			// in GWT there is no support for isAssignableFrom so following
 			// breaks compilation of GWT project
-			//if (cls.isAssignableFrom(x.getClass()))
+			// if (cls.isAssignableFrom(x.getClass()))
 			// I think that following will be ok for now
 			if (cls.equals(x.getClass()))
 				return (T) x;
 		}
 		return null;
 	}
-	
+
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		for (Extension e : this.extensions) {

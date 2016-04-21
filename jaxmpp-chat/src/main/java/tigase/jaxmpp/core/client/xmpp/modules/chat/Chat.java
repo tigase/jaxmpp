@@ -20,8 +20,8 @@ package tigase.jaxmpp.core.client.xmpp.modules.chat;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.UIDGenerator;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -72,8 +72,18 @@ public class Chat {
 	}
 
 	/**
+	 * Sets interlocutor JID.
+	 *
+	 * @param jid
+	 *            interlocutor JID.
+	 */
+	public void setJid(JID jid) {
+		this.jid = jid;
+	}
+
+	/**
 	 * Return {@linkplain SessionObject} related to this chat.
-	 * 
+	 *
 	 * @return {@linkplain SessionObject} related to this chat.
 	 */
 	public SessionObject getSessionObject() {
@@ -82,7 +92,7 @@ public class Chat {
 
 	/**
 	 * Returns thread-id.
-	 * 
+	 *
 	 * @return thread-id or <code>null</code> if not present.
 	 */
 	public String getThreadId() {
@@ -90,47 +100,38 @@ public class Chat {
 	}
 
 	/**
+	 * Sets thread-id.
+	 *
+	 * @param threadId
+	 *            thread-id.
+	 */
+	public void setThreadId(String threadId) {
+		this.threadId = threadId;
+	}
+
+	/**
 	 * Sends message in current chat. It uses correct interlocutor JID and
 	 * thread-id.
-	 * 
+	 *
 	 * @param body
 	 *            message to send.
 	 * @return
 	 */
-	protected Message sendMessage(String body) throws XMLException, JaxmppException {
+	public Message createMessage(String body) throws JaxmppException {
 		Message msg = Message.create();
 		msg.setTo(jid);
 		msg.setType(StanzaType.chat);
 		msg.setThread(threadId);
 		msg.setBody(body);
+		msg.setId(UIDGenerator.next());
 
 		// this would make it impossible for Extensions to process this message!
 		// this.context.getWriter().write(msg);
 		return msg;
 	}
 
-	/**
-	 * Sets interlocutor JID.
-	 * 
-	 * @param jid
-	 *            interlocutor JID.
-	 */
-	public void setJid(JID jid) {
-		this.jid = jid;
-	}
-
 	public void setMessageModule(MessageModule module) {
 		this.messageModule = module;
-	}
-
-	/**
-	 * Sets thread-id.
-	 * 
-	 * @param threadId
-	 *            thread-id.
-	 */
-	public void setThreadId(String threadId) {
-		this.threadId = threadId;
 	}
 
 }

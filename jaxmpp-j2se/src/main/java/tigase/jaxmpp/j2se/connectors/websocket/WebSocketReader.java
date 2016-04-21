@@ -17,6 +17,8 @@
  */
 package tigase.jaxmpp.j2se.connectors.websocket;
 
+import tigase.jaxmpp.j2se.connectors.socket.Reader;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -25,7 +27,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tigase.jaxmpp.j2se.connectors.socket.Reader;
+
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
 /**
@@ -51,9 +53,13 @@ public class WebSocketReader implements Reader {
 	@Override
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
+		boolean closed = false;
 		int startBufPos = buf.position();
 		int read = inputStream.read(arr, startBufPos, buf.remaining());
+		if (read == 0)
+			return 0;
 		if (read == -1) {
+			closed = true;
 			if (!buf.hasRemaining())
 				return -1;		
 			else
@@ -69,9 +75,24 @@ public class WebSocketReader implements Reader {
 				boolean reset = false;
 				int position = buf.position();
 				int type = buf.get();
-				if (type == 0x08) {
+				if ((type & 0x0F) == 0x08) {
 					// EOL (we should inform client that connection is closed)
-					break;
+					if (buf.hasRemaining()) {
+						byte len = buf.get();
+						if (buf.remaining() < len) {
+							if (!closed) {
+								buf.position(position);
+								break;
+							}
+						}
+						else {
+							if (len > 0) {
+								log.log(Level.FINE, "received WebSocket close with status = " + buf.getShort());
+							}
+						}
+
+					}
+					return -1;
 				}
 				if (buf.hasRemaining()) {
 					long len = buf.get() & 0x7f;

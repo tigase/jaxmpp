@@ -17,20 +17,10 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import tigase.jaxmpp.core.client.AbstractSessionObject;
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.XmppSessionEstablishedHandler;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -42,11 +32,7 @@ import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.AbstractIQModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
-import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
-import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
+import tigase.jaxmpp.core.client.xmpp.modules.*;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem.Subscription;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.ItemAddedHandler.ItemAddedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.ItemRemovedHandler.ItemRemovedEvent;
@@ -60,149 +46,19 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  */
 public class RosterModule extends AbstractIQModule implements ContextAware, InitializingModule, XmppSessionEstablishedHandler {
 
-	public static enum Action {
-		askCancelled,
-		subscribed,
-		unsubscribed,
-
-	}
-
-	public interface ItemAddedHandler extends EventHandler {
-
-		public static class ItemAddedEvent extends JaxmppEvent<ItemAddedHandler> {
-
-			private RosterItem item;
-
-			private Set<String> modifiedGroups;
-
-			public ItemAddedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
-				super(sessionObject);
-				this.item = currentItem;
-				this.modifiedGroups = modifiedGroups;
-			}
-
-			@Override
-			protected void dispatch(ItemAddedHandler handler) {
-				handler.onItemAdded(sessionObject, item, modifiedGroups);
-			}
-
-			public RosterItem getItem() {
-				return item;
-			}
-
-			public Set<String> getModifiedGroups() {
-				return modifiedGroups;
-			}
-
-			public void setItem(RosterItem item) {
-				this.item = item;
-			}
-
-			public void setModifiedGroups(Set<String> modifiedGroups) {
-				this.modifiedGroups = modifiedGroups;
-			}
-
-		}
-
-		void onItemAdded(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
-	}
-
-	public interface ItemRemovedHandler extends EventHandler {
-
-		public static class ItemRemovedEvent extends JaxmppEvent<ItemRemovedHandler> {
-
-			private RosterItem item;
-
-			private Set<String> modifiedGroups;
-
-			public ItemRemovedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
-				super(sessionObject);
-				this.item = currentItem;
-				this.modifiedGroups = modifiedGroups;
-			}
-
-			@Override
-			protected void dispatch(ItemRemovedHandler handler) {
-				handler.onItemRemoved(sessionObject, item, modifiedGroups);
-			}
-
-			public RosterItem getItem() {
-				return item;
-			}
-
-			public Set<String> getModifiedGroups() {
-				return modifiedGroups;
-			}
-
-			public void setItem(RosterItem item) {
-				this.item = item;
-			}
-
-			public void setModifiedGroups(Set<String> modifiedGroups) {
-				this.modifiedGroups = modifiedGroups;
-			}
-
-		}
-
-		void onItemRemoved(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
-	}
-
-	public interface ItemUpdatedHandler extends EventHandler {
-
-		public static class ItemUpdatedEvent extends JaxmppEvent<ItemUpdatedHandler> {
-
-			private Action action;
-
-			private RosterItem item;
-
-			private Set<String> modifiedGroups;
-
-			public ItemUpdatedEvent(SessionObject sessionObject, RosterItem currentItem, Action action,
-					Set<String> modifiedGroups) {
-				super(sessionObject);
-				this.item = currentItem;
-				this.action = action;
-				this.modifiedGroups = modifiedGroups;
-			}
-
-			@Override
-			protected void dispatch(ItemUpdatedHandler handler) {
-				handler.onItemUpdated(sessionObject, item, action, modifiedGroups);
-			}
-
-			public Action getChangeAction() {
-				return action;
-			}
-
-			public RosterItem getItem() {
-				return item;
-			}
-
-			public Set<String> getModifiedGroups() {
-				return modifiedGroups;
-			}
-
-			public void setChangeAction(Action action) {
-				this.action = action;
-			}
-
-			public void setItem(RosterItem item) {
-				this.item = item;
-			}
-
-			public void setModifiedGroups(Set<String> modifiedGroups) {
-				this.modifiedGroups = modifiedGroups;
-			}
-
-		}
-
-		void onItemUpdated(SessionObject sessionObject, RosterItem item, Action action, Set<String> modifiedGroups);
-	}
-
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:roster" }));
-
 	public static final String ROSTER_STORE_KEY = "RosterModule#ROSTER_STORE";
+	private RosterCacheProvider versionProvider;
+
+	public RosterModule() {
+		super();
+	}
+
+	public RosterModule(RosterCacheProvider versionProvider) {
+		super();
+		this.versionProvider = versionProvider;
+	}
 
 	private static final Element createItem(final RosterItem item) throws XMLException {
 		Element result = ElementFactory.create("item");
@@ -214,8 +70,8 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		return result;
 	}
 
-	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription,
-			Collection<String> groups, boolean ask) {
+	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription, Collection<String> groups,
+			boolean ask) {
 		rosterItem.setName(name);
 		rosterItem.setSubscription(subscription);
 		rosterItem.setAsk(ask);
@@ -241,21 +97,9 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		sessionObject.setProperty(Scope.user, ROSTER_STORE_KEY, rosterStore);
 	}
 
-	private RosterCacheProvider versionProvider;
-
-	public RosterModule() {
-		super();
-	}
-
-	public RosterModule(RosterCacheProvider versionProvider) {
-		super();
-		this.versionProvider = versionProvider;
-	}
-	
-	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback) throws XMLException,
-			JaxmppException {
+	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
+			throws JaxmppException {
 		RosterItem item = new RosterItem(jid, context.getSessionObject());
-		item.setData(RosterItem.ID_KEY, createId(jid));
 		fill(item, name, Subscription.none, groups, false);
 
 		IQ iq = IQ.create();
@@ -301,7 +145,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 			@Override
 			public void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
-					throws XMLException, JaxmppException {
+					throws JaxmppException {
 				RosterModule.this.add(jid, name, groups, asyncCallback);
 			}
 
@@ -311,12 +155,12 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			}
 
 			@Override
-			public void remove(BareJID jid) throws XMLException, JaxmppException {
+			public void remove(BareJID jid) throws JaxmppException {
 				RosterModule.this.remove(jid);
 			}
 
 			@Override
-			public void update(RosterItem item) throws XMLException, JaxmppException {
+			public void update(RosterItem item) throws JaxmppException {
 				RosterModule.this.update(item);
 			}
 		});
@@ -339,10 +183,6 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	public void beforeUnregister() {
 		// TODO Auto-generated method stub
 
-	}
-
-	private long createId(BareJID jid) {
-		return (context.getSessionObject().getUserBareJid() + "::" + jid).hashCode();
 	}
 
 	@Override
@@ -369,9 +209,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		Element features = StreamFeaturesModule.getStreamFeatures(context.getSessionObject());
 		if (features == null)
 			return false;
-		if (features.getChildrenNS("ver", "urn:xmpp:features:rosterver") != null)
-			return true;
-		return false;
+		return features.getChildrenNS("ver", "urn:xmpp:features:rosterver") != null;
 	}
 
 	private void loadFromCache() {
@@ -422,7 +260,6 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		} else if (currentItem == null) {
 			// add new item
 			currentItem = new RosterItem(jid, context.getSessionObject());
-			currentItem.setData(RosterItem.ID_KEY, createId(jid));
 			fill(currentItem, name, subscription, groups, ask);
 			Set<String> modifiedGroups = getRosterStore().addItem(currentItem);
 			fireEvent(new ItemAddedEvent(context.getSessionObject(), currentItem, modifiedGroups));
@@ -489,10 +326,10 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		processRosterQuery(query, false);
 	}
 
-	protected void remove(BareJID jid) throws XMLException, JaxmppException {
+	protected void remove(BareJID jid) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query", null, "jabber:iq:roster"));
 		Element item = query.addChild(ElementFactory.create("item"));
 		item.setAttribute("jid", jid.toString());
 		item.setAttribute("subscription", Subscription.remove.name());
@@ -520,7 +357,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	/**
 	 * Requests for roster. Roster will be send by server asynchronously.
 	 */
-	public void rosterRequest() throws XMLException, JaxmppException {
+	public void rosterRequest() throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.get);
 		Element query = ElementFactory.create("query", null, "jabber:iq:roster");
@@ -563,10 +400,10 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		this.context = context;
 	}
 
-	protected void update(RosterItem item) throws XMLException, JaxmppException {
+	protected void update(RosterItem item) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
-		final Element query = iq.addChild(ElementFactory.create("query xmlns", null, "jabber:iq:roster"));
+		final Element query = iq.addChild(ElementFactory.create("query", null, "jabber:iq:roster"));
 		query.addChild(createItem(item));
 
 		write(iq, new AsyncCallback() {
@@ -587,5 +424,144 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 			}
 		});
+	}
+
+	public enum Action {
+		askCancelled,
+		subscribed,
+		unsubscribed,
+
+	}
+
+	public interface ItemAddedHandler extends EventHandler {
+
+		void onItemAdded(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
+
+		class ItemAddedEvent extends JaxmppEvent<ItemAddedHandler> {
+
+			private RosterItem item;
+
+			private Set<String> modifiedGroups;
+
+			public ItemAddedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
+				super(sessionObject);
+				this.item = currentItem;
+				this.modifiedGroups = modifiedGroups;
+			}
+
+			@Override
+			protected void dispatch(ItemAddedHandler handler) {
+				handler.onItemAdded(sessionObject, item, modifiedGroups);
+			}
+
+			public RosterItem getItem() {
+				return item;
+			}
+
+			public void setItem(RosterItem item) {
+				this.item = item;
+			}
+
+			public Set<String> getModifiedGroups() {
+				return modifiedGroups;
+			}
+
+			public void setModifiedGroups(Set<String> modifiedGroups) {
+				this.modifiedGroups = modifiedGroups;
+			}
+
+		}
+	}
+
+	public interface ItemRemovedHandler extends EventHandler {
+
+		void onItemRemoved(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
+
+		class ItemRemovedEvent extends JaxmppEvent<ItemRemovedHandler> {
+
+			private RosterItem item;
+
+			private Set<String> modifiedGroups;
+
+			public ItemRemovedEvent(SessionObject sessionObject, RosterItem currentItem, Set<String> modifiedGroups) {
+				super(sessionObject);
+				this.item = currentItem;
+				this.modifiedGroups = modifiedGroups;
+			}
+
+			@Override
+			protected void dispatch(ItemRemovedHandler handler) {
+				handler.onItemRemoved(sessionObject, item, modifiedGroups);
+			}
+
+			public RosterItem getItem() {
+				return item;
+			}
+
+			public void setItem(RosterItem item) {
+				this.item = item;
+			}
+
+			public Set<String> getModifiedGroups() {
+				return modifiedGroups;
+			}
+
+			public void setModifiedGroups(Set<String> modifiedGroups) {
+				this.modifiedGroups = modifiedGroups;
+			}
+
+		}
+	}
+
+	public interface ItemUpdatedHandler extends EventHandler {
+
+		void onItemUpdated(SessionObject sessionObject, RosterItem item, Action action, Set<String> modifiedGroups);
+
+		class ItemUpdatedEvent extends JaxmppEvent<ItemUpdatedHandler> {
+
+			private Action action;
+
+			private RosterItem item;
+
+			private Set<String> modifiedGroups;
+
+			public ItemUpdatedEvent(SessionObject sessionObject, RosterItem currentItem, Action action,
+					Set<String> modifiedGroups) {
+				super(sessionObject);
+				this.item = currentItem;
+				this.action = action;
+				this.modifiedGroups = modifiedGroups;
+			}
+
+			@Override
+			protected void dispatch(ItemUpdatedHandler handler) {
+				handler.onItemUpdated(sessionObject, item, action, modifiedGroups);
+			}
+
+			public Action getChangeAction() {
+				return action;
+			}
+
+			public void setChangeAction(Action action) {
+				this.action = action;
+			}
+
+			public RosterItem getItem() {
+				return item;
+			}
+
+			public void setItem(RosterItem item) {
+				this.item = item;
+			}
+
+			public Set<String> getModifiedGroups() {
+				return modifiedGroups;
+			}
+
+			public void setModifiedGroups(Set<String> modifiedGroups) {
+				this.modifiedGroups = modifiedGroups;
+			}
+
+		}
 	}
 }

@@ -21,18 +21,16 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-import java.net.SocketException;
-import java.net.URL;
+import java.net.*;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
@@ -40,23 +38,16 @@ import tigase.xml.SimpleParser;
 public abstract class BoshWorker implements BoshRequest {
 
 	private final Element body;
-
-	private HttpURLConnection conn;
-
 	private final DomBuilderHandler domHandler;
-
-	private Logger log;
-
 	private final SimpleParser parser;
-
 	private final String rid;
-
 	private final SessionObject sessionObject;
-
+	private HttpURLConnection conn;
+	private Logger log;
 	private boolean terminated = false;
 
 	public BoshWorker(DomBuilderHandler domHandler, SimpleParser parser, SessionObject sessionObject, Element body)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		this.domHandler = domHandler;
 		this.parser = parser;
 		this.sessionObject = sessionObject;
@@ -70,12 +61,7 @@ public abstract class BoshWorker implements BoshRequest {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (!(obj instanceof BoshWorker))
-			return false;
-
-		return ((BoshWorker) obj).rid.equals(rid);
+		return obj == this || obj instanceof BoshWorker && ((BoshWorker) obj).rid.equals(rid);
 	}
 
 	@Override
@@ -104,15 +90,32 @@ public abstract class BoshWorker implements BoshRequest {
 				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
 				if (url == null)
 					throw new JaxmppException(BoshConnector.URL_KEY + " is not set!");
-				this.conn = (HttpURLConnection) (url.openConnection());
+
+				if (sessionObject.getProperty(Connector.PROXY_HOST) != null) {
+					final String proxyHost = sessionObject.getProperty(Connector.PROXY_HOST);
+					final int proxyPort = sessionObject.getProperty(Connector.PROXY_PORT);
+					Proxy.Type proxyType = sessionObject.getProperty(Connector.PROXY_TYPE);
+					if (proxyType == null)
+						proxyType = Proxy.Type.HTTP;
+
+					log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+					SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+					Proxy proxy = new Proxy(proxyType, addr);
+					this.conn = (HttpURLConnection) (url.openConnection(proxy));
+				} else {
+					this.conn = (HttpURLConnection) (url.openConnection());
+				}
+
 				// force to use POST method
 				this.conn.setRequestMethod("POST");
 				// added as per comment at
 				// http://stackoverflow.com/questions/941628/urlconnection-filenotfoundexception-for-non-standard-http-port-sources/2274535#2274535
-				// related to server not returning data when request are not on default HTTP port
-				conn.setRequestProperty("User-Agent","Mozilla/5.0 ( compatible ) ");
-				conn.setRequestProperty("Accept","*/*");
-				
+				// related to server not returning data when request are not on
+				// default HTTP port
+				conn.setRequestProperty("User-Agent", "Mozilla/5.0 ( compatible ) ");
+				conn.setRequestProperty("Accept", "*/*");
+
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
@@ -127,22 +130,33 @@ public abstract class BoshWorker implements BoshRequest {
 				try {
 					responseCode = conn.getResponseCode();
 
-					StringBuilder sb = new StringBuilder();
-					InputStream is = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
-					BufferedReader rd = new BufferedReader(new InputStreamReader(is));
-					String line;
-					while ((line = rd.readLine()) != null) {
-						sb.append(line);
+					if (responseCode == 407) {
+						responseData = "Proxy Authentication Required";
+					} else {
+						StringBuilder sb = new StringBuilder();
+						InputStream is = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
+						BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+						String line;
+						while ((line = rd.readLine()) != null) {
+							sb.append(line);
+						}
+						responseData = sb.toString();
 					}
-					responseData = sb.toString();
-				} catch (RuntimeException ex) {
-					// in case of server not returning any data we need to handle
+				} catch (Exception ex) {
+					// in case of server not returning any data we need to
+					// handle
 					// exception properly as conn.getResponseCode() may return
 					// exception wrapped in RuntimeException
-					responseCode = 500;
-					responseData = "Server returned no data";
-					if (log.isLoggable(Level.FINEST)) {
-						log.log(Level.FINEST, "got exception while reading data from socket", ex);
+
+					if (sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY) == Connector.State.disconnected) {
+						responseCode = 500;
+						responseData = "Client is disconnected.";
+					} else {
+						responseCode = 500;
+						responseData = "Server returned no data.";
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST, "Got exception while reading data from socket", ex);
+						}
 					}
 				}
 
@@ -165,7 +179,7 @@ public abstract class BoshWorker implements BoshRequest {
 
 					tigase.xml.Element elem;
 					while ((elem = elems.poll()) != null) {
-						final String type = elem.getAttribute("type");
+						final String type = elem.getAttributeStaticStr("type");
 						Element response = new J2seElement(elem);
 						if (type != null && "terminate".equals(type)) {
 							onTerminate(responseCode, responseData, response);

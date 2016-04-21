@@ -17,18 +17,18 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
-import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
-
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
+
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
 /**
  *
@@ -89,7 +89,7 @@ public abstract class Worker extends Thread {
 	@Override
 	public void interrupt() {
 		super.interrupt();
-		log.fine("Worker Interrupted");
+		log.log(Level.FINE, "Worker Interrupted");
 	}
 
 	protected abstract void onErrorInThread(Exception e) throws JaxmppException;
