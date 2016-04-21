@@ -133,6 +133,8 @@
 				<version>2.5.2</version>
 				<configuration>
 				  <releaseProfiles>dist,docs</releaseProfiles>
+				  <tagNameFormat>@{project.version}</tagNameFormat>
+				  <autoVersionSubmodules>true</autoVersionSubmodules>
 				</configuration>				
 			</plugin>
 			<plugin>
