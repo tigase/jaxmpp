@@ -1,4 +1,4 @@
-= Tigase JaXMPP 
+= Tigase JaXMPP
 Tigase Team <team@tigase.net>
 :toc:
 :numbered:
@@ -10,5 +10,7 @@ Tigase Team <team@tigase.net>
 :no title:
 
 :no author:
+
+include::text/v3.1.0_notes.asciidoc[]
 
 include::text/Tigase_JaXMPP-General_overview.asciidoc[]
