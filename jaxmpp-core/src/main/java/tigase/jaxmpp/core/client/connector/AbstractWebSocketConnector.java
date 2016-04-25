@@ -113,7 +113,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	protected boolean handleSeeOtherUri(String seeOtherUri) throws JaxmppException {
 		try {
 			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
-			stop();
+			onStreamTerminate();
 			fireOnError(null, null, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "could not properly handle see-other-host", ex);
@@ -147,7 +147,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				if (handleSeeOtherHost(response))
 					return;
 			}
-			stop();
+			onStreamTerminate();
 			fireOnError(response, ex, AbstractWebSocketConnector.this.context.getSessionObject());
 		} catch (JaxmppException ex1) {
 			log.log(Level.SEVERE, null, ex1);
@@ -159,10 +159,19 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	protected void onStreamTerminate() throws JaxmppException {
-		if (getState() == State.disconnecting)
+		if (getState() == State.disconnecting || getState() == State.disconnected) {
 			return;
-		terminateStream();
+		}
+		
 		setStage(State.disconnecting);
+		try {
+			terminateStream();
+		} catch (Exception ex) {
+			log.log(Level.FINEST, "Problem on terminating stream", ex);
+			setStage(State.disconnected);
+		}
+
+		terminateStream();
 
 		if (log.isLoggable(Level.FINE))
 			log.fine("Stream terminated");
@@ -292,8 +301,13 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	public void stop() throws JaxmppException {
 		if (getState() == State.disconnected)
 			return;
-		terminateStream();
 		setStage(State.disconnecting);
+		try {
+			terminateStream();
+		} catch (Exception ex) {
+			log.log(Level.FINEST, "Problem on terminating stream", ex);
+			setStage(State.disconnected);
+		}
 		terminateAllWorkers();
 	}
 
@@ -309,7 +323,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	protected void terminateStream() throws JaxmppException {
 		final State state = getState();
-		if (state == State.connected || state == State.connecting) {
+		if (state == State.connected || state == State.connecting || state == State.disconnecting) {
 			String x = isRfc() ? "<close xmlns='urn:ietf:params:xml:ns:xmpp-framing'/>" : "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
 			send(x);
