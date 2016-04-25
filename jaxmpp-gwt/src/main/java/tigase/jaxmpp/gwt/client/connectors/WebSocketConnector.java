@@ -95,6 +95,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			@Override
 			public void onMessage(WebSocket ws, String message) {
 				try {
+					if (getState() == State.disconnected)
+						return;
 					parseSocketData(message);
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
@@ -221,12 +223,25 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	@Override
 	public void send(final String data) throws JaxmppException {
-		if (getState() == State.connected) {
+		//if (getState() == State.connected) {
+		try {
 			socket.send(data);
-		} else {
-			throw new JaxmppException("Not connected");
+		} catch (Throwable ex) {
+			throw new JaxmppException(ex);
 		}
+		//} else {
+		//	throw new JaxmppException("Not connected");
+		//}
 	}	
+	
+	@Override
+	protected void onStreamTerminate() throws JaxmppException {
+		super.onStreamTerminate();
+		if (getState() == State.disconnecting || getState() == State.disconnected) {
+			socket.close();
+			workerTerminated();
+		}
+	}
 	
 	@Override
 	protected void terminateAllWorkers() throws JaxmppException {
