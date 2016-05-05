@@ -571,6 +571,8 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void setStage(State state) throws JaxmppException {
+		if (this.context == null)
+			return;
 		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
