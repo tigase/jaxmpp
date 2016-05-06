@@ -1269,7 +1269,9 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			fireEvent(event);
 		}
 
-		room.setLastMessageDate(delayTime);
+		if (room.getLastMessageDate() == null || delayTime == null || room.getLastMessageDate().getTime() < delayTime.getTime()) {
+			room.setLastMessageDate(delayTime);
+		}
 	}
 
 	protected void processPresence(Presence element) throws JaxmppException {

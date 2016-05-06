@@ -17,11 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -32,6 +27,11 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
 public class Room {
 
@@ -77,9 +77,7 @@ public class Room {
 	}
 
 	public void setLastMessageDate(Date date) {
-		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
-			this.lastMessageDate = date;
-		}
+		this.lastMessageDate = date;
 	}
 
 	public String getNickname() {
