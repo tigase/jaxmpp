@@ -42,20 +42,12 @@ public class DefaultEventBus extends EventBus {
 		doAdd(type, null, handler);
 	}
 
-	@Override
-	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler) {
-		doAdd(type, source, handler);
-	}
 
 	@Override
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
 		doAdd(type, null, listener);
 	}
 
-	@Override
-	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source, EventListener listener) {
-		doAdd(type, source, listener);
-	}
 
 	@Override
 	public <H extends EventHandler> void addListener(EventListener listener) {
@@ -93,25 +85,20 @@ public class DefaultEventBus extends EventBus {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected void doFire(Event<EventHandler> event, Object source) {
+	protected void doFire(Event<EventHandler> event) {
 		if (event == null) {
 			throw new NullPointerException("Cannot fire null event");
 		}
 
-		setEventSource(event, source);
 		final ArrayList<EventHandler> handlers = new ArrayList<EventHandler>();
 		synchronized (this.handlers) {
-			handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), source));
-			handlers.addAll(getHandlersList(null, source));
-			if (source != null) {
-				handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass(), null));
-				handlers.addAll(getHandlersList(null, null));
-			}
+			handlers.addAll(getHandlersList((Class<? extends Event<?>>) event.getClass()));
+			handlers.addAll(getHandlersList(null));
 		}
-		doFire(event, source, handlers);
+		doFire(event, handlers);
 	}
 
-	protected void doFire(Event<EventHandler> event, Object source, ArrayList<EventHandler> handlers) {
+	protected void doFire(Event<EventHandler> event, ArrayList<EventHandler> handlers) {
 		final Set<Throwable> causes = new HashSet<Throwable>();
 
 		for (EventHandler eventHandler : handlers) {
@@ -138,21 +125,16 @@ public class DefaultEventBus extends EventBus {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void fire(Event<?> event) {
-		doFire((Event<EventHandler>) event, null);
+		doFire((Event<EventHandler>) event);
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public void fire(Event<?> event, Object source) {
-		doFire((Event<EventHandler>) event, source);
-	}
 
 	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
 		return handlers.get(source == null ? NULL_SOURCE : source);
 	}
 
-	protected Collection<EventHandler> getHandlersList(Class<? extends Event<?>> type, Object source) {
-		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
+	protected Collection<EventHandler> getHandlersList(Class<? extends Event<?>> type) {
+		final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(null);
 		if (hdlrs == null) {
 			return Collections.emptyList();
 		} else {
@@ -174,13 +156,8 @@ public class DefaultEventBus extends EventBus {
 
 	@Override
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
-		remove(type, null, handler);
-	}
-
-	@Override
-	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
 		synchronized (this.handlers) {
-			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(source);
+			final Map<Class<? extends Event<?>>, List<EventHandler>> hdlrs = getHandlersBySource(null);
 			if (hdlrs != null) {
 				List<EventHandler> lst = hdlrs.get(type == null ? NULL_TYPE : type);
 				if (lst != null) {
@@ -189,7 +166,7 @@ public class DefaultEventBus extends EventBus {
 						hdlrs.remove(type == null ? NULL_TYPE : type);
 					}
 					if (hdlrs.isEmpty()) {
-						handlers.remove(source == null ? NULL_SOURCE : source);
+						handlers.remove(NULL_SOURCE);
 					}
 				}
 			}

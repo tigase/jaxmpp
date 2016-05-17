@@ -196,7 +196,7 @@ public class SaslModule implements XmppModule, ContextAware {
 		} catch (ClientSaslException e) {
 			SaslAuthFailedHandler.SaslAuthFailedEvent event = new SaslAuthFailedHandler.SaslAuthFailedEvent(
 					context.getSessionObject(), null);
-			context.getEventBus().fire(event, this);
+			context.getEventBus().fire(event);
 			throw e;
 		}
 	}
@@ -223,7 +223,7 @@ public class SaslModule implements XmppModule, ContextAware {
 
 		SaslAuthFailedHandler.SaslAuthFailedEvent event = new SaslAuthFailedHandler.SaslAuthFailedEvent(
 				context.getSessionObject(), error);
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 	}
 
 	protected void processSuccess(Element element) throws JaxmppException {
@@ -235,12 +235,12 @@ public class SaslModule implements XmppModule, ContextAware {
 		if (mechanism.isComplete(context.getSessionObject())) {
 			context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 			log.fine("Authenticated");
-			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
+			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()));
 		} else {
 			log.fine("Authenticated by server but responses are not accepted by client.");
 			context.getEventBus().fire(
-					new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(), SaslError.server_not_trusted),
-					this);
+					new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(), SaslError.server_not_trusted)
+			);
 		}
 	}
 

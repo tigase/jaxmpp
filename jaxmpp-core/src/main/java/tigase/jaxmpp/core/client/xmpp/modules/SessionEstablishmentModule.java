@@ -76,7 +76,7 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.FALSE);
 				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
 						context.getSessionObject(), error);
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 
 			@Override
@@ -84,14 +84,14 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.TRUE);
 				SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent event = new SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent(
 						context.getSessionObject());
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
 				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
 						context.getSessionObject(), null);
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 		});
 	}

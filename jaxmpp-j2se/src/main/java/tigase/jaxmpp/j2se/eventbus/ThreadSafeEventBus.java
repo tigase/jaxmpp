@@ -51,7 +51,7 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 	}
 
 	@Override
-	protected void doFire(final Event<EventHandler> event, final Object source, final ArrayList<EventHandler> handlers) {
+	protected void doFire(final Event<EventHandler> event, final ArrayList<EventHandler> handlers) {
 		for (final EventHandler eventHandler : handlers) {
 			Runnable r = new Runnable() {
 				@Override

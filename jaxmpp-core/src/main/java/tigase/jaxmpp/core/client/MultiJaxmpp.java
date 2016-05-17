@@ -17,23 +17,20 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.eventbus.Event;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.EventListener;
 import tigase.jaxmpp.core.client.eventbus.MultiEventBus;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+
 //import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 //import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 /**
  * Class for keeping many instances of {@linkplain JaxmppCore}.
- * 
  */
 public class MultiJaxmpp {
 
@@ -63,9 +60,8 @@ public class MultiJaxmpp {
 
 	/**
 	 * Register implementation of {@linkplain JaxmppCore}
-	 * 
-	 * @param jaxmpp
-	 *            {@linkplain JaxmppCore} instance
+	 *
+	 * @param jaxmpp {@linkplain JaxmppCore} instance
 	 */
 	public <T extends JaxmppCore> void add(final T jaxmpp) {
 		synchronized (jaxmpps) {
@@ -77,34 +73,18 @@ public class MultiJaxmpp {
 
 	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class,
-	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 * tigase.jaxmpp.core.client.eventbus.EventHandler)
 	 */
 	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
 		eventBus.addHandler(type, handler);
 	}
 
 	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler) {
-		eventBus.addHandler(type, source, handler);
-	}
-
-	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class,
-	 *      tigase.jaxmpp.core.client.eventbus.EventListener)
+	 * tigase.jaxmpp.core.client.eventbus.EventListener)
 	 */
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
 		eventBus.addListener(type, listener);
-	}
-
-	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventListener)
-	 */
-	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source, EventListener listener) {
-		eventBus.addListener(type, source, listener);
 	}
 
 	/**
@@ -116,7 +96,7 @@ public class MultiJaxmpp {
 
 	/**
 	 * Returns collection of registered instances of {@linkplain JaxmppCore}
-	 * 
+	 *
 	 * @return collection
 	 */
 	public Collection<JaxmppCore> get() {
@@ -126,9 +106,8 @@ public class MultiJaxmpp {
 	/**
 	 * Return instance of {@linkplain JaxmppCore} connected registered for
 	 * specific user account.
-	 * 
-	 * @param userJid
-	 *            user account
+	 *
+	 * @param userJid user account
 	 * @return {@linkplain JaxmppCore}
 	 */
 	@SuppressWarnings("unchecked")
@@ -141,9 +120,8 @@ public class MultiJaxmpp {
 	/**
 	 * Returns instance of {@linkplain JaxmppCore} connected registered for
 	 * specific user account represented by {@linkplain SessionObject}.
-	 * 
-	 * @param sessionObject
-	 *            {@linkplain SessionObject} related to user account
+	 *
+	 * @param sessionObject {@linkplain SessionObject} related to user account
 	 * @return {@linkplain JaxmppCore}
 	 */
 	public <T extends JaxmppCore> T get(final SessionObject sessionObject) {
@@ -162,19 +140,12 @@ public class MultiJaxmpp {
 
 	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
-	 *      tigase.jaxmpp.core.client.eventbus.EventHandler)
+	 * tigase.jaxmpp.core.client.eventbus.EventHandler)
 	 */
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
 		eventBus.remove(type, handler);
 	}
 
-	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
-	 *      java.lang.Object, tigase.jaxmpp.core.client.eventbus.EventHandler)
-	 */
-	public void remove(Class<? extends Event<?>> type, Object source, EventHandler handler) {
-		eventBus.remove(type, source, handler);
-	}
 
 	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventHandler)
@@ -185,9 +156,8 @@ public class MultiJaxmpp {
 
 	/**
 	 * Unregisters {@linkplain JaxmppCore}.
-	 * 
-	 * @param jaxmpp
-	 *            {@linkplain JaxmppCore} to unregister.
+	 *
+	 * @param jaxmpp {@linkplain JaxmppCore} to unregister.
 	 */
 	public <T extends JaxmppCore> void remove(final T jaxmpp) {
 		synchronized (jaxmpps) {

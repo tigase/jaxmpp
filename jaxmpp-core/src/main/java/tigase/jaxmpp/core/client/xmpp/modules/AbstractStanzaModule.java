@@ -17,9 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
-import java.util.List;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.XmppModule;
@@ -29,19 +26,21 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
+import java.util.List;
+import java.util.logging.Logger;
+
 public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule, InitializingModule, ContextAware {
+
+	protected final Logger log;
+	protected Context context;
+
+	public AbstractStanzaModule() {
+		log = Logger.getLogger(this.getClass().getName());
+	}
 
 	protected static Element getFirstChild(Element element, String elementName) throws XMLException {
 		List<Element> elements = element.getChildren(elementName);
 		return elements == null || elements.size() == 0 ? null : elements.get(0);
-	}
-
-	protected Context context;
-
-	protected final Logger log;
-
-	public AbstractStanzaModule() {
-		log = Logger.getLogger(this.getClass().getName());
 	}
 
 	@Override
@@ -59,7 +58,7 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 	}
 
 	protected void fireEvent(Event<?> event) {
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 	}
 
 	@Override

@@ -53,9 +53,8 @@ import java.util.logging.Level;
  * href='http://xmpp.org/extensions/xep-0060.html'>XEP-0060:
  * Publish-Subscribe</a>.
  * </p>
- * 
+ *
  * @author bmalkow
- * 
  */
 //public class PubSubModule extends AbstractStanzaModule<Message> {
 public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
@@ -84,20 +83,16 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	}
 
 	public void addNotificationReceivedHandler(NotificationReceivedHandler handler) {
-		context.getEventBus().addHandler(NotificationReceivedHandler.NotificationReceivedEvent.class, this, handler);
+		context.getEventBus().addHandler(NotificationReceivedHandler.NotificationReceivedEvent.class, handler);
 	}
 
 	/**
 	 * Submit configuration of node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param configuration
-	 *            data element with configuration
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node
+	 * @param configuration data element with configuration
+	 * @param callback      request callback
 	 */
 	public void configureNode(BareJID pubSubJID, String nodeName, JabberDataElement configuration, AsyncCallback callback)
 			throws JaxmppException {
@@ -119,14 +114,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Submit configuration of node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param configuration
-	 *            data element with configuration
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node
+	 * @param configuration data element with configuration
+	 * @param callback      request callback
 	 */
 	public void configureNode(BareJID pubSubJID, String nodeName, JabberDataElement configuration, PubSubAsyncCallback callback)
 			throws JaxmppException {
@@ -137,16 +128,11 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Submit configuration of subscription.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param subscriberJID
-	 *            subscriber JID
-	 * @param form
-	 *            data element with configuration
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node
+	 * @param subscriberJID subscriber JID
+	 * @param form          data element with configuration
+	 * @param callback      request callback
 	 */
 	public void configureSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement form,
 									  AsyncCallback callback) throws JaxmppException {
@@ -170,31 +156,23 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Submit configuration of subscription.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param subscriberJID
-	 *            subscriber JID
-	 * @param form
-	 *            data element with configuration
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node
+	 * @param subscriberJID subscriber JID
+	 * @param form          data element with configuration
+	 * @param callback      request callback
 	 */
 	public void configureSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement form,
-			PubSubAsyncCallback callback) throws JaxmppException {
+									  PubSubAsyncCallback callback) throws JaxmppException {
 		configureSubscription(pubSubJID, nodeName, subscriberJID, form, (AsyncCallback) callback);
 	}
 
 	/**
 	 * Create node on PubSub Service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node to be created
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID PubSub service address
+	 * @param nodeName  name of node to be created
+	 * @param callback  callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		createNode(pubSubJID, nodeName, null, callback);
@@ -203,14 +181,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Create node on PubSub Service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node to be created
-	 * @param nodeConfiguration
-	 *            node configuration
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID         PubSub service address
+	 * @param nodeName          name of node to be created
+	 * @param nodeConfiguration node configuration
+	 * @param callback          callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, JabberDataElement nodeConfiguration, AsyncCallback callback)
 			throws JaxmppException {
@@ -236,14 +210,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Create node on PubSub Service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node to be created
-	 * @param nodeConfiguration
-	 *            node configuration
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID         PubSub service address
+	 * @param nodeName          name of node to be created
+	 * @param nodeConfiguration node configuration
+	 * @param callback          callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, JabberDataElement nodeConfiguration, PubSubAsyncCallback callback)
 			throws JaxmppException {
@@ -253,14 +223,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Create node on PubSub Service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node to be created
-	 * @param config
-	 *            node configuration
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID PubSub service address
+	 * @param nodeName  name of node to be created
+	 * @param config    node configuration
+	 * @param callback  callback
 	 */
 	public void createNode(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
 		createNode(pubSubJID, nodeName, null, (AsyncCallback) callback);
@@ -284,14 +250,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Delete published item.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address
+	 * @param nodeName  name of node
+	 * @param itemId    ID of item
+	 * @param callback  request callback
 	 */
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -314,14 +276,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Delete published item.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address
+	 * @param nodeName  name of node
+	 * @param itemId    ID of item
+	 * @param callback  request callback
 	 */
 	public void deleteItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
 			throws JaxmppException {
@@ -331,12 +289,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Delete node from PubSub service.
 	 *
-	 * @param pubSubJID
-	 *            address of PubSub service
-	 * @param nodeName
-	 *            na of node to delete
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID address of PubSub service
+	 * @param nodeName  na of node to delete
+	 * @param callback  callback
 	 */
 	public void deleteNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -355,12 +310,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Delete node from PubSub service.
 	 *
-	 * @param pubSubJID
-	 *            address of PubSub service
-	 * @param nodeName
-	 *            na of node to delete
-	 * @param callback
-	 *            callback
+	 * @param pubSubJID address of PubSub service
+	 * @param nodeName  na of node to delete
+	 * @param callback  callback
 	 */
 	public void deleteNode(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
 		deleteNode(pubSubJID, nodeName, (AsyncCallback) callback);
@@ -370,14 +322,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	 * Delete subscriber. Formelly it sets subscription to
 	 * <code>{@linkplain Subscription#none none}</code>.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node
-	 * @param subscriberJID
-	 *            subscriber JID
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address
+	 * @param nodeName      name of node
+	 * @param subscriberJID subscriber JID
+	 * @param callback      request callback
 	 */
 	public void deleteSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)
 			throws JaxmppException {
@@ -385,7 +333,7 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	}
 
 	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId, Element payload,
-			Date delayTime) throws JaxmppException {
+											Date delayTime) throws JaxmppException {
 		final NotificationReceivedEvent event = new NotificationReceivedEvent(context.getSessionObject());
 		event.setMessage(message);
 		event.setPubSubJID(message.getFrom());
@@ -405,12 +353,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets default subscription configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback.
 	 */
 	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName, AsyncCallback callback)
 			throws JaxmppException {
@@ -431,15 +376,12 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets default subscription configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback.
 	 */
 	public void getDefaultSubscriptionConfiguration(BareJID pubSubJID, String nodeName,
-			SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
+													SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
 		getDefaultSubscriptionConfiguration(pubSubJID, nodeName, (AsyncCallback) callback);
 	}
 
@@ -451,13 +393,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get node configuration. May be used to get default node configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            node name. If <code>null</code> then default node
-	 *            configuration will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  node name. If <code>null</code> then default node
+	 *                  configuration will be requested.
+	 * @param callback  request callback.
 	 */
 	public void getNodeConfiguration(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
@@ -482,13 +421,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get node configuration. May be used to get default node configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            node name. If <code>null</code> then default node
-	 *            configuration will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  node name. If <code>null</code> then default node
+	 *                  configuration will be requested.
+	 * @param callback  request callback.
 	 */
 	public void getNodeConfiguration(BareJID pubSubJID, String nodeName, NodeConfigurationAsyncCallback callback)
 			throws JaxmppException {
@@ -498,10 +434,8 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get default node configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param callback  request callback
 	 */
 	public void getNodeConfigurationDefault(BareJID pubSubJID, AsyncCallback callback) throws JaxmppException {
 		getNodeConfiguration(pubSubJID, null, callback);
@@ -510,10 +444,8 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get default node configuration.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param callback  request callback
 	 */
 	public void getNodeConfigurationDefault(BareJID pubSubJID, NodeConfigurationAsyncCallback callback) throws JaxmppException {
 		getNodeConfiguration(pubSubJID, null, (AsyncCallback) callback);
@@ -522,14 +454,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get subscription options.
 	 *
-	 * @param pubSubJID
-	 *            JID of PubSub Service
-	 * @param nodeName
-	 *            node name
-	 * @param subscriberJID
-	 *            subcriber JID
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     JID of PubSub Service
+	 * @param nodeName      node name
+	 * @param subscriberJID subcriber JID
+	 * @param callback      request callback
 	 */
 	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
 			throws JaxmppException {
@@ -551,17 +479,13 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Get subscriptions options.
 	 *
-	 * @param pubSubJID
-	 *            JID of PubSub Service
-	 * @param nodeName
-	 *            node name
-	 * @param subscriberJID
-	 *            subcriber JID
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     JID of PubSub Service
+	 * @param nodeName      node name
+	 * @param subscriberJID subcriber JID
+	 * @param callback      request callback
 	 */
 	public void getSubscriptionConfiguration(BareJID pubSubJID, String nodeName, JID subscriberJID,
-			SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
+											 SubscriptionOptionsAsyncCallback callback) throws JaxmppException {
 		getSubscriptionConfiguration(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
@@ -598,23 +522,18 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Publish item in PubSub service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param itemId
-	 *            ID of item to be published. If <code>null</code> then Service
-	 *            will generate unique item ID.
-	 * @param payload
-	 *            element to be publish.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param itemId    ID of item to be published. If <code>null</code> then Service
+	 *                  will generate unique item ID.
+	 * @param payload   element to be publish.
+	 * @param callback  request callback.
 	 */
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, AsyncCallback callback)
 			throws JaxmppException {
 		IQ iq = IQ.create();
-		if ( pubSubJID != null ){
-			iq.setTo( JID.jidInstance( pubSubJID ) );
+		if (pubSubJID != null) {
+			iq.setTo(JID.jidInstance(pubSubJID));
 		}
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
@@ -636,17 +555,12 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Publish item in PubSub service.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param itemId
-	 *            ID of item to be published. If <code>null</code> then Service
-	 *            will generate unique item ID.
-	 * @param payload
-	 *            element to be publish.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param itemId    ID of item to be published. If <code>null</code> then Service
+	 *                  will generate unique item ID.
+	 * @param payload   element to be publish.
+	 * @param callback  request callback.
 	 */
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, PublishAsyncCallback callback)
 			throws JaxmppException {
@@ -656,12 +570,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Purge the node of all published items.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback
 	 */
 	public void purge(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -680,12 +591,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Purge the node of all published items.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback
 	 */
 	public void purge(BareJID pubSubJID, String nodeName, PubSubAsyncCallback callback) throws JaxmppException {
 		purge(pubSubJID, nodeName, (AsyncCallback) callback);
@@ -698,13 +606,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve affiliations. Owner affiliation is required.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then affiliations from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then affiliations from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback.
 	 */
 	public void retrieveAffiliations(BareJID pubSubJID, String nodeName, AffiliationsRetrieveAsyncCallback callback)
 			throws JaxmppException {
@@ -714,13 +619,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve affiliations. Owner affiliation is required.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then affiliations from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then affiliations from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback.
 	 */
 	public void retrieveAffiliations(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveAffiliations(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, callback);
@@ -744,12 +646,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets ALL published items from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param callback  request callback
 	 */
 	public void retrieveItem(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, null, null, callback);
@@ -758,12 +657,9 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets ALL published items from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param callback  request callback
 	 */
 	public void retrieveItem(BareJID pubSubJID, String nodeName, RetrieveItemsAsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, null, null, callback);
@@ -772,14 +668,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets published item from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item to pe retrieve.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param itemId    ID of item to pe retrieve.
+	 * @param callback  request callback
 	 */
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException {
 		retrieveItem(pubSubJID, nodeName, itemId, null, callback);
@@ -788,17 +680,12 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets published item(s) from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item to pe retrieve. May be <code>null</code>. Then all
-	 *            items will be requested.
-	 * @param maxItems
-	 *            maximum amount of items to be retrieve.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param itemId    ID of item to pe retrieve. May be <code>null</code>. Then all
+	 *                  items will be requested.
+	 * @param maxItems  maximum amount of items to be retrieve.
+	 * @param callback  request callback
 	 */
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, Integer maxItems, AsyncCallback callback)
 			throws JaxmppException {
@@ -827,14 +714,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets published item from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param itemId
-	 *            ID of item to pe retrieve.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param itemId    ID of item to pe retrieve.
+	 * @param callback  request callback
 	 */
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, RetrieveItemsAsyncCallback callback)
 			throws JaxmppException {
@@ -844,16 +727,11 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Gets published item(s) from node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node
-	 * @param max
-	 *            maximum amount of items to be retrieve.
-	 * @param index
-	 *            offset from which to start retrieval
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node
+	 * @param max       maximum amount of items to be retrieve.
+	 * @param index     offset from which to start retrieval
+	 * @param callback  request callback
 	 */
 	public void retrieveItems(BareJID pubSubJID, String nodeName, Integer max, Integer index, AsyncCallback callback)
 			throws JaxmppException {
@@ -884,13 +762,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve own affiliations.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then affiliations from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then affiliations from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback.
 	 */
 	public void retrieveOwnAffiliations(BareJID pubSubJID, String nodeName, AffiliationsRetrieveAsyncCallback callback)
 			throws JaxmppException {
@@ -900,13 +775,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve own affiliations.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then affiliations from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then affiliations from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback.
 	 */
 	public void retrieveOwnAffiliations(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveAffiliations(pubSubJID, nodeName, PUBSUB_XMLNS, callback);
@@ -915,13 +787,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve own subscriptions.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then subscriptions from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then subscriptions from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback
 	 */
 	public void retrieveOwnSubscription(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveSubscription(pubSubJID, nodeName, PUBSUB_XMLNS, null, callback);
@@ -930,13 +799,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve own subscriptions.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node. If <code>null</code> then subscriptions from all
-	 *            nodes will be requested.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node. If <code>null</code> then subscriptions from all
+	 *                  nodes will be requested.
+	 * @param callback  request callback
 	 */
 	public void retrieveOwnSubscription(BareJID pubSubJID, String nodeName, SubscriptionsRetrieveAsyncCallback callback)
 			throws JaxmppException {
@@ -946,19 +812,16 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve all subscriptions of given node. Owner affiliation is required.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback
 	 */
 	public void retrieveSubscription(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, null, callback);
 	}
 
 	protected void retrieveSubscription(BareJID pubSubJID, String nodeName, String xmlns,
-			SubscriptionFilterExtension filterExt, AsyncCallback callback) throws JaxmppException {
+										SubscriptionFilterExtension filterExt, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
@@ -987,29 +850,22 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Retrieve all subscriptions of given node. Owner affiliation is required.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param filterExt
-	 *            subscription filter.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param filterExt subscription filter.
+	 * @param callback  request callback
 	 */
 	public void retrieveSubscription(BareJID pubSubJID, String nodeName, SubscriptionFilterExtension filterExt,
-			AsyncCallback callback) throws JaxmppException {
+									 AsyncCallback callback) throws JaxmppException {
 		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, filterExt, callback);
 	}
 
 	/**
 	 * Retrieve all subscriptions of given node. Owner affiliation is required.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param callback  request callback
 	 */
 	public void retrieveSubscription(BareJID pubSubJID, String nodeName, SubscriptionsRetrieveAsyncCallback callback)
 			throws JaxmppException {
@@ -1019,17 +875,13 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Modify or set multiple affiliations.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param affiliationElements
-	 *            array of affiliations elements.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID           PubSub service address.
+	 * @param nodeName            name of node.
+	 * @param affiliationElements array of affiliations elements.
+	 * @param callback            request callback
 	 */
 	public void setAffiliation(BareJID pubSubJID, String nodeName, AffiliationElement[] affiliationElements,
-			PubSubAsyncCallback callback) throws JaxmppException {
+							   PubSubAsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -1051,63 +903,49 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Modify or set affiliation.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node
-	 * @param subscriberJID
-	 *            subscriber JID
-	 * @param affiliation
-	 *            new affiliation.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address
+	 * @param nodeName      name of node
+	 * @param subscriberJID subscriber JID
+	 * @param affiliation   new affiliation.
+	 * @param callback      request callback
 	 */
 	public void setAffiliation(BareJID pubSubJID, String nodeName, JID subscriberJID, Affiliation affiliation,
-			PubSubAsyncCallback callback) throws JaxmppException {
+							   PubSubAsyncCallback callback) throws JaxmppException {
 		AffiliationElement ae = new AffiliationElement();
 		ae.setJID(subscriberJID);
 		ae.setAffiliation(affiliation);
 
-		setAffiliation(pubSubJID, nodeName, new AffiliationElement[] { ae }, callback);
+		setAffiliation(pubSubJID, nodeName, new AffiliationElement[]{ae}, callback);
 	}
 
 	/**
 	 * Modify or set subscription.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address
-	 * @param nodeName
-	 *            name of node
-	 * @param subscriberJID
-	 *            subscriber JID
-	 * @param subscription
-	 *            new subscription
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address
+	 * @param nodeName      name of node
+	 * @param subscriberJID subscriber JID
+	 * @param subscription  new subscription
+	 * @param callback      request callback
 	 */
 	public void setSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, Subscription subscription,
-			PubSubAsyncCallback callback) throws JaxmppException {
+								PubSubAsyncCallback callback) throws JaxmppException {
 		SubscriptionElement se = new SubscriptionElement();
 		se.setJID(subscriberJID);
 		se.setSubscription(subscription);
 
-		setSubscription(pubSubJID, nodeName, new SubscriptionElement[] { se }, callback);
+		setSubscription(pubSubJID, nodeName, new SubscriptionElement[]{se}, callback);
 	}
 
 	/**
 	 * Modify or set multiple subscriptions.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param subscriptionElements
-	 *            array of subscription elements.
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID            PubSub service address.
+	 * @param nodeName             name of node.
+	 * @param subscriptionElements array of subscription elements.
+	 * @param callback             request callback
 	 */
 	public void setSubscription(BareJID pubSubJID, String nodeName, SubscriptionElement[] subscriptionElements,
-			PubSubAsyncCallback callback) throws JaxmppException {
+								PubSubAsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -1129,19 +967,14 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Subscribe to a Node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node to be subscribe
-	 * @param subscriberJID
-	 *            subscriber JID.
-	 * @param options
-	 *            subscription options. <code>null</code> is allowed.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node to be subscribe
+	 * @param subscriberJID subscriber JID.
+	 * @param options       subscription options. <code>null</code> is allowed.
+	 * @param callback      request callback.
 	 */
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
-			AsyncCallback callback) throws JaxmppException {
+						  AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
@@ -1167,33 +1000,24 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Subscribe to a Node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node to be subscribe
-	 * @param subscriberJID
-	 *            subscriber JID.
-	 * @param options
-	 *            subscription options. <code>null</code> is allowed.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node to be subscribe
+	 * @param subscriberJID subscriber JID.
+	 * @param options       subscription options. <code>null</code> is allowed.
+	 * @param callback      request callback.
 	 */
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, JabberDataElement options,
-			SubscriptionAsyncCallback callback) throws JaxmppException {
+						  SubscriptionAsyncCallback callback) throws JaxmppException {
 		subscribe(pubSubJID, nodeName, subscriberJID, options, (AsyncCallback) callback);
 	}
 
 	/**
 	 * Subscribe to a Node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node to be subscribe
-	 * @param subscriberJID
-	 *            subscriber JID.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node to be subscribe
+	 * @param subscriberJID subscriber JID.
+	 * @param callback      request callback.
 	 */
 	public void subscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, SubscriptionAsyncCallback callback)
 			throws JaxmppException {
@@ -1205,14 +1029,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	 * nodes with active <a
 	 * href='http://xmpp.org/extensions/xep-0254.html'>PubSub Queueing</a>.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param itemId
-	 *            ID of item to be unlock.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param itemId    ID of item to be unlock.
+	 * @param callback  request callback.
 	 */
 	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -1237,14 +1057,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	 * nodes with active <a
 	 * href='http://xmpp.org/extensions/xep-0254.html'>PubSub Queueing</a>.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node.
-	 * @param itemId
-	 *            ID of item to be unlock.
-	 * @param callback
-	 *            request callback.
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName  name of node.
+	 * @param itemId    ID of item to be unlock.
+	 * @param callback  request callback.
 	 */
 	public void unlockItem(BareJID pubSubJID, String nodeName, String itemId, PubSubAsyncCallback callback)
 			throws JaxmppException {
@@ -1254,14 +1070,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Unsubscribe from a Node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node to be unsubscribe.
-	 * @param subscriberJID
-	 *            JID of subscriber
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node to be unsubscribe.
+	 * @param subscriberJID JID of subscriber
+	 * @param callback      request callback
 	 */
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
 			throws JaxmppException {
@@ -1282,14 +1094,10 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 	/**
 	 * Unsubscribe from a Node.
 	 *
-	 * @param pubSubJID
-	 *            PubSub service address.
-	 * @param nodeName
-	 *            name of node to be unsubscribe.
-	 * @param subscriberJID
-	 *            JID of subscriber
-	 * @param callback
-	 *            request callback
+	 * @param pubSubJID     PubSub service address.
+	 * @param nodeName      name of node to be unsubscribe.
+	 * @param subscriberJID JID of subscriber
+	 * @param callback      request callback
 	 */
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)
 			throws JaxmppException {

@@ -75,7 +75,7 @@ public class StreamFeaturesModule implements XmppModule, ContextAware {
 			XMPPStream xmppStream = ((StreamPacket) element).getXmppStream();
 			xmppStream.setFeatures(element);
 		}
-		context.getEventBus().fire(new StreamFeaturesReceivedEvent(context.getSessionObject(), element), this);
+		context.getEventBus().fire(new StreamFeaturesReceivedEvent(context.getSessionObject(), element));
 	}
 
 	public void removeStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {

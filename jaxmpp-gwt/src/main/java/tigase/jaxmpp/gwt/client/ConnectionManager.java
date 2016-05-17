@@ -55,13 +55,44 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 	private WebDnsResolver.DomainResolutionCallback webDnsCallback = null;
 	
 	public ConnectionManager() {}
-	
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-		resolver.setContext(context);
-		context.getEventBus().addHandler(StateChangedHandler.StateChangedEvent.class, this);
-		context.getEventBus().addHandler(SeeOtherHostHandler.SeeOtherHostEvent.class, this);
+
+	public void connectionFailure(String seeHost, boolean hostFailure) {
+		String boshUrl = context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
+
+		if (hostFailure) {
+			resolver.hostFailure(boshUrl);
+		}
+
+		String domain = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
+		if (domain == null) {
+			BareJID userJid = context.getSessionObject().getUserBareJid();
+			if (userJid != null) {
+				domain = userJid.getDomain();
+			}
+		}
+
+		boolean seeHostIsUri = isUsableUrl(seeHost);
+		if (!resolver.isEnabled() || seeHostIsUri) {
+			if (seeHost == null) {
+				// no webbased DNS resolver set and no see other host so we have
+				// no other option but we need to fail
+				webDnsCallback.onUrlFailed();
+			} else {
+				if (!seeHostIsUri) {
+					MatchResult result = URL_PARSER.exec(boshUrl);
+					String newBoshUrl = result.getGroup(1) + "://" + seeHost
+							+ (result.getGroup(3) != null ? result.getGroup(3) : "")
+							+ result.getGroup(4);
+
+					webDnsCallback.onUrlResolved(domain, newBoshUrl);
+				} else {
+					webDnsCallback.onUrlResolved(domain, seeHost);
+				}
+			}
+			return;
+		}
+
+		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
 	}
 	
 	public boolean initialize(Jaxmpp jaxmpp_) throws JaxmppException {
@@ -71,6 +102,13 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		if (this.webDnsCallback == null) {
 			this.webDnsCallback = new WebDnsResolver.DomainResolutionCallback() {
 				@Override
+				public void onUrlFailed() {
+					Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
+							context.getSessionObject(), StreamError.remote_connection_failed, null);
+					context.getEventBus().fire(e);
+				}
+
+				@Override
 				public void onUrlResolved(String domain, String url) {
 					try {
 						jaxmpp.login(url);
@@ -78,15 +116,8 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 						log.log(Level.SEVERE, "Exception while reconnecting after connection failure", ex);
 						Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
 								context.getSessionObject(), StreamError.undefined_condition, null);
-						context.getEventBus().fire(e, this);
+						context.getEventBus().fire(e);
 					}
-				}
-
-				@Override
-				public void onUrlFailed() {
-					Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
-							context.getSessionObject(), StreamError.remote_connection_failed, null);
-					context.getEventBus().fire(e, this);
 				}
 			};
 		}
@@ -97,12 +128,32 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		
 		return context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY) != null;
 	}
-	
+
+	private boolean isUsableUrl(String url) {
+		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") || url.startsWith("wss://"));
+	}
+
+	@Override
+	public void onSeeOtherHost(final String seeHost, MutableBoolean handled) {
+		handled.setValue(true);
+		context.getSessionObject().setProperty(RECONNECTING_KEY, true);
+		context.getSessionObject().setProperty(SEE_OTHER_HOST_URI, seeHost);
+//		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
+//		Timer timer = new Timer() {
+//			@Override
+//			public void run() {
+//				log.log(Level.SEVERE, "reconnecting");
+//				connectionFailure(seeHost, true);
+//			}
+//		};
+//		timer.schedule(10);
+	}
+
 	@Override
 	public void onStateChanged(SessionObject sessionObject, Connector.State oldState, Connector.State newState) throws JaxmppException {
-		if (oldState == newState) 
+		if (oldState == newState)
 			return;
-		
+
 		String boshUrl = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "connector changed state " + oldState + " -> " + newState + " for = " + boshUrl);
@@ -137,64 +188,11 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		}
 	}
 
-
 	@Override
-	public void onSeeOtherHost(final String seeHost, MutableBoolean handled) {
-		handled.setValue(true);
-		context.getSessionObject().setProperty(RECONNECTING_KEY, true);
-		context.getSessionObject().setProperty(SEE_OTHER_HOST_URI, seeHost);
-//		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
-//		Timer timer = new Timer() {
-//			@Override
-//			public void run() {
-//				log.log(Level.SEVERE, "reconnecting");
-//				connectionFailure(seeHost, true);
-//			}
-//		};
-//		timer.schedule(10);
-	}	
-
-	public void connectionFailure(String seeHost, boolean hostFailure) {
-		String boshUrl = context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
-
-		if (hostFailure) {
-			resolver.hostFailure(boshUrl);
-		}
-
-		String domain = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
-		if (domain == null) {
-			BareJID userJid = context.getSessionObject().getUserBareJid();
-			if (userJid != null) {
-				domain = userJid.getDomain();
-			}
-		}
-		
-		boolean seeHostIsUri = isUsableUrl(seeHost);
-		if (!resolver.isEnabled() || seeHostIsUri) {
-			if (seeHost == null) {
-				// no webbased DNS resolver set and no see other host so we have
-				// no other option but we need to fail
-				webDnsCallback.onUrlFailed();
-			}
-			else {
-				if (!seeHostIsUri) {
-					MatchResult result = URL_PARSER.exec(boshUrl);
-					String newBoshUrl = result.getGroup(1) + "://" + seeHost
-							+ (result.getGroup(3) != null ? result.getGroup(3) : "")
-							+ result.getGroup(4);
-
-					webDnsCallback.onUrlResolved(domain, newBoshUrl);
-				} else {
-					webDnsCallback.onUrlResolved(domain, seeHost);
-				}
-			}
-			return;
-		}
-		
-		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
-	}
-
-	private boolean isUsableUrl(String url) {
-		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") || url.startsWith("wss://"));
+	public void setContext(Context context) {
+		this.context = context;
+		resolver.setContext(context);
+		context.getEventBus().addHandler(StateChangedHandler.StateChangedEvent.class, this);
+		context.getEventBus().addHandler(SeeOtherHostHandler.SeeOtherHostEvent.class, this);
 	}
 }

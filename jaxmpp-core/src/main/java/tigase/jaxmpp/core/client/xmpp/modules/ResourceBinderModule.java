@@ -78,7 +78,7 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 				ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
 						context.getSessionObject(), error);
-				context.getEventBus().fire(event, ResourceBinderModule.this);
+				context.getEventBus().fire(event);
 			}
 
 			@Override
@@ -94,11 +94,11 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 					context.getSessionObject().setProperty(BINDED_RESOURCE_JID, jid);
 					ResourceBindSuccessHandler.ResourceBindSuccessEvent event = new ResourceBindSuccessHandler.ResourceBindSuccessEvent(
 							context.getSessionObject(), jid);
-					context.getEventBus().fire(event, ResourceBinderModule.this);
+					context.getEventBus().fire(event);
 				} else {
 					ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
 							context.getSessionObject(), null);
-					context.getEventBus().fire(event, ResourceBinderModule.this);
+					context.getEventBus().fire(event);
 				}
 			}
 
@@ -106,7 +106,7 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 			public void onTimeout() throws JaxmppException {
 				ResourceBindErrorHandler.ResourceBindErrorEvent event = new ResourceBindErrorHandler.ResourceBindErrorEvent(
 						context.getSessionObject(), null);
-				context.getEventBus().fire(event, ResourceBinderModule.this);
+				context.getEventBus().fire(event);
 			}
 		});
 	}

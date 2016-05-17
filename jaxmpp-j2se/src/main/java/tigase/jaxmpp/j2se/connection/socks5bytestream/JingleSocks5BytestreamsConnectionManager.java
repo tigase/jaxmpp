@@ -17,13 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
@@ -36,29 +29,29 @@ import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Candidate;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleTransportInfoHandler;
-import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Transport;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.j2se.connection.ConnectionSessionHandler;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
- * 
  * @author andrzej
  */
 public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionManager {
 
 	public static final String CANDIDATE_USED_KEY = "candidate-used";
-
-	private static final Logger log = Logger.getLogger("JingleSocks5BytestreamsConnectionManager");
-
 	public static final String XMLNS = "urn:xmpp:jingle:transports:s5b:1";
-
 	public static final String SOCKS5_TRANSPORT_KEY = "socks5-transport-key-" + XMLNS;
-
 	public static final String TRANSPORT_USED_KEY = "transport-used";
-
 	public static final String TRANSPORTS_KEY = "transports-key";
-
+	private static final Logger log = Logger.getLogger("JingleSocks5BytestreamsConnectionManager");
 	private final ConnectionEstablishedHandler connectionEstablishedHandler = new ConnectionEstablishedHandler() {
 
 		@Override
@@ -99,7 +92,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 
 			if (candidate.getType() == Candidate.Type.proxy) {
 				// need to activate proxy
-				JaxmppCore jaxmpp = (JaxmppCore) session.getData(JAXMPP_KEY);
+				JaxmppCore jaxmpp = session.getData(JAXMPP_KEY);
 				connectToProxy(jaxmpp, session, transport.getSid(), candidate);
 			} else {
 				//Socket socket = session.getData("socket");
@@ -144,15 +137,15 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	@Override
 	public void connectUdp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException {
 		throw new UnsupportedOperationException("Not supported yet."); // To
-																		// change
-																		// body
-																		// of
-																		// generated
-																		// methods,
-																		// choose
-																		// Tools
-																		// |
-																		// Templates.
+		// change
+		// body
+		// of
+		// generated
+		// methods,
+		// choose
+		// Tools
+		// |
+		// Templates.
 	}
 
 	public Transport getTransport(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException {
@@ -190,7 +183,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 
 				@Override
 				public void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content,
-						MutableBoolean handled) throws JaxmppException {
+												  MutableBoolean handled) throws JaxmppException {
 					if (content == null) {
 						return;
 					}
@@ -219,9 +212,9 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	}
 
 	private void sendCandidateUsed(ConnectionSession session) throws JaxmppException {
-		JaxmppCore jaxmpp = (JaxmppCore) session.getData(JAXMPP_KEY);
-		Transport transport = (Transport) session.getData(TRANSPORT_USED_KEY);
-		Candidate candidateUsed = (Candidate) session.getData(CANDIDATE_USED_KEY);
+		JaxmppCore jaxmpp = session.getData(JAXMPP_KEY);
+		Transport transport = session.getData(TRANSPORT_USED_KEY);
+		Candidate candidateUsed = session.getData(CANDIDATE_USED_KEY);
 
 		JingleModule jingleModule = jaxmpp.getModule(JingleModule.class);
 
@@ -245,8 +238,7 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 	@Override
 	public void setContext(Context context) {
 		super.setContext(context);
-		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this,
-				connectionEstablishedHandler);
+		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, connectionEstablishedHandler);
 	}
 
 }

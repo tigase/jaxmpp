@@ -17,21 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -48,6 +33,21 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.filetransfer.FileTransfer;
 import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -448,8 +448,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
 			context.getEventBus().fire(
-					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket),
-					this);
+					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket)
+			);
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionEstablished event", ex);
 		}
@@ -458,8 +458,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnFailure(ConnectionSession session) {
 		try {
 			unregisterSession(session);
-			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session),
-					this);
+			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session)
+			);
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}
@@ -629,7 +629,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				});
 	}
 
-	public static enum State {
+	public enum State {
 
 		Active,
 		ActiveServ,
@@ -658,7 +658,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				log.log(Level.SEVERE, null, ex);
 			}
 		}
-	};
+	}
 
 	/**
 	 * Internal TCP connection manager

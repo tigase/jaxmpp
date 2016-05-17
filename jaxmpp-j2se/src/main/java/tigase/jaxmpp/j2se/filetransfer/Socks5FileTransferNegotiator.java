@@ -17,12 +17,6 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import java.net.Socket;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -40,8 +34,13 @@ import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5BytestreamsConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5ConnectionManager;
 
+import java.net.Socket;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
- * 
  * @author andrzej
  */
 public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract implements
@@ -98,7 +97,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 		FileTransfer ft = (FileTransfer) connectionSession;
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "got ft incoming = {0} with packet id = {1}",
-					new Object[] { ft.isIncoming(), ft.getData(Socks5ConnectionManager.PACKET_ID) });
+					new Object[]{ft.isIncoming(), ft.getData(Socks5ConnectionManager.PACKET_ID)});
 		}
 		// if it is incoming file transfer we need to notify peer about used
 		// streamhost
@@ -113,7 +112,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public void onFileTransferRequest(SessionObject sessionObject,
-			tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id, List<String> streamMethods) {
+									  tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id, List<String> streamMethods) {
 		FileTransfer ft = new FileTransfer(fts.getSessionObject(), fts.getPeer(), fts.getSid());
 		ft.setFileInfo(fts.getFilename(), fts.getFileSize(), fts.getFileModification(), fts.getFileMimeType());
 		ft.setData(PACKET_ID, id);
@@ -166,7 +165,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 	public void sendFile2(final JaxmppCore jaxmpp, final FileTransfer ft) throws JaxmppException {
 		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
 		if (ftModule != null) {
-			ftModule.sendStreamInitiationOffer(ft, new String[] { Socks5BytestreamsModule.XMLNS_BS },
+			ftModule.sendStreamInitiationOffer(ft, new String[]{Socks5BytestreamsModule.XMLNS_BS},
 					new StreamInitiationOfferAsyncCallback(ft.getSid()) {
 						@Override
 						public void onAccept(String sid) {
@@ -194,8 +193,7 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 	public void setContext(Context context) {
 		super.setContext(context);
 		connectionManager.setContext(context);
-		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				connectionManager, this);
+		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
 	}
 
 	@Override

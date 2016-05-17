@@ -94,7 +94,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		ConnectedEvent event = new ConnectedEvent(sessionObject);
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
@@ -109,7 +109,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 
 		ErrorEvent e = new ErrorEvent(sessionObject, condition, caught);
-		context.getEventBus().fire(e, this);
+		context.getEventBus().fire(e);
 	}
 
 	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject)
@@ -118,7 +118,7 @@ public abstract class AbstractBoshConnector implements Connector {
 			{
 				BoshPacketReceivedHandler.BoshPacketReceivedEvent event = new BoshPacketReceivedHandler.BoshPacketReceivedEvent(
 						sessionObject, responseCode, response, responseData);
-				context.getEventBus().fire(event, this);
+				context.getEventBus().fire(event);
 
 			}
 			if (response != null) {
@@ -134,7 +134,7 @@ public abstract class AbstractBoshConnector implements Connector {
 
 					p.setXmppStream(context.getStreamsManager().getDefaultStream());
 					StanzaReceivedEvent event = new StanzaReceivedEvent(sessionObject, p);
-					context.getEventBus().fire(event, this);
+					context.getEventBus().fire(event);
 				}
 			}
 		} catch (XMLException e) {
@@ -148,7 +148,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		// XXX check
 
 		StreamTerminatedEvent event = new StreamTerminatedEvent(sessionObject);
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 	}
 
 	protected String getSid() {
@@ -349,7 +349,7 @@ public abstract class AbstractBoshConnector implements Connector {
 		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			StateChangedEvent e = new StateChangedEvent(context.getSessionObject(), s, state);
-			context.getEventBus().fire(e, this);
+			context.getEventBus().fire(e);
 		}
 	}
 

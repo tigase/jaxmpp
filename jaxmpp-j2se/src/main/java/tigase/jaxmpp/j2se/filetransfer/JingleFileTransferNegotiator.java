@@ -17,19 +17,6 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
@@ -42,15 +29,20 @@ import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesModule;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule;
-import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.Transport;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.connection.ConnectionSessionHandler;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.JingleSocks5BytestreamsConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.Socks5ConnectionManager;
+
+import java.net.Socket;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -60,16 +52,16 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		JingleModule.JingleSessionAcceptHandler, JingleModule.JingleSessionInitiationHandler,
 		JingleModule.JingleSessionTerminateHandler, ConnectionManager.ConnectionEstablishedHandler {
 
-	private static DateTimeFormat dateTimeFormat = new DateTimeFormat();
 	public static final String JINGLE_FT_XMLNS = "urn:xmpp:jingle:apps:file-transfer:3";
 	private static final String[] FEATURES = { JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS };
 	private static final Logger log = Logger.getLogger(JingleFileTransferNegotiator.class.getCanonicalName());
 	private static final long TIMEOUT = 5 * 60 * 1000;
 	private static final String TRANSPORTS_KEY = "transports-key";
+	private static DateTimeFormat dateTimeFormat = new DateTimeFormat();
 	private final JingleSocks5BytestreamsConnectionManager connectionManager = new JingleSocks5BytestreamsConnectionManager(
 			this);
-	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String, FileTransfer>());
 	private final Timer timer = new Timer();
+	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String, FileTransfer>());
 
 	@Override
 	public void acceptFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft)
@@ -99,7 +91,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		return sessions.get(sid);
 	}
 
-	protected List<Transport> getTransports(JaxmppCore jaxmpp, FileTransfer ft) throws XMLException, JaxmppException {
+	protected List<Transport> getTransports(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException {
 		List<Transport> transports = ft.getData(TRANSPORTS_KEY);
 		if (transports == null) {
 			transports = new ArrayList<Transport>();
@@ -286,7 +278,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		super.setContext(context);
 		connectionManager.setContext(context);
 		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				connectionManager, this);
+				this);
 	}
 
 	@Override

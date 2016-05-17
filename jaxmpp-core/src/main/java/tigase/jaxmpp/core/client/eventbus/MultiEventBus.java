@@ -34,7 +34,7 @@ public class MultiEventBus extends DefaultEventBus {
 
 			@Override
 			public void onEvent(Event<? extends EventHandler> event) {
-				fire(event, event.getSource());
+				fire(event);
 			}
 		};
 	}
