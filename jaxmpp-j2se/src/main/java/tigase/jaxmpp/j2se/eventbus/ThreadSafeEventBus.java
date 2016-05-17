@@ -17,16 +17,22 @@
  */
 package tigase.jaxmpp.j2se.eventbus;
 
+import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
+import tigase.jaxmpp.core.client.eventbus.Event;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
-import tigase.jaxmpp.core.client.eventbus.Event;
-import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
 public class ThreadSafeEventBus extends DefaultEventBus {
+
+	private final Executor executor = Executors.newSingleThreadExecutor();
 
 	@Override
 	protected List<EventHandler> createHandlersArray() {
@@ -44,4 +50,27 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 		return new ConcurrentHashMap<Class<? extends Event<?>>, List<EventHandler>>();
 	}
 
+	@Override
+	protected void doFire(final Event<EventHandler> event, final Object source, final ArrayList<EventHandler> handlers) {
+		for (final EventHandler eventHandler : handlers) {
+			Runnable r = new Runnable() {
+				@Override
+				public void run() {
+					try {
+						log.finest("Calling handler class " + eventHandler.getClass() + " with event " + event.getClass());
+						if (eventHandler instanceof EventListener) {
+							((EventListener) eventHandler).onEvent(event);
+						} else {
+							event.dispatch(eventHandler);
+						}
+					} catch (Throwable e) {
+						if (log.isLoggable(Level.WARNING))
+							log.log(Level.WARNING, "", e);
+					}
+				}
+			};
+			executor.execute(r);
+		}
+
+	}
 }

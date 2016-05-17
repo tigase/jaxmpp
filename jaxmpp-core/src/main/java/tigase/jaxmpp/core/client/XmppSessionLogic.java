@@ -26,51 +26,50 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
  */
 public interface XmppSessionLogic {
 
-	public static interface XmppSessionEstablishedHandler extends EventHandler {
-		
-		public static class XmppSessionEstablishedEvent extends JaxmppEvent<XmppSessionEstablishedHandler> {
-			
-			public XmppSessionEstablishedEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-			
-			@Override
-			protected void dispatch(XmppSessionEstablishedHandler handler) throws Exception {
-				handler.onXmppSessionEstablished(sessionObject);
-			}
-			
-		}
-		
-		void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException;
-		
-	}
-	
-	/**
-	 * Interface for session listener.
-	 * 
-	 */
-	public static interface SessionListener {
-
-		void onException(JaxmppException e) throws JaxmppException;
-	}
-
 	/**
 	 * Method executed just before login process is started. In this method
 	 * implementation should register listeners.
 	 */
-	public void beforeStart() throws JaxmppException;
-
+	void beforeStart() throws JaxmppException;
+	
 	/**
 	 * Set {@linkplain SessionListener}.
-	 * 
+	 *
 	 * @param listener
 	 *            {@linkplain SessionListener}
 	 */
-	public void setSessionListener(SessionListener listener) throws JaxmppException;
+	void setSessionListener(SessionListener listener) throws JaxmppException;
 
 	/**
 	 * In this method implementation must unregister all previously registered
 	 * listeners.
 	 */
-	public void unbind() throws JaxmppException;
+	void unbind() throws JaxmppException;
+
+	interface XmppSessionEstablishedHandler extends EventHandler {
+
+		void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException;
+
+		class XmppSessionEstablishedEvent extends JaxmppEvent<XmppSessionEstablishedHandler> {
+
+			public XmppSessionEstablishedEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(XmppSessionEstablishedHandler handler) throws Exception {
+				handler.onXmppSessionEstablished(sessionObject);
+			}
+
+		}
+
+	}
+
+	/**
+	 * Interface for session listener.
+	 */
+	interface SessionListener {
+
+		void onException(JaxmppException e) throws JaxmppException;
+	}
 }

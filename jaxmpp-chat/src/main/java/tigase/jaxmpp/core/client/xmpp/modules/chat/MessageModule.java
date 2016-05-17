@@ -17,9 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
-import java.util.Iterator;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
@@ -34,6 +31,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.Extension;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Module to handle messages.
@@ -304,7 +304,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			}
 
 			@Override
-			protected void dispatch(ChatClosedHandler handler) {
+			public void dispatch(ChatClosedHandler handler) {
 				handler.onChatClosed(sessionObject, chat);
 			}
 
@@ -336,7 +336,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			}
 
 			@Override
-			protected void dispatch(ChatCreatedHandler handler) {
+			public void dispatch(ChatCreatedHandler handler) {
 				handler.onChatCreated(sessionObject, chat, message);
 			}
 
@@ -373,7 +373,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			}
 
 			@Override
-			protected void dispatch(ChatUpdatedHandler handler) {
+			public void dispatch(ChatUpdatedHandler handler) {
 				handler.onChatUpdated(sessionObject, chat);
 			}
 
@@ -405,7 +405,7 @@ public class MessageModule extends AbstractStanzaExtendableModule<Message> {
 			}
 
 			@Override
-			protected void dispatch(MessageReceivedHandler handler) {
+			public void dispatch(MessageReceivedHandler handler) {
 				handler.onMessageReceived(sessionObject, chat, stanza);
 			}
 

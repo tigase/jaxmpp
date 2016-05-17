@@ -17,26 +17,14 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaSendingHandler.StanzaSendingEvent;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler.StreamTerminatedEvent;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -46,142 +34,39 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Abstract class for implementing BOSH connector.
  */
 public abstract class AbstractBoshConnector implements Connector {
 
 	/**
-	 * Implemented by handlers of {@linkplain BoshPacketReceivedEvent
-	 * BoshPacketReceivedEvent}.
-	 */
-	public interface BoshPacketReceivedHandler extends EventHandler {
-
-		/**
-		 * Fired BOSH packet is received.
-		 */
-		public static class BoshPacketReceivedEvent extends JaxmppEvent<BoshPacketReceivedHandler> {
-
-			private String receivedData;
-
-			private Element response;
-
-			private int responseCode;
-
-			public BoshPacketReceivedEvent(SessionObject sessionObject, int responseCode, Element response,
-					String responseData) {
-				super(sessionObject);
-				this.responseCode = responseCode;
-				this.response = response;
-				this.receivedData = responseData;
-			}
-
-			@Override
-			protected void dispatch(BoshPacketReceivedHandler handler) {
-				handler.onBoshPacketReceived(sessionObject, responseCode, response);
-			}
-
-			public String getReceivedData() {
-				return receivedData;
-			}
-
-			public Element getResponse() {
-				return response;
-			}
-
-			public int getResponseCode() {
-				return responseCode;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain BoshPacketReceivedEvent
-		 * BoshPacketReceivedEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param responseCode
-		 *            HTTP response code.
-		 * @param response
-		 *            received BOSH packet.
-		 */
-		void onBoshPacketReceived(SessionObject sessionObject, int responseCode, Element response);
-	}
-
-	/**
-	 * Implemented by handlers of {@linkplain BoshPacketSendingEvent
-	 * BoshPacketSendingEvent}.
-	 */
-	public interface BoshPacketSendingHandler extends EventHandler {
-
-		/**
-		 * Fired when BOSH packet is sending.
-		 */
-		public static class BoshPacketSendingEvent extends JaxmppEvent<BoshPacketSendingHandler> {
-
-			private Element element;
-
-			public BoshPacketSendingEvent(SessionObject sessionObject, Element element) {
-				super(sessionObject);
-				this.element = element;
-			}
-
-			@Override
-			protected void dispatch(BoshPacketSendingHandler handler) throws JaxmppException {
-				handler.onBoshPacketSending(sessionObject, element);
-			}
-
-			public Element getElement() {
-				return element;
-			}
-
-			public void setElement(Element stanza) {
-				this.element = stanza;
-			}
-
-		}
-
-		/**
-		 * Called when {@linkplain BoshPacketSendingEvent
-		 * BoshPacketSendingEvent} is fired.
-		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param packet
-		 *            sending BOSH packet.
-		 */
-		void onBoshPacketSending(SessionObject sessionObject, Element packet) throws JaxmppException;
-	}
-
-	/**
 	 * Name of property that specify BOSH service URL.<br/>
 	 * Type: {@linkplain String String}.
 	 */
 	public static final String BOSH_SERVICE_URL_KEY = "BOSH_SERVICE_URL_KEY";
-
+	/**
+	 * Type: {@linkplain Long Long}.
+	 */
+	public final static String RID_KEY = "BOSH#RID_KEY";
+	/**
+	 * Name of property that specify BOSH Session ID.<br/>
+	 * Type: {@linkplain String String}.
+	 */
+	public static final String SID_KEY = "BOSH#SID_KEY";
 	/**
 	 * Name of property that specify longest time that client will wait for
 	 * response.<br/>
 	 * Type: {@linkplain String String}.
 	 */
 	private static final String DEFAULT_TIMEOUT_KEY = "BOSH#DEFAULT_TIMEOUT_KEY";
-
-	/**
-	 * Type: {@linkplain Long Long}.
-	 */
-	public final static String RID_KEY = "BOSH#RID_KEY";
-
-	/**
-	 * Name of property that specify BOSH Session ID.<br/>
-	 * Type: {@linkplain String String}.
-	 */
-	public static final String SID_KEY = "BOSH#SID_KEY";
-
 	protected final Context context;
-
 	protected final Logger log;
-
 	protected final Set<BoshRequest> requests = new HashSet<BoshRequest>();
 
 	public AbstractBoshConnector(Context context) {
@@ -268,6 +153,10 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	protected String getSid() {
 		return this.context.getSessionObject().getProperty(SID_KEY);
+	}
+
+	protected void setSid(String sid) {
+		this.context.getSessionObject().setProperty(SID_KEY, sid);
 	}
 
 	@Override
@@ -418,16 +307,16 @@ public abstract class AbstractBoshConnector implements Connector {
 		return e;
 	}
 
-	protected abstract void processSendData(final Element element) throws XMLException, JaxmppException;
+	protected abstract void processSendData(final Element element) throws JaxmppException;
 
 	protected void removeFromRequests(final BoshRequest ack) {
 		synchronized (this.requests) {
-			this.requests.remove(ack);		
+			this.requests.remove(ack);
 		}
 	}
 
 	@Override
-	public void restartStream() throws XMLException, JaxmppException {
+	public void restartStream() throws JaxmppException {
 		if (getState() != State.disconnected) {
 			processSendData(prepareRetartBody());
 		}
@@ -444,7 +333,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public void send(final Element stanza) throws XMLException, JaxmppException {
+	public void send(final Element stanza) throws JaxmppException {
 		if (getState() == State.connected) {
 			if (stanza != null) {
 				final Element body = prepareBody(stanza);
@@ -453,10 +342,6 @@ public abstract class AbstractBoshConnector implements Connector {
 			}
 		} else
 			throw new JaxmppException("Not connected");
-	}
-
-	protected void setSid(String sid) {
-		this.context.getSessionObject().setProperty(SID_KEY, sid);
 	}
 
 	protected void setStage(State state) throws JaxmppException {
@@ -469,7 +354,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		// if
 		// (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)
 		// == null)
@@ -499,12 +384,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	@Override
-	public void stop() throws XMLException, JaxmppException {
+	public void stop() throws JaxmppException {
 		stop(false);
 	}
 
 	@Override
-	public void stop(boolean terminate) throws XMLException, JaxmppException {
+	public void stop(boolean terminate) throws JaxmppException {
 		State oldState = getState();
 
 		setStage(State.disconnecting);
@@ -526,5 +411,105 @@ public abstract class AbstractBoshConnector implements Connector {
 		}
 
 		context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain BoshPacketReceivedEvent
+	 * BoshPacketReceivedEvent}.
+	 */
+	public interface BoshPacketReceivedHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain BoshPacketReceivedEvent
+		 * BoshPacketReceivedEvent} is fired.
+		 *
+		 * @param sessionObject session object related to connection.
+		 * @param responseCode  HTTP response code.
+		 * @param response      received BOSH packet.
+		 */
+		void onBoshPacketReceived(SessionObject sessionObject, int responseCode, Element response);
+
+		/**
+		 * Fired BOSH packet is received.
+		 */
+		class BoshPacketReceivedEvent extends JaxmppEvent<BoshPacketReceivedHandler> {
+
+			private String receivedData;
+
+			private Element response;
+
+			private int responseCode;
+
+			public BoshPacketReceivedEvent(SessionObject sessionObject, int responseCode, Element response,
+										   String responseData) {
+				super(sessionObject);
+				this.responseCode = responseCode;
+				this.response = response;
+				this.receivedData = responseData;
+			}
+
+			@Override
+			public void dispatch(BoshPacketReceivedHandler handler) {
+				handler.onBoshPacketReceived(sessionObject, responseCode, response);
+			}
+
+			public String getReceivedData() {
+				return receivedData;
+			}
+
+			public Element getResponse() {
+				return response;
+			}
+
+			public int getResponseCode() {
+				return responseCode;
+			}
+
+		}
+	}
+
+	/**
+	 * Implemented by handlers of {@linkplain BoshPacketSendingEvent
+	 * BoshPacketSendingEvent}.
+	 */
+	public interface BoshPacketSendingHandler extends EventHandler {
+
+		/**
+		 * Called when {@linkplain BoshPacketSendingEvent
+		 * BoshPacketSendingEvent} is fired.
+		 *
+		 * @param sessionObject
+		 *            session object related to connection.
+		 * @param packet
+		 *            sending BOSH packet.
+		 */
+		void onBoshPacketSending(SessionObject sessionObject, Element packet) throws JaxmppException;
+
+		/**
+		 * Fired when BOSH packet is sending.
+		 */
+		class BoshPacketSendingEvent extends JaxmppEvent<BoshPacketSendingHandler> {
+
+			private Element element;
+
+			public BoshPacketSendingEvent(SessionObject sessionObject, Element element) {
+				super(sessionObject);
+				this.element = element;
+			}
+
+			@Override
+			public void dispatch(BoshPacketSendingHandler handler) throws JaxmppException {
+				handler.onBoshPacketSending(sessionObject, element);
+			}
+
+			public Element getElement() {
+				return element;
+			}
+
+			public void setElement(Element stanza) {
+				this.element = stanza;
+			}
+
+		}
 	}
 }

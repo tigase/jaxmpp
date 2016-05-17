@@ -17,13 +17,9 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
 
-import java.util.ArrayList;
-import java.util.List;
 import tigase.jaxmpp.core.client.AsyncCallback;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -32,76 +28,21 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransferModule.FileTransferRequestHandler.FileTransferRequestEvent;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class FileTransferModule implements XmppModule {
 
-	public interface FileTransferRequestHandler extends EventHandler {
-
-		public static class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
-
-			private FileTransfer fileTransfer;
-
-			private String id;
-
-			private List<String> streamMethods;
-
-			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id,
-					List<String> streamMethods) {
-				super(sessionObject);
-				this.fileTransfer = ft;
-				this.id = id;
-				this.streamMethods = streamMethods;
-			}
-
-			@Override
-			protected void dispatch(FileTransferRequestHandler handler) {
-				handler.onFileTransferRequest(sessionObject, fileTransfer, id, streamMethods);
-			}
-
-			public FileTransfer getFileTransfer() {
-				return fileTransfer;
-			}
-
-			public String getId() {
-				return id;
-			}
-
-			public List<String> getStreamMethods() {
-				return streamMethods;
-			}
-
-			public void setFileTransfer(FileTransfer fileTransfer) {
-				this.fileTransfer = fileTransfer;
-			}
-
-			public void setId(String id) {
-				this.id = id;
-			}
-
-			public void setStreamMethods(List<String> streamMethods) {
-				this.streamMethods = streamMethods;
-			}
-
-		}
-
-		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer, String id,
-				List<String> streamMethods);
-	}
-
 	public static final String XMLNS_SI = "http://jabber." + "org/protocol/si";
-
 	public static final String XMLNS_SI_FILE = "http://jabber.org/protocol/si/profile/file-transfer";
-
 	private static final Criteria CRIT = ElementCriteria.name("iq").add(
 			ElementCriteria.name("si", new String[] { "xmlns", "profile" }, new String[] { XMLNS_SI, XMLNS_SI_FILE }));
-
 	private static final String[] FEATURES = new String[] { XMLNS_SI, XMLNS_SI_FILE };
-
 	private Context context;
 
 	public FileTransferModule(Context context) {
@@ -149,12 +90,12 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element element) throws JaxmppException {
 		final IQ iq = element instanceof Stanza ? (IQ) element : (IQ) Stanza.create(element);
 		process(iq);
 	}
 
-	public void process(IQ iq) throws XMLException, JaxmppException {
+	public void process(IQ iq) throws JaxmppException {
 		Element query = iq.getChildrenNS("si", XMLNS_SI);
 		if (query != null) {
 			processStreamInitiationRequest(iq);
@@ -248,7 +189,7 @@ public class FileTransferModule implements XmppModule {
 	}
 
 	public void sendStreamInitiationOffer(FileTransfer ft, String[] streamMethods, AsyncCallback callback)
-			throws XMLException, JaxmppException {
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(ft.getPeer());
 		iq.setType(StanzaType.set);
@@ -289,6 +230,59 @@ public class FileTransferModule implements XmppModule {
 		}
 
 		context.getWriter().write(iq, (long) (10 * 60 * 1000), callback);
+	}
+
+	public interface FileTransferRequestHandler extends EventHandler {
+
+		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer, String id,
+								   List<String> streamMethods);
+
+		class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
+
+			private FileTransfer fileTransfer;
+
+			private String id;
+
+			private List<String> streamMethods;
+
+			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer ft, String id,
+											List<String> streamMethods) {
+				super(sessionObject);
+				this.fileTransfer = ft;
+				this.id = id;
+				this.streamMethods = streamMethods;
+			}
+
+			@Override
+			public void dispatch(FileTransferRequestHandler handler) {
+				handler.onFileTransferRequest(sessionObject, fileTransfer, id, streamMethods);
+			}
+
+			public FileTransfer getFileTransfer() {
+				return fileTransfer;
+			}
+
+			public void setFileTransfer(FileTransfer fileTransfer) {
+				this.fileTransfer = fileTransfer;
+			}
+
+			public String getId() {
+				return id;
+			}
+
+			public void setId(String id) {
+				this.id = id;
+			}
+
+			public List<String> getStreamMethods() {
+				return streamMethods;
+			}
+
+			public void setStreamMethods(List<String> streamMethods) {
+				this.streamMethods = streamMethods;
+			}
+
+		}
 	}
 
 }

@@ -17,11 +17,11 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.Set;
-
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
+import java.util.Set;
 
 /**
  * Session object is for store state of connection, modules etc.
@@ -35,14 +35,114 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 public interface SessionObject extends UserProperties {
 
 	/**
+	 * Name of property used to keep logical name of XMPP server. Usually it is
+	 * equals to hostname of users JID.
+	 */
+	String DOMAIN_NAME = "domainName";
+	/**
+	 * Name of property used to keep users nickname
+	 */
+	String NICKNAME = "nickname";
+	/**
+	 * Name of property used to keep users password
+	 */
+	String PASSWORD = "password";
+	/**
+	 * Name of property used to keep XMPP resource
+	 */
+	String RESOURCE = "resource";
+	/**
+	 * Name of property used to keep logical name of XMPP server. Usually it is
+	 * equals to hostname of users JID.
+	 */
+	@Deprecated
+	String SERVER_NAME = "domainName";
+	/**
+	 * Name of property used to keep users JID
+	 */
+	String USER_BARE_JID = "userBareJid";
+
+	/**
+	 * Reset state. Clears all properties stored by modules, roster and presence
+	 * store. Users properties are keeped.
+	 *
+	 * @throws JaxmppException
+	 */
+	void clear() throws JaxmppException;
+
+	/**
+	 * Reset state. Clears given properties stored by modules. Roster and
+	 * presence store will be cleared if {@linkplain Scope#session} is in
+	 * parameters.
+	 *
+	 * @throws JaxmppException
+	 */
+	void clear(Scope... scopes) throws JaxmppException;
+
+	/**
+	 * Returns property
+	 *
+	 * @param key
+	 *            property name
+	 * @return property
+	 */
+	<T> T getProperty(String key);
+
+	/**
+	 * Returns users JID
+	 *
+	 * @return
+	 */
+	BareJID getUserBareJid();
+
+	/**
+	 * Set property in given scope.
+	 *
+	 * @param scope
+	 *            scope of property
+	 * @param key
+	 *            property name
+	 * @param value
+	 *            property value. <code>null</code> to unset property.
+	 * @return instance of <code>this</code> {@linkplain SessionObject}
+	 */
+	SessionObject setProperty(Scope scope, String key, Object value);
+
+	/**
+	 * Set property in {@linkplain Scope#session session} scope.
+	 *
+	 * @param key
+	 *            property name
+	 * @param value
+	 *            property value. <code>null</code> to unset property.
+	 *
+	 * @return instance of <code>this</code> {@linkplain SessionObject}
+	 */
+	SessionObject setProperty(String key, Object value);
+
+	enum Scope {
+		session,
+		stream,
+		user
+	}
+
+	/**
 	 * Implemented by handlers of {@linkplain ClearedEvent}.
 	 */
-	public interface ClearedHandler extends EventHandler {
+	interface ClearedHandler extends EventHandler {
+
+		/**
+		 * Called when {@link ClearedEvent} if fired.
+		 *
+		 * @param sessionObject cleared session object.
+		 * @param scopes        set cleared {@link Scope scopes}.
+		 */
+		void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException;
 
 		/**
 		 * Fired when properties from {@link SessionObject} are cleared.
 		 */
-		public static class ClearedEvent extends JaxmppEvent<ClearedHandler> {
+		class ClearedEvent extends JaxmppEvent<ClearedHandler> {
 
 			private Set<Scope> scopes;
 
@@ -52,7 +152,7 @@ public interface SessionObject extends UserProperties {
 			}
 
 			@Override
-			protected void dispatch(ClearedHandler handler) throws JaxmppException {
+			public void dispatch(ClearedHandler handler) throws JaxmppException {
 				handler.onCleared(sessionObject, scopes);
 			}
 
@@ -65,113 +165,6 @@ public interface SessionObject extends UserProperties {
 			}
 
 		}
-
-		/**
-		 * Called when {@link ClearedEvent} if fired.
-		 * 
-		 * @param sessionObject
-		 *            cleared session object.
-		 * @param scopes
-		 *            set cleared {@link Scope scopes}.
-		 */
-		void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException;
 	}
-
-	public static enum Scope {
-		session,
-		stream,
-		user;
-	}
-
-	/**
-	 * Name of property used to keep logical name of XMPP server. Usually it is
-	 * equals to hostname of users JID.
-	 */
-	public static final String DOMAIN_NAME = "domainName";
-
-	/**
-	 * Name of property used to keep users nickname
-	 */
-	public static final String NICKNAME = "nickname";
-
-	/**
-	 * Name of property used to keep users password
-	 */
-	public static final String PASSWORD = "password";
-
-	/**
-	 * Name of property used to keep XMPP resource
-	 */
-	public static final String RESOURCE = "resource";
-
-	/**
-	 * Name of property used to keep logical name of XMPP server. Usually it is
-	 * equals to hostname of users JID.
-	 */
-	@Deprecated
-	public static final String SERVER_NAME = "domainName";
-
-	/**
-	 * Name of property used to keep users JID
-	 */
-	public static final String USER_BARE_JID = "userBareJid";
-
-	/**
-	 * Reset state. Clears all properties stored by modules, roster and presence
-	 * store. Users properties are keeped.
-	 * 
-	 * @throws JaxmppException
-	 */
-	public void clear() throws JaxmppException;
-
-	/**
-	 * Reset state. Clears given properties stored by modules. Roster and
-	 * presence store will be cleared if {@linkplain Scope#session} is in
-	 * parameters.
-	 * 
-	 * @throws JaxmppException
-	 */
-	void clear(Scope... scopes) throws JaxmppException;
-
-	/**
-	 * Returns property
-	 * 
-	 * @param key
-	 *            property name
-	 * @return property
-	 */
-	public <T> T getProperty(String key);
-
-	/**
-	 * Returns users JID
-	 * 
-	 * @return
-	 */
-	public BareJID getUserBareJid();
-
-	/**
-	 * Set property in given scope.
-	 * 
-	 * @param scope
-	 *            scope of property
-	 * @param key
-	 *            property name
-	 * @param value
-	 *            property value. <code>null</code> to unset property.
-	 * @return instance of <code>this</code> {@linkplain SessionObject}
-	 */
-	public SessionObject setProperty(Scope scope, String key, Object value);
-
-	/**
-	 * Set property in {@linkplain Scope#session session} scope.
-	 * 
-	 * @param key
-	 *            property name
-	 * @param value
-	 *            property value. <code>null</code> to unset property.
-	 * 
-	 * @return instance of <code>this</code> {@linkplain SessionObject}
-	 */
-	public SessionObject setProperty(String key, Object value);
 
 }

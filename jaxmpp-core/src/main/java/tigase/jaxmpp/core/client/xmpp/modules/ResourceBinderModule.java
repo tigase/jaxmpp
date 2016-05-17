@@ -17,15 +17,8 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -37,6 +30,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.logging.Logger;
+
 /**
  * Module for <a href='http://xmpp.org/rfcs/rfc6120.html#bind'>Resource
  * Binding</a>.
@@ -44,85 +39,19 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public class ResourceBinderModule implements XmppModule, ContextAware {
 
 	/**
-	 * Event fires on binding error.
-	 */
-	public interface ResourceBindErrorHandler extends EventHandler {
-
-		public static class ResourceBindErrorEvent extends JaxmppEvent<ResourceBindErrorHandler> {
-
-			private ErrorCondition error;
-
-			public ResourceBindErrorEvent(SessionObject sessionObject, ErrorCondition error) {
-				super(sessionObject);
-				this.error = error;
-			}
-
-			@Override
-			protected void dispatch(ResourceBindErrorHandler handler) {
-				handler.onResourceBindError(sessionObject, error);
-			}
-
-			public ErrorCondition getError() {
-				return error;
-			}
-
-			public void setError(ErrorCondition error) {
-				this.error = error;
-			}
-
-		}
-
-		void onResourceBindError(SessionObject sessionObject, ErrorCondition errorCondition);
-	}
-
-	/**
-	 * Event fires on binding success.
-	 */
-	public interface ResourceBindSuccessHandler extends EventHandler {
-
-		public static class ResourceBindSuccessEvent extends JaxmppEvent<ResourceBindSuccessHandler> {
-
-			private JID bindedJid;
-
-			public ResourceBindSuccessEvent(SessionObject sessionObject, JID jid) {
-				super(sessionObject);
-				this.bindedJid = jid;
-			}
-
-			@Override
-			protected void dispatch(ResourceBindSuccessHandler handler) throws JaxmppException {
-				handler.onResourceBindSuccess(sessionObject, bindedJid);
-			}
-
-			public JID getBindedJid() {
-				return bindedJid;
-			}
-
-			public void setBindedJid(JID bindedJid) {
-				this.bindedJid = bindedJid;
-			}
-
-		}
-
-		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException;
-	}
-
-	/**
 	 * Property name for retrieve binded resource from
 	 * {@linkplain SessionObject}.
 	 */
 	public static final String BINDED_RESOURCE_JID = "BINDED_RESOURCE_JID";
-
-	public static JID getBindedJID(SessionObject sessionObject) {
-		return sessionObject.getProperty(BINDED_RESOURCE_JID);
-	}
-
-	private Context context;
-
 	protected final Logger log;
+	private Context context;
 
 	public ResourceBinderModule() {
 		log = Logger.getLogger(this.getClass().getName());
+	}
+
+	public static JID getBindedJID(SessionObject sessionObject) {
+		return sessionObject.getProperty(BINDED_RESOURCE_JID);
 	}
 
 	public void addResourceBindErrorHandler(ResourceBindErrorHandler handler) {
@@ -133,7 +62,7 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 		context.getEventBus().addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, handler);
 	}
 
-	public void bind() throws XMLException, JaxmppException {
+	public void bind() throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setXMLNS("jabber:client");
 		iq.setType(StanzaType.set);
@@ -211,6 +140,70 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	/**
+	 * Event fires on binding error.
+	 */
+	public interface ResourceBindErrorHandler extends EventHandler {
+
+		void onResourceBindError(SessionObject sessionObject, ErrorCondition errorCondition);
+
+		class ResourceBindErrorEvent extends JaxmppEvent<ResourceBindErrorHandler> {
+
+			private ErrorCondition error;
+
+			public ResourceBindErrorEvent(SessionObject sessionObject, ErrorCondition error) {
+				super(sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			public void dispatch(ResourceBindErrorHandler handler) {
+				handler.onResourceBindError(sessionObject, error);
+			}
+
+			public ErrorCondition getError() {
+				return error;
+			}
+
+			public void setError(ErrorCondition error) {
+				this.error = error;
+			}
+
+		}
+	}
+
+	/**
+	 * Event fires on binding success.
+	 */
+	public interface ResourceBindSuccessHandler extends EventHandler {
+
+		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException;
+
+		class ResourceBindSuccessEvent extends JaxmppEvent<ResourceBindSuccessHandler> {
+
+			private JID bindedJid;
+
+			public ResourceBindSuccessEvent(SessionObject sessionObject, JID jid) {
+				super(sessionObject);
+				this.bindedJid = jid;
+			}
+
+			@Override
+			public void dispatch(ResourceBindSuccessHandler handler) throws JaxmppException {
+				handler.onResourceBindSuccess(sessionObject, bindedJid);
+			}
+
+			public JID getBindedJid() {
+				return bindedJid;
+			}
+
+			public void setBindedJid(JID bindedJid) {
+				this.bindedJid = bindedJid;
+			}
+
+		}
 	}
 
 }

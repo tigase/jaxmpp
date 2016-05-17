@@ -17,12 +17,6 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Connector.ErrorHandler;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler;
 import tigase.jaxmpp.core.client.Connector.State;
@@ -50,6 +44,12 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 //import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 //import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
@@ -528,7 +528,7 @@ public abstract class JaxmppCore {
 			}
 
 			@Override
-			protected void dispatch(LoggedInHandler handler) {
+			public void dispatch(LoggedInHandler handler) {
 				handler.onLoggedIn(sessionObject);
 			}
 
@@ -559,7 +559,7 @@ public abstract class JaxmppCore {
 			}
 
 			@Override
-			protected void dispatch(LoggedOutHandler handler) {
+			public void dispatch(LoggedOutHandler handler) {
 				handler.onLoggedOut(sessionObject);
 			}
 

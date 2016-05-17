@@ -17,8 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connection;
 
-import java.net.Socket;
-
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -27,33 +25,44 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 
+import java.net.Socket;
+
 /**
  * 
  * @author andrzej
  */
 public interface ConnectionManager extends ContextAware {
 
-	public interface ConnectionClosedHandler extends EventHandler {
+	void connectTcp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
 
-		public static class ConnectionClosedEvent extends JaxmppEvent<ConnectionClosedHandler> {
+	void connectUdp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
+
+	void initConnection(JaxmppCore jaxmpp, ConnectionSession session, InitializedCallback callback) throws JaxmppException;
+
+	interface ConnectionClosedHandler extends EventHandler {
+
+		void onConnectionClosed(SessionObject sessionObject);
+
+		class ConnectionClosedEvent extends JaxmppEvent<ConnectionClosedHandler> {
 
 			public ConnectionClosedEvent(SessionObject sessionObject) {
 				super(sessionObject);
 			}
 
 			@Override
-			protected void dispatch(ConnectionClosedHandler handler) {
+			public void dispatch(ConnectionClosedHandler handler) {
 				handler.onConnectionClosed(sessionObject);
 			}
 
 		}
+	}
 
-		void onConnectionClosed(SessionObject sessionObject);
-	};
+	interface ConnectionEstablishedHandler extends EventHandler {
 
-	public interface ConnectionEstablishedHandler extends EventHandler {
+		void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
+				throws JaxmppException;
 
-		public static class ConnectionEstablishedEvent extends JaxmppEvent<ConnectionEstablishedHandler> {
+		class ConnectionEstablishedEvent extends JaxmppEvent<ConnectionEstablishedHandler> {
 
 			private ConnectionSession connectionSession;
 
@@ -66,7 +75,7 @@ public interface ConnectionManager extends ContextAware {
 			}
 
 			@Override
-			protected void dispatch(ConnectionEstablishedHandler handler) throws JaxmppException {
+			public void dispatch(ConnectionEstablishedHandler handler) throws JaxmppException {
 				handler.onConnectionEstablished(sessionObject, connectionSession, socket);
 			}
 
@@ -74,12 +83,12 @@ public interface ConnectionManager extends ContextAware {
 				return connectionSession;
 			}
 
-			public Socket getSocket() {
-				return socket;
-			}
-
 			public void setConnectionSession(ConnectionSession connectionSession) {
 				this.connectionSession = connectionSession;
+			}
+
+			public Socket getSocket() {
+				return socket;
 			}
 
 			public void setSocket(Socket socket) {
@@ -87,14 +96,13 @@ public interface ConnectionManager extends ContextAware {
 			}
 
 		}
-
-		void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
-				throws JaxmppException;
 	}
 
-	public interface ConnectionFailedHandler extends EventHandler {
+	interface ConnectionFailedHandler extends EventHandler {
 
-		public static class ConnectionFailedEvent extends JaxmppEvent<ConnectionFailedHandler> {
+		void onConnectionFailed(SessionObject sessionObject, ConnectionSession connectionSession);
+
+		class ConnectionFailedEvent extends JaxmppEvent<ConnectionFailedHandler> {
 
 			private ConnectionSession connectionSession;
 
@@ -104,7 +112,7 @@ public interface ConnectionManager extends ContextAware {
 			}
 
 			@Override
-			protected void dispatch(ConnectionFailedHandler handler) {
+			public void dispatch(ConnectionFailedHandler handler) {
 				handler.onConnectionFailed(sessionObject, connectionSession);
 			}
 
@@ -117,20 +125,12 @@ public interface ConnectionManager extends ContextAware {
 			}
 
 		}
-
-		void onConnectionFailed(SessionObject sessionObject, ConnectionSession connectionSession);
 	}
 
-	public static interface InitializedCallback {
+	interface InitializedCallback {
 
 		void initialized(JaxmppCore jaxmpp, ConnectionSession session);
 
 	}
-
-	void connectTcp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
-
-	void connectUdp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
-
-	void initConnection(JaxmppCore jaxmpp, ConnectionSession session, InitializedCallback callback) throws JaxmppException;
 
 }

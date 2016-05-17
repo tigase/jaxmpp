@@ -192,14 +192,14 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		void onNotSupportedError(SessionObject sessionObject) throws JaxmppException;
 
-		public static class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
+		class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
 
 			public NotSupportedErrorEvent(SessionObject sessionObject) {
 				super(sessionObject);
 			}
 
 			@Override
-			protected void dispatch(NotSupportedErrorHandler handler) throws JaxmppException {
+			public void dispatch(NotSupportedErrorHandler handler) throws JaxmppException {
 				handler.onNotSupportedError(sessionObject);
 			}
 
@@ -211,7 +211,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
 				throws JaxmppException;
 
-		public static class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
+		class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
 
 			private ErrorCondition errorCondition;
 
@@ -224,7 +224,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			}
 
 			@Override
-			protected void dispatch(ReceivedErrorHandler handler) throws JaxmppException {
+			public void dispatch(ReceivedErrorHandler handler) throws JaxmppException {
 				handler.onReceivedError(sessionObject, responseStanza, errorCondition);
 			}
 
@@ -251,7 +251,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza);
 
-		public static class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
+		class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
 
 			private IQ responseStanza;
 
@@ -261,7 +261,7 @@ public class InBandRegistrationModule extends AbstractIQModule {
 			}
 
 			@Override
-			protected void dispatch(ReceivedRequestedFieldsHandler handler) {
+			public void dispatch(ReceivedRequestedFieldsHandler handler) {
 				handler.onReceivedRequestedFields(sessionObject, responseStanza);
 			}
 
@@ -280,14 +280,14 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException;
 
-		public static class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
+		class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
 
 			public ReceivedTimeoutEvent(SessionObject sessionObject) {
 				super(sessionObject);
 			}
 
 			@Override
-			protected void dispatch(ReceivedTimeoutHandler handler) throws JaxmppException {
+			public void dispatch(ReceivedTimeoutHandler handler) throws JaxmppException {
 				handler.onReceivedTimeout(sessionObject);
 			}
 

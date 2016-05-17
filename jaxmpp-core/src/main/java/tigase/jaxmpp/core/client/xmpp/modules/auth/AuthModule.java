@@ -17,12 +17,8 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -41,6 +37,9 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.UnsupportedSaslMechanisms;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Module used for authentication. This module automatically selects better
  * authentication module to use. Currently it choose between
@@ -48,90 +47,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
  */
 public class AuthModule implements XmppModule, ContextAware, InitializingModule {
 
-	public interface AuthFailedHandler extends EventHandler {
-
-		public static class AuthFailedEvent extends JaxmppEvent<AuthFailedHandler> {
-
-			private SaslError error;
-
-			public AuthFailedEvent(SessionObject sessionObject, SaslError error) {
-				super(sessionObject);
-				this.error = error;
-			}
-
-			@Override
-			protected void dispatch(AuthFailedHandler handler) throws JaxmppException {
-				handler.onAuthFailed(sessionObject, error);
-			}
-
-			public SaslError getError() {
-				return error;
-			}
-
-			public void setError(SaslError error) {
-				this.error = error;
-			}
-
-		}
-
-		void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException;
-	}
-
-	public interface AuthStartHandler extends EventHandler {
-
-		public static class AuthStartEvent extends JaxmppEvent<AuthStartHandler> {
-
-			public AuthStartEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(AuthStartHandler handler) {
-				handler.onAuthStart(sessionObject);
-			}
-
-		}
-
-		void onAuthStart(SessionObject sessionObject);
-	}
-
-	public interface AuthSuccessHandler extends EventHandler {
-
-		public static class AuthSuccessEvent extends JaxmppEvent<AuthSuccessHandler> {
-
-			public AuthSuccessEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(AuthSuccessHandler handler) throws JaxmppException {
-				handler.onAuthSuccess(sessionObject);
-			}
-
-		}
-
-		void onAuthSuccess(SessionObject sessionObject) throws JaxmppException;
-	}
-
-	public static class DefaultCredentialsCallback implements CredentialsCallback {
-
-		private final SessionObject sessionObject;
-
-		public DefaultCredentialsCallback(SessionObject sessionObject) {
-			this.sessionObject = sessionObject;
-		}
-
-		@Override
-		public String getCredential() {
-			return sessionObject.getProperty(SessionObject.PASSWORD);
-		}
-
-	}
-
 	public static final String AUTHORIZED = "jaxmpp#authorized";
-
 	public static final String CREDENTIALS_CALLBACK = "jaxmpp#credentialsCallback";
-
 	/**
 	 * If <code>true</code> then Non-SASL (<a
 	 * href='http://xmpp.org/extensions/xep-0078.html'>XEP-0078</a>) mechanism
@@ -139,8 +56,14 @@ public class AuthModule implements XmppModule, ContextAware, InitializingModule 
 	 * Type: {@link Boolean Boolean}
 	 */
 	public static final String FORCE_NON_SASL = "jaxmpp#forceNonSASL";
-
 	public static final String LOGIN_USER_NAME_KEY = "LOGIN_USER_NAME";
+	private final Logger log;
+	private Context context;
+	private ModuleProvider moduleManager;
+
+	public AuthModule() {
+		this.log = Logger.getLogger(this.getClass().getName());
+	}
 
 	public static boolean isAuthAvailable(final SessionObject sessionObject) throws XMLException {
 		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
@@ -151,16 +74,6 @@ public class AuthModule implements XmppModule, ContextAware, InitializingModule 
 				&& features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
 
 		return saslSupported || nonSaslSupported;
-	}
-
-	private Context context;
-
-	private final Logger log;
-
-	private ModuleProvider moduleManager;
-
-	public AuthModule() {
-		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public void addAuthFailedHandler(AuthFailedHandler handler) {
@@ -301,7 +214,7 @@ public class AuthModule implements XmppModule, ContextAware, InitializingModule 
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element element) throws JaxmppException {
 	}
 
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
@@ -327,6 +240,86 @@ public class AuthModule implements XmppModule, ContextAware, InitializingModule 
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	public interface AuthFailedHandler extends EventHandler {
+
+		void onAuthFailed(SessionObject sessionObject, SaslError error) throws JaxmppException;
+
+		class AuthFailedEvent extends JaxmppEvent<AuthFailedHandler> {
+
+			private SaslError error;
+
+			public AuthFailedEvent(SessionObject sessionObject, SaslError error) {
+				super(sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			public void dispatch(AuthFailedHandler handler) throws JaxmppException {
+				handler.onAuthFailed(sessionObject, error);
+			}
+
+			public SaslError getError() {
+				return error;
+			}
+
+			public void setError(SaslError error) {
+				this.error = error;
+			}
+
+		}
+	}
+
+	public interface AuthStartHandler extends EventHandler {
+
+		void onAuthStart(SessionObject sessionObject);
+
+		class AuthStartEvent extends JaxmppEvent<AuthStartHandler> {
+
+			public AuthStartEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(AuthStartHandler handler) {
+				handler.onAuthStart(sessionObject);
+			}
+
+		}
+	}
+
+	public interface AuthSuccessHandler extends EventHandler {
+
+		void onAuthSuccess(SessionObject sessionObject) throws JaxmppException;
+
+		class AuthSuccessEvent extends JaxmppEvent<AuthSuccessHandler> {
+
+			public AuthSuccessEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(AuthSuccessHandler handler) throws JaxmppException {
+				handler.onAuthSuccess(sessionObject);
+			}
+
+		}
+	}
+
+	public static class DefaultCredentialsCallback implements CredentialsCallback {
+
+		private final SessionObject sessionObject;
+
+		public DefaultCredentialsCallback(SessionObject sessionObject) {
+			this.sessionObject = sessionObject;
+		}
+
+		@Override
+		public String getCredential() {
+			return sessionObject.getProperty(SessionObject.PASSWORD);
+		}
+
 	}
 
 }

@@ -5,11 +5,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat.xep0085;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -29,6 +24,12 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author andrzej
@@ -36,69 +37,21 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 public class ChatStateExtension
 		implements Extension, ContextAware, MessageModule.ChatClosedHandler, JaxmppCore.LoggedOutHandler {
 
+	public static final String CHAT_STATE_DISABLED_KEY = "xep-0085#disabled";
 	private static final Logger log = Logger.getLogger(ChatStateExtension.class.getCanonicalName());
-
-	public static final String CHAT_STATE_DISABLED_KEY = "xep-0085#disabled";	
-	
-	public interface ChatStateChangedHandler extends EventHandler {
-
-		class ChatStateChangedEvent extends JaxmppEvent<ChatStateChangedHandler> {
-
-			private final Chat chat;
-			private final ChatState chatState;
-
-			public ChatStateChangedEvent(SessionObject sessionObject, Chat chat, ChatState state) {
-				super(sessionObject);
-				this.chat = chat;
-				this.chatState = state;
-			}
-
-			@Override
-			protected void dispatch(ChatStateChangedHandler handler) throws Exception {
-				handler.onChatStateChanged(sessionObject, chat, chatState);
-			}
-		}
-
-		void onChatStateChanged(SessionObject sessionObject, Chat chat, ChatState state);
-	}
-	
-	private class StateHolder {
-		
-		private ChatState ownChatState;
-		private ChatState recipientChatState;
-		
-		public ChatState getOwnChatState() {
-			return ownChatState;
-		}
-		
-		public boolean setOwnChatState(ChatState state) {
-			boolean changed = ownChatState != state;
-			ownChatState = state;
-			return changed;
-		}
-		
-		public ChatState getRecipientChatState() {
-			return recipientChatState;
-		}
-		
-		public boolean setRecipientChatState(ChatState state) {
-			boolean changed = recipientChatState != state;
-			recipientChatState = state;
-			return changed;
-		}
-		
-	}
-	
 	private static final String[] FEATURES = { ChatState.XMLNS };
-	
 	private final AbstractChatManager chatManager;
 	private final Map<Long,StateHolder> chatStates = new HashMap<Long,StateHolder>();
 	private Context context;
-
 	public ChatStateExtension(AbstractChatManager chatManager) {
 		this.chatManager = chatManager;
 	}
-	
+
+	public static boolean isDisabled(SessionObject sessionObject) {
+		Boolean value = sessionObject.getProperty(CHAT_STATE_DISABLED_KEY);
+		return (value != null && value);
+	}
+
 	@Override
 	public Element afterReceive(Element received) throws JaxmppException {
 		Message msg = (Message) Stanza.create(received);
@@ -145,6 +98,13 @@ public class ChatStateExtension
 		return received;
 	}
 
+	@Override
+	public String[] getFeatures() {
+		if (!isDisabled(context.getSessionObject()))
+			return FEATURES;
+		return null;
+	}
+
 	public ChatState getRecipientChatState(Chat chat) {
 		StateHolder holder;
 		synchronized (chatStates) {
@@ -152,15 +112,73 @@ public class ChatStateExtension
 		}
 		return holder == null ? null : holder.getRecipientChatState();
 	}
+
+	@Override
+	public void onChatClosed(SessionObject sessionObject, Chat chat) {
+		try {
+			if (!isDisabled(sessionObject))
+				setOwnChatState(chat, ChatState.gone);
+		} catch (JaxmppException ex) {
+			log.log(Level.FINE, "Exception while sending gone notification on chat close", ex);
+		}
+		synchronized (chatStates) {
+			chatStates.remove(chat.getId());
+		}
+	}
 	
+	@Override
+	public void onLoggedOut(SessionObject sessionObject) {
+		for (Chat chat : chatManager.getChats()) {
+			StateHolder holder;
+			synchronized (chatStates) {
+				holder = chatStates.remove(chat.getId());
+			}
+			if (holder != null && holder.getRecipientChatState() != null) {
+				context.getEventBus().fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
+			}
+		}
+	}
+	
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+		context.getEventBus().addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, this);
+		context.getEventBus().addHandler(LoggedOutEvent.class, this);
+	}
+
+	public void setDisabled(boolean disabled) {
+		context.getSessionObject().setProperty(CHAT_STATE_DISABLED_KEY, disabled);
+		if (disabled) {
+			for (Chat chat : chatManager.getChats()) {
+				try {
+					StateHolder holder;
+					synchronized (chatStates) {
+						holder = chatStates.remove(chat.getId());
+					}
+					if (holder != null) {
+						if (holder.getRecipientChatState() != null) {
+							context.getEventBus().fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
+						}
+						if (holder.getOwnChatState() != null && (holder.getOwnChatState() != ChatState.active || holder.getOwnChatState() != ChatState.gone)) {
+							setOwnChatState(chat, ChatState.active, true);
+						}
+					}
+				}
+				catch (JaxmppException ex) {
+					log.log(Level.FINE, "Exception sending chat state on disabling chat state support", ex);
+				}
+			}
+		}
+	}
+
 	public void setOwnChatState(Chat chat, ChatState state) throws JaxmppException {
 		setOwnChatState(chat, state, false);
 	}
-	
+
 	private void setOwnChatState(Chat chat, ChatState state, boolean force) throws JaxmppException {
 		if (!force && isDisabled(chat.getSessionObject()))
 			return;
-		
+
 		PresenceStore presenceStore = PresenceModule.getPresenceStore(context.getSessionObject());
 		if (presenceStore == null || !presenceStore.isAvailable(chat.getJid().getBareJid()))
 			return;
@@ -182,75 +200,53 @@ public class ChatStateExtension
 			context.getWriter().write(msg);
 		}
 	}
-	
-	@Override
-	public String[] getFeatures() {
-		if (!isDisabled(context.getSessionObject()))
-			return FEATURES;
-		return null;
+
+	public interface ChatStateChangedHandler extends EventHandler {
+
+		void onChatStateChanged(SessionObject sessionObject, Chat chat, ChatState state);
+
+		class ChatStateChangedEvent extends JaxmppEvent<ChatStateChangedHandler> {
+
+			private final Chat chat;
+			private final ChatState chatState;
+
+			public ChatStateChangedEvent(SessionObject sessionObject, Chat chat, ChatState state) {
+				super(sessionObject);
+				this.chat = chat;
+				this.chatState = state;
+			}
+
+			@Override
+			public void dispatch(ChatStateChangedHandler handler) throws Exception {
+				handler.onChatStateChanged(sessionObject, chat, chatState);
+			}
+		}
 	}
 
-	@Override
-	public void onLoggedOut(SessionObject sessionObject) {
-		for (Chat chat : chatManager.getChats()) {
-			StateHolder holder;
-			synchronized (chatStates) {
-				holder = chatStates.remove(chat.getId());
-			}
-			if (holder != null && holder.getRecipientChatState() != null) {
-				context.getEventBus().fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
-			}
+	private class StateHolder {
+
+		private ChatState ownChatState;
+		private ChatState recipientChatState;
+
+		public ChatState getOwnChatState() {
+			return ownChatState;
 		}
-	}
-	
-	@Override
-	public void onChatClosed(SessionObject sessionObject, Chat chat) {
-		try {
-			if (!isDisabled(sessionObject))
-				setOwnChatState(chat, ChatState.gone);
+
+		public ChatState getRecipientChatState() {
+			return recipientChatState;
 		}
-		catch (JaxmppException ex) {
-			log.log(Level.FINE, "Exception while sending gone notification on chat close", ex);
+
+		public boolean setOwnChatState(ChatState state) {
+			boolean changed = ownChatState != state;
+			ownChatState = state;
+			return changed;
 		}
-		synchronized (chatStates) {
-			chatStates.remove(chat.getId());
-		}		
-	}
-	
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-		context.getEventBus().addHandler(MessageModule.ChatClosedHandler.ChatClosedEvent.class, this);
-		context.getEventBus().addHandler(LoggedOutEvent.class, this);
-	}
-	
-	public void setDisabled(boolean disabled) {
-		context.getSessionObject().setProperty(CHAT_STATE_DISABLED_KEY, disabled);
-		if (disabled) {
-			for (Chat chat : chatManager.getChats()) {
-				try {
-					StateHolder holder;
-					synchronized (chatStates) {
-						holder = chatStates.remove(chat.getId());
-					}
-					if (holder != null) {
-						if (holder.getRecipientChatState() != null) {
-							context.getEventBus().fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
-						}
-						if (holder.getOwnChatState() != null && (holder.getOwnChatState() != ChatState.active || holder.getOwnChatState() != ChatState.gone)) {
-							setOwnChatState(chat, ChatState.active, true);
-						}
-					}			
-				}
-				catch (JaxmppException ex) {
-					log.log(Level.FINE, "Exception sending chat state on disabling chat state support", ex);
-				}
-			}
+
+		public boolean setRecipientChatState(ChatState state) {
+			boolean changed = recipientChatState != state;
+			recipientChatState = state;
+			return changed;
 		}
+
 	}
-	
-	public static boolean isDisabled(SessionObject sessionObject) {
-		Boolean value = sessionObject.getProperty(CHAT_STATE_DISABLED_KEY);
-		return (value != null && value);		
-	}	
 }

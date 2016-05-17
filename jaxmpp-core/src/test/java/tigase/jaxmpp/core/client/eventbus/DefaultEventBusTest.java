@@ -1,63 +1,13 @@
 package tigase.jaxmpp.core.client.eventbus;
 
 import junit.framework.TestCase;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test01Handler.Test01Event;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test02Handler.Test02Event;
 
 public class DefaultEventBusTest extends TestCase {
-
-	public interface Test01Handler extends EventHandler {
-
-		public static class Test01Event extends Event<Test01Handler> {
-
-			private final String data;
-
-			public Test01Event(String data) {
-				this.data = data;
-			}
-
-			@Override
-			protected void dispatch(Test01Handler handler) {
-				handler.onTest01Event(data);
-			}
-
-			public String getData() {
-				return data;
-			}
-
-		}
-
-		void onTest01Event(String data);
-	}
-
-	public interface Test02Handler extends EventHandler {
-
-		public static class Test02Event extends Event<Test02Handler> {
-
-			private final String data;
-
-			public Test02Event(String data) {
-				this.data = data;
-			}
-
-			@Override
-			protected void dispatch(Test02Handler handler) {
-				handler.onTest02Event(data);
-			}
-
-			public String getData() {
-				return data;
-			}
-
-		}
-
-		void onTest02Event(String data);
-	}
 
 	private EventBus eventBus;
 
@@ -192,5 +142,53 @@ public class DefaultEventBusTest extends TestCase {
 
 		Assert.assertEquals("t1", value[0]);
 		Assert.assertEquals("t2", value[1]);
+	}
+
+	public interface Test01Handler extends EventHandler {
+
+		void onTest01Event(String data);
+
+		class Test01Event extends Event<Test01Handler> {
+
+			private final String data;
+
+			public Test01Event(String data) {
+				this.data = data;
+			}
+
+			@Override
+			public void dispatch(Test01Handler handler) {
+				handler.onTest01Event(data);
+			}
+
+			public String getData() {
+				return data;
+			}
+
+		}
+	}
+
+	public interface Test02Handler extends EventHandler {
+
+		void onTest02Event(String data);
+
+		class Test02Event extends Event<Test02Handler> {
+
+			private final String data;
+
+			public Test02Event(String data) {
+				this.data = data;
+			}
+
+			@Override
+			public void dispatch(Test02Handler handler) {
+				handler.onTest02Event(data);
+			}
+
+			public String getData() {
+				return data;
+			}
+
+		}
 	}
 }

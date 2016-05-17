@@ -1,12 +1,5 @@
 package tigase.jaxmpp.core.client.xmpp.modules.streammng;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -25,6 +18,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.S
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler.UnacknowledgedEvent;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class StreamManagementModule implements XmppModule, ContextAware {
 
@@ -479,7 +479,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamManagementEnabledHandler handler) {
+			public void dispatch(StreamManagementEnabledHandler handler) {
 				handler.onStreamManagementEnabled(sessionObject, resume, resumeId);
 			}
 
@@ -516,7 +516,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamManagementFailedHandler handler) {
+			public void dispatch(StreamManagementFailedHandler handler) {
 				handler.onStreamManagementFailed(sessionObject, condition);
 			}
 
@@ -540,7 +540,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamResumedHandler handler) throws JaxmppException {
+			public void dispatch(StreamResumedHandler handler) throws JaxmppException {
 				handler.onStreamResumed(sessionObject, h, previd);
 			}
 
@@ -577,7 +577,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(UnacknowledgedHandler handler) throws JaxmppException {
+			public void dispatch(UnacknowledgedHandler handler) throws JaxmppException {
 				handler.onUnacknowledged(sessionObject, elements);
 			}
 

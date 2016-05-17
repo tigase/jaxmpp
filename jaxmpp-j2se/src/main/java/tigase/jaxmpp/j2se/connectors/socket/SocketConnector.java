@@ -17,24 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.net.*;
-import java.nio.charset.Charset;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
-
-import javax.net.ssl.*;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.EncryptionEstablishedHandler.EncryptionEstablishedEvent;
@@ -58,6 +40,23 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
+
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.net.*;
+import java.nio.charset.Charset;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
 
 /**
  *
@@ -901,7 +900,7 @@ public class SocketConnector implements Connector {
 			}
 
 			@Override
-			protected void dispatch(HostChangedHandler handler) {
+			public void dispatch(HostChangedHandler handler) {
 				handler.onHostChanged(sessionObject);
 			}
 

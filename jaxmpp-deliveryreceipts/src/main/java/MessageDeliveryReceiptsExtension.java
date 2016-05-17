@@ -13,91 +13,10 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 
 public class MessageDeliveryReceiptsExtension implements MessageModuleExtension, Extension {
 
-	public interface ReceiptReceivedHandler extends EventHandler {
-
-		public static class ReceiptReceivedEvent extends JaxmppEvent<ReceiptReceivedHandler> {
-
-			private Chat chat;
-
-			private String confirmedId;
-
-			private Message message;
-
-			public ReceiptReceivedEvent(SessionObject sessionObject, Chat chat, Message msg, String confirmedId) {
-				super(sessionObject);
-				this.chat = chat;
-				this.message = msg;
-				this.confirmedId = confirmedId;
-			}
-
-			@Override
-			protected void dispatch(ReceiptReceivedHandler handler) {
-				handler.onReceiptReceived(sessionObject, chat, message, confirmedId);
-			}
-
-			public Chat getChat() {
-				return chat;
-			}
-
-			/**
-			 * @return the confirmedId
-			 */
-			public String getConfirmedId() {
-				return confirmedId;
-			}
-
-			/**
-			 * @return the message
-			 */
-			public Message getMessage() {
-				return message;
-			}
-
-			public void setChat(Chat chat) {
-				this.chat = chat;
-			}
-
-			/**
-			 * @param confirmedId
-			 *            the confirmedId to set
-			 */
-			public void setConfirmedId(String confirmedId) {
-				this.confirmedId = confirmedId;
-			}
-
-			/**
-			 * @param message
-			 *            the message to set
-			 */
-			public void setMessage(Message message) {
-				this.message = message;
-			}
-
-		}
-
-		/**
-		 * Called when Message Delivery Receipt is received.
-		 * 
-		 * @param sessionObject
-		 *            session object.
-		 * @param chat
-		 *            chat related to confirmed message.
-		 * @param message
-		 *            received message with confirmation (this is not confirmed
-		 *            message!).
-		 * @param confirmedId
-		 *            identifier of confirmed message. May be <code>null</code>
-		 *            if confirming client supports older version of Receipts.
-		 */
-		void onReceiptReceived(SessionObject sessionObject, Chat chat, Message message, String confirmedId);
-	}
-
+	public static final String XMLNS = "urn:xmpp:receipts";
 	private final static String RECEIVED_NAME = "received";
 
 	private final static String REQUEST_NAME = "request";
-
-	public static final String XMLNS = "urn:xmpp:receipts";
-
 	private final Context context;
 
 	public MessageDeliveryReceiptsExtension(Context context) {
@@ -150,6 +69,79 @@ public class MessageDeliveryReceiptsExtension implements MessageModuleExtension,
 	@Override
 	public String[] getFeatures() {
 		return new String[] { XMLNS };
+	}
+
+	public interface ReceiptReceivedHandler extends EventHandler {
+
+		/**
+		 * Called when Message Delivery Receipt is received.
+		 *
+		 * @param sessionObject session object.
+		 * @param chat          chat related to confirmed message.
+		 * @param message       received message with confirmation (this is not confirmed
+		 *                      message!).
+		 * @param confirmedId   identifier of confirmed message. May be <code>null</code>
+		 *                      if confirming client supports older version of Receipts.
+		 */
+		void onReceiptReceived(SessionObject sessionObject, Chat chat, Message message, String confirmedId);
+
+		class ReceiptReceivedEvent extends JaxmppEvent<ReceiptReceivedHandler> {
+
+			private Chat chat;
+
+			private String confirmedId;
+
+			private Message message;
+
+			public ReceiptReceivedEvent(SessionObject sessionObject, Chat chat, Message msg, String confirmedId) {
+				super(sessionObject);
+				this.chat = chat;
+				this.message = msg;
+				this.confirmedId = confirmedId;
+			}
+
+			@Override
+			public void dispatch(ReceiptReceivedHandler handler) {
+				handler.onReceiptReceived(sessionObject, chat, message, confirmedId);
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public void setChat(Chat chat) {
+				this.chat = chat;
+			}
+
+			/**
+			 * @return the confirmedId
+			 */
+			public String getConfirmedId() {
+				return confirmedId;
+			}
+
+			/**
+			 * @param confirmedId the confirmedId to set
+			 */
+			public void setConfirmedId(String confirmedId) {
+				this.confirmedId = confirmedId;
+			}
+
+			/**
+			 * @return the message
+			 */
+			public Message getMessage() {
+				return message;
+			}
+
+			/**
+			 * @param message the message to set
+			 */
+			public void setMessage(Message message) {
+				this.message = message;
+			}
+
+		}
 	}
 
 }

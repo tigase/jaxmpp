@@ -17,16 +17,8 @@
  */
 package tigase.jaxmpp.core.client.eventbus;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,21 +27,10 @@ import java.util.logging.Logger;
  */
 public class DefaultEventBus extends EventBus {
 
-	private final static class N extends Event<EventHandler> {
-
-		@Override
-		protected void dispatch(EventHandler handler) throws Exception {
-		}
-	}
-
 	private final static Object NULL_SOURCE = new Object();
-
 	private final static Class<? extends Event<?>> NULL_TYPE = N.class;
-
 	protected final Map<Object, Map<Class<? extends Event<?>>, List<EventHandler>>> handlers;
-
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
-
 	protected boolean throwingExceptionOn = true;
 
 	public DefaultEventBus() {
@@ -135,6 +116,7 @@ public class DefaultEventBus extends EventBus {
 
 		for (EventHandler eventHandler : handlers) {
 			try {
+				log.finest("Calling handler class " + eventHandler.getClass() + " with event " + event.getClass());
 				if (eventHandler instanceof EventListener) {
 					((EventListener) eventHandler).onEvent(event);
 				} else {
@@ -186,6 +168,10 @@ public class DefaultEventBus extends EventBus {
 		return throwingExceptionOn;
 	}
 
+	public void setThrowingExceptionOn(boolean throwingExceptionOn) {
+		this.throwingExceptionOn = throwingExceptionOn;
+	}
+
 	@Override
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
 		remove(type, null, handler);
@@ -231,8 +217,11 @@ public class DefaultEventBus extends EventBus {
 		}
 	}
 
-	public void setThrowingExceptionOn(boolean throwingExceptionOn) {
-		this.throwingExceptionOn = throwingExceptionOn;
+	private final static class N extends Event<EventHandler> {
+
+		@Override
+		public void dispatch(EventHandler handler) throws Exception {
+		}
 	}
 
 }

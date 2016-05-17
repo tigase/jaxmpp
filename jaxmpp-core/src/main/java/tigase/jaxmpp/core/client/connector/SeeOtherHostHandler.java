@@ -28,23 +28,23 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
  */
 public interface SeeOtherHostHandler extends EventHandler {
 
-	public static class SeeOtherHostEvent extends JaxmppEvent<SeeOtherHostHandler> {
+	void onSeeOtherHost(String seeHost, MutableBoolean handled);
+
+	class SeeOtherHostEvent extends JaxmppEvent<SeeOtherHostHandler> {
 
 		private final String seeHost;
 		private final MutableBoolean handled;
-		
+
 		public SeeOtherHostEvent(SessionObject sessionObject, String seeHost, MutableBoolean handled) {
 			super(sessionObject);
 			this.seeHost = seeHost;
 			this.handled = handled;
 		}
-		
+
 		@Override
-		protected void dispatch(SeeOtherHostHandler handler) throws Exception {
+		public void dispatch(SeeOtherHostHandler handler) throws Exception {
 			handler.onSeeOtherHost(seeHost, handled);
 		}
-		
+
 	}
-	
-	public abstract void onSeeOtherHost(String seeHost, MutableBoolean handled);
 }

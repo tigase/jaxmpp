@@ -33,11 +33,11 @@ public abstract class Event<H extends EventHandler> {
 
 	/**
 	 * Invokes handlers method.
-	 * 
+	 *
 	 * @param handler
 	 *            handler
 	 */
-	protected abstract void dispatch(H handler) throws Exception;
+	public abstract void dispatch(H handler) throws Exception;
 
 	/**
 	 * Returns events source.
@@ -56,6 +56,6 @@ public abstract class Event<H extends EventHandler> {
 	 */
 	void setSource(Object source) {
 		this.source = source;
-	};
+	}
 
 }

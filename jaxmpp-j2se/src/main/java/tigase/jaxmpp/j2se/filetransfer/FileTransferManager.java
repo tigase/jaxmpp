@@ -17,29 +17,7 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.Property;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -56,10 +34,15 @@ import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.j2se.J2SECapabiliesCache;
-import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -68,106 +51,6 @@ import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
 public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler,
 		FileTransferNegotiator.NegotiationRejectHandler, FileTransferNegotiator.NegotiationRequestHandler,
 		ConnectionManager.ConnectionEstablishedHandler, Property {
-
-	public interface FileTransferFailureHandler extends EventHandler {
-
-		public static class FileTransferFailureEvent extends JaxmppEvent<FileTransferFailureHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferFailureEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(FileTransferFailureHandler handler) throws Exception {
-				handler.onFileTransferFailure(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface FileTransferProgressHandler extends EventHandler {
-
-		public static class FileTransferProgressEvent extends JaxmppEvent<FileTransferProgressHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferProgressEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(FileTransferProgressHandler handler) throws Exception {
-				handler.onFileTransferProgress(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferProgress(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface FileTransferRejectedHandler extends EventHandler {
-
-		public static class FileTransferRejectedEvent extends JaxmppEvent<FileTransferRejectedHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferRejectedEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(FileTransferRejectedHandler handler) throws Exception {
-				handler.onFileTransferRejected(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferRejected(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface FileTransferRequestHandler extends EventHandler {
-
-		public static class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(FileTransferRequestHandler handler) throws Exception {
-				handler.onFileTransferRequest(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface FileTransferSuccessHandler extends EventHandler {
-
-		public static class FileTransferSuccessEvent extends JaxmppEvent<FileTransferSuccessHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferSuccessEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(FileTransferSuccessHandler handler) throws Exception {
-				handler.onFileTransferSuccess(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
 
 	private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
 
@@ -180,6 +63,10 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 					}
 				});
 	}
+
+	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
+	protected Context context = null;
+	private JaxmppCore jaxmpp = null;
 
 	public static void initialize(JaxmppCore jaxmpp, boolean experimental) {
 		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
@@ -200,7 +87,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		}
 		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
-	
+
 	protected static String getCapsNode(Presence presence) throws XMLException {
 		if (presence == null) {
 			return null;
@@ -218,11 +105,6 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 
 		return node + "#" + ver;
 	}
-
-	protected Context context = null;
-
-	private JaxmppCore jaxmpp = null;
-	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
 
 	public void acceptFile(FileTransfer ft) throws JaxmppException {
 		ft.setIncoming(true);
@@ -256,7 +138,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	public Class<FileTransferManager> getPropertyClass() {
 		return FileTransferManager.class;
 	}
-	
+
 	@Override
 	public void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
 			throws JaxmppException {
@@ -474,7 +356,107 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 			// maybe we should not send this event every time?
 			fireOnProgress(ft);
 		}
-		
+
 		out.flush();
+	}
+
+	public interface FileTransferFailureHandler extends EventHandler {
+
+		void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferFailureEvent extends JaxmppEvent<FileTransferFailureHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferFailureEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(FileTransferFailureHandler handler) throws Exception {
+				handler.onFileTransferFailure(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	public interface FileTransferProgressHandler extends EventHandler {
+
+		void onFileTransferProgress(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferProgressEvent extends JaxmppEvent<FileTransferProgressHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferProgressEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(FileTransferProgressHandler handler) throws Exception {
+				handler.onFileTransferProgress(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	public interface FileTransferRejectedHandler extends EventHandler {
+
+		void onFileTransferRejected(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferRejectedEvent extends JaxmppEvent<FileTransferRejectedHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferRejectedEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(FileTransferRejectedHandler handler) throws Exception {
+				handler.onFileTransferRejected(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	public interface FileTransferRequestHandler extends EventHandler {
+
+		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferRequestEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(FileTransferRequestHandler handler) throws Exception {
+				handler.onFileTransferRequest(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	public interface FileTransferSuccessHandler extends EventHandler {
+
+		void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferSuccessEvent extends JaxmppEvent<FileTransferSuccessHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferSuccessEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(FileTransferSuccessHandler handler) throws Exception {
+				handler.onFileTransferSuccess(sessionObject, fileTransfer);
+			}
+		}
 	}
 }

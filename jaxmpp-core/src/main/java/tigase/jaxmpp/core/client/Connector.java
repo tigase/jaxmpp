@@ -203,7 +203,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(ConnectedHandler handler) {
+			public void dispatch(ConnectedHandler handler) {
 				handler.onConnected(sessionObject);
 			}
 
@@ -233,7 +233,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(DisconnectedHandler handler) throws Exception {
+			public void dispatch(DisconnectedHandler handler) throws Exception {
 				handler.onDisconnected(sessionObject);
 			}
 		}
@@ -264,7 +264,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(EncryptionEstablishedHandler handler) {
+			public void dispatch(EncryptionEstablishedHandler handler) {
 				handler.onEncryptionEstablished(sessionObject);
 			}
 
@@ -306,13 +306,7 @@ public interface Connector {
 			}
 
 			@Override
-			public String toString() {
-				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject + ", caught=" + caught
-						+ '}';
-			}
-
-			@Override
-			protected void dispatch(ErrorHandler handler) throws JaxmppException {
+			public void dispatch(ErrorHandler handler) throws JaxmppException {
 				handler.onError(sessionObject, condition, caught);
 			}
 
@@ -322,6 +316,12 @@ public interface Connector {
 
 			public StreamError getCondition() {
 				return condition;
+			}
+
+			@Override
+			public String toString() {
+				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject + ", caught=" + caught
+						+ '}';
 			}
 
 		}
@@ -357,17 +357,17 @@ public interface Connector {
 			}
 
 			@Override
-			public String toString() {
-				return "StanzaReceivedEvent{" + "stanza=" + stanza + '}';
-			}
-
-			@Override
-			protected void dispatch(StanzaReceivedHandler handler) {
+			public void dispatch(StanzaReceivedHandler handler) {
 				handler.onStanzaReceived(sessionObject, stanza);
 			}
 
 			public StreamPacket getStanza() {
 				return stanza;
+			}
+
+			@Override
+			public String toString() {
+				return "StanzaReceivedEvent{" + "stanza=" + stanza + '}';
 			}
 
 		}
@@ -403,12 +403,7 @@ public interface Connector {
 			}
 
 			@Override
-			public String toString() {
-				return "StanzaSendingEvent{" + "stanza=" + stanza + '}';
-			}
-
-			@Override
-			protected void dispatch(StanzaSendingHandler handler) throws JaxmppException {
+			public void dispatch(StanzaSendingHandler handler) throws JaxmppException {
 				handler.onStanzaSending(sessionObject, stanza);
 			}
 
@@ -418,6 +413,11 @@ public interface Connector {
 
 			public void setStanza(Element stanza) {
 				this.stanza = stanza;
+			}
+
+			@Override
+			public String toString() {
+				return "StanzaSendingEvent{" + "stanza=" + stanza + '}';
 			}
 
 		}
@@ -458,13 +458,7 @@ public interface Connector {
 			}
 
 			@Override
-			public String toString() {
-				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState + ", sessionObject="
-						+ sessionObject + '}';
-			}
-
-			@Override
-			protected void dispatch(StateChangedHandler handler) throws JaxmppException {
+			public void dispatch(StateChangedHandler handler) throws JaxmppException {
 				handler.onStateChanged(sessionObject, oldState, newState);
 			}
 
@@ -474,6 +468,12 @@ public interface Connector {
 
 			public State getOldState() {
 				return oldState;
+			}
+
+			@Override
+			public String toString() {
+				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState + ", sessionObject="
+						+ sessionObject + '}';
 			}
 
 		}
@@ -504,7 +504,7 @@ public interface Connector {
 			}
 
 			@Override
-			protected void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
+			public void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
 				handler.onStreamTerminated(sessionObject);
 			}
 

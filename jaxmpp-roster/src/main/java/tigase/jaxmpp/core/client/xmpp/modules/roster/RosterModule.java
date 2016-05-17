@@ -17,8 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
-import java.util.*;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -40,6 +38,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule.ItemUpdatedHan
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+
+import java.util.*;
 
 /**
  * Module for roster manipulation.
@@ -450,7 +450,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			}
 
 			@Override
-			protected void dispatch(ItemAddedHandler handler) {
+			public void dispatch(ItemAddedHandler handler) {
 				handler.onItemAdded(sessionObject, item, modifiedGroups);
 			}
 
@@ -490,7 +490,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			}
 
 			@Override
-			protected void dispatch(ItemRemovedHandler handler) {
+			public void dispatch(ItemRemovedHandler handler) {
 				handler.onItemRemoved(sessionObject, item, modifiedGroups);
 			}
 
@@ -534,7 +534,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			}
 
 			@Override
-			protected void dispatch(ItemUpdatedHandler handler) {
+			public void dispatch(ItemUpdatedHandler handler) {
 				handler.onItemUpdated(sessionObject, item, action, modifiedGroups);
 			}
 
