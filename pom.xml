@@ -5,7 +5,7 @@
 	<artifactId>tigase-jaxmpp</artifactId>
 	<packaging>pom</packaging>
 	<name>Tigase XMPP Client Library</name>
-	<version>3.1.1-SNAPSHOT</version>
+	<version>3.1.1</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -124,7 +124,7 @@
 
 	<scm>
 		<developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
-    <tag>3.1.0</tag>
+    <tag>3.1.1</tag>
   </scm>
 
 	<build>
