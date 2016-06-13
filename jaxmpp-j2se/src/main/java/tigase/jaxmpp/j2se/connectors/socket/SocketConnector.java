@@ -229,7 +229,7 @@ public class SocketConnector implements Connector {
 		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
 			return;
 		if (getState() == State.connected)
-			send(new byte[] { 32 });
+			send(new byte[]{32});
 	}
 
 	protected void onError(Element response, Throwable caught) throws JaxmppException {
@@ -818,8 +818,10 @@ public class SocketConnector implements Connector {
 					}
 					context = null;
 					closeSocket();
-					closeTimer.cancel();
-					closeTimer = null;
+					if (closeTimer != null) {
+						closeTimer.cancel();
+						closeTimer = null;
+					}
 				}
 			}, 3 * 1000);
 		} else {
