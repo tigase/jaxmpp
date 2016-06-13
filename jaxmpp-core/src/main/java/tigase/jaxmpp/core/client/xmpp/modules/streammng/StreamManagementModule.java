@@ -109,6 +109,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 
 		sessionObject.setProperty(OUTGOING_STREAM_H_KEY, null);
 		sessionObject.setProperty(INCOMING_STREAM_H_KEY, null);
+		sessionObject.setProperty(INCOMING_STREAM_H_LAST_SENT_KEY, null);
 	}
 
 	public void addStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
@@ -240,6 +241,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
 		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
+		context.getSessionObject().setProperty(OUTGOING_STREAM_H_KEY, null);
+		context.getSessionObject().setProperty(INCOMING_STREAM_H_KEY, null);
+		context.getSessionObject().setProperty(INCOMING_STREAM_H_LAST_SENT_KEY, null);
 
 		XMPPException.ErrorCondition condition = ErrorCondition.unexpected_request;
 		for (Element element2 : errors) {
