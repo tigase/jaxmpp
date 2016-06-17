@@ -539,7 +539,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Room room;
 
 			public InvitationDeclinedEvent(SessionObject sessionObject, Message message, Room room, JID inviteeJID,
-					String reason) {
+										   String reason) {
 				super(sessionObject);
 				this.message = message;
 				this.room = room;
@@ -742,7 +742,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Date timestamp;
 
 			public MucMessageReceivedEvent(SessionObject sessionObject, Message message, Room room, String nickname,
-					Date delayTime) {
+										   Date delayTime) {
 				super(sessionObject);
 				this.message = message;
 				this.room = room;
@@ -848,7 +848,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private Room room;
 
 			public OccupantChangedNickEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
-					String oldNickname, String nickname) {
+											String oldNickname, String nickname) {
 				super(sessionObject);
 				this.presence = element;
 				this.room = room;
@@ -923,7 +923,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private XMucUserElement xUserElement;
 
 			public OccupantChangedPresenceEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
-					String nickname, XMucUserElement xUser) {
+												String nickname, XMucUserElement xUser) {
 				super(sessionObject);
 				this.presence = element;
 				this.room = room;
@@ -997,7 +997,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			private XMucUserElement xUserElement;
 
 			public OccupantComesEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
-					String nickname, XMucUserElement xUser) {
+									  String nickname, XMucUserElement xUser) {
 				super(sessionObject);
 				this.presence = element;
 				this.room = room;
@@ -1056,7 +1056,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 	public interface OccupantLeavedHandler extends EventHandler {
 
-		void onOccupantLeaved(SessionObject sessionObject, Room room, Occupant occupant);
+		void onOccupantLeaved(SessionObject sessionObject, Room room, Occupant occupant, Presence stanza, XMucUserElement xUserElement);
 
 		class OccupantLeavedEvent extends JaxmppEvent<OccupantLeavedHandler> {
 
@@ -1078,7 +1078,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 			}
 
 			public OccupantLeavedEvent(SessionObject sessionObject, Presence element, Room room, Occupant occupant,
-					String nickname, XMucUserElement xUser) {
+									   String nickname, XMucUserElement xUser) {
 				super(sessionObject);
 				this.occupant = occupant;
 				this.room = room;
@@ -1089,7 +1089,7 @@ public class MucModule extends AbstractStanzaModule<Stanza> {
 
 			@Override
 			public void dispatch(OccupantLeavedHandler handler) {
-				handler.onOccupantLeaved(sessionObject, room, occupant);
+				handler.onOccupantLeaved(sessionObject, room, occupant, presence, xUserElement);
 			}
 
 			public Occupant getOccupant() {
