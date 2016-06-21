@@ -417,12 +417,16 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) == null
-				|| !(Boolean) sessionObject.getProperty(Connector.RECONNECTING_KEY)) {
-			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.notify();
-			}
-		}
+		// Removed as it breaks blocking mode of login()/disconnect() methods !!!!!!
+		// This worked fine in 3.1 but in 3.2 due to separate thread on which events
+		// are fired this breaks blocking mode.
+		// Do we need this notify at all? As DisconnectedEvent will be fired at the end
+		// of processing and it will fire notify.
+//		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) != Boolean.TRUE) {
+//			synchronized (Jaxmpp.this) {
+//				Jaxmpp.this.notify();
+//			}
+//		}
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 

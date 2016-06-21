@@ -171,8 +171,6 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			setStage(State.disconnected);
 		}
 
-		terminateStream();
-
 		if (log.isLoggable(Level.FINE))
 			log.fine("Stream terminated");
 
