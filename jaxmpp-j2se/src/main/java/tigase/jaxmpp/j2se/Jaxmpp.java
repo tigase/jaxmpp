@@ -17,11 +17,6 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executor;
-import java.util.logging.Level;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.JaxmppCore.LoggedInHandler.LoggedInEvent;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
@@ -38,6 +33,11 @@ import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.websocket.WebSocketConnector;
 import tigase.jaxmpp.j2se.eventbus.ThreadSafeEventBus;
 import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
+
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.logging.Level;
 
 /**
  * Main library class for using in standalone, Android and other J2SE compatible
@@ -398,8 +398,10 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
+		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) != Boolean.TRUE) {
+			synchronized (Jaxmpp.this) {
+				Jaxmpp.this.notify();
+			}
 		}
 
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));

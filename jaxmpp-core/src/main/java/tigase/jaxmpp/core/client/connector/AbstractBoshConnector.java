@@ -161,7 +161,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public State getState() {
-		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		State state = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		return state == null ? State.disconnected : state;
 	}
 
 	@Override
@@ -197,6 +198,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		removeFromRequests(request);
 		if (log.isLoggable(Level.FINER))
 			log.log(Level.FINER, "responseCode=" + responseCode, caught);
+		if (getState() == State.disconnected)
+			return;
 		setStage(State.disconnected);
 		terminateAllWorkers();
 		fireOnError(responseCode, responseData, response, caught, context.getSessionObject());
@@ -391,6 +394,8 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void stop(boolean terminate) throws JaxmppException {
 		State oldState = getState();
+		if (oldState == State.disconnected)
+			return;
 
 		setStage(State.disconnecting);
 		if (terminate)
