@@ -17,26 +17,14 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.Connector;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.ErrorHandler.ErrorEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaReceivedHandler.StanzaReceivedEvent;
 import tigase.jaxmpp.core.client.Connector.StanzaSendingHandler.StanzaSendingEvent;
 import tigase.jaxmpp.core.client.Connector.StateChangedHandler.StateChangedEvent;
 import tigase.jaxmpp.core.client.Connector.StreamTerminatedHandler.StreamTerminatedEvent;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -45,6 +33,12 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Abstract class for implementing BOSH connector.
@@ -272,7 +266,8 @@ public abstract class AbstractBoshConnector implements Connector {
 
 	@Override
 	public State getState() {
-		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		State state = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		return state == null ? State.disconnected : state;
 	}
 
 	@Override
@@ -308,6 +303,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		removeFromRequests(request);
 		if (log.isLoggable(Level.FINER))
 			log.log(Level.FINER, "responseCode=" + responseCode, caught);
+		if (getState() == State.disconnected)
+			return;
 		setStage(State.disconnected);
 		terminateAllWorkers();
 		fireOnError(responseCode, responseData, response, caught, context.getSessionObject());
@@ -506,6 +503,8 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void stop(boolean terminate) throws XMLException, JaxmppException {
 		State oldState = getState();
+		if (oldState == State.disconnected)
+			return;
 
 		setStage(State.disconnecting);
 		if (terminate)

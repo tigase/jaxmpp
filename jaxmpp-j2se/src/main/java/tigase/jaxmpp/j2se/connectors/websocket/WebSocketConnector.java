@@ -81,13 +81,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 			@Override
 			public void onSeeOtherHost(String seeHost, MutableBoolean handled) {
-				try {
-					WebSocketConnector.this.context.getSessionObject().setUserProperty(
-							AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
-					start();
-				} catch (JaxmppException ex) {
-					log.log(Level.SEVERE, "exception on see-other-host reconnection", ex);
-				}
+				WebSocketConnector.this.context.getSessionObject().setUserProperty(
+						AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
 			}
 		});
 	}
@@ -249,7 +244,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	@Override
 	public void send(final String data) throws JaxmppException {
-		if (getState() == State.connected || getState() == State.connecting) {
+		if (getState() == State.connected || getState() == State.connecting || getState() == State.disconnecting) {
 			send(data.getBytes(UTF_CHARSET));
 		} else {
 			throw new JaxmppException("Not connected");
