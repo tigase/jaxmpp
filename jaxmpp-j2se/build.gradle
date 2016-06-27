@@ -20,6 +20,6 @@ dependencies {
     compile project(':jaxmpp-roster')
     compile project(':jaxmpp-presence')
     compile project(':jaxmpp-registration')
-    compile 'tigase:tigase-xmltools:3.4.5'
+    compile 'tigase:tigase-xmltools:3.5.0-SNAPSHOT'
     compile 'dnsjava:dnsjava:2.1.7'
 }

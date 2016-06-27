@@ -129,7 +129,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 	 * @param name
 	 */
 	@Override
-	public void endElement(StringBuilder name) {
+	public boolean endElement(StringBuilder name) {
 		if (log.isLoggable(Level.FINEST)) {
 			log.finest("End element name: " + name);
 		}
@@ -139,7 +139,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 		if (tmp_name.equals(ELEM_STREAM_STREAM)) {
 			service.xmppStreamClosed();
 
-			return;
+			return true;
 		} // end of if (tmp_name.equals(ELEM_STREAM_STREAM))
 
 		if (el_stack.isEmpty()) {
@@ -157,6 +157,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 		} else {
 			el_stack.peek().addChild(elem);
 		} // end of if (el_stack.isEmpty()) else
+		return true;
 	}
 
 	/**
