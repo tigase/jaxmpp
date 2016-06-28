@@ -1,0 +1,26 @@
+apply plugin: 'java'
+
+sourceCompatibility = defaultSourceCompatibility
+targetCompatibility = defaultTargetCompatibility
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile project(':jaxmpp-core')
+    compile project(':jaxmpp-socks5')
+    compile project(':jaxmpp-jingle')
+    compile project(':jaxmpp-filetransfer')
+    compile project(':jaxmpp-roster')
+    compile project(':jaxmpp-presence')
+    compile project(':jaxmpp-chat')
+    compile project(':jaxmpp-muc')
+    compile project(':jaxmpp-j2se')
+    compile project(':jaxmpp-registration')
+}
