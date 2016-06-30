@@ -299,6 +299,35 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	}
 
 	/**
+	 * Sends own presence.
+	 *
+	 * @param show     presence substate.
+	 * @param status   human readable description of status.
+	 * @param priority priority.
+	 */
+	public void sentDirectPresence(JID jid, Show show, String status, Integer priority) throws JaxmppException {
+		Presence presence = Presence.create();
+
+		if (jid != null) {
+			presence.setTo(jid);
+		}
+		if (Show.offline.equals(show)) {
+			presence.setType(StanzaType.unavailable);
+		}
+		if (show != null && !Show.offline.equals(show)) {
+			presence.setShow(show);
+		}
+		if (status != null) {
+			presence.setStatus(status);
+		}
+		if (priority != null) {
+			presence.setPriority(priority);
+		}
+
+		write(presence);
+	}
+
+	/**
 	 * Subscribe for presence.
 	 *
 	 * @param jid JID

@@ -49,6 +49,10 @@ public class Presence extends Stanza {
 		 */
 		online(4),
 		/**
+		 * The entity or resource is offline and unavailable.
+		 */
+		offline(0),
+		/**
 		 * The entity or resource is away for an extended period (xa =
 		 * "eXtended Away").
 		 */
