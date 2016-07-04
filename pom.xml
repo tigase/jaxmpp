@@ -16,6 +16,7 @@
 		<sign-storepass>storepass</sign-storepass>
 		<sign-keypass>keypass</sign-keypass>
 		<sign-skip>true</sign-skip>
+		<verbose-log>false</verbose-log>
 	</properties>
 
 	<inceptionYear>2006</inceptionYear>
@@ -225,7 +226,7 @@
 					<alias>${sign-alias}</alias>
 					<storepass>${sign-storepass}</storepass>
 					<keypass>${sign-keypass}</keypass>
-					<!--<verbose>true</verbose>-->
+					<verbose>${verbose-log}</verbose>
 				</configuration>
 			</plugin>
 		</plugins>
