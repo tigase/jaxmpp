@@ -107,6 +107,10 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	}
 
 	public void acceptFile(FileTransfer ft) throws JaxmppException {
+		if (ft.getFile() == null) {
+			fireOnFailure(ft);
+			throw new JaxmppException("Destination file not set! Cannot accept file transfer without destination file!");
+		}
 		ft.setIncoming(true);
 
 		ft.getNegotiator().acceptFile(jaxmpp, ft);
