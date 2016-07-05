@@ -17,29 +17,7 @@
  */
 package tigase.jaxmpp.j2se.filetransfer;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
-import tigase.jaxmpp.core.client.Property;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -56,10 +34,15 @@ import tigase.jaxmpp.core.client.xmpp.modules.socks5.Socks5BytestreamsModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.j2se.J2SECapabiliesCache;
-import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.J2SEStreamhostsResolver;
 import tigase.jaxmpp.j2se.connection.socks5bytestream.StreamhostsResolver;
+
+import java.io.*;
+import java.net.Socket;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -225,6 +208,10 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
 
 	public void acceptFile(FileTransfer ft) throws JaxmppException {
+		if (ft.getFile() == null) {
+			fireOnFailure(ft);
+			throw new JaxmppException("Destination file not set! Cannot accept file transfer without destination file!");
+		}
 		ft.setIncoming(true);
 
 		ft.getNegotiator().acceptFile(jaxmpp, ft);
