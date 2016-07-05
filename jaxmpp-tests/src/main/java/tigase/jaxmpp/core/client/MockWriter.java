@@ -17,10 +17,10 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.ArrayList;
-
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
+
+import java.util.ArrayList;
 
 public class MockWriter implements PacketWriter {
 

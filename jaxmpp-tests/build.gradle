@@ -3,6 +3,12 @@ apply plugin: 'java'
 sourceCompatibility = defaultSourceCompatibility
 targetCompatibility = defaultTargetCompatibility
 
+jar {
+    from('src/main/java') {
+        include '**/*'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -12,7 +18,6 @@ publishing {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile project(':jaxmpp-core')
-    testCompile project(':jaxmpp-tests')
+    compile 'junit:junit:4.12'
 }

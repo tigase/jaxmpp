@@ -1,8 +1,8 @@
 package tigase.jaxmpp.core.client;
 
-import java.util.HashMap;
-
 import tigase.jaxmpp.core.client.eventbus.EventBus;
+
+import java.util.HashMap;
 //import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 //import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterModule;
 //import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterStore;

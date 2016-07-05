@@ -23,13 +23,13 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Representation of Presence stanza.
- * 
+ *
  */
 public class Presence extends Stanza {
 
 	/**
 	 * Availability sub-state
-	 * 
+	 *
 	 */
 	public static enum Show {
 		/**
@@ -72,7 +72,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Creates new instance of stanza.
-	 * 
+	 *
 	 * @return {@linkplain Presence}
 	 */
 	public static Presence create() throws JaxmppException {
@@ -101,7 +101,7 @@ public class Presence extends Stanza {
 	 * Returns nickname. Nickname is defined in <a
 	 * href='http://xmpp.org/extensions/xep-0172.html'>XEP-0172: User
 	 * Nickname</a>.
-	 * 
+	 *
 	 * @return nickname or <code>null</code> if not present.
 	 */
 	public String getNickname() throws XMLException {
@@ -116,7 +116,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Returns priority level of resource.
-	 * 
+	 *
 	 * @return priority level.
 	 */
 	public Integer getPriority() throws XMLException {
@@ -137,7 +137,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Return avaiability substate.
-	 * 
+	 *
 	 * @return {@linkplain Show}
 	 */
 	public Show getShow() throws XMLException {
@@ -146,7 +146,9 @@ public class Presence extends Stanza {
 
 		String x = getChildElementValue("show");
 		final Show show;
-		if (x == null)
+		if(getType()==StanzaType.unavailable)
+			return Show.offline;
+		else if (x == null)
 			show = Show.online;
 		else
 			show = Show.valueOf(x);
@@ -156,7 +158,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Returns natural-language description of an entity's availability.
-	 * 
+	 *
 	 * @return status
 	 */
 	public String getStatus() throws XMLException {
@@ -172,7 +174,7 @@ public class Presence extends Stanza {
 	 * Sets nickname. Nickname is defined in <a
 	 * href='http://xmpp.org/extensions/xep-0172.html'>XEP-0172: User
 	 * Nickname</a>.
-	 * 
+	 *
 	 * @param nickname
 	 *            nickname
 	 */
@@ -182,7 +184,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Sets priority level of resource.
-	 * 
+	 *
 	 * @param value
 	 * @throws XMLException
 	 */
@@ -192,13 +194,16 @@ public class Presence extends Stanza {
 
 	/**
 	 * Sets avaiability sub-state.
-	 * 
+	 *
 	 * @param show
 	 *            {@linkplain Show}
 	 * @throws XMLException
 	 */
 	public void setShow(Show show) throws XMLException {
-		if (show == null || show == Show.online)
+		if (show == null || show == Show.offline) {
+			setChildElementValue("show", null);
+			setType(StanzaType.unavailable);
+		} else if (show == null || show == Show.online)
 			setChildElementValue("show", null);
 		else
 			setChildElementValue("show", show.name());
@@ -206,7 +211,7 @@ public class Presence extends Stanza {
 
 	/**
 	 * Sets natural-language description of an entity's availability.
-	 * 
+	 *
 	 * @param status
 	 *            description
 	 * @throws XMLException

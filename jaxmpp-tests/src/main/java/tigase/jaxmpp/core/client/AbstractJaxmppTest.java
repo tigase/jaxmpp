@@ -1,14 +1,13 @@
 package tigase.jaxmpp.core.client;
 
 import junit.framework.TestCase;
-
 import org.junit.Before;
-
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
 import tigase.jaxmpp.core.client.eventbus.EventBus;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
 import tigase.jaxmpp.core.client.xmpp.stream.XmppStreamsManager;
+
 
 public abstract class AbstractJaxmppTest extends TestCase {
 
