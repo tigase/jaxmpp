@@ -334,7 +334,9 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			sessions.remove(hash);
 
 			if (sessions.isEmpty()) {
-				server.shutdown();
+				if (server != null) {
+					server.shutdown();
+				}
 			}
 		}
 	}
