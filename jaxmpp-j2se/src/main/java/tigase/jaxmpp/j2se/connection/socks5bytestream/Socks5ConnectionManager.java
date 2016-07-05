@@ -17,21 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -48,6 +33,21 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.j2se.connection.ConnectionManager;
 import tigase.jaxmpp.j2se.filetransfer.FileTransfer;
 import tigase.jaxmpp.j2se.filetransfer.FileTransferManager;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -334,7 +334,9 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			sessions.remove(hash);
 
 			if (sessions.isEmpty()) {
-				server.shutdown();
+				if (server != null) {
+					server.shutdown();
+				}
 			}
 		}
 	}
