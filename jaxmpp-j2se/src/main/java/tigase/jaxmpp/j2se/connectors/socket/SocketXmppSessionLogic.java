@@ -18,15 +18,32 @@
 package tigase.jaxmpp.j2se.connectors.socket;
 
 import tigase.jaxmpp.core.client.Context;
+import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.connector.AbstractSocketXmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
+import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 
 public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<SocketConnector> {
 
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, Context context) {
 		super(connector, modulesManager, context);
+	}
+
+	@Override
+	public void onStreamManagementFailed(SessionObject sessionObject, XMPPException.ErrorCondition condition) {
+		try {
+			PresenceStore store = PresenceModule.getPresenceStore(sessionObject);
+			if (store != null) {
+				store.clear();
+			}
+		} catch (JaxmppException e) {
+			e.printStackTrace();
+		}
+		super.onStreamManagementFailed(sessionObject, condition);
 	}
 
 	@Override

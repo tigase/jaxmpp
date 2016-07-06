@@ -33,18 +33,16 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 
-public class AbstractSocketXmppSessionLogic<T extends Connector> implements XmppSessionLogic {
+public class AbstractSocketXmppSessionLogic<T extends Connector> implements XmppSessionLogic, StreamManagementModule.StreamManagementFailedHandler, StreamManagementModule.StreamResumedHandler {
 
 	protected final T connector;
 	protected final Context context;
-	private final StreamManagementModule.StreamManagementFailedHandler streamResumeFailedHandler;
 	private final AuthFailedHandler authFailedHandler;
 	private final AuthSuccessHandler authSuccessHandler;
 	private final Connector.ErrorHandler connectorListener;
 	private final XmppModulesManager modulesManager;
 	private final SessionEstablishmentModule.SessionEstablishmentErrorHandler sessionEstablishmentErrorHandler;
 	private final SessionEstablishmentModule.SessionEstablishmentSuccessHandler sessionEstablishmentSuccessHandler;
-	private final StreamManagementModule.StreamResumedHandler smResumedListener;
 	private final StreamFeaturesReceivedHandler streamFeaturesEventListener;
 	private AuthModule authModule;
 	private StreamFeaturesModule featuresModule;
@@ -100,17 +98,6 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 				AbstractSocketXmppSessionLogic.this.processResourceBindEvent(sessionObject, bindedJid);
 			}
 		};
-		this.streamResumeFailedHandler = new StreamManagementModule.StreamManagementFailedHandler() {
-			@Override
-			public void onStreamManagementFailed(SessionObject sessionObject, ErrorCondition condition) {
-				try {
-					resourceBinder.bind();
-				} catch (JaxmppException e) {
-					e.printStackTrace();
-				}
-			}
-		};
-
 		this.sessionEstablishmentErrorHandler = new SessionEstablishmentModule.SessionEstablishmentErrorHandler() {
 
 			@Override
@@ -124,17 +111,6 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 			@Override
 			public void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException {
 				sessionBindedAndEstablished(sessionObject);
-			}
-		};
-
-		this.smResumedListener = new StreamManagementModule.StreamResumedHandler() {
-
-			@Override
-			public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
-				// sessionObject.clear(Scope.session);
-				// resourceBinder.bind();
-				AbstractSocketXmppSessionLogic.this.context.getEventBus().fire(
-						new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 			}
 		};
 	}
@@ -163,6 +139,21 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null)
 			context.getSessionObject().setProperty(SessionObject.DOMAIN_NAME,
 					((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain());
+	}
+
+	@Override
+	public void onStreamManagementFailed(SessionObject sessionObject, ErrorCondition condition) {
+		try {
+			resourceBinder.bind();
+		} catch (JaxmppException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException {
+		AbstractSocketXmppSessionLogic.this.context.getEventBus().fire(
+				new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 	}
 
 	protected void processAuthFailed(SaslError error) throws JaxmppException {
@@ -238,7 +229,7 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		if (StreamManagementModule.isStreamManagementAvailable(context.getSessionObject())) {
 			if (context.getSessionObject().getProperty(StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY) == null
 					|| !((Boolean) context.getSessionObject().getProperty(
-							StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
+					StreamManagementModule.STREAM_MANAGEMENT_DISABLED_KEY)).booleanValue()) {
 				StreamManagementModule streamManagement = this.modulesManager.getModule(StreamManagementModule.class);
 				streamManagement.enable();
 			}
@@ -263,10 +254,12 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		this.sessionEstablishmentModule.addSessionEstablishmentErrorHandler(sessionEstablishmentErrorHandler);
 		this.sessionEstablishmentModule.addSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
 
-		this.streamManaegmentModule.addStreamResumedHandler(smResumedListener);
+		this.context.getEventBus().addHandler(
+				StreamManagementModule.StreamResumedHandler.StreamResumedEvent.class,
+				this);
 		this.context.getEventBus().addHandler(
 				StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent.class,
-				streamResumeFailedHandler);
+				this);
 	}
 
 	@Override
@@ -280,8 +273,8 @@ public class AbstractSocketXmppSessionLogic<T extends Connector> implements Xmpp
 		this.sessionEstablishmentModule.removeSessionEstablishmentErrorHandler(sessionEstablishmentErrorHandler);
 		this.sessionEstablishmentModule.removeSessionEstablishmentSuccessHandler(sessionEstablishmentSuccessHandler);
 
-		this.streamManaegmentModule.removeStreamResumedHandler(smResumedListener);
-		this.context.getEventBus().remove(streamResumeFailedHandler);
+		this.context.getEventBus().remove(StreamManagementModule.StreamResumedHandler.StreamResumedEvent.class, this);
+		this.context.getEventBus().remove(StreamManagementModule.StreamManagementFailedHandler.StreamManagementFailedEvent.class, this);
 	}
 
 }
