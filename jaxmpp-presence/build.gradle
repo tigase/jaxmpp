@@ -14,5 +14,5 @@ publishing {
 dependencies {
     testCompile 'junit:junit:4.12'
     compile project(':jaxmpp-core')
-    testCompile project(':jaxmpp-tests')
+    testCompile project(':jaxmpp-core').sourceSets.test.output
 }
