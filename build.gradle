@@ -1,16 +1,39 @@
 subprojects {
     apply plugin: 'maven-publish'
-
-
+    apply plugin: 'signing'
 
     group = 'tigase'
     version = jaxmppVersion
+
+    signing {
+        sign configurations.archives
+    }
+
+    task signJar << {
+        description = "Signs JAR"
+        if (project.hasProperty('jar')) {
+            def config = loadProperties("sign.properties")
+            ant.signjar(jar: jar.archivePath,
+                    alias: config.sign_alias,
+                    keystore: config.sign_keystore,
+                    storepass: config.sign_storepass,
+                    keypass: config.sign_keypass)
+        }
+    }
 
     publishing {
         repositories {
             mavenLocal()
         }
     }
+}
+
+def loadProperties(propsFilename) {
+    def props = new Properties()
+    new File(propsFilename).withInputStream {
+        stream -> props.load(stream)
+    }
+    return new ConfigSlurper().parse(props)
 }
 
 allprojects {
