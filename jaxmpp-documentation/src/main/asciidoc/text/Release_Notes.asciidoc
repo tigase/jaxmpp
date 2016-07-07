@@ -1,0 +1,27 @@
+[[releaseNotes]]
+= JaXMPP V3.1.2 Release Notes
+:author: Daniel Wisnewski (daniel@tigase.org)
+:version: v3.1.2
+:date: 21-04-2016 11:00
+
+:toc:
+:numbered:
+:website: http://www.tigase.org
+
+Tigase JaXMPP v3.1.2 has been released!  Please review the change notes below to see what has changed since our last release.
+
+== Changes
+- Tigase-XMLtools upgraded to v3.5.0.
+- Offical JDK v8 support.
+- link:https://projects.tigase.org/issues/4280[#4280] Support for link:https://xmpp.org/extensions/xep-0352.html[XEP-0352 Client State Indication] has been added.
+- link:https://projects.tigase.org/issues/4288[#4288] Support for Direct Presence has been added.
+- jaxmpp-samples folder has been updated with a number of new samples.
+
+== Fixes
+
+- link:https://projects.tigase.org/issues/4266[#4266] Fixed issue where disconnection would not close session and disallow reconnection.
+- link:https://projects.tigase.org/issues/4291[#4291] Fixed error where unavailable presence would display as online.
+- link:https://projects.tigase.org/issues/4317[#4317] Fixed NPE when receiver is not connected in SOCKS5 file transfer.
+- link:https://projects.tigase.org/issues/4318[#4318] Fixed NPE on receiver's end when using SOCKS5 file transfer.
+- Fixed NPE from detached Connectors.
+- Fixed clearing of presences when stream resumption fails.
