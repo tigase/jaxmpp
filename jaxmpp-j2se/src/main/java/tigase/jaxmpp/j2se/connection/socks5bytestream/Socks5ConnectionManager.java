@@ -129,7 +129,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			case WelcomeServ:
 				byte ver1 = buf.get();
 				if (ver1 != 0x05) {
-					log.warning("bad protocol version! ver = " + ver1);
+					log.fine("bad protocol version! ver = " + ver1);
 					socket.close();
 					return State.Closed;
 				} else {
@@ -166,7 +166,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					log.finest("for Command read = " + buf.remaining());
 				}
 				if (buf.get() != 0x05) {
-					log.warning("bad protocol version!");
+					log.fine("bad protocol version!");
 					socket.close();
 					return State.Closed;
 				}
@@ -229,7 +229,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 				int ver = buf.get();
 				if (ver != 0x05) {
-					log.warning("bad protocol version!");
+					log.fine("bad protocol version!");
 					socket.close();
 					return State.Closed;
 				}
@@ -245,7 +245,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					log.finest("for AUTH response read = " + buf.remaining());
 				}
 				if (buf.get() != 0x05) {
-					log.warning("bad protocol version!");
+					log.fine("bad protocol version!");
 				}
 
 				// let's ignore response for now
@@ -260,7 +260,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				break;
 
 			default:
-				log.log(Level.WARNING, "wrong state, buffer has remainging = {0}", buf.remaining());
+				log.log(Level.FINE, "wrong state, buffer has remainging = {0}", buf.remaining());
 				buf.clear();
 			}
 			if (log.isLoggable(Level.FINEST)) {
@@ -311,7 +311,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			int len = out.remaining();
 			int wrote = socket.write(out);
 			if (out.hasRemaining()) {
-				log.log(Level.WARNING, "we wrote to stream = {0} but we have remaining = {1}",
+				log.log(Level.FINE, "we wrote to stream = {0} but we have remaining = {1}",
 						new Object[] { wrote, out.remaining() });
 			}
 		}
@@ -503,7 +503,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				buf.flip();
 			} else {
 				if (!buf.hasRemaining()) {
-					if (log.isLoggable(Level.WARNING)) {
+					if (log.isLoggable(Level.FINE)) {
 						log.warning("no space to read from socket!!");
 					}
 
@@ -573,7 +573,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 
 	protected void proxyDiscoveryError(JaxmppCore jaxmpp, ConnectionSession ft, InitializedCallback callback,
 			String errorText) {
-		log.log(Level.WARNING, "error during Socks5 proxy discovery = {0}", errorText);
+		log.log(Level.FINE, "error during Socks5 proxy discovery = {0}", errorText);
 		ft.setData(PROXY_JID_KEY, null);
 		callback.initialized(jaxmpp, ft);
 	}
@@ -591,7 +591,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		if (jaxmpp == null) {
 			log.severe("no jaxmpp instance!!");
 		} else if (session.getPeer() == null) {
-			log.severe("no peer");
+			log.fine("no peer");
 		}
 		jaxmpp.getModule(Socks5BytestreamsModule.class).requestActivate(usedProxyJid, session.getSid(), session.getPeer(),
 				new ActivateCallback() {
@@ -702,7 +702,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 							clearSessions();
 						}
 					} catch (Exception ex) {
-						log.log(Level.WARNING, "problem with closing server socket", ex);
+						log.log(Level.FINEST, "problem with closing server socket", ex);
 					}
 				}
 			};
@@ -718,10 +718,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 					SocketChannel socketChannel = serverSocket.accept();
 					new IncomingConnectionHandlerThread(socketChannel).start();
 				} catch (ClosedChannelException ex) {
-					log.log(Level.SEVERE, null, ex);
+					log.log(Level.FINEST, "Socket already closed, when we tried to accept connection", ex);
 					// break;
 				} catch (IOException ex) {
-					log.log(Level.SEVERE, null, ex);
+					log.log(Level.FINEST, "Exception occurred while we tried to accept incoming connection", ex);
 				}
 			}
 		}
@@ -741,7 +741,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				try {
 					serverSocket.close();
 				} catch (IOException ex) {
-					log.log(Level.WARNING, "problem with closing server socket", ex);
+					log.log(Level.FINEST, "problem with closing server socket", ex);
 				}
 			}
 		}
