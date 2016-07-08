@@ -17,12 +17,6 @@
  */
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.JaxmppCore;
 import tigase.jaxmpp.core.client.SessionObject;
@@ -36,6 +30,11 @@ import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback;
 import tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostsCallback;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -136,9 +135,9 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 
 			@Override
 			public boolean onSuccess(Streamhost host) {
-				System.out.println("streamhost-used = " + host.getJid());
+				log.log(Level.FINEST, "streamhost-used = " + host.getJid());
 				if (host.getJid().equals(ResourceBinderModule.getBindedJID(ft.getSessionObject()))) {
-					System.out.println("streamhost-used = 'local'");
+					log.log(Level.FINEST, "streamhost-used = 'local'");
 					synchronized (ft) {
 						fireOnConnected(ft);
 //						Socket socket = ft.getData("socket");
