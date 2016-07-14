@@ -78,14 +78,23 @@ public class SocketConnector implements Connector {
 	/**
 	 * Socket timeout.
 	 */
-	public static final int SOCKET_TIMEOUT = 1000 * 60 * 3;
+	public static final int DEFAULT_SOCKET_TIMEOUT = 1000 * 60 * 3;
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
+	/**
+	 * Property to specify custom {@link Socket#setSoTimeout(int) socket timeout} for SSL Socket. Default is <code>0</code>.
+	 */
+	public static final String SSL_SOCKET_TIMEOUT_KEY = "SSL_SOCKET_TIMEOUT_KEY";
+	/**
+	 * Property to specify custom {@linkplain Socket#setSoTimeout(int) socket timeout} for Plain Socket. Default is {@link SocketConnector#DEFAULT_SOCKET_TIMEOUT 180000 ms}.
+	 */
+	public static final String PLAIN_SOCKET_TIMEOUT_KEY = "PLAIN_SOCKET_TIMEOUT_KEY";
 	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
+	public static final String KEEP_ALIVE_DELAY_KEY = "KEEP_ALIVE_DELAY_KEY";
 	private final Object ioMutex = new Object();
 	private final Logger log;
 
@@ -207,6 +216,19 @@ public class SocketConnector implements Connector {
 			return State.disconnected;
 		State st = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		return st == null ? State.disconnected : st;
+	}
+
+	/**
+	 * Returns timeout value.
+	 *
+	 * @param propertyName name of property
+	 * @param defaultValue default value if property is <code>null</code>.
+	 * @return timeout value or <code>null</code> if value is less than 0.
+	 */
+	protected Integer getTimeout(String propertyName, int defaultValue) {
+		Integer v = context.getSessionObject().getProperty(propertyName);
+		int result = v == null ? defaultValue : v.intValue();
+		return result < 0 ? null : result;
 	}
 
 	/**
@@ -338,9 +360,11 @@ public class SocketConnector implements Connector {
 			// || !((Boolean)
 			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
 			// {
-			// s1.setSoTimeout(SOCKET_TIMEOUT);
+			// s1.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
 			// }
-			s1.setSoTimeout(0);
+			Integer sslSoTimeout = getTimeout(SSL_SOCKET_TIMEOUT_KEY, 0);
+			if (sslSoTimeout != null)
+				s1.setSoTimeout(sslSoTimeout);
 			s1.setKeepAlive(false);
 			s1.setTcpNoDelay(true);
 			s1.setUseClientMode(true);
@@ -651,9 +675,11 @@ public class SocketConnector implements Connector {
 			// || ((Boolean)
 			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
 			// {
-			// socket.setSoTimeout(SOCKET_TIMEOUT);
+			// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
 			// }
-			socket.setSoTimeout(SOCKET_TIMEOUT);
+			Integer soTimeout = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+			if (soTimeout != null)
+				socket.setSoTimeout(soTimeout);
 			socket.setKeepAlive(false);
 			socket.setTcpNoDelay(true);
 			// writer = new BufferedOutputStream(socket.getOutputStream());
@@ -716,14 +742,19 @@ public class SocketConnector implements Connector {
 					}.start();
 				}
 			};
-			long delay = SOCKET_TIMEOUT - 1000 * 5;
-
-			if (log.isLoggable(Level.CONFIG))
-				log.config("Whitespace ping period is setted to " + delay + "ms");
 
 			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
 					|| ((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
-				timer.schedule(pingTask, delay, delay);
+				Integer defaultDelay = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+				defaultDelay = defaultDelay == null ? -1 : defaultDelay - 1000 * 5;
+
+				Integer delay = getTimeout(KEEP_ALIVE_DELAY_KEY, defaultDelay);
+
+				if (log.isLoggable(Level.CONFIG))
+					log.config("Whitespace ping period is setted to " + delay + "ms");
+
+				if (delay != null)
+					timer.schedule(pingTask, delay, delay);
 			}
 
 			fireOnConnected(context.getSessionObject());

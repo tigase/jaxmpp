@@ -47,7 +47,6 @@ import java.util.logging.Level;
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
 
 /**
- *
  * @author andrzej
  */
 public class WebSocketConnector extends AbstractWebSocketConnector {
@@ -59,6 +58,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	private static final byte[] HTTP_RESPONSE_101 = "HTTP/1.1 101 ".getBytes(UTF_CHARSET);
 
 	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+	/**
+	 * Property to specify custom {@linkplain Socket#setSoTimeout(int) socket timeout} for Socket. Default is {@link SocketConnector#DEFAULT_SOCKET_TIMEOUT 180000 ms}.
+	 */
+	private static final String WEB_SOCKET_TIMEOUT_KEY = "WEB_SOCKET_TIMEOUT_KEY";
 
 	private final Object ioMutex = new Object();
 	private TimerTask pingTask;
@@ -85,6 +88,17 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
 			}
 		});
+	}
+
+	private void closeSocket() {
+		if (socket.isConnected()) {
+			try {
+				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
+				socket.close();
+			} catch (IOException ex) {
+				log.log(Level.FINEST, "Problem with closing socket", ex);
+			}
+		}
 	}
 
 	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
@@ -127,34 +141,34 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			for (int i = 0; i < read; i++) {
 				byte b = buffer[i];
 				switch (b) {
-				case ':':
-					if (key == null) {
-						key = sb.toString();
-						sb = new StringBuilder(64);
-						i++;
-					} else {
-						sb.append((char) b);
-					}
-					eol = false;
-					break;
-				case '\n':
-					break;
-				case '\r':
-					if (eol) {
-						headersRead = true;
+					case ':':
+						if (key == null) {
+							key = sb.toString();
+							sb = new StringBuilder(64);
+							i++;
+						} else {
+							sb.append((char) b);
+						}
+						eol = false;
 						break;
-					}
-					if (key != null) {
-						headers.put(key.trim(), sb.toString().trim());
-						key = null;
-					}
-					sb = new StringBuilder(64);
-					eol = true;
-					break;
-				default:
-					sb.append((char) b);
-					eol = false;
-					break;
+					case '\n':
+						break;
+					case '\r':
+						if (eol) {
+							headersRead = true;
+							break;
+						}
+						if (key != null) {
+							headers.put(key.trim(), sb.toString().trim());
+							key = null;
+						}
+						sb = new StringBuilder(64);
+						eol = true;
+						break;
+					default:
+						sb.append((char) b);
+						eol = false;
+						break;
 				}
 				if (headersRead)
 					break;
@@ -221,7 +235,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					writer.write(bbuf.array(), 0, bbuf.remaining());
 					writer.write(mask, 0, 4);
 
-					for (int i=0; i<buffer.length; i++) {
+					for (int i = 0; i < buffer.length; i++) {
 						buffer[i] = (byte) (buffer[i] ^ mask[i % 4]);
 					}
 					// send actual data
@@ -302,7 +316,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				socket = new Socket();
 			}
 
-			socket.setSoTimeout(SOCKET_TIMEOUT);
+			Integer soTimeout = getTimeout(WEB_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+			if (soTimeout != null)
+				socket.setSoTimeout(soTimeout);
 			socket.setKeepAlive(false);
 			socket.setTcpNoDelay(true);
 			socket.connect(new InetSocketAddress(x, port));
@@ -343,7 +359,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			// || ((Boolean)
 			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
 			// {
-			// socket.setSoTimeout(SOCKET_TIMEOUT);
+			// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
 			// }
 			// writer = new BufferedOutputStream(socket.getOutputStream());
 			writer = socket.getOutputStream();
@@ -409,14 +425,18 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					}.start();
 				}
 			};
-			long delay = SOCKET_TIMEOUT - 1000 * 5;
-
-			if (log.isLoggable(Level.CONFIG))
-				log.config("Whitespace ping period is setted to " + delay + "ms");
-
 			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
 					|| ((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
-				timer.schedule(pingTask, delay, delay);
+				Integer defaultDelay = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+				defaultDelay = defaultDelay == null ? -1 : defaultDelay - 1000 * 5;
+
+				Integer delay = getTimeout(SocketConnector.KEEP_ALIVE_DELAY_KEY, defaultDelay);
+
+				if (log.isLoggable(Level.CONFIG))
+					log.config("Whitespace ping period is setted to " + delay + "ms");
+
+				if (delay != null)
+					timer.schedule(pingTask, delay, delay);
 			}
 
 			fireOnConnected(context.getSessionObject());
@@ -491,17 +511,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		} catch (Exception e) {
 			log.log(Level.WARNING, "Cannot terminate worker correctly", e);
-		}
-	}
-
-	private void closeSocket() {
-		if (socket.isConnected()) {
-			try {
-				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
-				socket.close();
-			} catch (IOException ex) {
-				log.log(Level.FINEST, "Problem with closing socket", ex);
-			}
 		}
 	}
 }
