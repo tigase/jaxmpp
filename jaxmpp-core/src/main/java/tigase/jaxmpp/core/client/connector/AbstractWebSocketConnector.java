@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * @author andrzej
  */
 public abstract class AbstractWebSocketConnector implements Connector {
@@ -89,6 +88,19 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	@Override
 	public Connector.State getState() {
 		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+	}
+
+	/**
+	 * Returns timeout value.
+	 *
+	 * @param propertyName name of property
+	 * @param defaultValue default value if property is <code>null</code>.
+	 * @return timeout value or <code>null</code> if value is less than 0.
+	 */
+	protected Integer getTimeout(String propertyName, int defaultValue) {
+		Integer v = context.getSessionObject().getProperty(propertyName);
+		int result = v == null ? defaultValue : v.intValue();
+		return result < 0 ? null : result;
 	}
 
 	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
@@ -162,7 +174,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		if (getState() == State.disconnecting || getState() == State.disconnected) {
 			return;
 		}
-		
+
 		setStage(State.disconnecting);
 		try {
 			terminateStream();
@@ -296,7 +308,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		if (rfcCompatible == null)
 			rfcCompatible = false;
 	}
-	
+
 	@Override
 	public void stop() throws JaxmppException {
 		if (getState() == State.disconnected)
