@@ -137,6 +137,42 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.codehaus.gmaven</groupId>
+				<artifactId>gmaven-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>gitver</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<providerSelection>2.0</providerSelection>
+							<properties>
+								<script>git rev-list HEAD --count</script>
+							</properties>
+							<source>
+								def version
+								try {
+								def command = project.properties.script
+								def process = command.execute()
+								process.waitFor()
+
+								version = process.in.text.trim()
+								} catch (Exception e) {
+								version = '0'
+								}
+								println "setting revision to: " + version
+
+								project.properties.setProperty( 'gitVersion' , version )
+
+							</source>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
 				<version>2.5.2</version>
 				<configuration>
@@ -195,6 +231,7 @@
 							<reportOutputDirectory>docs/javadoc</reportOutputDirectory>
 							<destDir>docs/javadoc</destDir>
 							<additionalparam>-Xdoclint:none</additionalparam>
+							<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
 						</configuration>
 					</execution>
 				</executions>

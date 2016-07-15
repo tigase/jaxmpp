@@ -160,7 +160,7 @@
 									<descriptor>src/main/assembly/dist.xml</descriptor>
 								</descriptors>
 								<tarLongFileMode>gnu</tarLongFileMode>
-								<finalName>${project.artifactId}-${project.version}</finalName>
+								<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
 								<outputDirectory>dist</outputDirectory>
 								<appendAssemblyId>false</appendAssemblyId>
 							</configuration>
