@@ -52,13 +52,14 @@
 			<optional>true</optional>
 		</dependency>	
 		<dependency>
-			<groupId>tigase</groupId>
-			<artifactId>tigase-xmltools</artifactId>
-			<version>3.4.5</version>
-		</dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jaxmpp-chat</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>	
 		<dependency>
 			<groupId>tigase</groupId>
-			<artifactId>jaxmpp-chat</artifactId>
+			<artifactId>tigase-xmltools</artifactId>
 			<version>3.4.5</version>
 		</dependency>
 		<dependency>
