@@ -28,11 +28,6 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>tigase</groupId>
-			<artifactId>tigase-xmltools</artifactId>
-			<version>3.4.5</version>
-		</dependency>
-		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-j2se</artifactId>
 			<version>${project.version}</version>
