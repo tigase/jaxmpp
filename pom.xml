@@ -55,6 +55,7 @@
 		<module>jaxmpp-deliveryreceipts</module>
 		<module>jaxmpp-pubsub</module>
 		<module>jaxmpp-adhoc</module>
+		<module>jaxmpp-mam</module>
 		<module>jaxmpp-filetransfer</module>
 		<module>jaxmpp-jingle</module>
 		<module>jaxmpp-socks5</module>

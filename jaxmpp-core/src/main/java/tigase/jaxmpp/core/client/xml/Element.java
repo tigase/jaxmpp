@@ -17,8 +17,10 @@
  */
 package tigase.jaxmpp.core.client.xml;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public interface Element {
 
@@ -33,7 +35,16 @@ public interface Element {
 	Element addChild(Element child) throws XMLException;
 
 	public Element findChild(String[] elemPath) throws XMLException;
-	
+
+	default <R> List<R> mapChildren(Function<Element, ? extends R> mapper) throws XMLException {
+		List<Element> children = getChildren();
+		List<R> results = new LinkedList<R>();
+		for (Element child : children) {
+			results.add(mapper.apply(child));
+		}
+		return results;
+	}
+
 	/**
 	 * Get this element as XML string.
 	 * 

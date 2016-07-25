@@ -19,6 +19,7 @@ package tigase.jaxmpp.core.client.xml;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Wrapper for {@linkplain Element} class.
@@ -202,6 +203,11 @@ public class ElementWrapper implements Element {
 	@Override
 	public int hashCode() {
 		return this.element.hashCode();
+	}
+
+	@Override
+	public <R> List<R> mapChildren(Function<Element, ? extends R> mapper) throws XMLException {
+		return this.element.mapChildren(mapper);
 	}
 
 	/**

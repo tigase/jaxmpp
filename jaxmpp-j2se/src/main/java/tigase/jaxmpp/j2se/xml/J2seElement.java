@@ -17,13 +17,15 @@
  */
 package tigase.jaxmpp.j2se.xml;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementComparator;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public class J2seElement implements Element {
 
