@@ -471,6 +471,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			// sending websocket close
 
 			//socket.close();
+		} else {
+			setStage(State.disconnected);
 		}
 
 		// it there a need for this?
