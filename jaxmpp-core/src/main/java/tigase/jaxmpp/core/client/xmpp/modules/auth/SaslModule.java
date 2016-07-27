@@ -57,13 +57,9 @@ public class SaslModule implements XmppModule, ContextAware {
 	public SaslModule() {
 		log = Logger.getLogger(this.getClass().getName());
 
-		this.mechanisms.put("ANONYMOUS", new AnonymousMechanism());
-		this.mechanisms.put("PLAIN", new PlainMechanism());
-		this.mechanisms.put("X-OAUTH2", new XOAuth2Mechanism());
-
-		this.mechanismsOrder.add("X-OAUTH2");
-		this.mechanismsOrder.add("PLAIN");
-		this.mechanismsOrder.add("ANONYMOUS");
+		addMechanism(new PlainMechanism());
+		addMechanism(new XOAuth2Mechanism());
+		addMechanism(new AnonymousMechanism());
 	}
 
 	public static List<String> getAllowedSASLMechanisms(SessionObject sessionObject) throws XMLException {
@@ -110,6 +106,7 @@ public class SaslModule implements XmppModule, ContextAware {
 	}
 
 	public ArrayList<String> getMechanismsOrder() {
+
 		return mechanismsOrder;
 	}
 

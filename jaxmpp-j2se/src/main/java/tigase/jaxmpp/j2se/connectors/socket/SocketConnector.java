@@ -50,6 +50,7 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.cert.Certificate;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,12 +90,14 @@ public class SocketConnector implements Connector {
 	 * Property to specify custom {@linkplain Socket#setSoTimeout(int) socket timeout} for Plain Socket. Default is {@link SocketConnector#DEFAULT_SOCKET_TIMEOUT 180000 ms}.
 	 */
 	public static final String PLAIN_SOCKET_TIMEOUT_KEY = "PLAIN_SOCKET_TIMEOUT_KEY";
+	public static final String KEEP_ALIVE_DELAY_KEY = "KEEP_ALIVE_DELAY_KEY";
+	public static final String TLS_SESSION_ID_KEY = "TLS_SESSION_ID_KEY";
+	public static final String TLS_PEER_CERTIFICATE_KEY = "TLS_PEER_CERTIFICATE_KEY";
 	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
-	public static final String KEEP_ALIVE_DELAY_KEY = "KEEP_ALIVE_DELAY_KEY";
 	private final Object ioMutex = new Object();
 	private final Logger log;
 
@@ -339,16 +342,19 @@ public class SocketConnector implements Connector {
 			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 			TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
 			final SSLSocketFactory factory;
+			final SSLEngine sslEngine;
 			if (trustManagers == null) {
 				if (context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
 					factory = context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY);
 				} else {
 					factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				}
+				sslEngine = null;
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
 				ctx.init(getKeyManagers(), trustManagers, new SecureRandom());
 				factory = ctx.getSocketFactory();
+				sslEngine = ctx.createSSLEngine();
 			}
 
 			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(),
@@ -375,6 +381,16 @@ public class SocketConnector implements Connector {
 					log.info("TLS completed " + arg0);
 					context.getSessionObject().setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
 					context.getEventBus().fire(new EncryptionEstablishedEvent(context.getSessionObject()));
+
+					context.getSessionObject().setProperty(Scope.stream, TLS_SESSION_ID_KEY, arg0.getSession().getId());
+
+					try {
+						Certificate[] certs = arg0.getPeerCertificates();
+						Certificate peerCertificate = certs == null || certs.length == 0 ? null : certs[certs.length - 1];
+						context.getSessionObject().setProperty(Scope.stream, TLS_PEER_CERTIFICATE_KEY, peerCertificate);
+					} catch (Exception e) {
+						log.log(Level.WARNING, "Cannot extract peer certificate", e);
+					}
 				}
 			});
 			writer = null;

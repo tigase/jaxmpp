@@ -26,6 +26,8 @@ import tigase.jaxmpp.core.client.connector.StreamError;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramPlusMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
@@ -172,8 +174,7 @@ public class Jaxmpp extends JaxmppCore {
 	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
 	 * modules.
 	 *
-	 * @param executor
-	 *            executor
+	 * @param executor executor
 	 */
 	public void setExecutor(Executor executor) {
 		if (executor == null)
@@ -203,6 +204,12 @@ public class Jaxmpp extends JaxmppCore {
 		this.processor = new Processor(this.modulesManager, context);
 
 		modulesInit();
+
+		SaslModule saslModule = getModule(SaslModule.class);
+		if (saslModule != null) {
+			saslModule.addMechanism(new ScramMechanism(), true);
+			saslModule.addMechanism(new ScramPlusMechanism(), true);
+		}
 	}
 
 	// public FileTransferManager getFileTransferManager() {
@@ -265,9 +272,8 @@ public class Jaxmpp extends JaxmppCore {
 	/**
 	 * Connects to server.
 	 *
-	 * @param sync
-	 *            <code>true</code> to start method in sync mode. In sync mode
-	 *            whole connecting process will be done in this method.
+	 * @param sync <code>true</code> to start method in sync mode. In sync mode
+	 *             whole connecting process will be done in this method.
 	 */
 	public synchronized void login(boolean sync) throws JaxmppException {
 		synchronized (this) {
