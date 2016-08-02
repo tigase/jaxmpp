@@ -42,6 +42,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.RSM;
 
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -352,26 +353,24 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element prefs = responseStanza.getWrappedElement().getChildrenNS("prefs", MAM_XMLNS);
 			DefaultValue defValue = DefaultValue.valueOf(prefs.getAttribute("default"));
-			List<JID> always = prefs.getFirstChild("always").mapChildren(element -> {
-				try {
-					return JID.jidInstance(element.getValue());
-				} catch (XMLException ex) {
-					return null;
-				}
-			});
-			List<JID> never = prefs.getFirstChild("never").mapChildren(element -> {
-				try {
-					return JID.jidInstance(element.getValue());
-				} catch (XMLException ex) {
-					return null;
-				}
-			});
+			List<JID> always = mapChildrenToListOfJids(prefs.getFirstChild("always"));
+			List<JID> never = mapChildrenToListOfJids(prefs.getFirstChild("never"));
 			onSuccess(defValue, always, never);
 		}
 
 		public abstract void onSuccess(DefaultValue defValue, List<JID> always, List<JID> never) throws JaxmppException;
 
 	}
+
+	public static List<JID> mapChildrenToListOfJids(Element elem) throws XMLException {
+		List<Element> children = elem.getChildren();
+		List<JID> results = new LinkedList<>();
+		for (Element child : children) {
+			results.add(JID.jidInstance(child.getValue()));
+		}
+		return results;
+	}
+
 
 	public static enum DefaultValue {
 		always,
