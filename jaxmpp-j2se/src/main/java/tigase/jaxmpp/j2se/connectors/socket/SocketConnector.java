@@ -901,7 +901,6 @@ public class SocketConnector implements Connector {
 			String x = "</stream:stream>";
 			log.fine("Terminating XMPP Stream");
 			send(x.getBytes(UTF_CHARSET));
-			System.out.println(x);
 		} else
 			log.fine("Stream terminate not sent, because of connection state==" + state);
 	}
