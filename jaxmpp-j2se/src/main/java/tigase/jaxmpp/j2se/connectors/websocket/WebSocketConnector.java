@@ -465,6 +465,11 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				public void run() {
 					closeSocket();
 					closeTimer.cancel();
+					try {
+						setStage(State.disconnected);
+					} catch (JaxmppException ex) {
+						log.log(Level.FINEST, "Exception while updating connector state during connection close", ex);
+					}
 					closeTimer = null;
 				}
 			}, 3 * 1000);

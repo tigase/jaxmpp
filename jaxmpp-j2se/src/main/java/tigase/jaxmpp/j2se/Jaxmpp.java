@@ -344,6 +344,7 @@ public class Jaxmpp extends JaxmppCore {
 			}
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
+				sessionObject.setProperty(EXCEPTION_KEY, null);
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
 				throw r;
 			}
@@ -385,7 +386,7 @@ public class Jaxmpp extends JaxmppCore {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
+//			Jaxmpp.this.notify();
 			if (timer != null) {
 				timer.cancel();
 				timer = null;
