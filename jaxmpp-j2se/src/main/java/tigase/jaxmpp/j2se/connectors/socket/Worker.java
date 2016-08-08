@@ -113,7 +113,8 @@ public abstract class Worker extends Thread {
 				parser.parse(domHandler, buffer, 0, r);
 			}
 			// if (log.isLoggable(Level.FINEST))
-			log.finest(hashCode() + "Disconnecting: state=" + connector.getState() + "; buffer=" + r + "   " + this);
+			log.finest(hashCode() + " / Disconnecting: state=" + connector.getState() + "; isInterrupted():" + isInterrupted()
+					+ "; buffer=" + r + "   " + this);
 			if (!isInterrupted()) {
 				onStreamTerminate();
 			}
