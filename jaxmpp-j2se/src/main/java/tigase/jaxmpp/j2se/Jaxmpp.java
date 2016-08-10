@@ -104,21 +104,31 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void disconnect() throws JaxmppException {
-		disconnect(false);
+		disconnect(null);
 	}
 
-	public void disconnect(boolean snc) throws JaxmppException {
+	public void disconnect(Boolean snc) throws JaxmppException {
 		disconnect(snc, true);
 	}
 
-	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
+	public void disconnect(Boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
 				Boolean sync = this.sessionObject.getProperty(SYNCHRONIZED_MODE);
-				sync = snc || (sync != null && sync);
-				Connector.DisconnectedHandler handler = null;
-				if (sync) {
-					handler = new Connector.DisconnectedHandler() {
+				if (snc != null) {
+					sync = snc;
+				} else {
+					sync = (sync != null && sync);
+				}
+
+				if (!sync) {
+					try {
+						this.connector.stop();
+					} catch (XMLException e) {
+						throw new JaxmppException(e);
+					}
+				} else {
+					Connector.DisconnectedHandler handler = new Connector.DisconnectedHandler() {
 						@Override
 						public void onDisconnected(SessionObject sessionObject) {
 							synchronized (Jaxmpp.this) {
@@ -126,19 +136,21 @@ public class Jaxmpp extends JaxmppCore {
 							}
 						}
 					};
+
 					this.eventBus.addHandler(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
-				}
-				try {
-					this.connector.stop();
-				} catch (XMLException e) {
-					throw new JaxmppException(e);
-				}
-				if (sync) {
+
 					synchronized (Jaxmpp.this) {
-						if (getConnector().getState() != Connector.State.disconnected)
-							Jaxmpp.this.wait();
+						try {
+							this.connector.stop();
+
+							if (getConnector().getState() != Connector.State.disconnected)
+								Jaxmpp.this.wait();
+						} catch (XMLException e) {
+							throw new JaxmppException(e);
+						} finally {
+							this.eventBus.remove(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
+						}
 					}
-					this.eventBus.remove(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
 				}
 			}
 		} catch (InterruptedException e) {
@@ -323,7 +335,6 @@ public class Jaxmpp extends JaxmppCore {
 
 		try {
 			this.sessionLogic.beforeStart();
-			this.connector.start();
 			this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
 			if (sync) {
 				loginTimeoutTask = new LoginTimeoutTask();
@@ -331,6 +342,8 @@ public class Jaxmpp extends JaxmppCore {
 				log.finest("Starting LoginTimeoutTask");
 				timer.schedule(loginTimeoutTask, delay == null ? 1000 * 60 * 5 : delay);
 				synchronized (Jaxmpp.this) {
+					this.connector.start();
+
 					Jaxmpp.this.wait();
 					log.finest("Waked up");
 					Jaxmpp.this.wait(512);
@@ -341,6 +354,8 @@ public class Jaxmpp extends JaxmppCore {
 					loginTimeoutTask.cancel();
 					loginTimeoutTask = null;
 				}
+			} else {
+				this.connector.start();
 			}
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
