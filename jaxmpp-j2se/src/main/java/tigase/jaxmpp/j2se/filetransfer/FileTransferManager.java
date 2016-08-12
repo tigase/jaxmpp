@@ -45,7 +45,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
  * @author andrzej
  */
 public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler,
@@ -166,7 +165,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 
 	@Override
 	public void onFileTransferNegotiationFailure(SessionObject sessionObject,
-			tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) throws JaxmppException {
+												 tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) throws JaxmppException {
 		FileTransfer ft = (FileTransfer) fileTransfer;
 		if (!ft.isIncoming()) {
 			FileTransferNegotiator oldNegotiator = ft.getNegotiator();
@@ -189,14 +188,14 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 
 	@Override
 	public void onFileTransferNegotiationReject(SessionObject sessionObject,
-			tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
+												tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
 		context.getEventBus().fire(
 				new FileTransferRejectedHandler.FileTransferRejectedEvent(sessionObject, (FileTransfer) fileTransfer));
 	}
 
 	@Override
 	public void onFileTransferNegotiationRequest(SessionObject sessionObject,
-			tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
+												 tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
 		context.getEventBus().fire(
 				new FileTransferRequestHandler.FileTransferRequestEvent(sessionObject, (FileTransfer) fileTransfer));
 	}
@@ -295,7 +294,7 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	}
 
 	private void startReceiving(final FileTransfer fileTransfer, final Socket socket) {
-		new Thread() {
+		Thread t = new Thread() {
 			@Override
 			public void run() {
 				try {
@@ -317,11 +316,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 					fireOnFailure(fileTransfer);
 				}
 			}
-		}.start();
+		};
+		t.setDaemon(true);
+		t.start();
 	}
 
 	private void startSending(final FileTransfer fileTransfer, final Socket socket) {
-		new Thread() {
+		Thread t = new Thread() {
 			@Override
 			public void run() {
 				try {
@@ -340,7 +341,9 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 					fireOnFailure(fileTransfer);
 				}
 			}
-		}.start();
+		};
+		t.setDaemon(true);
+		t.start();
 	}
 
 	private void transferData(FileTransfer ft, InputStream in, OutputStream out) throws IOException {

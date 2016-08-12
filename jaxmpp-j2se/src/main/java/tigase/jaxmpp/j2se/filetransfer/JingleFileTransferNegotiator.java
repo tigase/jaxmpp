@@ -45,7 +45,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
  * @author andrzej
  */
 public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract implements ConnectionSessionHandler,
@@ -53,14 +52,14 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		JingleModule.JingleSessionTerminateHandler, ConnectionManager.ConnectionEstablishedHandler {
 
 	public static final String JINGLE_FT_XMLNS = "urn:xmpp:jingle:apps:file-transfer:3";
-	private static final String[] FEATURES = { JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS };
+	private static final String[] FEATURES = {JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS};
 	private static final Logger log = Logger.getLogger(JingleFileTransferNegotiator.class.getCanonicalName());
 	private static final long TIMEOUT = 5 * 60 * 1000;
 	private static final String TRANSPORTS_KEY = "transports-key";
 	private static DateTimeFormat dateTimeFormat = new DateTimeFormat();
 	private final JingleSocks5BytestreamsConnectionManager connectionManager = new JingleSocks5BytestreamsConnectionManager(
 			this);
-	private final Timer timer = new Timer();
+	private final Timer timer = new Timer(true);
 	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String, FileTransfer>());
 
 	@Override
@@ -136,7 +135,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		FileTransfer ft = (FileTransfer) connectionSession;
 		if (log.isLoggable(Level.FINEST)) {
 			log.log(Level.FINEST, "got ft incoming = {0} with packet id = {1}",
-					new Object[] { ft.isIncoming(), ft.getData(Socks5ConnectionManager.PACKET_ID) });
+					new Object[]{ft.isIncoming(), ft.getData(Socks5ConnectionManager.PACKET_ID)});
 		}
 		// fire notification that connection is established
 		if (socket != null) {
@@ -146,7 +145,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public void onJingleSessionAccept(SessionObject sessionObject, JID sender, String sid, Element description,
-			List<Transport> transports, MutableBoolean handled) {
+									  List<Transport> transports, MutableBoolean handled) {
 		if (sessions.containsKey(sid)) {
 			handled.setValue(true);
 			log.log(Level.FINER, "jingle session accepted");
@@ -155,7 +154,7 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public void onJingleSessionInitiation(SessionObject sessionObject, JID sender, String sid, Element desc,
-			List<Transport> transports, MutableBoolean handled) {
+										  List<Transport> transports, MutableBoolean handled) {
 		try {
 			if (!JINGLE_FT_XMLNS.equals(desc.getXMLNS())) {
 				return;

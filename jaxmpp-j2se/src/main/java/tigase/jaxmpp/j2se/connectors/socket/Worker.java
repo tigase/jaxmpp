@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
 /**
- *
  * @author andrzej
  */
 public abstract class Worker extends Thread {
@@ -39,7 +38,7 @@ public abstract class Worker extends Thread {
 	private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
 
 	private final Connector connector;
-
+	private final Logger log = Logger.getLogger(Worker.class.getCanonicalName());
 	private final XMPPDomBuilderHandler domHandler = new XMPPDomBuilderHandler(new StreamListener() {
 
 		@Override
@@ -75,13 +74,12 @@ public abstract class Worker extends Thread {
 			onStreamStart(attribs);
 		}
 	});
-
-	private final Logger log = Logger.getLogger(Worker.class.getCanonicalName());
-
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 
 	public Worker(Connector connector) {
 		this.connector = connector;
+		setName("Socket-Worker-Thread");
+		setDaemon(true);
 	}
 
 	protected abstract Reader getReader();

@@ -32,7 +32,14 @@ import java.util.logging.Level;
 
 public class ThreadSafeEventBus extends DefaultEventBus {
 
-	private final Executor executor = Executors.newSingleThreadExecutor();
+	private static int threadCounter = 1;
+
+	private final Executor executor = Executors.newSingleThreadExecutor(r -> {
+		Thread t = new Thread(r);
+		t.setName("EventBus-Thread-" + (++threadCounter));
+		t.setDaemon(true);
+		return t;
+	});
 
 	@Override
 	protected List<EventHandler> createHandlersArray() {
@@ -70,6 +77,7 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 				}
 			};
 			executor.execute(r);
+//			r.run();
 		}
 
 	}

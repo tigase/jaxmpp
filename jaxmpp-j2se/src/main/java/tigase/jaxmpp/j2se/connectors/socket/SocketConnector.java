@@ -38,7 +38,6 @@ import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationMod
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.j2se.DNSResolver;
-import tigase.jaxmpp.j2se.Jaxmpp;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
 
 import javax.net.ssl.*;
@@ -521,8 +520,6 @@ public class SocketConnector implements Connector {
 			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
 			terminateAllWorkers();
 
-			Object x1 = this.context.getSessionObject().getProperty(Jaxmpp.SYNCHRONIZED_MODE);
-
 			this.context.getSessionObject().clear(SessionObject.Scope.stream);
 			this.context.getSessionObject().setProperty(SERVER_HOST, newHost);
 			worker = null;
@@ -530,7 +527,6 @@ public class SocketConnector implements Connector {
 			writer = null;
 
 			this.context.getSessionObject().setProperty(RECONNECTING_KEY, Boolean.TRUE);
-			this.context.getSessionObject().setProperty(Jaxmpp.SYNCHRONIZED_MODE, x1);
 
 			log.finest("Waiting for workers termination");
 
@@ -746,7 +742,7 @@ public class SocketConnector implements Connector {
 
 				@Override
 				public void run() {
-					new Thread() {
+					Thread t = new Thread() {
 						@Override
 						public void run() {
 							try {
@@ -755,7 +751,9 @@ public class SocketConnector implements Connector {
 								log.log(Level.SEVERE, "Can't ping!", e);
 							}
 						}
-					}.start();
+					};
+					t.setDaemon(true);
+					t.start();
 				}
 			};
 
@@ -855,7 +853,7 @@ public class SocketConnector implements Connector {
 			if (closeTimer != null) {
 				closeTimer.cancel();
 			}
-			closeTimer = new Timer();
+			closeTimer = new Timer(true);
 			closeTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -879,12 +877,12 @@ public class SocketConnector implements Connector {
 		}
 
 		// is there a need for this?
-		// try {
-		// if (worker != null)
-		// worker.interrupt();
-		// } catch (Exception e) {
-		// log.log(Level.FINEST, "Problem with interrupting w2", e);
-		// }
+		try {
+			if (worker != null)
+				worker.interrupt();
+		} catch (Exception e) {
+			log.log(Level.FINEST, "Problem with interrupting w2", e);
+		}
 		try {
 			if (timer != null)
 				timer.cancel();

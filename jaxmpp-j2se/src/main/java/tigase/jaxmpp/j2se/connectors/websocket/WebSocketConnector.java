@@ -413,7 +413,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 				@Override
 				public void run() {
-					new Thread() {
+					Thread t = new Thread("Keep-Alive-Thread") {
 						@Override
 						public void run() {
 							try {
@@ -422,7 +422,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 								log.log(Level.SEVERE, "Can't ping!", e);
 							}
 						}
-					}.start();
+					};
+					t.setDaemon(true);
+					t.start();
 				}
 			};
 			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
@@ -459,7 +461,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			if (closeTimer != null) {
 				closeTimer.cancel();
 			}
-			closeTimer = new Timer();
+			closeTimer = new Timer(true);
 			closeTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {

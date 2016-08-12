@@ -17,18 +17,17 @@
  */
 package tigase.jaxmpp.j2se.connectors.bosh;
 
-import java.net.URL;
-import java.util.logging.Level;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
+
+import java.net.URL;
+import java.util.logging.Level;
 
 public class BoshConnector extends AbstractBoshConnector {
 
@@ -43,7 +42,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	}
 
 	@Override
-	protected void processSendData(final Element element) throws XMLException, JaxmppException {
+	protected void processSendData(final Element element) throws JaxmppException {
 		BoshRequest worker = new BoshWorker(domHandler, parser, context.getSessionObject(), element) {
 
 			@Override
@@ -68,12 +67,13 @@ public class BoshConnector extends AbstractBoshConnector {
 
 		if (log.isLoggable(Level.FINEST))
 			log.finest("Send: " + element.getAsString());
-
-		(new Thread(worker)).start();
+		Thread t = new Thread(worker);
+		t.setDaemon(true);
+		t.start();
 	}
 
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		try {
 			String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
 			if (u == null)
