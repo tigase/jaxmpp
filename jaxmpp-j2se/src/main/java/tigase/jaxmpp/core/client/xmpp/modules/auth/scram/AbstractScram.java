@@ -11,6 +11,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AbstractSaslMe
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -137,12 +138,12 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 				StringBuilder clientFinalMessage = new StringBuilder();
 
 
-				StringBuilder cData = new StringBuilder();
-				cData.append(data.cb);
+				final ByteArrayOutputStream cData = new ByteArrayOutputStream();
+				cData.write(data.cb.getBytes());
 				if (data.bindData != null) {
-					cData.append(new String(data.bindData));
+					cData.write(data.bindData);
 				}
-				clientFinalMessage.append("c=").append(Base64.encode(cData.toString().getBytes(UTF_CHARSET))).append(',');
+				clientFinalMessage.append("c=").append(Base64.encode(cData.toByteArray())).append(',');
 				clientFinalMessage.append("r=").append(nonce);
 
 				data.authMessage = data.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessage.toString();
