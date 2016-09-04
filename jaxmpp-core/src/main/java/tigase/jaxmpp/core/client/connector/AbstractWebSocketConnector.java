@@ -87,7 +87,8 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	@Override
 	public Connector.State getState() {
-		return this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		State state = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		return state == null ? State.disconnected : state;
 	}
 
 	/**
