@@ -351,8 +351,8 @@ public class Jaxmpp extends JaxmppCore {
 		}
 		this.modulesManager.initIfRequired();
 
-		final Connector.State state = sessionObject.getProperty(Connector.CONNECTOR_STAGE_KEY);
-		if (state != null && state != Connector.State.disconnected) {
+		final Connector.State state = this.connectorWrapper.getState();
+		if (state != Connector.State.disconnected) {
 			log.info("Cannot login, because Connector.State is " + state);
 			throw new JaxmppException("Connector is not in disconnected state");
 		}
@@ -366,14 +366,18 @@ public class Jaxmpp extends JaxmppCore {
 
 		synchronized (this.connectorWrapper) {
 			if (this.connectorWrapper.getConnector() != null) {
-				log.info("Found previous instance of Connector. Killing!");
-				try {
-					this.connectorWrapper.stop(true);
-					Thread.sleep(1000);
-				} catch (Exception e) {
-					log.log(Level.WARNING, "Something goes wrong during killing previous connector!", e);
-				}
-				this.connectorWrapper.setConnector(null);
+				log.log(Level.FINEST, "Found previous instance of Connector = {0}", connectorWrapper.getConnector());
+				// There is no point in stopping old connector as it is not possible
+				// to reach this point if connector is not in disconnected state, but
+				// calling this code may in some cases lead to errors in further
+				// use of this Jaxmpp instance.
+//				try {
+//					this.connectorWrapper.stop(true);
+//					Thread.sleep(1000);
+//				} catch (Exception e) {
+//					log.log(Level.WARNING, "Something goes wrong during killing previous connector!", e);
+//				}
+//				this.connectorWrapper.setConnector(null);
 			}
 			this.connectorWrapper.setConnector(createConnector());
 		}
