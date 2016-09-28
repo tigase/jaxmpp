@@ -223,7 +223,6 @@
 						<id>attach-javadocs</id>
 						<phase>generate-resources</phase>
 						<goals>
-							<goal>aggregate</goal>
 							<goal>aggregate-jar</goal>
 						</goals>
 						<configuration>
