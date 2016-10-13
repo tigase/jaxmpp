@@ -44,6 +44,7 @@ import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 /**
@@ -55,15 +56,7 @@ public class Jaxmpp extends JaxmppCore {
 	public static final String CONNECTOR_TYPE = "connectorType";
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
-	private static final Executor DEFAULT_EXECUTOR = new Executor() {
-
-		@Override
-		public synchronized void execute(Runnable command) {
-			Thread t = new Thread(command);
-			t.setDaemon(true);
-			t.start();
-		}
-	};
+	private static final Executor DEFAULT_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	static {
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
