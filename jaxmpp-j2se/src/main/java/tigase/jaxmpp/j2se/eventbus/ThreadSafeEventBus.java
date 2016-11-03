@@ -17,10 +17,7 @@
  */
 package tigase.jaxmpp.j2se.eventbus;
 
-import tigase.jaxmpp.core.client.eventbus.DefaultEventBus;
-import tigase.jaxmpp.core.client.eventbus.Event;
-import tigase.jaxmpp.core.client.eventbus.EventHandler;
-import tigase.jaxmpp.core.client.eventbus.EventListener;
+import tigase.jaxmpp.core.client.eventbus.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 public class ThreadSafeEventBus extends DefaultEventBus {
@@ -59,6 +57,8 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 
 	@Override
 	protected void doFire(final Event<EventHandler> event, final ArrayList<EventHandler> handlers) {
+		AtomicInteger counter = (event instanceof JaxmppEventWithCallback) ? new AtomicInteger(handlers.size() + 1) : null;
+
 		for (final EventHandler eventHandler : handlers) {
 			Runnable r = new Runnable() {
 				@Override
@@ -73,6 +73,8 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 					} catch (Throwable e) {
 						if (log.isLoggable(Level.WARNING))
 							log.log(Level.WARNING, "", e);
+					} finally {
+						doFireEventRunAfter(counter, event);
 					}
 				}
 			};
@@ -80,5 +82,15 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 //			r.run();
 		}
 
+		doFireEventRunAfter(counter, event);
+	}
+
+	protected void doFireEventRunAfter(AtomicInteger counter, Event<EventHandler> event) {
+		if (counter != null && counter.decrementAndGet() == 0) {
+			JaxmppEventWithCallback.RunAfter run = ((JaxmppEventWithCallback<EventHandler>) event).getRunAfter();
+			if (run != null) {
+				executor.execute(() -> run.after(event));
+			}
+		}
 	}
 }

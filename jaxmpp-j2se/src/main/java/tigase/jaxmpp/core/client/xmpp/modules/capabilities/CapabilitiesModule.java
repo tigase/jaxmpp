@@ -17,13 +17,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
@@ -45,6 +38,13 @@ import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule.ContactCha
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
+
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.logging.Logger;
 
 public class CapabilitiesModule implements XmppModule, ContextAware, InitializingModule {
 
@@ -203,11 +203,13 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 			return;
 
 		if (presence != null) {
-			final Element c = ElementFactory.create("c", null, "http://jabber.org/protocol/caps");
-			c.setAttribute("hash", "sha-1");
-			c.setAttribute("node", getNodeName());
-			c.setAttribute("ver", ver);
-			presence.addChild(c);
+			synchronized (presence) {
+				final Element c = ElementFactory.create("c", null, "http://jabber.org/protocol/caps");
+				c.setAttribute("hash", "sha-1");
+				c.setAttribute("node", getNodeName());
+				c.setAttribute("ver", ver);
+				presence.addChild(c);
+			}
 		}
 	}
 

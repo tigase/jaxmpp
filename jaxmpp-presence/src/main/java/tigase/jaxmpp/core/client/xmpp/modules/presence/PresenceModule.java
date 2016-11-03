@@ -24,6 +24,7 @@ import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
+import tigase.jaxmpp.core.client.eventbus.JaxmppEventWithCallback;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
@@ -261,9 +262,13 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
 
-		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence));
-
-		write(presence);
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence, event ->  {
+			try {
+				write(event.presence);
+			} catch (JaxmppException ex) {
+				log.log(Level.WARNING, "Could not write stanza", ex);
+			}
+		}));
 	}
 
 	@Override
@@ -293,9 +298,14 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
 
-		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence));
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence, event ->  {
+			try {
+				write(event.presence);
+			} catch (JaxmppException ex) {
+				log.log(Level.WARNING, "Could not write stanza", ex);
+			}
+		}));
 
-		write(presence);
 	}
 
 	/**
@@ -371,12 +381,12 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 		void onBeforePresenceSend(SessionObject sessionObject, Presence presence) throws JaxmppException;
 
-		class BeforePresenceSendEvent extends JaxmppEvent<BeforePresenceSendHandler> {
+		class BeforePresenceSendEvent extends JaxmppEventWithCallback<BeforePresenceSendHandler> {
 
-			private Presence presence;
+			protected Presence presence;
 
-			public BeforePresenceSendEvent(SessionObject sessionObject, Presence presence) {
-				super(sessionObject);
+			public BeforePresenceSendEvent(SessionObject sessionObject, Presence presence, RunAfter<BeforePresenceSendEvent> runAfter) {
+				super(sessionObject, runAfter);
 				this.presence = presence;
 			}
 

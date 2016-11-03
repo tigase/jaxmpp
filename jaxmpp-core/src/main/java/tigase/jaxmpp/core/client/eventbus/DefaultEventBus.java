@@ -116,6 +116,13 @@ public class DefaultEventBus extends EventBus {
 			}
 		}
 
+		if (event instanceof JaxmppEventWithCallback) {
+			JaxmppEventWithCallback.RunAfter run = ((JaxmppEventWithCallback<EventHandler>) event).getRunAfter();
+			if (run != null) {
+				run.after(event);
+			}
+		}
+
 		if (!causes.isEmpty()) {
 			if (throwingExceptionOn)
 				throw new EventBusException(causes);
