@@ -595,6 +595,8 @@ public class SocketConnector implements Connector {
 	}
 
 	protected void setStage(State state) throws JaxmppException {
+		if (this.context == null)
+			return;
 		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
 		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
@@ -848,8 +850,10 @@ public class SocketConnector implements Connector {
 					}
 					context = null;
 					closeSocket();
-					closeTimer.cancel();
-					closeTimer = null;
+					if (closeTimer != null) {
+						closeTimer.cancel();
+						closeTimer = null;
+					}
 				}
 			}, 3 * 1000);
 		} else {
