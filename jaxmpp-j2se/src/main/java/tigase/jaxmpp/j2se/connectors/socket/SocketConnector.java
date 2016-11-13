@@ -78,7 +78,7 @@ public class SocketConnector implements Connector {
 	/**
 	 * Socket timeout.
 	 */
-	public static final int DEFAULT_SOCKET_TIMEOUT = 1000 * 60 * 3;
+	public static final int DEFAULT_SOCKET_TIMEOUT = 0; // 1000 * 60 * 3;
 	public static final String SSL_SOCKET_FACTORY_KEY = "socket#SSLSocketFactory";
 	public static final String TLS_DISABLED_KEY = "TLS_DISABLED";
 	/**
