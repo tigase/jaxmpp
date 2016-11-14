@@ -82,8 +82,10 @@ public class BoshConnector extends AbstractBoshConnector {
 			context.getSessionObject().setProperty(URL_KEY, url);
 			super.start();
 		} catch (JaxmppException e) {
+			fireOnError(0, null, null, e, context.getSessionObject());
 			throw e;
 		} catch (Exception e) {
+			fireOnError(0, null, null, e, context.getSessionObject());
 			throw new JaxmppException(e);
 		}
 	}

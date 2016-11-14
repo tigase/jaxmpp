@@ -850,25 +850,29 @@ public class SocketConnector implements Connector {
 		}
 		// setStage(State.disconnected);
 		if (socket != null && socket.isConnected()) {
-			if (closeTimer != null) {
-				closeTimer.cancel();
-			}
-			closeTimer = new Timer(true);
-			closeTimer.schedule(new TimerTask() {
-				@Override
-				public void run() {
-					try {
-						setStage(State.disconnected);
-					} catch (JaxmppException e) {
-					}
-					context = null;
-					closeSocket();
-					if (closeTimer != null) {
-						closeTimer.cancel();
-						closeTimer = null;
-					}
+			synchronized (this) {
+				if (closeTimer != null) {
+					closeTimer.cancel();
 				}
-			}, 3 * 1000);
+				closeTimer = new Timer(true);
+				closeTimer.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						try {
+							setStage(State.disconnected);
+						} catch (JaxmppException e) {
+						}
+						context = null;
+						closeSocket();
+						synchronized (SocketConnector.this) {
+							if (closeTimer != null) {
+								closeTimer.cancel();
+								closeTimer = null;
+							}
+						}
+					}
+				}, 3 * 1000);
+			}
 		} else {
 			try {
 				setStage(State.disconnected);
@@ -905,11 +909,13 @@ public class SocketConnector implements Connector {
 
 	private void workerTerminated(final Worker worker) {
 		try {
-			if (closeTimer != null) {
-				closeTimer.cancel();
-				closeTimer = null;
+			synchronized (this) {
+				if (closeTimer != null) {
+					closeTimer.cancel();
+					closeTimer = null;
+				}
+				setStage(State.disconnected);
 			}
-			setStage(State.disconnected);
 		} catch (JaxmppException e) {
 		}
 		log.finest("Worker terminated");

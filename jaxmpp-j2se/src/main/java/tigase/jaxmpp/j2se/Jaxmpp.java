@@ -92,8 +92,8 @@ public class Jaxmpp extends JaxmppCore {
 					wakeUp();
 				} else if (event instanceof ResourceBinderModule.ResourceBindSuccessHandler.ResourceBindSuccessEvent) {
 					wakeUp();
-				} else if (event instanceof Connector.ErrorHandler.ErrorEvent) {
-					wakeUp();
+//				} else if (event instanceof Connector.ErrorHandler.ErrorEvent) {
+//					wakeUp();
 				} else if (event instanceof AuthModule.AuthFailedHandler.AuthFailedEvent) {
 					wakeUp();
 				} else if (event instanceof StreamManagementModule.StreamResumedHandler.StreamResumedEvent) {
@@ -111,11 +111,13 @@ public class Jaxmpp extends JaxmppCore {
 			try {
 				jaxmpp.getEventBus().addListener(eventListener);
 
+				final SessionObject sessionObject = jaxmpp.getSessionObject();
 				synchronized (jaxmpp) {
-					jaxmpp.wait(timeout);
+					if (sessionObject.getProperty(EXCEPTION_KEY) == null) {
+						jaxmpp.wait(timeout);
+					}
 				}
 				Thread.sleep(50);
-				final SessionObject sessionObject = jaxmpp.getSessionObject();
 				if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 					JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
 					sessionObject.setProperty(EXCEPTION_KEY, null);
@@ -203,7 +205,7 @@ public class Jaxmpp extends JaxmppCore {
 					throw new JaxmppException(e);
 				}
 				if (snc != null && snc)
-					waitForDisconnectFinish(this, 30 * 1000);
+					waitForDisconnectFinish(this, 0);
 			}
 		} finally {
 			if (resetStreamManagement) {
@@ -325,9 +327,14 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	public void login(boolean sync) throws JaxmppException {
-		login();
-		if (sync) {
-			waitForLoginFinish(this, 30 * 1000);
+		try {
+			login();
+		} catch (JaxmppException ex) {
+			throw ex;
+		} finally {
+			if (sync) {
+				waitForLoginFinish(this, 0);
+			}
 		}
 	}
 
@@ -424,7 +431,9 @@ public class Jaxmpp extends JaxmppCore {
 	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(Level.FINE, "Catching exception", e);
-		sessionObject.setProperty(EXCEPTION_KEY, e);
+		synchronized (Jaxmpp.this) {
+			sessionObject.setProperty(EXCEPTION_KEY, e);
+		}
 		try {
 			connector.stop();
 		} catch (Exception e1) {
@@ -435,6 +444,7 @@ public class Jaxmpp extends JaxmppCore {
 				timer.cancel();
 				timer = null;
 			}
+			this.notify();
 		}
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
