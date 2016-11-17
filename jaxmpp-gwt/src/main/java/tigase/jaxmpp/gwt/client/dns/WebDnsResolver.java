@@ -67,16 +67,7 @@ public class WebDnsResolver implements ContextAware {
 			@Override
 			public void onFailure(Throwable caught) {
 				dnsResult = null;
-				String protocol = "http://";
-				String port = "5280";
-				if (WebSocket.isSupported()) {
-					protocol = "ws://";
-					port = "5290";
-				}
-				
-				String boshUrl = protocol + domain + ":" + port + "/bosh";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
-//                                String boshUrl = "ws://" + domain + ":5290/";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
-				hostResolutionCallback.onUrlResolved(domain, boshUrl);
+				hostResolutionCallback.onUrlResolved(domain, null);
 			}
 
 			@Override

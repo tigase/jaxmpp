@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static tigase.jaxmpp.core.client.Connector.RECONNECTING_KEY;
+import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 
 /**
  *
@@ -46,6 +47,7 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 
 	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
 
+	public static final String URL_ON_FAILURE = "host-on-dns-failure";
 	private static final String SEE_OTHER_HOST_URI = "see-other-host-uri";
 	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 	
@@ -95,7 +97,7 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
 	}
 	
-	public boolean initialize(Jaxmpp jaxmpp_) throws JaxmppException {
+	public boolean initialize(final Jaxmpp jaxmpp_) throws JaxmppException {
 		if (this.jaxmpp == null) {
 			this.jaxmpp = jaxmpp_;
 		}
@@ -110,6 +112,25 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 
 				@Override
 				public void onUrlResolved(String domain, String url) {
+					if (url == null) {
+						url = jaxmpp.getSessionObject().getUserProperty(URL_ON_FAILURE);
+						if (url == null) {
+							String protocol = "http://";
+							String port = "5280";
+							if (WebSocket.isSupported()) {
+								protocol = "ws://";
+								port = "5290";
+							}
+				
+							url = protocol + domain + ":" + port + "/bosh";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
+//                                String boshUrl = "ws://" + domain + ":5290/";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
+
+						}
+					}
+					loginWithUrl(url);
+				}
+				
+				protected void loginWithUrl(String url) {
 					try {
 						jaxmpp.login(url);
 					} catch (JaxmppException ex) {
