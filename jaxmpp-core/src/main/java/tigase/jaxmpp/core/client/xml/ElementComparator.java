@@ -17,6 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xml;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -32,7 +33,13 @@ public class ElementComparator implements Comparator<Element> {
 				return tmp;
 
 			Map<String, String> e1Attr = e1.getAttributes();
+			if (e1Attr == null) {
+				e1Attr = Collections.emptyMap();
+			}
 			Map<String, String> e2Attr = e2.getAttributes();
+			if (e2Attr == null) {
+				e2Attr = Collections.emptyMap();
+			}
 			tmp = Integer.valueOf(e1Attr.size()).compareTo(Integer.valueOf(e2Attr.size()));
 			if (tmp != 0)
 				return tmp;
