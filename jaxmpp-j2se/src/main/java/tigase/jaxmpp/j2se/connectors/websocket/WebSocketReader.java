@@ -45,6 +45,7 @@ public class WebSocketReader implements Reader {
 	private final InputStream inputStream;
 	
 	private long remaining = 0;
+	private FrameType frameType = FrameType.Pong;
 
 	public WebSocketReader(InputStream inputStream) {
 		this.inputStream = inputStream;
@@ -75,24 +76,33 @@ public class WebSocketReader implements Reader {
 				boolean reset = false;
 				int position = buf.position();
 				int type = buf.get();
-				if ((type & 0x0F) == 0x08) {
-					// EOL (we should inform client that connection is closed)
-					if (buf.hasRemaining()) {
-						byte len = buf.get();
-						if (buf.remaining() < len) {
-							if (!closed) {
-								buf.position(position);
-								break;
+				byte frameType = (byte) (type & 0x0F);
+				switch (frameType) {
+					case 0x08:
+						// EOL (we should inform client that connection is closed)
+						if (buf.hasRemaining()) {
+							byte len = buf.get();
+							if (buf.remaining() < len) {
+								if (!closed) {
+									buf.position(position);
+									break;
+								}
 							}
-						}
-						else {
-							if (len > 0) {
-								log.log(Level.FINE, "received WebSocket close with status = " + buf.getShort());
+							else {
+								if (len > 0) {
+									log.log(Level.FINE, "received WebSocket close with status = " + buf.getShort());
+								}
 							}
-						}
 
-					}
-					return -1;
+						}
+						return -1;
+					case 0x0A:
+						this.frameType = FrameType.Pong;
+						log.log(Level.FINEST, "got PONG frame");
+						break;
+					default:
+						this.frameType = FrameType.Text;
+						break;
 				}
 				if (buf.hasRemaining()) {
 					long len = buf.get() & 0x7f;
@@ -123,11 +133,12 @@ public class WebSocketReader implements Reader {
 				int limit = buf.limit();
 				int rem = buf.remaining();
 				buf.limit((int) (buf.position() + waiting));
-				decoder.decode(buf, cb, false);
+				if (this.frameType == FrameType.Text) {
+					decoder.decode(buf, cb, false);
+				}
 				buf.limit(limit);
 				remaining -= (rem - buf.remaining());
-				if (remaining < 0) 
-					remaining = 0;
+				if (remaining < 0) remaining = 0;
 			}
 		}
 		buf.compact();
@@ -142,5 +153,11 @@ public class WebSocketReader implements Reader {
 		
 		return cb.remaining();
 	}
-	
+
+	public enum FrameType {
+		Text,
+		Ping,
+		Pong
+	}
+
 }
