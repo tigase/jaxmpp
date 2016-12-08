@@ -1262,7 +1262,7 @@ public class PubSubModule extends AbstractStanzaExtendableModule<Message> {
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			try {
-				final Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
+				final Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_OWNER_XMLNS);
 				List<Element> tmp = pubsub.getChildren("configure");
 				if (tmp == null || tmp.isEmpty()) {
 					tmp = pubsub.getChildren("default");
