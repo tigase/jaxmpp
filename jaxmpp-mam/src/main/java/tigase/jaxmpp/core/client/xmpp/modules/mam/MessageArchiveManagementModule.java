@@ -129,7 +129,7 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 	}
 
 	public void queryItems(Query query, JID componentJid, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
-		queryItems(query, null, null, queryid, rsm, callback);
+		queryItems(query, componentJid, null, queryid, rsm, callback);
 	}
 
 	public void queryItems(Query query, JID componentJid, String node, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
