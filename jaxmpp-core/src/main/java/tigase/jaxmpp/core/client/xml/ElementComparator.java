@@ -17,9 +17,7 @@
  */
 package tigase.jaxmpp.core.client.xml;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class ElementComparator implements Comparator<Element> {
@@ -36,9 +34,17 @@ public class ElementComparator implements Comparator<Element> {
 			if (e1Attr == null) {
 				e1Attr = Collections.emptyMap();
 			}
+			if (e1.getXMLNS() != null && (e1.getParent() == null || e1.getParent().getXMLNS() == null || !e1.getParent().getXMLNS().equals(e1.getXMLNS()))) {
+				e1Attr = new HashMap<>(e1Attr);
+				e1Attr.put("xmlns", e1.getXMLNS());
+			}
 			Map<String, String> e2Attr = e2.getAttributes();
 			if (e2Attr == null) {
 				e2Attr = Collections.emptyMap();
+			}
+			if (e2.getXMLNS() != null && (e2.getParent() == null || e2.getParent().getXMLNS() == null || !e2.getParent().getXMLNS().equals(e2.getXMLNS()))) {
+				e2Attr = new HashMap<>(e2Attr);
+				e2Attr.put("xmlns", e2.getXMLNS());
 			}
 			tmp = Integer.valueOf(e1Attr.size()).compareTo(Integer.valueOf(e2Attr.size()));
 			if (tmp != 0)
