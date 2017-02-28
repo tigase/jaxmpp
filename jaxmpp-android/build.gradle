@@ -4,7 +4,9 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+//        classpath 'com.android.tools.build:gradle:2.2.0'
+        classpath 'com.android.tools.build:gradle:2.3.+'
+
     }
 }
 
@@ -22,9 +24,13 @@ publishing {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
+    lintOptions {
+        abortOnError false
+    }
+    
     compileOptions {
         sourceCompatibility defaultSourceCompatibility
         targetCompatibility defaultTargetCompatibility

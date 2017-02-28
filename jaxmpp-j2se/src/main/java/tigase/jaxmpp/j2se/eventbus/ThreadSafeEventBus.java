@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -32,11 +33,14 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 
 	private static int threadCounter = 1;
 
-	private final Executor executor = Executors.newSingleThreadExecutor(r -> {
-		Thread t = new Thread(r);
-		t.setName("EventBus-Thread-" + (++threadCounter));
-		t.setDaemon(true);
-		return t;
+	private final Executor executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r);
+			t.setName("EventBus-Thread-" + (++threadCounter));
+			t.setDaemon(true);
+			return t;
+		}
 	});
 
 	@Override
@@ -57,7 +61,8 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 
 	@Override
 	protected void doFire(final Event<EventHandler> event, final ArrayList<EventHandler> handlers) {
-		AtomicInteger counter = (event instanceof JaxmppEventWithCallback) ? new AtomicInteger(handlers.size() + 1) : null;
+		final AtomicInteger counter = (event instanceof JaxmppEventWithCallback) ? new AtomicInteger(
+				handlers.size() + 1) : null;
 
 		for (final EventHandler eventHandler : handlers) {
 			Runnable r = new Runnable() {
@@ -85,11 +90,16 @@ public class ThreadSafeEventBus extends DefaultEventBus {
 		doFireEventRunAfter(counter, event);
 	}
 
-	protected void doFireEventRunAfter(AtomicInteger counter, Event<EventHandler> event) {
+	protected void doFireEventRunAfter(AtomicInteger counter, final Event<EventHandler> event) {
 		if (counter != null && counter.decrementAndGet() == 0) {
-			JaxmppEventWithCallback.RunAfter run = ((JaxmppEventWithCallback<EventHandler>) event).getRunAfter();
+			final JaxmppEventWithCallback.RunAfter run = ((JaxmppEventWithCallback<EventHandler>) event).getRunAfter();
 			if (run != null) {
-				executor.execute(() -> run.after(event));
+				executor.execute(new Runnable() {
+					@Override
+					public void run() {
+						run.after(event);
+					}
+				});
 			}
 		}
 	}

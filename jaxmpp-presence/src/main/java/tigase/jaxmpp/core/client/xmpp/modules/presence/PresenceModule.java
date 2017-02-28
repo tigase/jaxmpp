@@ -262,13 +262,17 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
 
-		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence, event ->  {
-			try {
-				write(event.presence);
-			} catch (JaxmppException ex) {
-				log.log(Level.WARNING, "Could not write stanza", ex);
-			}
-		}));
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence,
+											  new JaxmppEventWithCallback.RunAfter<BeforePresenceSendEvent>() {
+												  @Override
+												  public void after(BeforePresenceSendEvent event) {
+													  try {
+														  write(event.presence);
+													  } catch (JaxmppException ex) {
+														  log.log(Level.WARNING, "Could not write stanza", ex);
+													  }
+												  }
+											  }));
 	}
 
 	@Override
@@ -298,13 +302,17 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
 		}
 
-		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence, event ->  {
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence,
+											  new JaxmppEventWithCallback.RunAfter<BeforePresenceSendEvent>() {
+												  @Override
+												  public void after(BeforePresenceSendEvent event) {
 			try {
 				write(event.presence);
 			} catch (JaxmppException ex) {
 				log.log(Level.WARNING, "Could not write stanza", ex);
 			}
-		}));
+												  }
+											  }));
 
 	}
 
