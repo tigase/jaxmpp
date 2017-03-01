@@ -1,10 +1,13 @@
 /*
+ * Worker.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,7 +36,8 @@ import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKE
 /**
  * @author andrzej
  */
-public abstract class Worker extends Thread {
+public abstract class Worker
+		extends Thread {
 
 	private final char[] buffer = new char[DEFAULT_SOCKET_BUFFER_SIZE];
 
@@ -106,18 +110,19 @@ public abstract class Worker extends Thread {
 		int r = -2;
 		try {
 			Reader reader;// = getReader();
-			while ((reader = getReader()) != null && !isInterrupted() && (r = reader.read(buffer)) != -1
-					&& connector.getState() != Connector.State.disconnected) {
+			while ((reader = getReader()) != null && !isInterrupted() && (r = reader.read(buffer)) != -1 &&
+					connector.getState() != Connector.State.disconnected) {
 				parser.parse(domHandler, buffer, 0, r);
 			}
 			// if (log.isLoggable(Level.FINEST))
-			log.finest(hashCode() + " / Disconnecting: state=" + connector.getState() + "; isInterrupted():" + isInterrupted()
-					+ "; buffer=" + r + "   " + this);
+			log.finest(hashCode() + " / Disconnecting: state=" + connector.getState() + "; isInterrupted():" +
+							   isInterrupted() + "; buffer=" + r + "   " + this);
 			if (!isInterrupted()) {
 				onStreamTerminate();
 			}
 		} catch (Exception e) {
-			if (connector.getState() != Connector.State.disconnecting && connector.getState() != Connector.State.disconnected) {
+			if (connector.getState() != Connector.State.disconnecting &&
+					connector.getState() != Connector.State.disconnected) {
 				log.log(Level.WARNING, "Exception in worker", e);
 				try {
 					onErrorInThread(e);

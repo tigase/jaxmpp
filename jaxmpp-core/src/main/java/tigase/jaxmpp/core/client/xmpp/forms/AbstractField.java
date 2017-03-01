@@ -1,10 +1,13 @@
 /*
+ * AbstractField.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,16 +27,18 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Abstract class to implement fields.
- * 
- * @param <T>
- *            type of field
+ *
+ * @param <T> type of field
  */
-public abstract class AbstractField<T> extends ElementWrapper implements Field<T> {
+public abstract class AbstractField<T>
+		extends ElementWrapper
+		implements Field<T> {
 
 	AbstractField(String elementType, Element element) throws XMLException {
 		super(element);
-		if (elementType != null)
+		if (elementType != null) {
 			setAttribute("type", elementType);
+		}
 	}
 
 	/**
@@ -48,8 +53,24 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 	 * {@inheritDoc}
 	 */
 	@Override
+	public void setDesc(String desc) throws XMLException {
+		setChildElementValue("desc", desc);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public String getLabel() throws XMLException {
 		return getAttribute("label");
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setLabel(String label) throws XMLException {
+		setAttribute("label", label);
 	}
 
 	/**
@@ -72,6 +93,14 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 	 * {@inheritDoc}
 	 */
 	@Override
+	public void setVar(String var) throws XMLException {
+		setAttribute("var", var);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public boolean isRequired() throws XMLException {
 		return getFirstChild("required") != null;
 	}
@@ -80,38 +109,14 @@ public abstract class AbstractField<T> extends ElementWrapper implements Field<T
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setDesc(String desc) throws XMLException {
-		setChildElementValue("desc", desc);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setLabel(String label) throws XMLException {
-		setAttribute("label", label);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public void setRequired(boolean value) throws XMLException {
 		Element b = getFirstChild("required");
-		if (!value && b != null)
+		if (!value && b != null) {
 			removeChild(b);
-		else if (value && b == null) {
+		} else if (value && b == null) {
 			b = ElementFactory.create("required");
 			addChild(b);
 		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setVar(String var) throws XMLException {
-		setAttribute("var", var);
 	}
 
 }

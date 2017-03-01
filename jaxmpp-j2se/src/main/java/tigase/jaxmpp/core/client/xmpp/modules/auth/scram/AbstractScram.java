@@ -1,3 +1,24 @@
+/*
+ * AbstractScram.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 package tigase.jaxmpp.core.client.xmpp.modules.auth.scram;
 
 import tigase.jaxmpp.core.client.BareJID;
@@ -22,8 +43,8 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractScram extends AbstractSaslMechanism {
-
+public abstract class AbstractScram
+		extends AbstractSaslMechanism {
 
 	protected final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	private final static String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -31,19 +52,31 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 	private final static Pattern SERVER_FIRST_MESSAGE = Pattern.compile(
 			"^(m=[^\\000=]+,)?r=([\\x21-\\x2B\\x2D-\\x7E]+),s=([a-zA-Z0-9/+=]+),i=(\\d+)(?:,.*)?$");
 	private final static Pattern SERVER_LAST_MESSAGE = Pattern.compile("^(?:e=([^,]+)|v=([a-zA-Z0-9/+=]+)(?:,.*)?)$");
+
+	public enum BindType {
+		/**
+		 * Client doesn't support channel binding.
+		 */
+		n,
+		/**
+		 * Client does support channel binding but thinks the server does not.
+		 */
+		y,
+		/**
+		 * Client requires channel binding: <code>tls-unique</code>.
+		 */
+		tls_unique,
+		/**
+		 * Client requires channel binding: <code>tls-server-end-point</code>.
+		 */
+		tls_server_end_point
+	}
+
 	private final String algorithm;
 	private final byte[] clientKeyData;
 	private final String mechanismName;
 	private final Random random = new SecureRandom();
 	private final byte[] serverKeyData;
-
-
-	protected AbstractScram(String mechanismName, String algorithm, byte[] clientKey, byte[] serverKey) {
-		this.clientKeyData = clientKey;
-		this.serverKeyData = serverKey;
-		this.algorithm = algorithm;
-		this.mechanismName = mechanismName;
-	}
 
 	public static byte[] hi(String algorithm, byte[] password, final byte[] salt, final int iterations)
 			throws InvalidKeyException, NoSuchAlgorithmException {
@@ -77,6 +110,13 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 
 	public static byte[] normalize(String str) {
 		return str.getBytes(UTF_CHARSET);
+	}
+
+	protected AbstractScram(String mechanismName, String algorithm, byte[] clientKey, byte[] serverKey) {
+		this.clientKeyData = clientKey;
+		this.serverKeyData = serverKey;
+		this.algorithm = algorithm;
+		this.mechanismName = mechanismName;
 	}
 
 	@Override
@@ -120,23 +160,25 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 			} else if (data.stage == 1) {
 				final String serverFirstMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_FIRST_MESSAGE.matcher(serverFirstMessage);
-				if (!r.matches())
+				if (!r.matches()) {
 					throw new ClientSaslException("Bad challenge syntax");
+				}
 
 				final String mext = r.group(1);
 				final String nonce = r.group(2);
 				final byte[] salt = Base64.decode(r.group(3));
 				final int iterations = Integer.parseInt(r.group(4));
 
-				if (!nonce.startsWith(data.conce))
+				if (!nonce.startsWith(data.conce)) {
 					throw new ClientSaslException("Wrong nonce");
+				}
 
 				CredentialsCallback callback = sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK);
-				if (callback == null)
+				if (callback == null) {
 					callback = new AuthModule.DefaultCredentialsCallback(sessionObject);
+				}
 
 				StringBuilder clientFinalMessage = new StringBuilder();
-
 
 				final ByteArrayOutputStream cData = new ByteArrayOutputStream();
 				cData.write(data.cb.getBytes());
@@ -146,7 +188,8 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 				clientFinalMessage.append("c=").append(Base64.encode(cData.toByteArray())).append(',');
 				clientFinalMessage.append("r=").append(nonce);
 
-				data.authMessage = data.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessage.toString();
+				data.authMessage =
+						data.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessage.toString();
 
 				data.saltedPassword = hi(algorithm, normalize(callback.getCredential()), salt, iterations);
 				byte[] clientKey = hmac(key(data.saltedPassword), clientKeyData);
@@ -163,20 +206,23 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 			} else if (data.stage == 2) {
 				final String serverLastMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_LAST_MESSAGE.matcher(serverLastMessage);
-				if (!r.matches())
+				if (!r.matches()) {
 					throw new ClientSaslException("Bad challenge syntax");
+				}
 
 				final String e = r.group(1);
 				final String v = r.group(2);
 
-				if (e != null)
+				if (e != null) {
 					throw new ClientSaslException("Error: " + e);
+				}
 
 				byte[] serverKey = hmac(key(data.saltedPassword), serverKeyData);
 				byte[] serverSignature = hmac(key(serverKey), data.authMessage.getBytes(UTF_CHARSET));
 
-				if (!Arrays.equals(serverSignature, Base64.decode(v)))
+				if (!Arrays.equals(serverSignature, Base64.decode(v))) {
 					throw new ClientSaslException("Invalid Server Signature");
+				}
 
 				++data.stage;
 				setComplete(sessionObject, true);
@@ -185,8 +231,9 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 				// server last message was sent in challange. Here should be
 				// SUCCESS
 				return null;
-			} else
+			} else {
 				throw new ClientSaslException(name() + ": Client at illegal state");
+			}
 		} catch (ClientSaslException e) {
 			throw e;
 		} catch (Exception e1) {
@@ -214,9 +261,9 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 
 	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
-		return (sessionObject.getProperty(SessionObject.PASSWORD) != null
-				|| sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null)
-				&& sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
+		return (sessionObject.getProperty(SessionObject.PASSWORD) != null ||
+				sessionObject.getProperty(AuthModule.CREDENTIALS_CALLBACK) != null) &&
+				sessionObject.getProperty(SessionObject.USER_BARE_JID) != null;
 	}
 
 	protected SecretKey key(final byte[] key) {
@@ -248,33 +295,11 @@ public abstract class AbstractScram extends AbstractSaslMechanism {
 		return r;
 	}
 
-	public enum BindType {
-		/**
-		 * Client doesn't support channel binding.
-		 */
-		n,
-		/**
-		 * Client does support channel binding but thinks the server does not.
-		 */
-		y,
-		/**
-		 * Client requires channel binding: <code>tls-unique</code>.
-		 */
-		tls_unique,
-		/**
-		 * Client requires channel binding: <code>tls-server-end-point</code>.
-		 */
-		tls_server_end_point
-	}
-
 	private class Data {
 
-		private BindType bindType;
-
-		private byte[] bindData;
-
 		private String authMessage;
-
+		private byte[] bindData;
+		private BindType bindType;
 		private String cb;
 
 		private String clientFirstMessageBare;

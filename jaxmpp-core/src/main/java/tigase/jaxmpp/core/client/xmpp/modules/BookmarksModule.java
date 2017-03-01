@@ -1,10 +1,13 @@
 /*
+ * BookmarksModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,8 +19,6 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
-
-import java.util.List;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.XMPPException;
@@ -31,35 +32,21 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.List;
+
 /**
  * Implementation of <a
  * href='http://xmpp.org/extensions/xep-0049.html'>XEP-0049: Private XML
  * Storage</a>.
- * 
+ *
  * @author andrzej
  */
-public class BookmarksModule extends AbstractIQModule {
-
-	/**
-	 * Bookmarks callback.
-	 */
-	public static abstract class BookmarksAsyncCallback implements AsyncCallback {
-
-		public abstract void onBookmarksReceived(List<Element> bookmarks);
-
-		@Override
-		public void onSuccess(final Stanza stanza) throws XMLException {
-			Element query = stanza.getChildrenNS("query", "jabber:iq:private");
-			Element storage = query.getChildrenNS("storage", BOOKMARKS_XMLNS);
-			onBookmarksReceived(storage.getChildren());
-		}
-	}
+public class BookmarksModule
+		extends AbstractIQModule {
 
 	private static final String BOOKMARKS_XMLNS = "storage:bookmarks";
-
 	private static final Criteria CRIT = ElementCriteria.name("storage", BOOKMARKS_XMLNS);
-
-	private static final String[] FEATURES = { BOOKMARKS_XMLNS };
+	private static final String[] FEATURES = {BOOKMARKS_XMLNS};
 
 	public BookmarksModule() {
 		super();
@@ -87,11 +74,9 @@ public class BookmarksModule extends AbstractIQModule {
 
 	/**
 	 * Send list of bookmarks to private storage.
-	 * 
-	 * @param bookmarks
-	 *            collections of elements with bookmarks.
-	 * @param callback
-	 *            callback
+	 *
+	 * @param bookmarks collections of elements with bookmarks.
+	 * @param callback callback
 	 */
 	public void publishBookmarks(List<? extends Element> bookmarks, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
@@ -116,9 +101,8 @@ public class BookmarksModule extends AbstractIQModule {
 
 	/**
 	 * Retrieve bookmarks from private storage.
-	 * 
-	 * @param callback
-	 *            callback to handle response.
+	 *
+	 * @param callback callback to handle response.
 	 */
 	public void retrieveBookmarks(AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
@@ -133,6 +117,22 @@ public class BookmarksModule extends AbstractIQModule {
 		query.addChild(storage);
 
 		write(iq, callback);
+	}
+
+	/**
+	 * Bookmarks callback.
+	 */
+	public static abstract class BookmarksAsyncCallback
+			implements AsyncCallback {
+
+		public abstract void onBookmarksReceived(List<Element> bookmarks);
+
+		@Override
+		public void onSuccess(final Stanza stanza) throws XMLException {
+			Element query = stanza.getChildrenNS("query", "jabber:iq:private");
+			Element storage = query.getChildrenNS("storage", BOOKMARKS_XMLNS);
+			onBookmarksReceived(storage.getChildren());
+		}
 	}
 
 }

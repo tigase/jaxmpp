@@ -1,10 +1,13 @@
 /*
+ * ElementCriteria.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,23 +20,27 @@
  */
 package tigase.jaxmpp.core.client.criteria;
 
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
-
 /**
  * Simple implementation of Criteria to check element name and its attributes..
- * 
  */
-public class ElementCriteria implements Criteria {
+public class ElementCriteria
+		implements Criteria {
+
+	protected HashMap<String, String> attrs = new HashMap<String, String>();
+	protected String name;
+	protected Criteria nextCriteria;
 
 	/**
 	 * Makes criteria object what accepts all elements.
-	 * 
+	 *
 	 * @return criteria
 	 */
 	public static final ElementCriteria empty() {
@@ -42,9 +49,9 @@ public class ElementCriteria implements Criteria {
 
 	/**
 	 * Makes criteria object to check name of element.
-	 * 
-	 * @param name
-	 *            expected element name.
+	 *
+	 * @param name expected element name.
+	 *
 	 * @return criteria
 	 */
 	public static final ElementCriteria name(String name) {
@@ -53,15 +60,14 @@ public class ElementCriteria implements Criteria {
 
 	/**
 	 * Makes criteria object to check name of element and its namespace.
-	 * 
-	 * @param name
-	 *            expected name of element.
-	 * @param xmlns
-	 *            expected xmlns
+	 *
+	 * @param name expected name of element.
+	 * @param xmlns expected xmlns
+	 *
 	 * @return criteria
 	 */
 	public static final ElementCriteria name(String name, String xmlns) {
-		return new ElementCriteria(name, new String[] { "xmlns" }, new String[] { xmlns });
+		return new ElementCriteria(name, new String[]{"xmlns"}, new String[]{xmlns});
 	}
 
 	public static final ElementCriteria name(String name, String[] attNames, String[] attValues) {
@@ -70,31 +76,21 @@ public class ElementCriteria implements Criteria {
 
 	/**
 	 * Makes criteria checking only xmlns attribute.
-	 * 
-	 * @param xmlns
-	 *            expected xmlns
+	 *
+	 * @param xmlns expected xmlns
+	 *
 	 * @return criteria
 	 */
 	public static final ElementCriteria xmlns(String xmlns) {
-		return new ElementCriteria(null, new String[] { "xmlns" }, new String[] { xmlns });
+		return new ElementCriteria(null, new String[]{"xmlns"}, new String[]{xmlns});
 	}
-
-	protected HashMap<String, String> attrs = new HashMap<String, String>();
-
-	protected String name;
-
-	protected Criteria nextCriteria;
 
 	/**
 	 * Construct criteria.
-	 * 
-	 * @param name
-	 *            name of element. If <code>null</code> then any elements name
-	 *            will be accepted;
-	 * @param attname
-	 *            names of required attributes
-	 * @param attValue
-	 *            value of requird attrivutes
+	 *
+	 * @param name name of element. If <code>null</code> then any elements name will be accepted;
+	 * @param attname names of required attributes
+	 * @param attValue value of requird attrivutes
 	 */
 	public ElementCriteria(String name, String[] attname, String[] attValue) {
 		this.name = name;

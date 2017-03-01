@@ -1,10 +1,13 @@
 /*
+ * StreamFeaturesModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -39,20 +42,21 @@ import java.util.logging.Logger;
  * 'http://xmpp.org/rfcs/rfc6120.html#streams-negotiation-features'>Stream
  * Features</a>.
  */
-public class StreamFeaturesModule implements XmppModule, ContextAware {
+public class StreamFeaturesModule
+		implements XmppModule, ContextAware {
 
 	private final static Criteria CRIT = new Or(ElementCriteria.name("stream:features"),
-			ElementCriteria.name("features"));
+												ElementCriteria.name("features"));
 	protected final Logger log;
 	private Context context;
-
-	public StreamFeaturesModule() {
-		log = Logger.getLogger(this.getClass().getName());
-	}
 
 	public static Element getStreamFeatures(SessionObject sessionObject) {
 		XmppStreamsManager sm = XmppStreamsManager.getStreamsManager(sessionObject);
 		return sm == null ? null : sm.getDefaultStream().getFeatures();
+	}
+
+	public StreamFeaturesModule() {
+		log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public void addStreamFeaturesReceivedHandler(StreamFeaturesReceivedHandler handler) {
@@ -90,11 +94,13 @@ public class StreamFeaturesModule implements XmppModule, ContextAware {
 	/**
 	 * Event fires when stream features are received.
 	 */
-	public interface StreamFeaturesReceivedHandler extends EventHandler {
+	public interface StreamFeaturesReceivedHandler
+			extends EventHandler {
 
 		void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException;
 
-		class StreamFeaturesReceivedEvent extends JaxmppEvent<StreamFeaturesReceivedHandler> {
+		class StreamFeaturesReceivedEvent
+				extends JaxmppEvent<StreamFeaturesReceivedHandler> {
 
 			private Element featuresElement;
 

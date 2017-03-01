@@ -1,10 +1,13 @@
 /*
+ * Affiliation.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,7 +22,6 @@ package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
 /**
  * @author bmalkow
- * 
  */
 public enum Affiliation {
 	admin(30, true, true, true, true, true, true, true, false, false, false, false, true),
@@ -54,10 +56,10 @@ public enum Affiliation {
 
 	private final int weight;
 
-	private Affiliation(int weight, boolean enterOpenRoom, boolean registerWithOpenRoom, boolean retrieveMemberList,
-			boolean enterMembersOnlyRoom, boolean banMembersAndUnaffiliatedUsers, boolean editMemberList,
-			boolean editModeratorList, boolean editAdminList, boolean editOwnerList, boolean changeRoomDefinition,
-			boolean destroyRoom, boolean viewOccupantsJid) {
+	Affiliation(int weight, boolean enterOpenRoom, boolean registerWithOpenRoom, boolean retrieveMemberList,
+				boolean enterMembersOnlyRoom, boolean banMembersAndUnaffiliatedUsers, boolean editMemberList,
+				boolean editModeratorList, boolean editAdminList, boolean editOwnerList, boolean changeRoomDefinition,
+				boolean destroyRoom, boolean viewOccupantsJid) {
 		this.weight = weight;
 		this.enterOpenRoom = enterOpenRoom;
 		this.registerWithOpenRoom = registerWithOpenRoom;

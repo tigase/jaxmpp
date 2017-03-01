@@ -1,10 +1,13 @@
 /*
+ * WebSocketCallback.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,7 +21,6 @@
 package tigase.jaxmpp.gwt.client.connectors;
 
 /**
- * 
  * @author andrzej
  */
 public interface WebSocketCallback {
@@ -26,21 +28,21 @@ public interface WebSocketCallback {
 	/**
 	 * Method called when WebSocket connection is closed
 	 */
-	public void onClose(WebSocket ws);
+	void onClose(WebSocket ws);
 
 	/**
 	 * Method called when WebSocket receives error
 	 */
-	public void onError(WebSocket ws);
+	void onError(WebSocket ws);
 
 	/**
 	 * Method called when WebSocket receives message
 	 */
-	public void onMessage(WebSocket ws, String message);
+	void onMessage(WebSocket ws, String message);
 
 	/**
 	 * Method called when WebSocket opens connection
 	 */
-	public void onOpen(WebSocket ws);
+	void onOpen(WebSocket ws);
 
 }

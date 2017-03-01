@@ -1,10 +1,13 @@
 /*
+ * AbstractStanzaHandler.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,11 +26,11 @@ import tigase.jaxmpp.core.client.xml.Element;
 /**
  * Abstract class for handling incoming XMPP Stanzas.
  */
-public abstract class AbstractStanzaHandler implements Runnable {
-
-	private final Context context;
+public abstract class AbstractStanzaHandler
+		implements Runnable {
 
 	protected final Element element;
+	private final Context context;
 
 	public AbstractStanzaHandler(Element element, Context context) {
 		super();
@@ -43,12 +46,13 @@ public abstract class AbstractStanzaHandler implements Runnable {
 			process();
 		} catch (Exception e) {
 			Element errorResult = Processor.createError(element, e);
-			if (errorResult != null)
+			if (errorResult != null) {
 				try {
 					context.getWriter().write(errorResult);
 				} catch (JaxmppException e1) {
 					throw new RuntimeException("Can't send error stanza", e1);
 				}
+			}
 		}
 	}
 }

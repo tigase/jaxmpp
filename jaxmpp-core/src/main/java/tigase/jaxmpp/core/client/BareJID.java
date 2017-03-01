@@ -1,10 +1,13 @@
 /*
+ * BareJID.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,13 +23,18 @@ package tigase.jaxmpp.core.client;
 /**
  * XMPP entity address form <code>&lt;localpart@domainpart&gt;</code>
  */
-public class BareJID implements Comparable<BareJID> {
+public class BareJID
+		implements Comparable<BareJID> {
+
+	protected final String domain;
+	protected final String localpart;
+	private final String $toString;
 
 	/**
 	 * Creates instance of {@link BareJID}.
-	 * 
-	 * @param jid
-	 *            string contains full JID or bare JID
+	 *
+	 * @param jid string contains full JID or bare JID
+	 *
 	 * @return bare JID
 	 */
 	public static BareJID bareJIDInstance(String jid) {
@@ -36,11 +44,10 @@ public class BareJID implements Comparable<BareJID> {
 
 	/**
 	 * Creates instance of {@link BareJID}.
-	 * 
-	 * @param p_localpart
-	 *            localpart
-	 * @param p_domain
-	 *            domainpart
+	 *
+	 * @param p_localpart localpart
+	 * @param p_domain domainpart
+	 *
 	 * @return bare JID
 	 */
 	public static BareJID bareJIDInstance(String p_localpart, String p_domain) {
@@ -70,12 +77,6 @@ public class BareJID implements Comparable<BareJID> {
 		return (((p_localpart != null) && (p_localpart.length() > 0)) ? (p_localpart + "@" + p_domain) : p_domain);
 	}
 
-	private final String $toString;
-
-	protected final String domain;
-
-	protected final String localpart;
-
 	protected BareJID(String localpart, String domain) {
 		this.localpart = localpart != null ? localpart.intern() : null;
 		this.domain = domain.toLowerCase().intern();
@@ -89,24 +90,29 @@ public class BareJID implements Comparable<BareJID> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (!(obj instanceof BareJID))
+		}
+		if (!(obj instanceof BareJID)) {
 			return false;
+		}
 		BareJID other = (BareJID) obj;
 		if ($toString == null) {
-			if (other.$toString != null)
+			if (other.$toString != null) {
 				return false;
-		} else if (!$toString.equals(other.$toString))
+			}
+		} else if (!$toString.equals(other.$toString)) {
 			return false;
+		}
 		return true;
 	}
 
 	/**
 	 * Return domainpart.
-	 * 
+	 *
 	 * @return domainpart
 	 */
 	public String getDomain() {
@@ -115,7 +121,7 @@ public class BareJID implements Comparable<BareJID> {
 
 	/**
 	 * Return localpart.
-	 * 
+	 *
 	 * @return localpart
 	 */
 	public String getLocalpart() {

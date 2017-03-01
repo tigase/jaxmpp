@@ -1,10 +1,13 @@
 /*
+ * PubSubAsyncCallback.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,9 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.pubsub;
 
-import java.util.List;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
@@ -27,12 +27,16 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class PubSubAsyncCallback implements AsyncCallback {
+import java.util.List;
+import java.util.logging.Logger;
+
+public abstract class PubSubAsyncCallback
+		implements AsyncCallback {
 
 	protected Logger log = Logger.getLogger(this.getClass().getName());
 
-	protected abstract void onEror(IQ response, ErrorCondition errorCondition, PubSubErrorCondition pubSubErrorCondition)
-			throws JaxmppException;
+	protected abstract void onEror(IQ response, ErrorCondition errorCondition,
+								   PubSubErrorCondition pubSubErrorCondition) throws JaxmppException;
 
 	@Override
 	public final void onError(Stanza responseStanza, ErrorCondition errorCondition) throws JaxmppException {
@@ -47,8 +51,9 @@ public abstract class PubSubAsyncCallback implements AsyncCallback {
 			String c = perror.getName();
 			String feature = perror.getAttribute("feature");
 
-			if (feature != null)
+			if (feature != null) {
 				c = c + "_" + feature;
+			}
 
 			try {
 				pubSubErrorCondition = PubSubErrorCondition.valueOf(c.replace("-", "_"));

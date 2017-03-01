@@ -1,10 +1,13 @@
 /*
+ * MultiJaxmpp.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -72,7 +75,7 @@ public class MultiJaxmpp {
 	}
 
 	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class,
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addHandler(java.lang.Class, *
 	 * tigase.jaxmpp.core.client.eventbus.EventHandler)
 	 */
 	public <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler) {
@@ -80,7 +83,7 @@ public class MultiJaxmpp {
 	}
 
 	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class,
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#addListener(java.lang.Class, *
 	 * tigase.jaxmpp.core.client.eventbus.EventListener)
 	 */
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
@@ -108,6 +111,7 @@ public class MultiJaxmpp {
 	 * specific user account.
 	 *
 	 * @param userJid user account
+	 *
 	 * @return {@linkplain JaxmppCore}
 	 */
 	@SuppressWarnings("unchecked")
@@ -122,6 +126,7 @@ public class MultiJaxmpp {
 	 * specific user account represented by {@linkplain SessionObject}.
 	 *
 	 * @param sessionObject {@linkplain SessionObject} related to user account
+	 *
 	 * @return {@linkplain JaxmppCore}
 	 */
 	public <T extends JaxmppCore> T get(final SessionObject sessionObject) {
@@ -139,13 +144,12 @@ public class MultiJaxmpp {
 //	}
 
 	/**
-	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class,
+	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(java.lang.Class, *
 	 * tigase.jaxmpp.core.client.eventbus.EventHandler)
 	 */
 	public void remove(Class<? extends Event<?>> type, EventHandler handler) {
 		eventBus.remove(type, handler);
 	}
-
 
 	/**
 	 * @see tigase.jaxmpp.core.client.eventbus.DefaultEventBus#remove(tigase.jaxmpp.core.client.eventbus.EventHandler)

@@ -1,10 +1,13 @@
 /*
+ * TPath.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,10 +20,10 @@
  */
 package tigase.jaxmpp.core.client.criteria.tpath;
 
-import java.util.ArrayList;
-
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
+
+import java.util.ArrayList;
 
 public class TPath {
 
@@ -29,12 +32,14 @@ public class TPath {
 		Node rootNode = null;
 		Node lastNode = null;
 		for (String string : tokens) {
-			if (rootNode == null && string.isEmpty())
+			if (rootNode == null && string.isEmpty()) {
 				continue;
+			}
 			Object n = createNode(string);
 			if (n instanceof Node) {
-				if (rootNode == null)
+				if (rootNode == null) {
 					rootNode = (Node) n;
+				}
 
 				if (lastNode != null) {
 					lastNode.setSubnode((Node) n);
@@ -76,7 +81,7 @@ public class TPath {
 		if (pNames.isEmpty()) {
 			criteria = ElementCriteria.name(fName);
 		} else {
-			criteria = ElementCriteria.name(fName, pNames.toArray(new String[] {}), pVals.toArray(new String[] {}));
+			criteria = ElementCriteria.name(fName, pNames.toArray(new String[]{}), pVals.toArray(new String[]{}));
 		}
 
 		Node n = new Node(criteria, null);
@@ -94,14 +99,16 @@ public class TPath {
 			return new Function.Value();
 		} else if ("attr".equals(fname)) {
 			return new Function.Attr(fp);
-		} else
+		} else {
 			throw new RuntimeException("Unkown function '" + fname + "'");
+		}
 	}
 
 	private Object createNode(final String string) {
 		if (string.endsWith(")")) {
 			return createFunction(string);
-		} else
+		} else {
 			return createConditionNode(string);
+		}
 	}
 }

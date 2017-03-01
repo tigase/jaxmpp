@@ -1,3 +1,24 @@
+/*
+ * PresenceModuleTest.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 package tigase.jaxmpp.core.client.xmpp.modules.presence;
 
 import junit.framework.Assert;
@@ -26,14 +47,13 @@ public class PresenceModuleTest
 
 		final Set<JID> unavailableContacts = new HashSet<JID>();
 
-		context.getEventBus().addHandler(PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent.class,
-				new ContactUnavailableHandler() {
+		context.getEventBus().addHandler(PresenceModule.ContactUnavailableHandler.ContactUnavailableEvent.class, new ContactUnavailableHandler() {
 
-					@Override
-					public void onContactUnavailable(SessionObject sessionObject, Presence stanza, JID jid, String status) {
-						unavailableContacts.add(jid);
-					}
-				});
+			@Override
+			public void onContactUnavailable(SessionObject sessionObject, Presence stanza, JID jid, String status) {
+				unavailableContacts.add(jid);
+			}
+		});
 
 		try {
 			Presence p1 = Presence.create();
@@ -64,8 +84,7 @@ public class PresenceModuleTest
 
 			System.out.println(unavailableContacts);
 
-			Assert.assertFalse("Contant shouldn't be available anymore",
-					getPresence().isAvailable(BareJID.bareJIDInstance("a@b.c")));
+			Assert.assertFalse("Contant shouldn't be available anymore", getPresence().isAvailable(BareJID.bareJIDInstance("a@b.c")));
 		} catch (Throwable e) {
 			e.printStackTrace();
 			Assert.fail(e.getMessage());

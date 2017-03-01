@@ -1,10 +1,13 @@
 /*
+ * XMPPException.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +20,19 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.HashMap;
-
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
+import java.util.HashMap;
 
 /**
  * This exception may throwed during processing stanza. In result error will be
  * send back to stanza sender.
  */
-public class XMPPException extends JaxmppException {
+public class XMPPException
+		extends JaxmppException {
+
+	public static final String XMLNS = "urn:ietf:params:xml:ns:xmpp-stanzas";
+	private static final long serialVersionUID = 1L;
 
 	public static enum ErrorCondition {
 		/**
@@ -173,20 +180,18 @@ public class XMPPException extends JaxmppException {
 		unexpected_request("unexpected-request", "wait", 400);
 
 		protected final static HashMap<String, ErrorCondition> conditions = new HashMap<String, ErrorCondition>();
+		private final String elementName;
+		private final int errorCode;
+		private final String type;
 
 		public static ErrorCondition getByElementName(String name) {
 			for (ErrorCondition e : ErrorCondition.values()) {
-				if (e.elementName.equals(name))
+				if (e.elementName.equals(name)) {
 					return e;
+				}
 			}
 			return null;
 		}
-
-		private final String elementName;
-
-		private final int errorCode;
-
-		private final String type;
 
 		private ErrorCondition(String elementName, String type, int errorCode) {
 			this.elementName = elementName;
@@ -208,15 +213,11 @@ public class XMPPException extends JaxmppException {
 
 	}
 
-	private static final long serialVersionUID = 1L;
-
-	public static final String XMLNS = "urn:ietf:params:xml:ns:xmpp-stanzas";
+	private final ErrorCondition condition;
 
 	public static String getXmlns() {
 		return XMLNS;
 	}
-
-	private final ErrorCondition condition;
 
 	public XMPPException(ErrorCondition condition) {
 		this.condition = condition;

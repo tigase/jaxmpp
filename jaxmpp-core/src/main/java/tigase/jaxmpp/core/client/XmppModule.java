@@ -1,10 +1,13 @@
 /*
+ * XmppModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,15 +28,14 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 /**
  * Main interface for implement modules. Module is stateless!. To store any
  * statefull data use {@linkplain SessionObject SessionObject}
- * 
+ *
  * @author bmalkow
- * 
  */
 public interface XmppModule {
 
 	/**
 	 * Criteria
-	 * 
+	 *
 	 * @return
 	 */
 	Criteria getCriteria();
@@ -46,7 +48,7 @@ public interface XmppModule {
 	 * See <a href="http://xmpp.org/registrar/disco-features.html">Service
 	 * Discovery Features</a>
 	 * </p>
-	 * 
+	 *
 	 * @return array of features
 	 */
 	String[] getFeatures();
@@ -54,13 +56,10 @@ public interface XmppModule {
 	/**
 	 * Main method of module. Module will process incoming stanza by call this
 	 * method.
-	 * 
-	 * @param element
-	 *            incoming XMPP stanza
-	 * @param sessionObject
-	 *            XMPP session object
-	 * @param packetWriter
-	 *            XML writer
+	 *
+	 * @param element incoming XMPP stanza
+	 * @param sessionObject XMPP session object
+	 * @param packetWriter XML writer
 	 */
 	void process(Element element) throws XMPPException, XMLException, JaxmppException;
 

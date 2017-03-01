@@ -1,10 +1,13 @@
 /*
+ * DefaultEventBus.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,7 +28,8 @@ import java.util.logging.Logger;
 /**
  * Basic implementation of {@link EventBus}.
  */
-public class DefaultEventBus extends EventBus {
+public class DefaultEventBus
+		extends EventBus {
 
 	private final static Object NULL_SOURCE = new Object();
 	private final static Class<? extends Event<?>> NULL_TYPE = N.class;
@@ -42,12 +46,10 @@ public class DefaultEventBus extends EventBus {
 		doAdd(type, null, handler);
 	}
 
-
 	@Override
 	public <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener) {
 		doAdd(type, null, listener);
 	}
-
 
 	@Override
 	public <H extends EventHandler> void addListener(EventListener listener) {
@@ -110,8 +112,9 @@ public class DefaultEventBus extends EventBus {
 					event.dispatch(eventHandler);
 				}
 			} catch (Throwable e) {
-				if (log.isLoggable(Level.WARNING))
+				if (log.isLoggable(Level.WARNING)) {
 					log.log(Level.WARNING, "", e);
+				}
 				causes.add(e);
 			}
 		}
@@ -124,8 +127,9 @@ public class DefaultEventBus extends EventBus {
 		}
 
 		if (!causes.isEmpty()) {
-			if (throwingExceptionOn)
+			if (throwingExceptionOn) {
 				throw new EventBusException(causes);
+			}
 		}
 	}
 
@@ -134,7 +138,6 @@ public class DefaultEventBus extends EventBus {
 	public void fire(Event<?> event) {
 		doFire((Event<EventHandler>) event);
 	}
-
 
 	private Map<Class<? extends Event<?>>, List<EventHandler>> getHandlersBySource(Object source) {
 		return handlers.get(source == null ? NULL_SOURCE : source);
@@ -148,8 +151,9 @@ public class DefaultEventBus extends EventBus {
 			final List<EventHandler> lst = hdlrs.get(type == null ? NULL_TYPE : type);
 			if (lst != null) {
 				return lst;
-			} else
+			} else {
 				return Collections.emptyList();
+			}
 		}
 	}
 
@@ -183,25 +187,30 @@ public class DefaultEventBus extends EventBus {
 	@Override
 	public void remove(EventHandler handler) {
 		synchronized (this.handlers) {
-			Iterator<Entry<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>> l = this.handlers.entrySet().iterator();
+			Iterator<Entry<Object, Map<Class<? extends Event<?>>, List<EventHandler>>>> l = this.handlers.entrySet()
+					.iterator();
 			while (l.hasNext()) {
 				Map<Class<? extends Event<?>>, List<EventHandler>> eventHandlers = l.next().getValue();
-				Iterator<Entry<Class<? extends Event<?>>, List<EventHandler>>> iterator = eventHandlers.entrySet().iterator();
+				Iterator<Entry<Class<? extends Event<?>>, List<EventHandler>>> iterator = eventHandlers.entrySet()
+						.iterator();
 				while (iterator.hasNext()) {
 					Entry<Class<? extends Event<?>>, List<EventHandler>> entry = iterator.next();
 					if (entry != null) {
 						entry.getValue().remove(handler);
-						if (entry.getValue().isEmpty())
+						if (entry.getValue().isEmpty()) {
 							iterator.remove();
+						}
 					}
 				}
-				if (eventHandlers.isEmpty())
+				if (eventHandlers.isEmpty()) {
 					l.remove();
+				}
 			}
 		}
 	}
 
-	private final static class N extends Event<EventHandler> {
+	private final static class N
+			extends Event<EventHandler> {
 
 		@Override
 		public void dispatch(EventHandler handler) throws Exception {

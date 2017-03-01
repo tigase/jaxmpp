@@ -1,10 +1,13 @@
 /*
+ * UniversalFactory.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,60 +25,42 @@ import java.util.HashMap;
 /**
  * Provides methods to inject alternative implementation of object in several
  * points in this library.
- * 
+ *
  * @author bmalkow
- * 
  */
 public class UniversalFactory {
 
-	/**
-	 * Interface for object factory.
-	 * 
-	 * @param <T>
-	 *            type of created objects.
-	 */
-	public static interface FactorySpi<T> {
-
-		/**
-		 * Creates new instance of class.
-		 * 
-		 * @return
-		 */
-		T create();
-	}
-
 	private static UniversalFactory instance;
+	private final HashMap<String, FactorySpi<?>> factories = new HashMap<String, FactorySpi<?>>();
 
 	/**
 	 * Creates instance of object with given name.
-	 * 
-	 * @param key
-	 *            name of object.
-	 * @return instance of object or <code>null</code> if no factory is
-	 *         registered for that name.
+	 *
+	 * @param key name of object.
+	 *
+	 * @return instance of object or <code>null</code> if no factory is registered for that name.
 	 */
 	public static <T> T createInstance(String key) {
-		@SuppressWarnings("unchecked")
-		FactorySpi<T> spi = (FactorySpi<T>) instance().factories.get(key);
-		if (spi == null)
+		@SuppressWarnings("unchecked") FactorySpi<T> spi = (FactorySpi<T>) instance().factories.get(key);
+		if (spi == null) {
 			return null;
+		}
 		return spi.create();
 	}
 
 	static UniversalFactory instance() {
-		if (instance == null)
+		if (instance == null) {
 			instance = new UniversalFactory();
+		}
 		return instance;
 	}
 
 	/**
 	 * Registers object factory with name. Previously registered factory will
 	 * not be overwritten.
-	 * 
-	 * @param key
-	 *            name of object factory.
-	 * @param spi
-	 *            implementation of factory.
+	 *
+	 * @param key name of object factory.
+	 * @param spi implementation of factory.
 	 */
 	public static void setSpi(String key, FactorySpi<?> spi) {
 		setSpi(key, spi, false);
@@ -83,24 +68,34 @@ public class UniversalFactory {
 
 	/**
 	 * Registers object factory with name.
-	 * 
-	 * @param key
-	 *            name of object factory.
-	 * @param spi
-	 *            implementation of factory.
-	 * @param overwrite
-	 *            <code>true</code> if previously registered factory should be
-	 *            overwritten.
+	 *
+	 * @param key name of object factory.
+	 * @param spi implementation of factory.
+	 * @param overwrite <code>true</code> if previously registered factory should be overwritten.
 	 */
 	public static void setSpi(String key, FactorySpi<?> spi, boolean overwrite) {
-		if (!overwrite && instance().factories.containsKey(key))
+		if (!overwrite && instance().factories.containsKey(key)) {
 			return;
+		}
 		instance().factories.put(key, spi);
 	}
 
-	private final HashMap<String, FactorySpi<?>> factories = new HashMap<String, FactorySpi<?>>();
-
 	private UniversalFactory() {
+	}
+
+	/**
+	 * Interface for object factory.
+	 *
+	 * @param <T> type of created objects.
+	 */
+	public interface FactorySpi<T> {
+
+		/**
+		 * Creates new instance of class.
+		 *
+		 * @return
+		 */
+		T create();
 	}
 
 }

@@ -1,10 +1,13 @@
 /*
+ * ConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -28,22 +31,25 @@ import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 import java.net.Socket;
 
 /**
- * 
  * @author andrzej
  */
-public interface ConnectionManager extends ContextAware {
+public interface ConnectionManager
+		extends ContextAware {
 
 	void connectTcp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
 
 	void connectUdp(JaxmppCore jaxmpp, ConnectionSession session) throws JaxmppException;
 
-	void initConnection(JaxmppCore jaxmpp, ConnectionSession session, InitializedCallback callback) throws JaxmppException;
+	void initConnection(JaxmppCore jaxmpp, ConnectionSession session, InitializedCallback callback)
+			throws JaxmppException;
 
-	interface ConnectionClosedHandler extends EventHandler {
+	interface ConnectionClosedHandler
+			extends EventHandler {
 
 		void onConnectionClosed(SessionObject sessionObject);
 
-		class ConnectionClosedEvent extends JaxmppEvent<ConnectionClosedHandler> {
+		class ConnectionClosedEvent
+				extends JaxmppEvent<ConnectionClosedHandler> {
 
 			public ConnectionClosedEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -57,18 +63,21 @@ public interface ConnectionManager extends ContextAware {
 		}
 	}
 
-	interface ConnectionEstablishedHandler extends EventHandler {
+	interface ConnectionEstablishedHandler
+			extends EventHandler {
 
 		void onConnectionEstablished(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket)
 				throws JaxmppException;
 
-		class ConnectionEstablishedEvent extends JaxmppEvent<ConnectionEstablishedHandler> {
+		class ConnectionEstablishedEvent
+				extends JaxmppEvent<ConnectionEstablishedHandler> {
 
 			private ConnectionSession connectionSession;
 
 			private Socket socket;
 
-			public ConnectionEstablishedEvent(SessionObject sessionObject, ConnectionSession connectionSession, Socket socket) {
+			public ConnectionEstablishedEvent(SessionObject sessionObject, ConnectionSession connectionSession,
+											  Socket socket) {
 				super(sessionObject);
 				this.connectionSession = connectionSession;
 				this.socket = socket;
@@ -98,11 +107,13 @@ public interface ConnectionManager extends ContextAware {
 		}
 	}
 
-	interface ConnectionFailedHandler extends EventHandler {
+	interface ConnectionFailedHandler
+			extends EventHandler {
 
 		void onConnectionFailed(SessionObject sessionObject, ConnectionSession connectionSession);
 
-		class ConnectionFailedEvent extends JaxmppEvent<ConnectionFailedHandler> {
+		class ConnectionFailedEvent
+				extends JaxmppEvent<ConnectionFailedHandler> {
 
 			private ConnectionSession connectionSession;
 

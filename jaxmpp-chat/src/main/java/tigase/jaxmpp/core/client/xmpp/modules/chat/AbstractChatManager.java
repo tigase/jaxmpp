@@ -1,10 +1,13 @@
 /*
+ * AbstractChatManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,12 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+
+import java.util.List;
 
 public abstract class AbstractChatManager {
 
@@ -43,13 +46,13 @@ public abstract class AbstractChatManager {
 		return context;
 	}
 
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
 	protected void initialize() {
 	}
 
 	public abstract boolean isChatOpenFor(final BareJID jid);
-
-	public void setContext(Context context) {
-		this.context = context;
-	}
 
 }

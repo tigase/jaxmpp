@@ -1,10 +1,13 @@
 /*
+ * Property.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2014 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,17 +23,17 @@ package tigase.jaxmpp.core.client;
 /**
  * Base interface for classes which may be stored in JaxmppCore as "properties"
  * by using methods set and get on JaxmppCore instance.
- * 
+ *
  * @author andrzej
  */
 public interface Property {
-	
+
 	/**
-	 * Method which returns class which implements this interface which 
+	 * Method which returns class which implements this interface which
 	 * may be used as a key to store instance of this class in JaxmppCore.
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
 	Class<? extends Property> getPropertyClass();
-	
+
 }

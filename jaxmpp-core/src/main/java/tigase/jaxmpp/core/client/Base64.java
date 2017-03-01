@@ -1,10 +1,13 @@
 /*
+ * Base64.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,22 +26,24 @@ import java.util.Arrays;
  * Base64 encoder/decoder.
  */
 public class Base64 {
+
 	private static final char[] ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray();
 
 	private static final int[] ALPHABET_1 = new int[256];
 
 	static {
 		Arrays.fill(ALPHABET_1, -1);
-		for (int i = 0; i < ALPHABET.length; i++)
+		for (int i = 0; i < ALPHABET.length; i++) {
 			ALPHABET_1[ALPHABET[i]] = i;
+		}
 		ALPHABET_1['='] = 0;
 	}
 
 	/**
 	 * Translates the specified Base64 string into a byte array.
-	 * 
-	 * @param s
-	 *            the Base64 string (not null)
+	 *
+	 * @param s the Base64 string (not null)
+	 *
 	 * @return the byte array (not null)
 	 */
 	public static byte[] decode(String s) {
@@ -46,8 +51,9 @@ public class Base64 {
 		final int inputLen = s.length();
 		for (int i = 0; i < inputLen; i++) {
 			int c = ALPHABET_1[s.charAt(i)];
-			if (c < 0 && c != '=')
+			if (c < 0 && c != '=') {
 				separatorsCounter++;
+			}
 		}
 
 		int deltas = 0;
@@ -63,21 +69,23 @@ public class Base64 {
 		int mask = 0xFF;
 		int index = 0;
 		int o;
-		for (o = 0; o < s.length();) {
+		for (o = 0; o < s.length(); ) {
 
 			int c0 = ALPHABET_1[s.charAt(o++)];
 			if (c0 == -1) {
 				o = findNexIt(s, --o);
 				c0 = ALPHABET_1[s.charAt(o++)];
-				if (c0 == -1)
+				if (c0 == -1) {
 					break;
+				}
 			}
 			int c1 = ALPHABET_1[s.charAt(o++)];
 			if (c1 == -1) {
 				o = findNexIt(s, --o);
 				c1 = ALPHABET_1[s.charAt(o++)];
-				if (c1 == -1)
+				if (c1 == -1) {
 					break;
+				}
 			}
 
 			buffer[index++] = (byte) (((c0 << 2) | (c1 >> 4)) & mask);
@@ -88,8 +96,9 @@ public class Base64 {
 			if (c2 == -1) {
 				o = findNexIt(s, --o);
 				c2 = ALPHABET_1[s.charAt(o++)];
-				if (c2 == -1)
+				if (c2 == -1) {
 					break;
+				}
 			}
 			buffer[index++] = (byte) (((c1 << 4) | (c2 >> 2)) & mask);
 			if (index >= buffer.length) {
@@ -99,8 +108,9 @@ public class Base64 {
 			if (c3 == -1) {
 				o = findNexIt(s, --o);
 				c3 = ALPHABET_1[s.charAt(o++)];
-				if (c3 == -1)
+				if (c3 == -1) {
 					break;
+				}
 			}
 			buffer[index++] = (byte) (((c2 << 6) | c3) & mask);
 		}
@@ -110,9 +120,9 @@ public class Base64 {
 
 	/**
 	 * Translates the specified byte array into Base64 string.
-	 * 
-	 * @param buf
-	 *            the byte array (not null)
+	 *
+	 * @param buf the byte array (not null)
+	 *
 	 * @return the translated Base64 string (not null)
 	 */
 	public static String encode(byte[] buf) {
@@ -133,10 +143,10 @@ public class Base64 {
 			output[a++] = ALPHABET[b2 & mask];
 		}
 		switch (size % 3) {
-		case 1:
-			output[--a] = '=';
-		case 2:
-			output[--a] = '=';
+			case 1:
+				output[--a] = '=';
+			case 2:
+				output[--a] = '=';
 		}
 		return new String(output);
 	}
@@ -144,8 +154,9 @@ public class Base64 {
 	private static int findNexIt(String s, int i) {
 		final int sl = s.length() - 1;
 		int c2;
-		if (i >= sl)
+		if (i >= sl) {
 			return i;
+		}
 		do {
 			c2 = ALPHABET_1[s.charAt(++i)];
 		} while (c2 == -1 && i < sl);

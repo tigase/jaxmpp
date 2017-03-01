@@ -1,10 +1,13 @@
 /*
+ * UIDGenerator.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,20 +22,40 @@ package tigase.jaxmpp.core.client;
 
 /**
  * Unique IDs generator. Used for attribute 'id' in stanzas.
- * 
+ *
  * @author bmalkow
- * 
  */
 public abstract class UIDGenerator {
 
-	private static final class UIDGenerator35 extends UIDGenerator {
+	private static final String ELEMENTS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	private final static UIDGenerator generator = new UIDGenerator35();
+
+	public static void main(String[] args) {
+		for (int i = 0; i < 100; i++) {
+			System.out.println(next());
+		}
+	}
+
+	/**
+	 * Generate next id;
+	 *
+	 * @return unique id
+	 */
+	public static String next() {
+		return generator.nextUID();
+	}
+
+	protected abstract String nextUID();
+
+	private static final class UIDGenerator35
+			extends UIDGenerator {
 
 		private int[] k1 = new int[32];
 
 		private long l = 5;
 
-		private int[] v = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0 };
+		private int[] v = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+						   0, 0, 0};
 
 		public UIDGenerator35() {
 			for (int i = 0; i < k1.length; i++) {
@@ -41,8 +64,9 @@ public abstract class UIDGenerator {
 		}
 
 		private void inc(final int p) {
-			if (p >= l)
+			if (p >= l) {
 				++l;
+			}
 			v[p] = v[p] + 1;
 			if (v[p] >= ELEMENTS.length()) {
 				v[p] = 0;
@@ -69,26 +93,5 @@ public abstract class UIDGenerator {
 			return t;
 		}
 	}
-
-	private static final String ELEMENTS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-	private final static UIDGenerator generator = new UIDGenerator35();
-
-	public static void main(String[] args) {
-		for (int i = 0; i < 100; i++) {
-			System.out.println(next());
-		}
-	}
-
-	/**
-	 * Generate next id;
-	 * 
-	 * @return unique id
-	 */
-	public static String next() {
-		return generator.nextUID();
-	}
-
-	protected abstract String nextUID();
 
 }

@@ -1,10 +1,13 @@
 /*
+ * AbstractStanzaModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,18 +32,19 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import java.util.List;
 import java.util.logging.Logger;
 
-public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModule, InitializingModule, ContextAware {
+public abstract class AbstractStanzaModule<T extends Stanza>
+		implements XmppModule, InitializingModule, ContextAware {
 
 	protected final Logger log;
 	protected Context context;
 
-	public AbstractStanzaModule() {
-		log = Logger.getLogger(this.getClass().getName());
-	}
-
 	protected static Element getFirstChild(Element element, String elementName) throws XMLException {
 		List<Element> elements = element.getChildren(elementName);
 		return elements == null || elements.size() == 0 ? null : elements.get(0);
+	}
+
+	public AbstractStanzaModule() {
+		log = Logger.getLogger(this.getClass().getName());
 	}
 
 	@Override
@@ -49,8 +53,9 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 
 	@Override
 	public void beforeRegister() {
-		if (context == null)
+		if (context == null) {
 			throw new RuntimeException("Context cannot be null");
+		}
 	}
 
 	@Override
@@ -70,9 +75,8 @@ public abstract class AbstractStanzaModule<T extends Stanza> implements XmppModu
 
 	/**
 	 * Method for processing incoming stanza.
-	 * 
-	 * @param element
-	 *            incoming stanza
+	 *
+	 * @param element incoming stanza
 	 */
 	public abstract void process(T stanza) throws JaxmppException;
 

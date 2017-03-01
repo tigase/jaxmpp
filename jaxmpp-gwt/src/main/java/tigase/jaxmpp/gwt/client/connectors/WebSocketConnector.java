@@ -1,10 +1,13 @@
 /*
+ * WebSocketConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,7 +27,6 @@ import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.AbstractWebSocketConnector;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.gwt.client.xml.GwtElement;
 
@@ -33,17 +35,16 @@ import java.util.List;
 import java.util.logging.Level;
 
 /**
- * 
  * @author andrzej
  */
-public class WebSocketConnector extends AbstractWebSocketConnector {
-	
+public class WebSocketConnector
+		extends AbstractWebSocketConnector {
+
+	private final WebSocketCallback socketCallback;
+	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
+	private Timer closeTimer;
 	private Timer pingTimer = null;
 	private WebSocket socket = null;
-
-	private int SOCKET_TIMEOUT = 1000 * 60 * 3;
-	private final WebSocketCallback socketCallback;
-	private Timer closeTimer;
 
 	public WebSocketConnector(Context context) {
 		super(context);
@@ -52,8 +53,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			@Override
 			public void onClose(WebSocket ws) {
 				try {
-					if (getState() == State.connected && !rfcCompatible 
-							&& StreamFeaturesModule.getStreamFeatures(WebSocketConnector.this.context.getSessionObject()) == null) {
+					if (getState() == State.connected && !rfcCompatible && StreamFeaturesModule.getStreamFeatures(
+							WebSocketConnector.this.context.getSessionObject()) == null) {
 						if (pingTimer != null) {
 							pingTimer.cancel();
 							pingTimer = null;
@@ -61,7 +62,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						rfcCompatible = true;
 						start();
 						return;
-					}			
+					}
 					if (getState() != State.disconnected && getState() != State.disconnecting) {
 						if (pingTimer != null) {
 							pingTimer.cancel();
@@ -95,8 +96,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			@Override
 			public void onMessage(WebSocket ws, String message) {
 				try {
-					if (getState() == State.disconnected)
+					if (getState() == State.disconnected) {
 						return;
+					}
 					parseSocketData(message);
 				} catch (JaxmppException ex) {
 					WebSocketConnector.this.onError(null, ex);
@@ -128,8 +130,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						log.config("Whitespace ping period is setted to " + delay + "ms");
 					}
 
-					if (WebSocketConnector.this.context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
-							|| ((Boolean) WebSocketConnector.this.context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+					if (WebSocketConnector.this.context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) ==
+							null || ((Boolean) WebSocketConnector.this.context.getSessionObject()
+							.getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
 						pingTimer.scheduleRepeating(delay);
 					}
 
@@ -146,15 +149,25 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	public boolean isSecure() {
 		return socket.isSecure();
 	}
-	
+
+	@Override
+	protected void onStreamTerminate() throws JaxmppException {
+		super.onStreamTerminate();
+		if (getState() == State.disconnecting || getState() == State.disconnected) {
+			socket.close();
+			workerTerminated();
+		}
+	}
+
 	private void parseSocketData(String x) throws JaxmppException {
 		// ignore keep alive "whitespace"
 		if (x == null || x.length() == 1) {
 			x = x.trim();
-			if (x.length() == 0)
+			if (x.length() == 0) {
 				return;
+			}
 		}
-		
+
 		log.finest("received = " + x);
 
 		// workarounds for xml parsers implemented in browsers
@@ -180,10 +193,10 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 		Element response = new GwtElement(XMLParser.parse(x).getDocumentElement());
 		List<Element> received = null;
-		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName()) || "root".equals(response.getName())) {
+		if ("stream:stream".equals(response.getName()) || "stream".equals(response.getName()) ||
+				"root".equals(response.getName())) {
 			received = response.getChildren();
-		}
-		else if (response != null) {
+		} else if (response != null) {
 			received = new ArrayList<Element>();
 			received.add(response);
 		}
@@ -198,28 +211,6 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 		}
 	}
-	
-	@Override
-	public void start() throws XMLException, JaxmppException {
-		super.start();
-		
-		String url = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
-		setStage(State.connecting);
-		// maybe we should add other "protocols" to indicate which version of xmpp-over-websocket is used?
-		// if we would ask for "xmpp" and "xmpp-framing" new server would (at least Tigase) would respond
-		// with "xmpp-framing" to try newer version of protocol and older with "xmpp" suggesting to try 
-		// older protocol at first but in both cases we should be ready for error and failover!!
-		// This would only reduce number of roundtrips in case of an error.
-		// WARNING: old Tigase will not throw an exception when new protocol is tried - it will just hang.
-		// Good idea would be also to allow user to pass protocol version (new, old, autodetection [old and if failed try the new one])
-		socket = new WebSocket(url, new String[] { "xmpp", "xmpp-framing" }, socketCallback);
-	}
-
-	@Override
-	public void stop() throws XMLException, JaxmppException {
-		super.stop();
-		//context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
-	}
 
 	@Override
 	public void send(final String data) throws JaxmppException {
@@ -232,17 +223,30 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		//} else {
 		//	throw new JaxmppException("Not connected");
 		//}
-	}	
-	
-	@Override
-	protected void onStreamTerminate() throws JaxmppException {
-		super.onStreamTerminate();
-		if (getState() == State.disconnecting || getState() == State.disconnected) {
-			socket.close();
-			workerTerminated();
-		}
 	}
-	
+
+	@Override
+	public void start() throws JaxmppException {
+		super.start();
+
+		String url = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
+		setStage(State.connecting);
+		// maybe we should add other "protocols" to indicate which version of xmpp-over-websocket is used?
+		// if we would ask for "xmpp" and "xmpp-framing" new server would (at least Tigase) would respond
+		// with "xmpp-framing" to try newer version of protocol and older with "xmpp" suggesting to try
+		// older protocol at first but in both cases we should be ready for error and failover!!
+		// This would only reduce number of roundtrips in case of an error.
+		// WARNING: old Tigase will not throw an exception when new protocol is tried - it will just hang.
+		// Good idea would be also to allow user to pass protocol version (new, old, autodetection [old and if failed try the new one])
+		socket = new WebSocket(url, new String[]{"xmpp", "xmpp-framing"}, socketCallback);
+	}
+
+	@Override
+	public void stop() throws JaxmppException {
+		super.stop();
+		//context.getEventBus().fire(new DisconnectedHandler.DisconnectedEvent(context.getSessionObject()));
+	}
+
 	@Override
 	protected void terminateAllWorkers() throws JaxmppException {
 		if (this.pingTimer != null) {

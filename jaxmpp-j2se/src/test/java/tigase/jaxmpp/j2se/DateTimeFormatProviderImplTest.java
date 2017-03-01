@@ -1,10 +1,13 @@
 /*
+ * DateTimeFormatProviderImplTest.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,13 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.util.Date;
-
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
-public class DateTimeFormatProviderImplTest extends TestCase {
+import java.util.Date;
+
+public class DateTimeFormatProviderImplTest
+		extends TestCase {
 
 	private final DateTimeFormatProviderImpl dtf = new DateTimeFormatProviderImpl();
 

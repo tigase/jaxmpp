@@ -1,10 +1,13 @@
 /*
+ * MessageArchiveManagementModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2016 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,7 +20,10 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.mam;
 
-import tigase.jaxmpp.core.client.*;
+import tigase.jaxmpp.core.client.AsyncCallback;
+import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.PacketWriter;
+import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -49,7 +55,9 @@ import java.util.List;
  * MessageArchiveManagementModule class implements support for XEP-0313 Message
  * Archive Management.
  */
-public class MessageArchiveManagementModule extends AbstractStanzaModule implements PacketWriterAware, MessageModuleExtension, Extension {
+public class MessageArchiveManagementModule
+		extends AbstractStanzaModule
+		implements PacketWriterAware, MessageModuleExtension, Extension {
 
 	private static final String MAM_XMLNS = "urn:xmpp:mam:1";
 
@@ -57,29 +65,29 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 
 	private static final DateTimeFormat format = new DateTimeFormat();
 
+	public enum DefaultValue {
+		always,
+		roster,
+		never
+	}
+
 	private PacketWriter writer = null;
+
+	public static List<JID> mapChildrenToListOfJids(Element elem) throws XMLException {
+		List<Element> children = elem.getChildren();
+		List<JID> results = new LinkedList<>();
+		for (Element child : children) {
+			results.add(JID.jidInstance(child.getValue()));
+		}
+		return results;
+	}
 
 	public MessageArchiveManagementModule() {
 	}
 
 	@Override
-	public Criteria getCriteria() {
-		return CRIT;
-	}
-
-	@Override
 	public Element afterReceive(Element received) throws JaxmppException {
 		return received;
-	}
-
-	@Override
-	public Element beforeSend(Element received) throws JaxmppException {
-		return received;
-	}
-
-	@Override
-	public String[] getFeatures() {
-		return null;
 	}
 
 	@Override
@@ -91,24 +99,16 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 	}
 
 	@Override
-	public void process(Stanza stanza) throws XMPPException, XMLException, JaxmppException {
-
-	}
-
-	@Override
-	public void setPacketWriter(PacketWriter packetWriter) {
-		this.writer = packetWriter;
-	}
-
-	@Override
 	public Message beforeMessageProcess(Message message, Chat chat) throws JaxmppException {
 		Element resultEl = message.getChildrenNS("result", MAM_XMLNS);
-		if (resultEl == null)
+		if (resultEl == null) {
 			return message;
+		}
 
 		Element forwarded = resultEl.getChildrenNS("forwarded", "urn:xmpp:forward:0");
-		if (forwarded == null)
+		if (forwarded == null) {
 			return message;
+		}
 
 		Element timestampEl = forwarded.getChildrenNS("delay", "urn:xmpp:delay");
 		Element forwardedMessageEl = forwarded.getFirstChild("message");
@@ -119,32 +119,61 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		Date timestamp = format.parse(timestampEl.getAttribute("stamp"));
 		Message forwarededMessage = (Message) Stanza.create(forwardedMessageEl);
 
-		fireEvent(new MessageArchiveItemReceivedEventHandler.MessageArchiveItemReceivedEvent(context.getSessionObject(), queryid, messageId, timestamp, forwarededMessage));
+		fireEvent(new MessageArchiveItemReceivedEventHandler.MessageArchiveItemReceivedEvent(context.getSessionObject(),
+																							 queryid, messageId,
+																							 timestamp,
+																							 forwarededMessage));
 
 		return null;
+	}
+
+	@Override
+	public Element beforeSend(Element received) throws JaxmppException {
+		return received;
+	}
+
+	@Override
+	public Criteria getCriteria() {
+		return CRIT;
+	}
+
+	@Override
+	public String[] getFeatures() {
+		return null;
+	}
+
+	@Override
+	public void process(Stanza stanza) throws JaxmppException {
+
 	}
 
 	public void queryItems(Query query, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
 		queryItems(query, null, queryid, rsm, callback);
 	}
 
-	public void queryItems(Query query, JID componentJid, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
+	public void queryItems(Query query, JID componentJid, String queryid, RSM rsm, ResultCallback callback)
+			throws JaxmppException {
 		queryItems(query, componentJid, null, queryid, rsm, callback);
 	}
 
-	public void queryItems(Query query, JID componentJid, String node, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
-		queryItems(query != null ? query.toJabberDataElement(format) : (JabberDataElement) null, componentJid, node, queryid, rsm, callback);
+	public void queryItems(Query query, JID componentJid, String node, String queryid, RSM rsm, ResultCallback callback)
+			throws JaxmppException {
+		queryItems(query != null ? query.toJabberDataElement(format) : null, componentJid, node, queryid, rsm,
+				   callback);
 	}
 
-	public void queryItems(JabberDataElement form, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
+	public void queryItems(JabberDataElement form, String queryid, RSM rsm, ResultCallback callback)
+			throws JaxmppException {
 		queryItems(form, null, queryid, rsm, callback);
 	}
 
-	public void queryItems(JabberDataElement form, JID componentJid, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
+	public void queryItems(JabberDataElement form, JID componentJid, String queryid, RSM rsm, ResultCallback callback)
+			throws JaxmppException {
 		queryItems(form, componentJid, null, queryid, rsm, callback);
 	}
 
-	public void queryItems(JabberDataElement form, JID componentJid, String node, String queryid, RSM rsm, ResultCallback callback) throws JaxmppException {
+	public void queryItems(JabberDataElement form, JID componentJid, String node, String queryid, RSM rsm,
+						   ResultCallback callback) throws JaxmppException {
 		IQ iq = IQ.createIQ();
 		iq.setType(StanzaType.set);
 		if (componentJid != null) {
@@ -197,7 +226,13 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		writer.write(iq, callback);
 	}
 
-	public void updateSetttings(DefaultValue defValue, List<JID> always, List<JID> never, SettingsCallback callback) throws JaxmppException {
+	@Override
+	public void setPacketWriter(PacketWriter packetWriter) {
+		this.writer = packetWriter;
+	}
+
+	public void updateSetttings(DefaultValue defValue, List<JID> always, List<JID> never, SettingsCallback callback)
+			throws JaxmppException {
 		if (defValue == null) {
 			throw new JaxmppException("Default value may not be NULL!");
 		}
@@ -225,23 +260,53 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		writer.write(iq, callback);
 	}
 
+	public interface MessageArchiveItemReceivedEventHandler
+			extends EventHandler {
+
+		void onArchiveItemReceived(String queryid, String messageId, Date timestamp, Message message)
+				throws JaxmppException;
+
+		class MessageArchiveItemReceivedEvent
+				extends JaxmppEvent<MessageArchiveItemReceivedEventHandler> {
+
+			private final Message message;
+			private final String messageId;
+			private final String queryid;
+			private final Date timestamp;
+
+			MessageArchiveItemReceivedEvent(SessionObject sessionObject, String queryid, String messageId,
+											Date timestamp, Message message) {
+				super(sessionObject);
+				this.queryid = queryid;
+				this.messageId = messageId;
+				this.timestamp = timestamp;
+				this.message = message;
+			}
+
+			@Override
+			public void dispatch(MessageArchiveItemReceivedEventHandler handler) throws Exception {
+				handler.onArchiveItemReceived(queryid, messageId, timestamp, message);
+			}
+		}
+
+	}
 
 	public static class Query {
 
-		private JID with;
-		private Date start;
 		private Date end;
+		private Date start;
+		private JID with;
 
 		public Query() {
 
 		}
 
-		public JID getWith() {
-			return with;
+		public Date getEnd() {
+			return end;
 		}
 
-		public void setWith(JID with) {
-			this.with = with;
+		public void setEnd(Date end) {
+			this.end = end;
 		}
 
 		public Date getStart() {
@@ -252,12 +317,12 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 			this.start = start;
 		}
 
-		public Date getEnd() {
-			return end;
+		public JID getWith() {
+			return with;
 		}
 
-		public void setEnd(Date end) {
-			this.end = end;
+		public void setWith(JID with) {
+			this.with = with;
 		}
 
 		public JabberDataElement toJabberDataElement(DateTimeFormat df) throws XMLException {
@@ -281,34 +346,8 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		}
 	}
 
-	public interface MessageArchiveItemReceivedEventHandler extends EventHandler {
-
-		void onArchiveItemReceived(String queryid, String messageId, Date timestamp, Message message) throws JaxmppException;
-
-		class MessageArchiveItemReceivedEvent extends JaxmppEvent<MessageArchiveItemReceivedEventHandler> {
-
-			private final String queryid;
-			private final String messageId;
-			private final Date timestamp;
-			private final Message message;
-
-			MessageArchiveItemReceivedEvent(SessionObject sessionObject, String queryid, String messageId, Date timestamp, Message message) {
-				super(sessionObject);
-				this.queryid = queryid;
-				this.messageId = messageId;
-				this.timestamp = timestamp;
-				this.message = message;
-			}
-
-			@Override
-			public void dispatch(MessageArchiveItemReceivedEventHandler handler) throws Exception {
-				handler.onArchiveItemReceived(queryid, messageId, timestamp, message);
-			}
-		}
-
-	}
-
-	public static abstract class QueryFormCallback implements AsyncCallback {
+	public static abstract class QueryFormCallback
+			implements AsyncCallback {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -326,13 +365,10 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		public abstract void onSuccess(JabberDataElement form) throws JaxmppException;
 	}
 
-	public static abstract class ResultCallback implements AsyncCallback {
+	public static abstract class ResultCallback
+			implements AsyncCallback {
 
 		private String queryid;
-
-		protected void setQueryid(String queryid) {
-			this.queryid = queryid;
-		}
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -345,9 +381,14 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 		}
 
 		public abstract void onSuccess(String queryid, boolean complete, RSM rsm) throws JaxmppException;
+
+		protected void setQueryid(String queryid) {
+			this.queryid = queryid;
+		}
 	}
 
-	public static abstract class SettingsCallback implements AsyncCallback {
+	public static abstract class SettingsCallback
+			implements AsyncCallback {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -360,22 +401,6 @@ public class MessageArchiveManagementModule extends AbstractStanzaModule impleme
 
 		public abstract void onSuccess(DefaultValue defValue, List<JID> always, List<JID> never) throws JaxmppException;
 
-	}
-
-	public static List<JID> mapChildrenToListOfJids(Element elem) throws XMLException {
-		List<Element> children = elem.getChildren();
-		List<JID> results = new LinkedList<>();
-		for (Element child : children) {
-			results.add(JID.jidInstance(child.getValue()));
-		}
-		return results;
-	}
-
-
-	public static enum DefaultValue {
-		always,
-		roster,
-		never
 	}
 
 }

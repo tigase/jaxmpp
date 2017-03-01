@@ -1,10 +1,13 @@
 /*
+ * XmppSessionLogic.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,12 +34,11 @@ public interface XmppSessionLogic {
 	 * implementation should register listeners.
 	 */
 	void beforeStart() throws JaxmppException;
-	
+
 	/**
 	 * Set {@linkplain SessionListener}.
 	 *
-	 * @param listener
-	 *            {@linkplain SessionListener}
+	 * @param listener {@linkplain SessionListener}
 	 */
 	void setSessionListener(SessionListener listener) throws JaxmppException;
 
@@ -46,11 +48,21 @@ public interface XmppSessionLogic {
 	 */
 	void unbind() throws JaxmppException;
 
-	interface XmppSessionEstablishedHandler extends EventHandler {
+	/**
+	 * Interface for session listener.
+	 */
+	interface SessionListener {
+
+		void onException(JaxmppException e) throws JaxmppException;
+	}
+
+	interface XmppSessionEstablishedHandler
+			extends EventHandler {
 
 		void onXmppSessionEstablished(SessionObject sessionObject) throws JaxmppException;
 
-		class XmppSessionEstablishedEvent extends JaxmppEvent<XmppSessionEstablishedHandler> {
+		class XmppSessionEstablishedEvent
+				extends JaxmppEvent<XmppSessionEstablishedHandler> {
 
 			public XmppSessionEstablishedEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -63,13 +75,5 @@ public interface XmppSessionLogic {
 
 		}
 
-	}
-
-	/**
-	 * Interface for session listener.
-	 */
-	interface SessionListener {
-
-		void onException(JaxmppException e) throws JaxmppException;
 	}
 }

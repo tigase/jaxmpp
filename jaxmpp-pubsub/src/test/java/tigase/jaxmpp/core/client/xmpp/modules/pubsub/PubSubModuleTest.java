@@ -1,10 +1,13 @@
 /*
+ * PubSubModuleTest.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,33 +20,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.pubsub;
 
-import java.util.Collection;
-import java.util.Date;
-
-import org.junit.Test;
-
 //import tigase.jaxmpp.core.client.AbstractJaxmppTest;
-import tigase.jaxmpp.core.client.BareJID;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.ResponseManager;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.criteria.tpath.TPath;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.ElementFactory;
-import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.PingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.PublishAsyncCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.RetrieveItemsAsyncCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.SubscriptionAsyncCallback;
-import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule.SubscriptionElement;
-import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
-import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 public class PubSubModuleTest {
 //public class PubSubModuleTest extends AbstractJaxmppTest {

@@ -1,10 +1,13 @@
 /*
+ * ConnectorWrapper.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,12 +26,12 @@ import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Class for wrapping {@linkplain Connector Connector}.
  */
-public class ConnectorWrapper implements Connector {
+public class ConnectorWrapper
+		implements Connector {
 
 	private Connector connector;
 
@@ -42,11 +45,20 @@ public class ConnectorWrapper implements Connector {
 
 	/**
 	 * Returns wrapped connector.
-	 * 
+	 *
 	 * @return wrapped connector.
 	 */
 	public Connector getConnector() {
 		return connector;
+	}
+
+	/**
+	 * Sets connector to be wrapped.
+	 *
+	 * @param connector connector.
+	 */
+	public void setConnector(Connector connector) {
+		this.connector = connector;
 	}
 
 	@Override
@@ -70,37 +82,27 @@ public class ConnectorWrapper implements Connector {
 	}
 
 	@Override
-	public void restartStream() throws XMLException, JaxmppException {
+	public void restartStream() throws JaxmppException {
 		connector.restartStream();
 	}
 
 	@Override
-	public void send(Element stanza) throws XMLException, JaxmppException {
+	public void send(Element stanza) throws JaxmppException {
 		connector.send(stanza);
 	}
 
-	/**
-	 * Sets connector to be wrapped.
-	 * 
-	 * @param connector
-	 *            connector.
-	 */
-	public void setConnector(Connector connector) {
-		this.connector = connector;
-	}
-
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		connector.start();
 	}
 
 	@Override
-	public void stop() throws XMLException, JaxmppException {
+	public void stop() throws JaxmppException {
 		connector.stop();
 	}
 
 	@Override
-	public void stop(boolean terminate) throws XMLException, JaxmppException {
+	public void stop(boolean terminate) throws JaxmppException {
 		connector.stop(terminate);
 	}
 

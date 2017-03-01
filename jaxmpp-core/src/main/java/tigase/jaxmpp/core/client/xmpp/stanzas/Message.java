@@ -1,10 +1,13 @@
 /*
+ * Message.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,9 +27,9 @@ import tigase.jaxmpp.core.client.xmpp.utils.EscapeUtils;
 
 /**
  * Representation od Message stanza.
- * 
  */
-public class Message extends Stanza {
+public class Message
+		extends Stanza {
 
 	public static final Message create() throws JaxmppException {
 		return createMessage();
@@ -34,13 +37,14 @@ public class Message extends Stanza {
 
 	protected Message(Element element) throws XMLException {
 		super(element);
-		if (!"message".equals(element.getName()))
+		if (!"message".equals(element.getName())) {
 			throw new RuntimeException("Wrong element name: " + element.getName());
+		}
 	}
 
 	/**
 	 * Return message body.
-	 * 
+	 *
 	 * @return message body.
 	 */
 	public String getBody() throws XMLException {
@@ -48,8 +52,17 @@ public class Message extends Stanza {
 	}
 
 	/**
+	 * Sets body of message.
+	 *
+	 * @param body body of message
+	 */
+	public void setBody(String body) throws XMLException {
+		setChildElementValue("body", body);
+	}
+
+	/**
 	 * Returns subject of message.
-	 * 
+	 *
 	 * @return subject of message
 	 */
 	public String getSubject() throws XMLException {
@@ -57,12 +70,30 @@ public class Message extends Stanza {
 	}
 
 	/**
+	 * Sets subject of message.
+	 *
+	 * @param subject subject of message
+	 */
+	public void setSubject(String subject) throws XMLException {
+		setChildElementValue("subject", subject);
+	}
+
+	/**
 	 * Returns thread-id.
-	 * 
+	 *
 	 * @return thread-id
 	 */
 	public String getThread() throws XMLException {
 		return getChildElementValue("thread");
+	}
+
+	/**
+	 * Sets thread-id of message.
+	 *
+	 * @param thread thread-id
+	 */
+	public void setThread(String thread) throws XMLException {
+		setChildElementValue("thread", thread);
 	}
 
 	/**
@@ -71,36 +102,6 @@ public class Message extends Stanza {
 	@Override
 	public StanzaType getType() throws XMLException {
 		return super.getType(StanzaType.normal);
-	}
-
-	/**
-	 * Sets body of message.
-	 * 
-	 * @param body
-	 *            body of message
-	 */
-	public void setBody(String body) throws XMLException {
-		setChildElementValue("body", body);
-	}
-
-	/**
-	 * Sets subject of message.
-	 * 
-	 * @param subject
-	 *            subject of message
-	 */
-	public void setSubject(String subject) throws XMLException {
-		setChildElementValue("subject", subject);
-	}
-
-	/**
-	 * Sets thread-id of message.
-	 * 
-	 * @param thread
-	 *            thread-id
-	 */
-	public void setThread(String thread) throws XMLException {
-		setChildElementValue("thread", thread);
 	}
 
 }

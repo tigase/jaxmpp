@@ -1,10 +1,13 @@
 /*
+ * Socks5ConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -52,7 +55,8 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public abstract class Socks5ConnectionManager implements ConnectionManager {
+public abstract class Socks5ConnectionManager
+		implements ConnectionManager {
 
 	public static final String PACKET_ID = "packet-id";
 	protected static final String JAXMPP_KEY = "jaxmpp";
@@ -64,6 +68,20 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class.getCanonicalName());
 	private static final Map<String, ConnectionSession> sessions = new HashMap<String, ConnectionSession>();
 	private static final long TIMEOUT = 15 * 60 * 1000;
+
+	public enum State {
+
+		Active,
+		ActiveServ,
+		Auth,
+		AuthResp,
+		Closed,
+		Command,
+		Welcome,
+		WelcomeResp,
+		WelcomeServ
+	}
+
 	private static TcpServerThread server = null;
 	// ---------------------------------------------------------------------------------------
 	private static Timer timer = new Timer(true);
@@ -76,7 +94,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected static void clearSessions() {
 		synchronized (sessions) {
 			for (ConnectionSession session : new HashSet<ConnectionSession>(sessions.values())) {
-				Socks5ConnectionManager connectionManager = session.getData(Socks5ConnectionManager.class.getCanonicalName());
+				Socks5ConnectionManager connectionManager = session.getData(
+						Socks5ConnectionManager.class.getCanonicalName());
 				connectionManager.fireOnFailure(session);
 			}
 			sessions.clear();
@@ -87,9 +106,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		try {
 			String sid = session.getData(SID_KEY);
 			String data = session.isIncoming()
-					? sid + session.getPeer().toString()
-					+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString()
-					: sid + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
+						  ? sid + session.getPeer().toString() +
+								  ResourceBinderModule.getBindedJID(session.getSessionObject()).toString()
+						  : sid + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() +
+								  session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 			md.update(data.getBytes(UTF_CHARSET));
 			byte[] buff = md.digest();
@@ -101,8 +121,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				enc.append(ch);
 			} // end of for (b : digest)
 			if (log.isLoggable(Level.FINEST)) {
-				log.finest("for " + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + " generated "
-						+ data + " hash = " + enc.toString());
+				log.finest("for " + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() +
+								   " generated " + data + " hash = " + enc.toString());
 			}
 			return enc.toString();
 		} catch (NoSuchAlgorithmException e) {
@@ -152,7 +172,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 							socket.write(ByteBuffer.wrap(new byte[]{0x05, 0x00}));
 						} else {
 							if (log.isLoggable(Level.FINEST)) {
-								log.log(Level.FINEST, "stopping service {0} after failure during WELCOME step", socket.toString());
+								log.log(Level.FINEST, "stopping service {0} after failure during WELCOME step",
+										socket.toString());
 							}
 							socket.close();
 							return State.Closed;
@@ -217,8 +238,9 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 								sockets.add(socket.socket());
 							}
 							state = State.ActiveServ;
-						} else
+						} else {
 							return State.Closed;
+						}
 					}
 					break;
 
@@ -353,8 +375,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		handleConnection(session, channel.socket(), false);
 	}
 
-	public void discoverProxy(final JaxmppCore jaxmpp, final ConnectionSession session, final InitializedCallback callback)
-			throws JaxmppException {
+	public void discoverProxy(final JaxmppCore jaxmpp, final ConnectionSession session,
+							  final InitializedCallback callback) throws JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
 		final DiscoveryModule discoItemsModule = jaxmpp.getModule(DiscoveryModule.class);
 		JID jid = ResourceBinderModule.getBindedJID(jaxmpp.getSessionObject());
@@ -365,7 +387,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			}
 
 			@Override
-			public void onInfoReceived(String attribute, final ArrayList<DiscoveryModule.Item> items) throws XMLException {
+			public void onInfoReceived(String attribute, final ArrayList<DiscoveryModule.Item> items)
+					throws XMLException {
 				final int all = items.size();
 				if (all == 0) {
 					proxyDiscoveryError(jaxmpp, session, callback, "not supported by this server");
@@ -391,12 +414,13 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 								}
 
 								@Override
-								protected void onInfoReceived(String node, Collection<DiscoveryModule.Identity> identities,
+								protected void onInfoReceived(String node,
+															  Collection<DiscoveryModule.Identity> identities,
 															  Collection<String> features) throws XMLException {
 									if (identities != null) {
 										for (DiscoveryModule.Identity identity : identities) {
-											if ("proxy".equals(identity.getCategory())
-													&& "bytestreams".equals(identity.getType())) {
+											if ("proxy".equals(identity.getCategory()) &&
+													"bytestreams".equals(identity.getType())) {
 												proxyComponents.add(item.getJid());
 											}
 										}
@@ -433,24 +457,26 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnConnected(ConnectionSession session) {
 		List<Socket> sockets = session.getData("sockets");
 		for (Socket socket : sockets) {
-			if (socket.isClosed())
+			if (socket.isClosed()) {
 				continue;
+			}
 			try {
 				socket.getInputStream().read(new byte[0]);
 				socket.getOutputStream().write(new byte[0]);
 			} catch (Exception ex) {
 			}
-			if (socket.isClosed())
+			if (socket.isClosed()) {
 				continue;
+			}
 			fireOnConnected(session, socket);
 		}
 	}
 
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
-			context.getEventBus().fire(
-					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket)
-			);
+			context.getEventBus()
+					.fire(new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(),
+																					  session, socket));
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionEstablished event", ex);
 		}
@@ -459,8 +485,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnFailure(ConnectionSession session) {
 		try {
 			unregisterSession(session);
-			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session)
-			);
+			context.getEventBus()
+					.fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session));
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}
@@ -481,8 +507,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 				registerSession(session, sid, this);
 			}
-			return streamhostsResolver.getLocalStreamHosts(ResourceBinderModule.getBindedJID(session.getSessionObject()),
-					server.getPort());
+			return streamhostsResolver.getLocalStreamHosts(
+					ResourceBinderModule.getBindedJID(session.getSessionObject()), server.getPort());
 		} catch (Exception ex) {
 			throw new JaxmppException("problem in getting local streamhosts", ex);
 		}
@@ -592,8 +618,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		} else if (session.getPeer() == null) {
 			log.fine("no peer");
 		}
-		jaxmpp.getModule(Socks5BytestreamsModule.class).requestActivate(usedProxyJid, session.getSid(), session.getPeer(),
-				new ActivateCallback() {
+		jaxmpp.getModule(Socks5BytestreamsModule.class)
+				.requestActivate(usedProxyJid, session.getSid(), session.getPeer(), new ActivateCallback() {
 					@Override
 					public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 						fireOnFailure(session);
@@ -614,36 +640,28 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class,
-				new FileTransferManager.FileTransferSuccessHandler() {
-					@Override
-					public void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer) {
-						unregisterSession(fileTransfer);
-					}
-				});
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class,
-				new FileTransferManager.FileTransferFailureHandler() {
-					@Override
-					public void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer) {
-						unregisterSession(fileTransfer);
-					}
-				});
+		this.context.getEventBus()
+				.addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class,
+							new FileTransferManager.FileTransferSuccessHandler() {
+								@Override
+								public void onFileTransferSuccess(SessionObject sessionObject,
+																  FileTransfer fileTransfer) {
+									unregisterSession(fileTransfer);
+								}
+							});
+		this.context.getEventBus()
+				.addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class,
+							new FileTransferManager.FileTransferFailureHandler() {
+								@Override
+								public void onFileTransferFailure(SessionObject sessionObject,
+																  FileTransfer fileTransfer) {
+									unregisterSession(fileTransfer);
+								}
+							});
 	}
 
-	public enum State {
-
-		Active,
-		ActiveServ,
-		Auth,
-		AuthResp,
-		Closed,
-		Command,
-		Welcome,
-		WelcomeResp,
-		WelcomeServ
-	}
-
-	private class IncomingConnectionHandlerThread extends Thread {
+	private class IncomingConnectionHandlerThread
+			extends Thread {
 
 		private final SocketChannel socketChannel;
 
@@ -664,7 +682,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	/**
 	 * Internal TCP connection manager
 	 */
-	private class TcpServerThread extends Thread {
+	private class TcpServerThread
+			extends Thread {
 
 		// private ConnectionSession session = null;
 		private ServerSocketChannel serverSocket = null;

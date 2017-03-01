@@ -1,10 +1,13 @@
 /*
+ * XMPPDomBuilderHandler.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,19 +23,14 @@ package tigase.jaxmpp.j2se.connectors.socket;
 
 //~--- non-JDK imports --------------------------------------------------------
 
-import java.util.Arrays;
-import java.util.EmptyStackException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.xml.DefaultElementFactory;
 import tigase.xml.Element;
 import tigase.xml.ElementFactory;
 import tigase.xml.SimpleHandler;
+
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 //~--- classes ----------------------------------------------------------------
 
@@ -48,18 +46,21 @@ import tigase.xml.SimpleHandler;
  * <code>Element</code> class. To receive trees built with instances of proper
  * class user must provide <code>ElementFactory</code> implementation creating
  * instances of required <code>ELement</code> extension.
- * 
+ * <p>
  * <p>
  * Created: Sat Oct 2 22:01:34 2004
  * </p>
- * 
+ *
  * @param <RefObject>
+ *
  * @author <a href="mailto:artur.hefczyc@tigase.org">Artur Hefczyc</a>
  * @version $Rev: 2129 $
  */
-public class XMPPDomBuilderHandler implements SimpleHandler {
-	private static ElementFactory defaultFactory = new DefaultElementFactory();
+public class XMPPDomBuilderHandler
+		implements SimpleHandler {
+
 	private static final String ELEM_STREAM_STREAM = "stream:stream";
+	private static ElementFactory defaultFactory = new DefaultElementFactory();
 	private static Logger log = Logger.getLogger("tigase.xmpp.XMPPDomBuilderHandler");
 
 	// ~--- fields
@@ -77,8 +78,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
 	 * @param ioserv
 	 */
 	public XMPPDomBuilderHandler(StreamListener ioserv) {
@@ -88,8 +88,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Constructs ...
-	 * 
-	 * 
+	 *
 	 * @param ioserv
 	 * @param factory
 	 */
@@ -103,8 +102,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param cdata
 	 */
 	@Override
@@ -124,8 +122,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param name
 	 */
 	@Override
@@ -162,8 +159,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param errorMessage
 	 */
 	@Override
@@ -189,8 +185,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param other
 	 */
 	@Override
@@ -204,8 +199,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean parseError() {
@@ -214,8 +208,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -225,8 +218,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param state
 	 */
 	@Override
@@ -236,8 +228,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 
 	/**
 	 * Method description
-	 * 
-	 * 
+	 *
 	 * @param name
 	 * @param attr_names
 	 * @param attr_values
@@ -265,7 +256,7 @@ public class XMPPDomBuilderHandler implements SimpleHandler {
 					// avoid potential
 					// DOS by exhausting permgen
 					namespaces.put(attr_names[i].substring("xmlns:".length(), attr_names[i].length()).intern(),
-							attr_values[i].toString());
+								   attr_values[i].toString());
 
 					if (log.isLoggable(Level.FINEST)) {
 						log.finest("Namespace found: " + attr_values[i].toString());

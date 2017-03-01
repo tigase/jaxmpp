@@ -1,10 +1,13 @@
 /*
+ * AbstractSessionObject.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,45 +20,25 @@
  */
 package tigase.jaxmpp.core.client;
 
+import tigase.jaxmpp.core.client.eventbus.EventBus;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.eventbus.EventBus;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
-
 /**
  * Default representation of {@linkplain SessionObject}
- * 
  */
-public abstract class AbstractSessionObject implements SessionObject, EventBusAware {
-
-	@Override
-	public String toString() {
-		return "AbstractSessionObject{" + "properties=" + properties + '}';
-	}
-
-	public static class Entry {
-
-		public Entry() {
-		}
-		public Scope scope;
-		public Object value;
-
-		@Override
-		public String toString() {
-			return "Entry{" + "scope=" + scope + ", value=" + value + '}';
-		}
-	}
-
-	private EventBus eventBus;
+public abstract class AbstractSessionObject
+		implements SessionObject, EventBusAware {
 
 	protected final Logger log = Logger.getLogger(this.getClass().getName());
-
 	protected Map<String, Entry> properties;
+	private EventBus eventBus;
 
 	protected AbstractSessionObject() {
 	}
@@ -78,10 +61,11 @@ public abstract class AbstractSessionObject implements SessionObject, EventBusAw
 	@Override
 	public void clear(final Scope... scopes) throws JaxmppException {
 		final Set<Scope> scopesSet = new HashSet<Scope>();
-		if (scopes != null)
+		if (scopes != null) {
 			for (Scope scope : scopes) {
 				scopesSet.add(scope);
 			}
+		}
 		clear(scopesSet);
 	}
 
@@ -97,8 +81,9 @@ public abstract class AbstractSessionObject implements SessionObject, EventBusAw
 		Iterator<java.util.Map.Entry<String, Entry>> iterator = this.properties.entrySet().iterator();
 		while (iterator.hasNext()) {
 			java.util.Map.Entry<String, Entry> entry = iterator.next();
-			if (scopes.contains(entry.getValue().scope))
+			if (scopes.contains(entry.getValue().scope)) {
 				iterator.remove();
+			}
 		}
 
 		ClearedHandler.ClearedEvent event = new ClearedHandler.ClearedEvent(this, scopes);
@@ -109,15 +94,21 @@ public abstract class AbstractSessionObject implements SessionObject, EventBusAw
 		return eventBus;
 	}
 
+	@Override
+	public void setEventBus(EventBus eventBus) {
+		this.eventBus = eventBus;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T> T getProperty(Scope scope, String key) {
 		Entry entry = this.properties.get(key);
-		if (entry == null)
+		if (entry == null) {
 			return null;
-		else if (scope == null || scope == entry.scope)
+		} else if (scope == null || scope == entry.scope) {
 			return (T) entry.value;
-		else
+		} else {
 			return null;
+		}
 	}
 
 	/**
@@ -146,11 +137,6 @@ public abstract class AbstractSessionObject implements SessionObject, EventBusAw
 
 	public void removeClearedHandler(ClearedHandler handler) {
 		eventBus.remove(ClearedHandler.ClearedEvent.class, handler);
-	}
-
-	@Override
-	public void setEventBus(EventBus eventBus) {
-		this.eventBus = eventBus;
 	}
 
 	@Override
@@ -183,6 +169,25 @@ public abstract class AbstractSessionObject implements SessionObject, EventBusAw
 	@Override
 	public UserProperties setUserProperty(String key, Object value) {
 		return setProperty(Scope.user, key, value);
+	}
+
+	@Override
+	public String toString() {
+		return "AbstractSessionObject{" + "properties=" + properties + '}';
+	}
+
+	public static class Entry {
+
+		public Scope scope;
+		public Object value;
+
+		public Entry() {
+		}
+
+		@Override
+		public String toString() {
+			return "Entry{" + "scope=" + scope + ", value=" + value + '}';
+		}
 	}
 
 }

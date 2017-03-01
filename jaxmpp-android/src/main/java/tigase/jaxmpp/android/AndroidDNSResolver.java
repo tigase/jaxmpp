@@ -1,10 +1,13 @@
 /*
+ * AndroidDNSResolver.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2013-2014 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,21 +20,20 @@
  */
 package tigase.jaxmpp.android;
 
+import org.xbill.DNS.*;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DnsResolver;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Record;
-import org.xbill.DNS.SRVRecord;
-import org.xbill.DNS.TextParseException;
-import org.xbill.DNS.Type;
+public class AndroidDNSResolver
+		implements DnsResolver {
 
-import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DnsResolver;
-import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
-
-public class AndroidDNSResolver implements DnsResolver {
+	private final HashMap<String, Entry> cache = new HashMap<String, Entry>();
+	private long lastAccess = -1;
 
 	private static Entry resolveSRV(String domain) {
 		String hostName = null;
@@ -75,10 +77,6 @@ public class AndroidDNSResolver implements DnsResolver {
 		}
 		return new Entry(hostName, hostPort);
 	}
-
-	private final HashMap<String, Entry> cache = new HashMap<String, Entry>();
-
-	private long lastAccess = -1;
 
 	public AndroidDNSResolver() {
 	}

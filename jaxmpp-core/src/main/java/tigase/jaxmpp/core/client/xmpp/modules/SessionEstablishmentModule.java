@@ -1,10 +1,13 @@
 /*
+ * SessionEstablishmentModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -36,15 +39,12 @@ import java.util.logging.Logger;
  * Module for <a href='http://xmpp.org/rfcs/rfc3921.html#session'>Session
  * Establishment</a>.
  */
-public class SessionEstablishmentModule implements XmppModule, ContextAware {
+public class SessionEstablishmentModule
+		implements XmppModule, ContextAware {
 
 	public static final String SESSION_ESTABLISHED = "jaxmpp#sessionEstablished";
 	protected final Logger log;
 	private Context context;
-
-	public SessionEstablishmentModule() {
-		log = Logger.getLogger(this.getClass().getName());
-	}
 
 	public static boolean isSessionEstablishingAvailable(final SessionObject sessionObject) throws XMLException {
 
@@ -53,12 +53,18 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 		return features != null && features.getChildrenNS("session", "urn:ietf:params:xml:ns:xmpp-session") != null;
 	}
 
+	public SessionEstablishmentModule() {
+		log = Logger.getLogger(this.getClass().getName());
+	}
+
 	public void addSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
+		context.getEventBus()
+				.addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
 	}
 
 	public void addSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
+		context.getEventBus()
+				.addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
 	public void establish() throws JaxmppException {
@@ -115,7 +121,8 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 	}
 
 	public void removeSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
+		context.getEventBus()
+				.remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
 	@Override
@@ -123,11 +130,13 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 		this.context = context;
 	}
 
-	public interface SessionEstablishmentErrorHandler extends EventHandler {
+	public interface SessionEstablishmentErrorHandler
+			extends EventHandler {
 
 		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException;
 
-		class SessionEstablishmentErrorEvent extends JaxmppEvent<SessionEstablishmentErrorHandler> {
+		class SessionEstablishmentErrorEvent
+				extends JaxmppEvent<SessionEstablishmentErrorHandler> {
 
 			private ErrorCondition error;
 
@@ -152,11 +161,13 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 		}
 	}
 
-	public interface SessionEstablishmentSuccessHandler extends EventHandler {
+	public interface SessionEstablishmentSuccessHandler
+			extends EventHandler {
 
 		void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException;
 
-		class SessionEstablishmentSuccessEvent extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
+		class SessionEstablishmentSuccessEvent
+				extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
 
 			public SessionEstablishmentSuccessEvent(SessionObject sessionObject) {
 				super(sessionObject);

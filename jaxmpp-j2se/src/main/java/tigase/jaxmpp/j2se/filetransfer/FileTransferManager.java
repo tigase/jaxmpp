@@ -1,10 +1,13 @@
 /*
+ * FileTransferManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -47,25 +50,47 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public class FileTransferManager implements ContextAware, FileTransferNegotiator.NegotiationFailureHandler,
-		FileTransferNegotiator.NegotiationRejectHandler, FileTransferNegotiator.NegotiationRequestHandler,
-		ConnectionManager.ConnectionEstablishedHandler, Property {
+public class FileTransferManager
+		implements ContextAware,
+				   FileTransferNegotiator.NegotiationFailureHandler,
+				   FileTransferNegotiator.NegotiationRejectHandler,
+				   FileTransferNegotiator.NegotiationRequestHandler,
+				   ConnectionManager.ConnectionEstablishedHandler,
+				   Property {
 
 	private static final Logger log = Logger.getLogger(FileTransferManager.class.getCanonicalName());
 
 	static {
 		UniversalFactory.setSpi(StreamhostsResolver.class.getCanonicalName(),
-				new UniversalFactory.FactorySpi<J2SEStreamhostsResolver>() {
-					@Override
-					public J2SEStreamhostsResolver create() {
-						return new J2SEStreamhostsResolver();
-					}
-				});
+								new UniversalFactory.FactorySpi<J2SEStreamhostsResolver>() {
+									@Override
+									public J2SEStreamhostsResolver create() {
+										return new J2SEStreamhostsResolver();
+									}
+								});
 	}
 
 	private final List<FileTransferNegotiator> negotiators = new ArrayList<FileTransferNegotiator>();
 	protected Context context = null;
 	private JaxmppCore jaxmpp = null;
+
+	protected static String getCapsNode(Presence presence) throws XMLException {
+		if (presence == null) {
+			return null;
+		}
+		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
+		if (c == null) {
+			return null;
+		}
+
+		String node = c.getAttribute("node");
+		String ver = c.getAttribute("ver");
+		if (node == null || ver == null) {
+			return null;
+		}
+
+		return node + "#" + ver;
+	}
 
 	public static void initialize(JaxmppCore jaxmpp, boolean experimental) {
 		CapabilitiesModule capsModule = jaxmpp.getModule(CapabilitiesModule.class);
@@ -87,28 +112,11 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	}
 
-	protected static String getCapsNode(Presence presence) throws XMLException {
-		if (presence == null) {
-			return null;
-		}
-		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
-		if (c == null) {
-			return null;
-		}
-
-		String node = c.getAttribute("node");
-		String ver = c.getAttribute("ver");
-		if (node == null || ver == null) {
-			return null;
-		}
-
-		return node + "#" + ver;
-	}
-
 	public void acceptFile(FileTransfer ft) throws JaxmppException {
 		if (ft.getFile() == null) {
 			fireOnFailure(ft);
-			throw new JaxmppException("Destination file not set! Cannot accept file transfer without destination file!");
+			throw new JaxmppException(
+					"Destination file not set! Cannot accept file transfer without destination file!");
 		}
 		ft.setIncoming(true);
 
@@ -126,7 +134,8 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	}
 
 	private void fireOnProgress(final FileTransfer ft) {
-		context.getEventBus().fire(new FileTransferProgressHandler.FileTransferProgressEvent(ft.getSessionObject(), ft));
+		context.getEventBus()
+				.fire(new FileTransferProgressHandler.FileTransferProgressEvent(ft.getSessionObject(), ft));
 	}
 
 	private void fireOnSuccess(final FileTransfer ft) {
@@ -165,7 +174,8 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 
 	@Override
 	public void onFileTransferNegotiationFailure(SessionObject sessionObject,
-												 tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) throws JaxmppException {
+												 tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer)
+			throws JaxmppException {
 		FileTransfer ft = (FileTransfer) fileTransfer;
 		if (!ft.isIncoming()) {
 			FileTransferNegotiator oldNegotiator = ft.getNegotiator();
@@ -189,15 +199,17 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	@Override
 	public void onFileTransferNegotiationReject(SessionObject sessionObject,
 												tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
-		context.getEventBus().fire(
-				new FileTransferRejectedHandler.FileTransferRejectedEvent(sessionObject, (FileTransfer) fileTransfer));
+		context.getEventBus()
+				.fire(new FileTransferRejectedHandler.FileTransferRejectedEvent(sessionObject,
+																				(FileTransfer) fileTransfer));
 	}
 
 	@Override
 	public void onFileTransferNegotiationRequest(SessionObject sessionObject,
 												 tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fileTransfer) {
-		context.getEventBus().fire(
-				new FileTransferRequestHandler.FileTransferRequestEvent(sessionObject, (FileTransfer) fileTransfer));
+		context.getEventBus()
+				.fire(new FileTransferRequestHandler.FileTransferRequestEvent(sessionObject,
+																			  (FileTransfer) fileTransfer));
 	}
 
 	public void rejectFile(FileTransfer ft) throws JaxmppException {
@@ -252,14 +264,17 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
-		this.context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				this);
-		this.context.getEventBus().addHandler(
-				FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent.class, this);
-		this.context.getEventBus().addHandler(
-				FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent.class, this);
-		this.context.getEventBus().addHandler(
-				FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent.class, this);
+		this.context.getEventBus()
+				.addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
+		this.context.getEventBus()
+				.addHandler(FileTransferNegotiator.NegotiationFailureHandler.FileTransferNegotiationFailureEvent.class,
+							this);
+		this.context.getEventBus()
+				.addHandler(FileTransferNegotiator.NegotiationRejectHandler.FileTransferNegotiationRejectEvent.class,
+							this);
+		this.context.getEventBus()
+				.addHandler(FileTransferNegotiator.NegotiationRequestHandler.FileTransferNegotiationRequestEvent.class,
+							this);
 	}
 
 	public void setJaxmpp(JaxmppCore jaxmpp) {
@@ -367,11 +382,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		out.flush();
 	}
 
-	public interface FileTransferFailureHandler extends EventHandler {
+	public interface FileTransferFailureHandler
+			extends EventHandler {
 
 		void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer);
 
-		class FileTransferFailureEvent extends JaxmppEvent<FileTransferFailureHandler> {
+		class FileTransferFailureEvent
+				extends JaxmppEvent<FileTransferFailureHandler> {
 
 			private FileTransfer fileTransfer;
 
@@ -387,11 +404,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		}
 	}
 
-	public interface FileTransferProgressHandler extends EventHandler {
+	public interface FileTransferProgressHandler
+			extends EventHandler {
 
 		void onFileTransferProgress(SessionObject sessionObject, FileTransfer fileTransfer);
 
-		class FileTransferProgressEvent extends JaxmppEvent<FileTransferProgressHandler> {
+		class FileTransferProgressEvent
+				extends JaxmppEvent<FileTransferProgressHandler> {
 
 			private FileTransfer fileTransfer;
 
@@ -407,11 +426,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		}
 	}
 
-	public interface FileTransferRejectedHandler extends EventHandler {
+	public interface FileTransferRejectedHandler
+			extends EventHandler {
 
 		void onFileTransferRejected(SessionObject sessionObject, FileTransfer fileTransfer);
 
-		class FileTransferRejectedEvent extends JaxmppEvent<FileTransferRejectedHandler> {
+		class FileTransferRejectedEvent
+				extends JaxmppEvent<FileTransferRejectedHandler> {
 
 			private FileTransfer fileTransfer;
 
@@ -427,11 +448,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		}
 	}
 
-	public interface FileTransferRequestHandler extends EventHandler {
+	public interface FileTransferRequestHandler
+			extends EventHandler {
 
 		void onFileTransferRequest(SessionObject sessionObject, FileTransfer fileTransfer);
 
-		class FileTransferRequestEvent extends JaxmppEvent<FileTransferRequestHandler> {
+		class FileTransferRequestEvent
+				extends JaxmppEvent<FileTransferRequestHandler> {
 
 			private FileTransfer fileTransfer;
 
@@ -447,11 +470,13 @@ public class FileTransferManager implements ContextAware, FileTransferNegotiator
 		}
 	}
 
-	public interface FileTransferSuccessHandler extends EventHandler {
+	public interface FileTransferSuccessHandler
+			extends EventHandler {
 
 		void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
 
-		class FileTransferSuccessEvent extends JaxmppEvent<FileTransferSuccessHandler> {
+		class FileTransferSuccessEvent
+				extends JaxmppEvent<FileTransferSuccessHandler> {
 
 			private FileTransfer fileTransfer;
 

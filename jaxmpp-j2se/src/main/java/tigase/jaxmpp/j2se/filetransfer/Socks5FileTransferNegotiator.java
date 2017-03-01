@@ -1,10 +1,13 @@
 /*
+ * Socks5FileTransferNegotiator.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -43,14 +46,15 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract implements
-		ConnectionManager.ConnectionEstablishedHandler, FileTransferModule.FileTransferRequestHandler {
+public class Socks5FileTransferNegotiator
+		extends FileTransferNegotiatorAbstract
+		implements ConnectionManager.ConnectionEstablishedHandler, FileTransferModule.FileTransferRequestHandler {
 
 	private static final Logger log = Logger.getLogger(Socks5FileTransferNegotiator.class.getCanonicalName());
 	private final String BASE = "session-";
-	private final Socks5BytestreamsConnectionManager connectionManager = new Socks5BytestreamsConnectionManager();
 	private final String PACKET_ID = BASE + "initiation-packet-id";
 	private final String STREAM_METHOD = BASE + "stream-method";
+	private final Socks5BytestreamsConnectionManager connectionManager = new Socks5BytestreamsConnectionManager();
 
 	@Override
 	public void acceptFile(JaxmppCore jaxmpp, tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer ft)
@@ -85,7 +89,8 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 			String capsNode = FileTransferManager.getCapsNode(p);
 			Set<String> features = (capsCache != null) ? capsCache.getFeatures(capsNode) : null;
 
-			return (true || (features != null && features.contains(Socks5BytestreamsModule.XMLNS_BS) && features.contains(FileTransferModule.XMLNS_SI_FILE)));
+			return (true || (features != null && features.contains(Socks5BytestreamsModule.XMLNS_BS) &&
+					features.contains(FileTransferModule.XMLNS_SI_FILE)));
 		} catch (XMLException ex) {
 			return true;
 		}
@@ -112,7 +117,8 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public void onFileTransferRequest(SessionObject sessionObject,
-									  tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id, List<String> streamMethods) {
+									  tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer fts, String id,
+									  List<String> streamMethods) {
 		FileTransfer ft = new FileTransfer(fts.getSessionObject(), fts.getPeer(), fts.getSid());
 		ft.setFileInfo(fts.getFilename(), fts.getFileSize(), fts.getFileModification(), fts.getFileMimeType());
 		ft.setData(PACKET_ID, id);
@@ -166,26 +172,26 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 		FileTransferModule ftModule = jaxmpp.getModule(FileTransferModule.class);
 		if (ftModule != null) {
 			ftModule.sendStreamInitiationOffer(ft, new String[]{Socks5BytestreamsModule.XMLNS_BS},
-					new StreamInitiationOfferAsyncCallback(ft.getSid()) {
-						@Override
-						public void onAccept(String sid) {
-							try {
-								connectionManager.connectTcp(jaxmpp, ft);
-							} catch (JaxmppException ex) {
-								fireOnFailure(ft, ex);
-							}
-						}
+											   new StreamInitiationOfferAsyncCallback(ft.getSid()) {
+												   @Override
+												   public void onAccept(String sid) {
+													   try {
+														   connectionManager.connectTcp(jaxmpp, ft);
+													   } catch (JaxmppException ex) {
+														   fireOnFailure(ft, ex);
+													   }
+												   }
 
-						@Override
-						public void onError() {
-							fireOnFailure(ft, null);
-						}
+												   @Override
+												   public void onError() {
+													   fireOnFailure(ft, null);
+												   }
 
-						@Override
-						public void onReject() {
-							fireOnReject(ft);
-						}
-					});
+												   @Override
+												   public void onReject() {
+													   fireOnReject(ft);
+												   }
+											   });
 		}
 	}
 
@@ -193,7 +199,8 @@ public class Socks5FileTransferNegotiator extends FileTransferNegotiatorAbstract
 	public void setContext(Context context) {
 		super.setContext(context);
 		connectionManager.setContext(context);
-		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
+		context.getEventBus()
+				.addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
 	}
 
 	@Override

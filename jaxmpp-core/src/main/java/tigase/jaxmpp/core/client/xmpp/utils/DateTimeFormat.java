@@ -1,10 +1,13 @@
 /*
+ * DateTimeFormat.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,12 +29,6 @@ import java.util.Date;
  */
 public class DateTimeFormat {
 
-	public static interface DateTimeFormatProvider {
-		String format(Date date);
-
-		Date parse(String s);
-	}
-
 	private static DateTimeFormatProvider provider;
 
 	public static void setProvider(DateTimeFormatProvider provider) {
@@ -44,5 +41,12 @@ public class DateTimeFormat {
 
 	public Date parse(String s) {
 		return provider.parse(s);
+	}
+
+	public static interface DateTimeFormatProvider {
+
+		String format(Date date);
+
+		Date parse(String s);
 	}
 }

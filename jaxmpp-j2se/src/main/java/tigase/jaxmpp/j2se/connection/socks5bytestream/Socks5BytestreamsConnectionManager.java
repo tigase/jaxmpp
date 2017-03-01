@@ -1,10 +1,13 @@
 /*
+ * Socks5BytestreamsConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -37,10 +40,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
  * @author andrzej
  */
-public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager {
+public class Socks5BytestreamsConnectionManager
+		extends Socks5ConnectionManager {
 
 	private static final Logger log = Logger.getLogger(Socks5BytestreamsConnectionManager.class.getCanonicalName());
 
@@ -76,7 +79,7 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 
 			@Override
 			public void onStreamhostsHandler(SessionObject sessionObject, JID from, String id, String sid,
-					List<Streamhost> hosts) throws JaxmppException {
+											 List<Streamhost> hosts) throws JaxmppException {
 				session.setData(PACKET_ID, id);
 				if (session.getSid().equals(sid)) {
 					jaxmpp.getEventBus().remove(this);
@@ -117,8 +120,8 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 		});
 	}
 
-	protected void sendStreamHosts(final JaxmppCore jaxmpp, final ConnectionSession ft, List<Streamhost> proxyStreamhosts)
-			throws JaxmppException {
+	protected void sendStreamHosts(final JaxmppCore jaxmpp, final ConnectionSession ft,
+								   List<Streamhost> proxyStreamhosts) throws JaxmppException {
 		Socks5BytestreamsModule socks5Module = jaxmpp.getModule(Socks5BytestreamsModule.class);
 		List<Streamhost> streamhosts = getLocalStreamHosts(ft, ft.getSid());
 		if (proxyStreamhosts != null) {
@@ -170,7 +173,8 @@ public class Socks5BytestreamsConnectionManager extends Socks5ConnectionManager 
 	public void sendStreamhostUsed(FileTransfer ft, String packetId) throws JaxmppException {
 		JaxmppCore jaxmpp = ft.getData(JAXMPP_KEY);
 		Streamhost streamhost = ft.getData(STREAMHOST_KEY);
-		jaxmpp.getModule(Socks5BytestreamsModule.class).sendStreamhostUsed(ft.getPeer(), packetId, ft.getSid(), streamhost);
+		jaxmpp.getModule(Socks5BytestreamsModule.class)
+				.sendStreamhostUsed(ft.getPeer(), packetId, ft.getSid(), streamhost);
 	}
 
 }

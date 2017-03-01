@@ -1,10 +1,13 @@
 /*
+ * JingleSocks5BytestreamsConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -44,7 +47,8 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionManager {
+public class JingleSocks5BytestreamsConnectionManager
+		extends Socks5ConnectionManager {
 
 	public static final String CANDIDATE_USED_KEY = "candidate-used";
 	public static final String XMLNS = "urn:xmpp:jingle:transports:s5b:1";
@@ -73,8 +77,9 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 
 	private void candidateUsedReceived(JID sender, String sid, String transportSid, String cid) {
 		ConnectionSession session = connectionSessionHandler.getSession(sid);
-		if (session == null)
+		if (session == null) {
 			return;
+		}
 
 		try {
 			Transport transport = session.getData(SOCKS5_TRANSPORT_KEY);
@@ -110,8 +115,9 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 		if (transports != null) {
 			boolean established = false;
 			for (Transport transport : transports) {
-				if (!XMLNS.equals(transport.getXMLNS()))
+				if (!XMLNS.equals(transport.getXMLNS())) {
 					continue;
+				}
 
 				List<Candidate> candidates = transport.getCandidates();
 				for (Candidate candidate : candidates) {
@@ -155,16 +161,17 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 		Transport transport = new Transport(XMLNS, sid, Transport.Mode.tcp);
 
 		List<Streamhost> streamhosts = getLocalStreamHosts(session, sid);
-		if (streamhosts == null)
+		if (streamhosts == null) {
 			return null;
+		}
 
 		int priority = streamhosts.size();
 		for (Streamhost host : streamhosts) {
 			String cid = UUID.randomUUID().toString();
 			JID jid = host.getJid();
 			transport.addCandidate(new Candidate(cid, host.getHost(), host.getPort(), jid, priority,
-					ResourceBinderModule.getBindedJID(session.getSessionObject()).equals(jid) ? Candidate.Type.direct
-							: Candidate.Type.proxy));
+												 ResourceBinderModule.getBindedJID(session.getSessionObject())
+														 .equals(jid) ? Candidate.Type.direct : Candidate.Type.proxy));
 		}
 
 		session.setData(SOCKS5_TRANSPORT_KEY, transport);
@@ -232,13 +239,15 @@ public class JingleSocks5BytestreamsConnectionManager extends Socks5ConnectionMa
 		contentEl.addChild(transportEl);
 
 		jingleModule.transportInfo(session.getPeer(), ResourceBinderModule.getBindedJID(jaxmpp.getSessionObject()),
-				session.getSid(), contentEl);
+								   session.getSid(), contentEl);
 	}
 
 	@Override
 	public void setContext(Context context) {
 		super.setContext(context);
-		context.getEventBus().addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, connectionEstablishedHandler);
+		context.getEventBus()
+				.addHandler(ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
+							connectionEstablishedHandler);
 	}
 
 }

@@ -1,10 +1,13 @@
 /*
+ * PresenceStore.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,9 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.presence;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.Property;
@@ -28,25 +28,18 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 
+import java.util.Iterator;
+import java.util.Map;
+
 /**
  * Storage for keep received presences of buddies.
  */
-public abstract class PresenceStore implements Property {
-
-	static interface Handler {
-
-		public void onOffline(Presence i) throws JaxmppException;
-
-		public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException;
-
-	}
+public abstract class PresenceStore
+		implements Property {
 
 	protected Map<BareJID, Presence> bestPresence;
-
 	protected Handler handler;
-
 	protected Map<JID, Presence> presenceByJid;
-
 	protected Map<BareJID, Map<String, Presence>> presencesMapByBareJid;
 
 	/**
@@ -66,8 +59,9 @@ public abstract class PresenceStore implements Property {
 				it.remove();
 				handler.onOffline(i);
 			}
-		} else
+		} else {
 			bestPresence.clear();
+		}
 		presencesMapByBareJid.clear();
 	}
 
@@ -75,9 +69,9 @@ public abstract class PresenceStore implements Property {
 
 	/**
 	 * Returns presence stanza with highest priority of goven bare JID.
-	 * 
-	 * @param jid
-	 *            JID of sender
+	 *
+	 * @param jid JID of sender
+	 *
 	 * @return {@linkplain Presence} stanza or <code>null</code> if not found.
 	 */
 	public Presence getBestPresence(final BareJID jid) throws XMLException {
@@ -86,9 +80,9 @@ public abstract class PresenceStore implements Property {
 
 	/**
 	 * Returns presence stanza of given JID.
-	 * 
-	 * @param jid
-	 *            JID of sender
+	 *
+	 * @param jid JID of sender
+	 *
 	 * @return {@linkplain Presence} stanza or <code>null</code> if not found.
 	 */
 	public Presence getPresence(final JID jid) {
@@ -98,9 +92,9 @@ public abstract class PresenceStore implements Property {
 	/**
 	 * Returns map of all known resources and related presences stanza of given
 	 * bare JID.
-	 * 
-	 * @param jid
-	 *            basre JID of sender
+	 *
+	 * @param jid basre JID of sender
+	 *
 	 * @return map contains resource (key) and related presence stanza (value).
 	 */
 	public Map<String, Presence> getPresences(BareJID jid) {
@@ -111,7 +105,7 @@ public abstract class PresenceStore implements Property {
 	public Class<PresenceStore> getPropertyClass() {
 		return PresenceStore.class;
 	}
-	
+
 	private Presence intGetBestPresence(final BareJID jid) throws XMLException {
 		Map<String, Presence> resourcesPresence = this.presencesMapByBareJid.get(jid);
 		Presence result = null;
@@ -145,14 +139,15 @@ public abstract class PresenceStore implements Property {
 		this.handler = handler;
 	}
 
-	public void setPresence(Show show, String status, Integer priority) throws XMLException, JaxmppException {
+	public void setPresence(Show show, String status, Integer priority) throws JaxmppException {
 		this.handler.setPresence(show, status, priority);
 	}
 
 	protected void update(final Presence presence) throws XMLException {
 		final JID from = presence.getFrom();
-		if (from == null)
+		if (from == null) {
 			return;
+		}
 		final BareJID bareFrom = from.getBareJid();
 		final String resource = from.getResource() == null ? "" : from.getResource();
 
@@ -181,5 +176,13 @@ public abstract class PresenceStore implements Property {
 		// this.bestPresence.put(bareFrom, intGetBestPresence(bareFrom));
 		// }
 		// }
+	}
+
+	interface Handler {
+
+		void onOffline(Presence i) throws JaxmppException;
+
+		void setPresence(Show show, String status, Integer priority) throws JaxmppException;
+
 	}
 }

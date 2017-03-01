@@ -1,10 +1,13 @@
 /*
+ * ChatItem.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +20,11 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
-import java.util.Date;
 import tigase.jaxmpp.core.client.xml.Element;
 
-public class ChatItem {
+import java.util.Date;
 
-	@Override
-	public String toString() {
-		return "ChatItem{" + "body=" + body + ", date=" + date + ", type=" + type + '}';
-	}
+public class ChatItem {
 
 	public static enum Type {
 		FROM,
@@ -34,8 +33,8 @@ public class ChatItem {
 
 	private final String body;
 	private final Date date;
-	private final Type type;
 	private final Element item;
+	private final Type type;
 
 	public ChatItem(final Type type, final Date date, final String body, final Element item) {
 		this.type = type;
@@ -55,9 +54,14 @@ public class ChatItem {
 	public Element getItem() {
 		return item;
 	}
-	
+
 	public Type getType() {
 		return type;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "ChatItem{" + "body=" + body + ", date=" + date + ", type=" + type + '}';
+	}
+
 }

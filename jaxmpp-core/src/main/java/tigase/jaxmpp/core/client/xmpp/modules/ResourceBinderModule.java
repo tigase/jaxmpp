@@ -1,10 +1,13 @@
 /*
+ * ResourceBinderModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -36,7 +39,8 @@ import java.util.logging.Logger;
  * Module for <a href='http://xmpp.org/rfcs/rfc6120.html#bind'>Resource
  * Binding</a>.
  */
-public class ResourceBinderModule implements XmppModule, ContextAware {
+public class ResourceBinderModule
+		implements XmppModule, ContextAware {
 
 	/**
 	 * Property name for retrieve binded resource from
@@ -46,12 +50,12 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 	protected final Logger log;
 	private Context context;
 
-	public ResourceBinderModule() {
-		log = Logger.getLogger(this.getClass().getName());
-	}
-
 	public static JID getBindedJID(SessionObject sessionObject) {
 		return sessionObject.getProperty(BINDED_RESOURCE_JID);
+	}
+
+	public ResourceBinderModule() {
+		log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public void addResourceBindErrorHandler(ResourceBindErrorHandler handler) {
@@ -70,7 +74,8 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 		Element bind = ElementFactory.create("bind", null, "urn:ietf:params:xml:ns:xmpp-bind");
 		iq.addChild(bind);
 		bind.addChild(ElementFactory.create("resource",
-				(String) context.getSessionObject().getProperty(SessionObject.RESOURCE), null));
+											(String) context.getSessionObject().getProperty(SessionObject.RESOURCE),
+											null));
 
 		context.getWriter().write(iq, new AsyncCallback() {
 
@@ -145,11 +150,13 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 	/**
 	 * Event fires on binding error.
 	 */
-	public interface ResourceBindErrorHandler extends EventHandler {
+	public interface ResourceBindErrorHandler
+			extends EventHandler {
 
 		void onResourceBindError(SessionObject sessionObject, ErrorCondition errorCondition);
 
-		class ResourceBindErrorEvent extends JaxmppEvent<ResourceBindErrorHandler> {
+		class ResourceBindErrorEvent
+				extends JaxmppEvent<ResourceBindErrorHandler> {
 
 			private ErrorCondition error;
 
@@ -177,11 +184,13 @@ public class ResourceBinderModule implements XmppModule, ContextAware {
 	/**
 	 * Event fires on binding success.
 	 */
-	public interface ResourceBindSuccessHandler extends EventHandler {
+	public interface ResourceBindSuccessHandler
+			extends EventHandler {
 
 		void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException;
 
-		class ResourceBindSuccessEvent extends JaxmppEvent<ResourceBindSuccessHandler> {
+		class ResourceBindSuccessEvent
+				extends JaxmppEvent<ResourceBindSuccessHandler> {
 
 			private JID bindedJid;
 

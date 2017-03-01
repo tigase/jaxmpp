@@ -1,10 +1,13 @@
 /*
+ * ConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,32 +34,31 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
+import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static tigase.jaxmpp.core.client.Connector.RECONNECTING_KEY;
-import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 
 /**
- *
  * @author andrzej
  */
-public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandler, ContextAware {
-
-	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
+public class ConnectionManager
+		implements StateChangedHandler, SeeOtherHostHandler, ContextAware {
 
 	public static final String URL_ON_FAILURE = "host-on-dns-failure";
+	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
 	private static final String SEE_OTHER_HOST_URI = "see-other-host-uri";
 	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
-	
-	private Jaxmpp jaxmpp;
 	private Context context;
+	private Jaxmpp jaxmpp;
 	private WebDnsResolver resolver = new WebDnsResolver();
 	private WebDnsResolver.DomainResolutionCallback webDnsCallback = null;
-	
-	public ConnectionManager() {}
+
+	public ConnectionManager() {
+	}
 
 	public void connectionFailure(String seeHost, boolean hostFailure) {
 		String boshUrl = context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
@@ -82,9 +84,8 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 			} else {
 				if (!seeHostIsUri) {
 					MatchResult result = URL_PARSER.exec(boshUrl);
-					String newBoshUrl = result.getGroup(1) + "://" + seeHost
-							+ (result.getGroup(3) != null ? result.getGroup(3) : "")
-							+ result.getGroup(4);
+					String newBoshUrl = result.getGroup(1) + "://" + seeHost +
+							(result.getGroup(3) != null ? result.getGroup(3) : "") + result.getGroup(4);
 
 					webDnsCallback.onUrlResolved(domain, newBoshUrl);
 				} else {
@@ -96,13 +97,24 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 
 		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
 	}
-	
+
 	public boolean initialize(final Jaxmpp jaxmpp_) throws JaxmppException {
 		if (this.jaxmpp == null) {
 			this.jaxmpp = jaxmpp_;
 		}
 		if (this.webDnsCallback == null) {
 			this.webDnsCallback = new WebDnsResolver.DomainResolutionCallback() {
+				protected void loginWithUrl(String url) {
+					try {
+						jaxmpp.login(url);
+					} catch (JaxmppException ex) {
+						log.log(Level.SEVERE, "Exception while reconnecting after connection failure", ex);
+						Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
+								context.getSessionObject(), StreamError.undefined_condition, null);
+						context.getEventBus().fire(e);
+					}
+				}
+
 				@Override
 				public void onUrlFailed() {
 					Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
@@ -121,37 +133,28 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 								protocol = "ws://";
 								port = "5290";
 							}
-				
-							url = protocol + domain + ":" + port + "/bosh";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
+
+							url = protocol + domain + ":" + port +
+									"/bosh";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
 //                                String boshUrl = "ws://" + domain + ":5290/";//getBoshUrl((jid != null) ? jid.getDomain() : root.get("anon-domain"));
 
 						}
 					}
 					loginWithUrl(url);
 				}
-				
-				protected void loginWithUrl(String url) {
-					try {
-						jaxmpp.login(url);
-					} catch (JaxmppException ex) {
-						log.log(Level.SEVERE, "Exception while reconnecting after connection failure", ex);
-						Connector.ErrorHandler.ErrorEvent e = new Connector.ErrorHandler.ErrorEvent(
-								context.getSessionObject(), StreamError.undefined_condition, null);
-						context.getEventBus().fire(e);
-					}
-				}
 			};
 		}
-		
+
 		if (context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY) == null) {
 			connectionFailure(null, false);
 		}
-		
+
 		return context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY) != null;
 	}
 
 	private boolean isUsableUrl(String url) {
-		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") || url.startsWith("wss://"));
+		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") ||
+				url.startsWith("wss://"));
 	}
 
 	@Override
@@ -171,9 +174,11 @@ public class ConnectionManager implements StateChangedHandler, SeeOtherHostHandl
 	}
 
 	@Override
-	public void onStateChanged(SessionObject sessionObject, Connector.State oldState, Connector.State newState) throws JaxmppException {
-		if (oldState == newState)
+	public void onStateChanged(SessionObject sessionObject, Connector.State oldState, Connector.State newState)
+			throws JaxmppException {
+		if (oldState == newState) {
 			return;
+		}
 
 		String boshUrl = sessionObject.getProperty(BoshConnector.BOSH_SERVICE_URL_KEY);
 		if (log.isLoggable(Level.FINEST)) {

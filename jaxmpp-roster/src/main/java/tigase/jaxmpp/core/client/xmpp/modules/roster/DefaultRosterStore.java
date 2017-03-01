@@ -1,10 +1,32 @@
-package tigase.jaxmpp.core.client.xmpp.modules.roster;
+/*
+ * DefaultRosterStore.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 
-import java.util.*;
+package tigase.jaxmpp.core.client.xmpp.modules.roster;
 
 import tigase.jaxmpp.core.client.BareJID;
 
-public class DefaultRosterStore extends RosterStore {
+import java.util.*;
+
+public class DefaultRosterStore
+		extends RosterStore {
 
 	protected final Set<String> groups = new HashSet<String>();
 
@@ -59,9 +81,9 @@ public class DefaultRosterStore extends RosterStore {
 
 	/**
 	 * Returns {@linkplain RosterItem} of given bare JID.
-	 * 
-	 * @param jid
-	 *            bare JID.
+	 *
+	 * @param jid bare JID.
+	 *
 	 * @return roster item.
 	 */
 	@Override
@@ -73,29 +95,31 @@ public class DefaultRosterStore extends RosterStore {
 
 	/**
 	 * Returns all roster items selected by selector.
-	 * 
-	 * @param predicate
-	 *            selector.
+	 *
+	 * @param predicate selector.
+	 *
 	 * @return all matched roster items.
 	 */
 	@Override
 	public List<RosterItem> getAll(final Predicate predicate) {
 		ArrayList<RosterItem> result = new ArrayList<RosterItem>();
 		synchronized (this.roster) {
-			if (predicate == null)
+			if (predicate == null) {
 				result.addAll(this.roster.values());
-			else
+			} else {
 				for (RosterItem i : this.roster.values()) {
-					if (predicate.match(i))
+					if (predicate.match(i)) {
 						result.add(i);
+					}
 				}
+			}
 		}
 		return result;
 	}
 
 	/**
 	 * Returns number of roster items in storage.
-	 * 
+	 *
 	 * @return number of roster items in storage.
 	 */
 	@Override
@@ -105,7 +129,7 @@ public class DefaultRosterStore extends RosterStore {
 
 	/**
 	 * Get all known groups of buddies.
-	 * 
+	 *
 	 * @return collection of group names.
 	 */
 	@Override

@@ -1,10 +1,13 @@
 /*
+ * Session.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,19 +27,15 @@ import java.util.Map;
 /**
  * Class for help handle longer conversation with client. It allows to keep data
  * between requests.
- * 
+ *
  * @author bmalkow
- * 
  */
 public class Session {
 
 	private final Map<String, Object> data = new HashMap<String, Object>();
-
-	private Action defaultAction;
-
-	private Date lastRequest;
-
 	private final String sessionId;
+	private Action defaultAction;
+	private Date lastRequest;
 
 	public Session(String sessionId) {
 		this.sessionId = sessionId;
@@ -44,9 +43,9 @@ public class Session {
 
 	/**
 	 * Return object stored in session.
-	 * 
-	 * @param key
-	 *            name of stored object
+	 *
+	 * @param key name of stored object
+	 *
 	 * @return stored object or <code>null</code> is no object with given name.
 	 */
 	@SuppressWarnings("unchecked")
@@ -56,25 +55,33 @@ public class Session {
 
 	/**
 	 * Return default action used in last {@linkplain AdHocResponse}.
-	 * 
+	 *
 	 * @return {@linkplain Action}
 	 */
 	Action getDefaultAction() {
 		return defaultAction == null ? Action.execute : defaultAction;
 	}
 
+	void setDefaultAction(Action defaultAction) {
+		this.defaultAction = defaultAction;
+	}
+
 	/**
 	 * Return timestamp of last request.
-	 * 
+	 *
 	 * @return timestamp of last request.
 	 */
 	public Date getLastRequest() {
 		return lastRequest;
 	}
 
+	void setLastRequest(Date lastRequest) {
+		this.lastRequest = lastRequest;
+	}
+
 	/**
 	 * Return session ID.
-	 * 
+	 *
 	 * @return session ID.
 	 */
 	public String getSessionId() {
@@ -83,22 +90,12 @@ public class Session {
 
 	/**
 	 * Store object in session.
-	 * 
-	 * @param key
-	 *            name of object.
-	 * @param data
-	 *            object to store.
+	 *
+	 * @param key name of object.
+	 * @param data object to store.
 	 */
 	public <T> void setData(String key, T data) {
 		this.data.put(key, data);
-	}
-
-	void setDefaultAction(Action defaultAction) {
-		this.defaultAction = defaultAction;
-	}
-
-	void setLastRequest(Date lastRequest) {
-		this.lastRequest = lastRequest;
 	}
 
 }

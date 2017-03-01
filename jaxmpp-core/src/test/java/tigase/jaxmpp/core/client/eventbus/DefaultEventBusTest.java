@@ -1,3 +1,24 @@
+/*
+ * DefaultEventBusTest.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 package tigase.jaxmpp.core.client.eventbus;
 
 import junit.framework.TestCase;
@@ -7,7 +28,8 @@ import org.junit.Test;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test01Handler.Test01Event;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test02Handler.Test02Event;
 
-public class DefaultEventBusTest extends TestCase {
+public class DefaultEventBusTest
+		extends TestCase {
 
 	private EventBus eventBus;
 
@@ -35,7 +57,6 @@ public class DefaultEventBusTest extends TestCase {
 		eventBus.fire(event);
 
 		Assert.assertEquals("htest0.2", value[0]);
-
 
 		event = new Test01Event("test0.3");
 		eventBus.fire(event);
@@ -133,11 +154,13 @@ public class DefaultEventBusTest extends TestCase {
 		Assert.assertEquals("t2", value[1]);
 	}
 
-	public interface Test01Handler extends EventHandler {
+	public interface Test01Handler
+			extends EventHandler {
 
 		void onTest01Event(String data);
 
-		class Test01Event extends Event<Test01Handler> {
+		class Test01Event
+				extends Event<Test01Handler> {
 
 			private final String data;
 
@@ -157,11 +180,13 @@ public class DefaultEventBusTest extends TestCase {
 		}
 	}
 
-	public interface Test02Handler extends EventHandler {
+	public interface Test02Handler
+			extends EventHandler {
 
 		void onTest02Event(String data);
 
-		class Test02Event extends Event<Test02Handler> {
+		class Test02Event
+				extends Event<Test02Handler> {
 
 			private final String data;
 

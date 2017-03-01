@@ -1,10 +1,13 @@
 /*
+ * RosterModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Ma��kowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -44,21 +47,22 @@ import java.util.*;
 /**
  * Module for roster manipulation.
  */
-public class RosterModule extends AbstractIQModule implements ContextAware, InitializingModule, XmppSessionEstablishedHandler {
+public class RosterModule
+		extends AbstractIQModule
+		implements ContextAware, InitializingModule, XmppSessionEstablishedHandler {
 
-	public static final Criteria CRIT = ElementCriteria.name("iq").add(
-			ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { "jabber:iq:roster" }));
+	public static final Criteria CRIT = ElementCriteria.name("iq")
+			.add(ElementCriteria.name("query", new String[]{"xmlns"}, new String[]{"jabber:iq:roster"}));
 	public static final String ROSTER_STORE_KEY = "RosterModule#ROSTER_STORE";
+
+	public enum Action {
+		askCancelled,
+		subscribed,
+		unsubscribed,
+
+	}
+
 	private RosterCacheProvider versionProvider;
-
-	public RosterModule() {
-		super();
-	}
-
-	public RosterModule(RosterCacheProvider versionProvider) {
-		super();
-		this.versionProvider = versionProvider;
-	}
 
 	private static final Element createItem(final RosterItem item) throws XMLException {
 		Element result = ElementFactory.create("item");
@@ -70,8 +74,8 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		return result;
 	}
 
-	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription, Collection<String> groups,
-			boolean ask) {
+	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription,
+								 Collection<String> groups, boolean ask) {
 		rosterItem.setName(name);
 		rosterItem.setSubscription(subscription);
 		rosterItem.setAsk(ask);
@@ -87,14 +91,24 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	}
 
 	private final static Subscription getSubscription(String x) {
-		if (x == null)
+		if (x == null) {
 			return null;
+		}
 		return Subscription.valueOf(x);
 	}
 
 	public static void setRosterStore(SessionObject sessionObject, RosterStore rosterStore) {
 		rosterStore.setSessionObject(sessionObject);
 		sessionObject.setProperty(Scope.user, ROSTER_STORE_KEY, rosterStore);
+	}
+
+	public RosterModule() {
+		super();
+	}
+
+	public RosterModule(RosterCacheProvider versionProvider) {
+		super();
+		this.versionProvider = versionProvider;
 	}
 
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
@@ -132,8 +146,9 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 	@Override
 	public void beforeRegister() {
-		if (context == null)
+		if (context == null) {
 			throw new RuntimeException("Context cannot be null!");
+		}
 
 		RosterStore rosterStore = RosterModule.getRosterStore(context.getSessionObject());
 		if (rosterStore == null) {
@@ -164,18 +179,21 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 				RosterModule.this.update(item);
 			}
 		});
-		context.getEventBus().addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
-				new AbstractSessionObject.ClearedHandler() {
+		context.getEventBus()
+				.addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
+							new AbstractSessionObject.ClearedHandler() {
 
-					@Override
-					public void onCleared(SessionObject sessionObject, Set<Scope> scopes) throws JaxmppException {
-						if (scopes.contains(Scope.user)) {
-							getRosterStore().clear();
-						}
-					}
-				});
-		if (this.versionProvider == null)
+								@Override
+								public void onCleared(SessionObject sessionObject, Set<Scope> scopes)
+										throws JaxmppException {
+									if (scopes.contains(Scope.user)) {
+										getRosterStore().clear();
+									}
+								}
+							});
+		if (this.versionProvider == null) {
 			this.versionProvider = UniversalFactory.createInstance(RosterCacheProvider.class.getName());
+		}
 		context.getEventBus().addHandler(XmppSessionEstablishedHandler.XmppSessionEstablishedEvent.class, this);
 	}
 
@@ -204,11 +222,13 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	}
 
 	private boolean isRosterVersioningAvailable() throws XMLException {
-		if (versionProvider == null)
+		if (versionProvider == null) {
 			return false;
+		}
 		Element features = StreamFeaturesModule.getStreamFeatures(context.getSessionObject());
-		if (features == null)
+		if (features == null) {
 			return false;
+		}
 		return features.getChildrenNS("ver", "urn:xmpp:features:rosterver") != null;
 	}
 
@@ -264,23 +284,24 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			Set<String> modifiedGroups = getRosterStore().addItem(currentItem);
 			fireEvent(new ItemAddedEvent(context.getSessionObject(), currentItem, modifiedGroups));
 			log.fine("Roster item " + jid + " added");
-		} else if (currentItem.isAsk() && ask && (subscription == Subscription.from || subscription == Subscription.none)) {
+		} else if (currentItem.isAsk() && ask &&
+				(subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
 			fill(currentItem, name, subscription, null, ask);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.askCancelled, null));
 			log.fine("Roster item " + jid + " ask cancelled");
-		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from
-				|| currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
+		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from ||
+				currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
 			fill(currentItem, name, subscription, null, ask);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.unsubscribed, null));
 			log.fine("Roster item " + jid + " unsubscribed");
-		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both
-				|| currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
+		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both ||
+				currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
 			fill(currentItem, name, subscription, null, ask);
 			// store needs to know that item has changed!
@@ -301,8 +322,9 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 
 	private void processRosterQuery(final Element query, boolean force) throws JaxmppException {
 		if (query != null) {
-			if (force)
+			if (force) {
 				getRosterStore().removeAll();
+			}
 
 			List<Element> items = query.getChildren("item");
 			String ver = query.getAttribute("ver");
@@ -319,8 +341,9 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 	@Override
 	protected void processSet(final IQ stanza) throws JaxmppException {
 		final JID bindedJid = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		if (stanza.getFrom() != null && !stanza.getFrom().getBareJid().equals(bindedJid.getBareJid()))
+		if (stanza.getFrom() != null && !stanza.getFrom().getBareJid().equals(bindedJid.getBareJid())) {
 			throw new XMPPException(ErrorCondition.not_allowed);
+		}
 
 		Element query = stanza.getQuery();
 		processRosterQuery(query, false);
@@ -367,8 +390,9 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 				x = "";
 				versionProvider.updateReceivedVersion(context.getSessionObject(), x);
 			}
-			if (x != null)
+			if (x != null) {
 				query.setAttribute("ver", x);
+			}
 		}
 		iq.addChild(query);
 
@@ -426,18 +450,13 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		});
 	}
 
-	public enum Action {
-		askCancelled,
-		subscribed,
-		unsubscribed,
-
-	}
-
-	public interface ItemAddedHandler extends EventHandler {
+	public interface ItemAddedHandler
+			extends EventHandler {
 
 		void onItemAdded(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
 
-		class ItemAddedEvent extends JaxmppEvent<ItemAddedHandler> {
+		class ItemAddedEvent
+				extends JaxmppEvent<ItemAddedHandler> {
 
 			private RosterItem item;
 
@@ -473,11 +492,13 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		}
 	}
 
-	public interface ItemRemovedHandler extends EventHandler {
+	public interface ItemRemovedHandler
+			extends EventHandler {
 
 		void onItemRemoved(SessionObject sessionObject, RosterItem item, Set<String> modifiedGroups);
 
-		class ItemRemovedEvent extends JaxmppEvent<ItemRemovedHandler> {
+		class ItemRemovedEvent
+				extends JaxmppEvent<ItemRemovedHandler> {
 
 			private RosterItem item;
 
@@ -513,11 +534,13 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 		}
 	}
 
-	public interface ItemUpdatedHandler extends EventHandler {
+	public interface ItemUpdatedHandler
+			extends EventHandler {
 
 		void onItemUpdated(SessionObject sessionObject, RosterItem item, Action action, Set<String> modifiedGroups);
 
-		class ItemUpdatedEvent extends JaxmppEvent<ItemUpdatedHandler> {
+		class ItemUpdatedEvent
+				extends JaxmppEvent<ItemUpdatedHandler> {
 
 			private Action action;
 
@@ -526,7 +549,7 @@ public class RosterModule extends AbstractIQModule implements ContextAware, Init
 			private Set<String> modifiedGroups;
 
 			public ItemUpdatedEvent(SessionObject sessionObject, RosterItem currentItem, Action action,
-					Set<String> modifiedGroups) {
+									Set<String> modifiedGroups) {
 				super(sessionObject);
 				this.item = currentItem;
 				this.action = action;

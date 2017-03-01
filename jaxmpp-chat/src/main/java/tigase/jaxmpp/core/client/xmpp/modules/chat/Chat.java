@@ -1,10 +1,13 @@
 /*
+ * Chat.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -42,17 +45,35 @@ public class Chat {
 
 	/**
 	 * Creates new chat representation object.
-	 * 
-	 * @param id
-	 *            internal object identifier.
-	 * @param packetWriter
-	 *            packet writer related to chat.
-	 * @param sessionObject
-	 *            session object related to chat.
+	 *
+	 * @param id internal object identifier.
+	 * @param packetWriter packet writer related to chat.
+	 * @param sessionObject session object related to chat.
 	 */
 	public Chat(long id, Context context) {
 		this.id = id;
 		this.context = context;
+	}
+
+	/**
+	 * Sends message in current chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 *
+	 * @param body message to send.
+	 *
+	 * @return
+	 */
+	public Message createMessage(String body) throws JaxmppException {
+		Message msg = Message.create();
+		msg.setTo(jid);
+		msg.setType(StanzaType.chat);
+		msg.setThread(threadId);
+		msg.setBody(body);
+		msg.setId(UIDGenerator.next());
+
+		// this would make it impossible for Extensions to process this message!
+		// this.context.getWriter().write(msg);
+		return msg;
 	}
 
 	/**
@@ -64,7 +85,7 @@ public class Chat {
 
 	/**
 	 * Returns interlocutor JID.
-	 * 
+	 *
 	 * @return interlocutor JID.
 	 */
 	public JID getJid() {
@@ -74,8 +95,7 @@ public class Chat {
 	/**
 	 * Sets interlocutor JID.
 	 *
-	 * @param jid
-	 *            interlocutor JID.
+	 * @param jid interlocutor JID.
 	 */
 	public void setJid(JID jid) {
 		this.jid = jid;
@@ -102,32 +122,10 @@ public class Chat {
 	/**
 	 * Sets thread-id.
 	 *
-	 * @param threadId
-	 *            thread-id.
+	 * @param threadId thread-id.
 	 */
 	public void setThreadId(String threadId) {
 		this.threadId = threadId;
-	}
-
-	/**
-	 * Sends message in current chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 *
-	 * @param body
-	 *            message to send.
-	 * @return
-	 */
-	public Message createMessage(String body) throws JaxmppException {
-		Message msg = Message.create();
-		msg.setTo(jid);
-		msg.setType(StanzaType.chat);
-		msg.setThread(threadId);
-		msg.setBody(body);
-		msg.setId(UIDGenerator.next());
-
-		// this would make it impossible for Extensions to process this message!
-		// this.context.getWriter().write(msg);
-		return msg;
 	}
 
 	public void setMessageModule(MessageModule module) {

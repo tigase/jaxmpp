@@ -1,10 +1,13 @@
 /*
+ * ClientStateIndicationModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2016 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,11 +32,16 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 /**
  * Created by andrzej on 27.06.2016.
  */
-public class ClientStateIndicationModule implements XmppModule, ContextAware {
+public class ClientStateIndicationModule
+		implements XmppModule, ContextAware {
 
 	private static final String CSI_XMLNS = "urn:xmpp:csi:0";
 
 	private Context context;
+
+	public void active() {
+		setState(true);
+	}
 
 	@Override
 	public Criteria getCriteria() {
@@ -45,8 +53,8 @@ public class ClientStateIndicationModule implements XmppModule, ContextAware {
 		return null;
 	}
 
-	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void inactive() {
+		setState(false);
 	}
 
 	public boolean isAvailable() throws XMLException {
@@ -54,12 +62,13 @@ public class ClientStateIndicationModule implements XmppModule, ContextAware {
 		return streamFeaturesElem != null && streamFeaturesElem.getChildrenNS("csi", "urn:xmpp:csi:0") != null;
 	}
 
-	public void active() {
-		setState(true);
+	@Override
+	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 	}
 
-	public void inactive() {
-		setState(false);
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	public boolean setState(boolean active) {
@@ -71,11 +80,5 @@ public class ClientStateIndicationModule implements XmppModule, ContextAware {
 		} catch (JaxmppException ex) {
 		}
 		return false;
-	}
-
-
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
 	}
 }

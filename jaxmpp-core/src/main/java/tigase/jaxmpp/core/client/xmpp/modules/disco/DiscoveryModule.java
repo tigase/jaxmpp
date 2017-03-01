@@ -1,3 +1,24 @@
+/*
+ * DiscoveryModule.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 package tigase.jaxmpp.core.client.xmpp.modules.disco;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
@@ -26,25 +47,26 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 import java.util.*;
 
-public class DiscoveryModule extends AbstractIQModule {
+public class DiscoveryModule
+		extends AbstractIQModule {
 
 	public final static String IDENTITY_CATEGORY_KEY = "IDENTITY_CATEGORY_KEY";
 	public final static String IDENTITY_TYPE_KEY = "IDENTITY_TYPE_KEY";
 	public static final String INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	public static final String ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 	public static final String SERVER_FEATURES_KEY = "SERVER_FEATURES_KEY";
+	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new DefaultNodeDetailsCallback(this);
 	private final Map<String, NodeDetailsCallback> callbacks = new HashMap<String, NodeDetailsCallback>();
 	private final Criteria criteria;
 	private final String[] features;
-	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new DefaultNodeDetailsCallback(this);
 	private ModuleProvider moduleProvider;
 
 	public DiscoveryModule() {
 		setNodeCallback(null, NULL_NODE_DETAILS_CALLBACK);
-		this.features = new String[] { INFO_XMLNS, ITEMS_XMLNS };
-		this.criteria = ElementCriteria.name("iq").add(
-				new Or(ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { ITEMS_XMLNS }),
-						ElementCriteria.name("query", new String[] { "xmlns" }, new String[] { INFO_XMLNS })));
+		this.features = new String[]{INFO_XMLNS, ITEMS_XMLNS};
+		this.criteria = ElementCriteria.name("iq")
+				.add(new Or(ElementCriteria.name("query", new String[]{"xmlns"}, new String[]{ITEMS_XMLNS}),
+							ElementCriteria.name("query", new String[]{"xmlns"}, new String[]{INFO_XMLNS})));
 	}
 
 	public void addServerFeaturesReceivedHandler(ServerFeaturesReceivedHandler handler) {
@@ -62,8 +84,9 @@ public class DiscoveryModule extends AbstractIQModule {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				if (callback != null)
+				if (callback != null) {
 					callback.onError(responseStanza, error);
+				}
 			}
 
 			@Override
@@ -73,23 +96,26 @@ public class DiscoveryModule extends AbstractIQModule {
 				ff.addAll(features);
 				context.getSessionObject().setProperty(SERVER_FEATURES_KEY, ff);
 
-				final ServerFeaturesReceivedEvent event = new ServerFeaturesReceivedEvent(context.getSessionObject(),
-						(IQ) this.responseStanza, ff.toArray(new String[] {}));
+				final ServerFeaturesReceivedEvent event = new ServerFeaturesReceivedEvent(context.getSessionObject(), (IQ) this.responseStanza,
+																						  ff.toArray(new String[]{}));
 				fireEvent(event);
-				if (callback != null)
+				if (callback != null) {
 					callback.onInfoReceived(node, identities, features);
+				}
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				if (callback != null)
+				if (callback != null) {
 					callback.onTimeout();
+				}
 			}
 		};
 
 		JID jid = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
-		if (jid != null)
+		if (jid != null) {
 			getInfo(JID.jidInstance(jid.getDomain()), null, (AsyncCallback) diac);
+		}
 	}
 
 	@Override
@@ -108,12 +134,14 @@ public class DiscoveryModule extends AbstractIQModule {
 
 	public void getInfo(JID jid, String node, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
-		if (jid != null)
+		if (jid != null) {
 			iq.setTo(jid);
+		}
 		iq.setType(StanzaType.get);
 		Element query = ElementFactory.create("query", null, INFO_XMLNS);
-		if (node != null)
+		if (node != null) {
 			query.setAttribute("node", node);
+		}
 		iq.addChild(query);
 
 		write(iq, callback);
@@ -150,15 +178,17 @@ public class DiscoveryModule extends AbstractIQModule {
 		final String node = q.getAttribute("node");
 		final NodeDetailsCallback callback = callbacks.get(node);
 
-		if (callback == null)
+		if (callback == null) {
 			throw new XMPPException(ErrorCondition.item_not_found);
+		}
 
 		if (INFO_XMLNS.equals(q.getXMLNS())) {
 			processGetInfo(element, q, node, callback);
 		} else if (ITEMS_XMLNS.equals(q.getXMLNS())) {
 			processGetItems(element, q, node, callback);
-		} else
+		} else {
 			throw new XMPPException(ErrorCondition.bad_request);
+		}
 	}
 
 	private void processGetInfo(IQ stanza, Element queryElement, String node, NodeDetailsCallback callback)
@@ -200,16 +230,18 @@ public class DiscoveryModule extends AbstractIQModule {
 		queryResult.setAttribute("node", node);
 		result.addChild(queryResult);
 
-		if (items != null)
+		if (items != null) {
 			for (Item it : items) {
 				Element e = ElementFactory.create("item");
-				if (it.getJid() != null)
+				if (it.getJid() != null) {
 					e.setAttribute("jid", it.getJid().toString());
+				}
 				e.setAttribute("name", it.getName());
 				e.setAttribute("node", it.getNode());
 
 				queryResult.addChild(e);
 			}
+		}
 
 		write(result);
 	}
@@ -231,11 +263,13 @@ public class DiscoveryModule extends AbstractIQModule {
 		this.callbacks.put(nodeName, callback == null ? NULL_NODE_DETAILS_CALLBACK : callback);
 	}
 
-	public interface ServerFeaturesReceivedHandler extends EventHandler {
+	public interface ServerFeaturesReceivedHandler
+			extends EventHandler {
 
 		void onServerFeaturesReceived(SessionObject sessionObject, IQ stanza, String[] features);
 
-		class ServerFeaturesReceivedEvent extends JaxmppEvent<ServerFeaturesReceivedHandler> {
+		class ServerFeaturesReceivedEvent
+				extends JaxmppEvent<ServerFeaturesReceivedHandler> {
 
 			private final String[] features;
 
@@ -255,7 +289,8 @@ public class DiscoveryModule extends AbstractIQModule {
 		}
 	}
 
-	public static class DefaultNodeDetailsCallback implements NodeDetailsCallback {
+	public static class DefaultNodeDetailsCallback
+			implements NodeDetailsCallback {
 
 		private DiscoveryModule discoveryModule;
 
@@ -290,7 +325,8 @@ public class DiscoveryModule extends AbstractIQModule {
 
 	}
 
-	public static abstract class DiscoInfoAsyncCallback implements AsyncCallback {
+	public static abstract class DiscoInfoAsyncCallback
+			implements AsyncCallback {
 
 		protected Stanza responseStanza;
 		private String requestedNode;
@@ -299,8 +335,7 @@ public class DiscoveryModule extends AbstractIQModule {
 			this.requestedNode = requestedNode;
 		}
 
-		protected abstract void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
-				throws XMLException;
+		protected abstract void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features) throws XMLException;
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws XMLException {
@@ -320,8 +355,9 @@ public class DiscoveryModule extends AbstractIQModule {
 			ArrayList<String> feres = new ArrayList<String>();
 			for (Element element : features) {
 				String v = element.getAttribute("var");
-				if (v != null)
+				if (v != null) {
 					feres.add(v);
+				}
 			}
 
 			String n = query.getAttribute("node");
@@ -329,7 +365,8 @@ public class DiscoveryModule extends AbstractIQModule {
 		}
 	}
 
-	public static abstract class DiscoItemsAsyncCallback implements AsyncCallback {
+	public static abstract class DiscoItemsAsyncCallback
+			implements AsyncCallback {
 
 		public abstract void onInfoReceived(String attribute, ArrayList<Item> items) throws XMLException;
 
@@ -340,8 +377,9 @@ public class DiscoveryModule extends AbstractIQModule {
 			ArrayList<Item> items = new ArrayList<Item>();
 			for (Element i : ritems) {
 				Item to = new Item();
-				if (i.getAttribute("jid") != null)
+				if (i.getAttribute("jid") != null) {
 					to.setJid(JID.jidInstance(i.getAttribute("jid")));
+				}
 				to.setName(i.getAttribute("name"));
 				to.setNode(i.getAttribute("node"));
 				items.add(to);
@@ -352,6 +390,7 @@ public class DiscoveryModule extends AbstractIQModule {
 	}
 
 	public static class Identity {
+
 		private String category;
 
 		private String name;

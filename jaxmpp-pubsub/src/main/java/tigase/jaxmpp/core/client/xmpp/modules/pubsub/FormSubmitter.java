@@ -1,10 +1,13 @@
 /*
+ * FormSubmitter.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -38,7 +41,8 @@ public abstract class FormSubmitter {
 
 	protected final PacketWriter writer;
 
-	public FormSubmitter(SessionObject sessionObject, PacketWriter packetWriter, JID serviceJID, JabberDataElement form) {
+	public FormSubmitter(SessionObject sessionObject, PacketWriter packetWriter, JID serviceJID,
+						 JabberDataElement form) {
 		this.form = form;
 		this.serviceJID = serviceJID;
 		this.sessionObject = sessionObject;
@@ -51,7 +55,7 @@ public abstract class FormSubmitter {
 
 	protected abstract Element prepareIqPayload() throws XMLException;
 
-	public void submit(final AsyncCallback callback) throws XMLException, JaxmppException {
+	public void submit(final AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 		iq.setTo(serviceJID);

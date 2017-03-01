@@ -1,10 +1,13 @@
 /*
+ * StreamhostUsedCallback.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,10 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -29,17 +28,26 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
- * 
  * @author andrzej
  */
-public abstract class StreamhostUsedCallback implements AsyncCallback {
+public abstract class StreamhostUsedCallback
+		implements AsyncCallback {
 
-	private static final Logger log = Logger.getLogger("tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback");
+	private static final Logger log = Logger.getLogger(
+			"tigase.jaxmpp.core.client.xmpp.modules.socks5.StreamhostUsedCallback");
 	private List<Streamhost> hosts;
 
 	public List<Streamhost> getHosts() {
 		return this.hosts;
+	}
+
+	public void setHosts(List<Streamhost> hosts) {
+		this.hosts = hosts;
 	}
 
 	public abstract void onError(Exception ex, String errorText);
@@ -73,8 +81,9 @@ public abstract class StreamhostUsedCallback implements AsyncCallback {
 					log.log(Level.FINEST, "activation of stream completed");
 					connected = onSuccess(host);
 					log.log(Level.FINEST, "connected set to = " + connected);
-					if (connected)
+					if (connected) {
 						break;
+					}
 				} catch (Exception ex) {
 					log.log(Level.FINEST, "exception connecting to proxy", ex);
 					// stop();
@@ -93,9 +102,5 @@ public abstract class StreamhostUsedCallback implements AsyncCallback {
 	@Override
 	public void onTimeout() throws JaxmppException {
 		onError(null, "request timed out");
-	}
-
-	public void setHosts(List<Streamhost> hosts) {
-		this.hosts = hosts;
 	}
 }

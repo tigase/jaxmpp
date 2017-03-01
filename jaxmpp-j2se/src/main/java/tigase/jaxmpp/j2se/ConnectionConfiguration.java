@@ -1,10 +1,13 @@
 /*
+ * ConnectionConfiguration.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,20 +20,27 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-import java.net.Proxy;
-
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+
 /**
  * Connection configuration object.
  */
-public class ConnectionConfiguration extends tigase.jaxmpp.core.client.ConnectionConfiguration {
+public class ConnectionConfiguration
+		extends tigase.jaxmpp.core.client.ConnectionConfiguration {
+
+	public enum ConnectionType {
+		bosh,
+		socket,
+		websocket
+	}
 
 	ConnectionConfiguration(SessionObject sessionObject) {
 		super(sessionObject);
@@ -39,8 +49,7 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Set BOSH Service URL. Required if connection type is <code>bosh</code>.
 	 *
-	 * @param boshService
-	 *            BOSH service URL
+	 * @param boshService BOSH service URL
 	 */
 	public void setBoshService(String boshService) {
 		sessionObject.setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, boshService);
@@ -50,8 +59,7 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Set connection type.
 	 *
-	 * @param connectionType
-	 *            connection type
+	 * @param connectionType connection type
 	 */
 	public void setConnectionType(ConnectionType connectionType) {
 		sessionObject.setUserProperty(Jaxmpp.CONNECTOR_TYPE, connectionType.name());
@@ -60,8 +68,7 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Enable or disable TLS usage.
 	 *
-	 * @param disabled
-	 *            <code>true</code> is TLS should be disabled.
+	 * @param disabled <code>true</code> is TLS should be disabled.
 	 */
 	public void setDisableTLS(boolean disabled) {
 		sessionObject.setUserProperty(SocketConnector.TLS_DISABLED_KEY, disabled);
@@ -79,10 +86,8 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Set connection proxy.
 	 *
-	 * @param host
-	 *            proxy host or {@code null} for direct connection.
-	 * @param port
-	 *            proxy port.
+	 * @param host proxy host or {@code null} for direct connection.
+	 * @param port proxy port.
 	 */
 	public void setProxy(String host, int port) {
 		sessionObject.setUserProperty(Connector.PROXY_HOST, host);
@@ -92,9 +97,7 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Set proxy type.
 	 *
-	 * @param type
-	 *            type of proxy. Available values: {@code HTTP} and
-	 *            {@code SOCKS}.
+	 * @param type type of proxy. Available values: {@code HTTP} and {@code SOCKS}.
 	 */
 	public void setProxyType(Proxy.Type type) {
 		sessionObject.setUserProperty(Connector.PROXY_TYPE, type);
@@ -102,11 +105,9 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 
 	/**
 	 * Set proxy authentication credentials.
-	 * 
-	 * @param username
-	 *            proxy username.
-	 * @param password
-	 *            proxy password.
+	 *
+	 * @param username proxy username.
+	 * @param password proxy password.
 	 */
 	public void setProxyUsernamePassword(final String username, final String password) {
 		Authenticator.setDefault(new Authenticator() {
@@ -128,8 +129,7 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Set server hostname. Not needed if it is equals to hostname of JID.
 	 *
-	 * @param server
-	 *            hostname
+	 * @param server hostname
 	 */
 	public void setServer(String server) {
 		sessionObject.setUserProperty(SocketConnector.SERVER_HOST, server);
@@ -138,19 +138,11 @@ public class ConnectionConfiguration extends tigase.jaxmpp.core.client.Connectio
 	/**
 	 * Enable o disable SASL. Default <code>true</code>.
 	 *
-	 * @param useSASL
-	 *            <code>false</code> is only non-SASL authentication (XEP-0078)
-	 *            should be available.
+	 * @param useSASL <code>false</code> is only non-SASL authentication (XEP-0078) should be available.
 	 */
 	public void setUseSASL(boolean useSASL) {
 		sessionObject.setUserProperty(AuthModule.FORCE_NON_SASL, !useSASL);
 
-	}
-
-	public static enum ConnectionType {
-		bosh,
-		socket,
-		websocket
 	}
 
 }

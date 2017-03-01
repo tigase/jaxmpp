@@ -1,10 +1,13 @@
 /*
+ * JaxmppCore.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -56,10 +59,9 @@ import java.util.logging.Logger;
 
 /**
  * Base abstract class for implementation platform-specific jaxmpp clients.
- *
- *
  */
 public abstract class JaxmppCore {
+
 	public static final String AUTOADD_STANZA_ID_KEY = "AUTOADD_STANZA_ID_KEY";
 	protected final Logger log;
 	protected Connector connector;
@@ -82,8 +84,9 @@ public abstract class JaxmppCore {
 
 		@Override
 		public void write(final Element stanza) throws JaxmppException {
-			if (connector.getState() != Connector.State.connected)
+			if (connector.getState() != Connector.State.connected) {
 				throw new JaxmppException("Not connected!");
+			}
 			try {
 				if (stanza != null && log.isLoggable(Level.FINEST)) {
 					log.finest("SENT: " + stanza.getAsString());
@@ -137,8 +140,7 @@ public abstract class JaxmppCore {
 	/**
 	 * Executes task in executor. Used to handle received stanzas.
 	 *
-	 * @param runnable
-	 *            task to execute.
+	 * @param runnable task to execute.
 	 */
 	public abstract void execute(Runnable runnable);
 
@@ -148,7 +150,7 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Returns configurator.
-	 *
+	 * <p>
 	 * This wrapper for SessionObject.
 	 *
 	 * @return configuration
@@ -186,8 +188,8 @@ public abstract class JaxmppCore {
 	 * Return module implementation by module class. This method calls
 	 * {@linkplain XmppModulesManager#getModule(Class)}.
 	 *
-	 * @param moduleClass
-	 *            module class
+	 * @param moduleClass module class
+	 *
 	 * @return module implementation
 	 */
 	public <T extends XmppModule> T getModule(Class<T> moduleClass) {
@@ -240,14 +242,18 @@ public abstract class JaxmppCore {
 	// }
 
 	protected void init() {
-		if (this.eventBus == null)
+		if (this.eventBus == null) {
 			throw new RuntimeException("EventBus cannot be null!");
-		if (this.sessionObject == null)
+		}
+		if (this.sessionObject == null) {
 			throw new RuntimeException("SessionObject cannot be null!");
-		if (this.writer == null)
+		}
+		if (this.writer == null) {
 			throw new RuntimeException("PacketWriter cannot be null!");
-		if (ResponseManager.getResponseManager(sessionObject) == null)
+		}
+		if (ResponseManager.getResponseManager(sessionObject) == null) {
 			throw new RuntimeException("ResponseManager cannot be null!");
+		}
 		// if (RosterModule.getRosterStore(sessionObject) == null)
 		// throw new RuntimeException("RosterModule cannot be null!");
 		// if (PresenceModule.getPresenceStore(sessionObject) == null)
@@ -305,13 +311,15 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class, new ResourceBindSuccessHandler() {
+		eventBus.addHandler(ResourceBindSuccessHandler.ResourceBindSuccessEvent.class,
+							new ResourceBindSuccessHandler() {
 
-			@Override
-			public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid) throws JaxmppException {
-				JaxmppCore.this.onResourceBindSuccess(bindedJid);
-			}
-		});
+								@Override
+								public void onResourceBindSuccess(SessionObject sessionObject, JID bindedJid)
+										throws JaxmppException {
+									JaxmppCore.this.onResourceBindSuccess(bindedJid);
+								}
+							});
 
 		eventBus.addHandler(StreamTerminatedHandler.StreamTerminatedEvent.class, new StreamTerminatedHandler() {
 
@@ -324,7 +332,8 @@ public abstract class JaxmppCore {
 		eventBus.addHandler(ErrorHandler.ErrorEvent.class, new ErrorHandler() {
 
 			@Override
-			public void onError(SessionObject sessionObject, StreamError condition, Throwable caught) throws JaxmppException {
+			public void onError(SessionObject sessionObject, StreamError condition, Throwable caught)
+					throws JaxmppException {
 				JaxmppCore.this.onStreamError(condition, caught);
 			}
 		});
@@ -361,8 +370,8 @@ public abstract class JaxmppCore {
 	 * @return <code>true</code> if XMPP connection is established.
 	 */
 	public boolean isConnected() {
-		return this.connector != null && this.connector.getState() == State.connected
-				&& this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
+		return this.connector != null && this.connector.getState() == State.connected &&
+				this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
 	}
 
 	/**
@@ -380,8 +389,9 @@ public abstract class JaxmppCore {
 	 * @throws JaxmppException
 	 */
 	public void keepalive() throws JaxmppException {
-		if (sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null)
+		if (sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null) {
 			this.connector.keepalive();
+		}
 	}
 
 	/**
@@ -426,8 +436,9 @@ public abstract class JaxmppCore {
 	protected void onStanzaReceived(StreamPacket stanza) {
 		final Runnable r = this.processor.process(stanza);
 		try {
-			if (ackModule.processIncomingStanza(stanza))
+			if (ackModule.processIncomingStanza(stanza)) {
 				return;
+			}
 		} catch (XMLException e) {
 			log.log(Level.WARNING, "Problem on counting", e);
 		}
@@ -442,8 +453,9 @@ public abstract class JaxmppCore {
 
 	protected void onUnacknowledged(List<Element> elements) throws JaxmppException {
 		for (Element e : elements) {
-			if (e == null)
+			if (e == null) {
 				continue;
+			}
 			String to = e.getAttribute("to");
 			String from = e.getAttribute("from");
 
@@ -458,8 +470,9 @@ public abstract class JaxmppCore {
 			e.addChild(error);
 
 			final Runnable r = processor.process(e);
-			if (r != null)
+			if (r != null) {
 				execute(r);
+			}
 		}
 	}
 
@@ -467,10 +480,8 @@ public abstract class JaxmppCore {
 	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
 	 * connection.
 	 *
-	 * @param stanza
-	 *            IQ stanza to send.
-	 * @param asyncCallback
-	 *            callback to handle response for sent IQ stanza.
+	 * @param stanza IQ stanza to send.
+	 * @param asyncCallback callback to handle response for sent IQ stanza.
 	 */
 	public void send(IQ stanza, AsyncCallback asyncCallback) throws JaxmppException {
 		this.writer.write(stanza, asyncCallback);
@@ -480,12 +491,9 @@ public abstract class JaxmppCore {
 	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
 	 * connection.
 	 *
-	 * @param stanza
-	 *            IQ stanza to send.
-	 * @param timeout
-	 *            maximum time to wait for response in miliseconds.
-	 * @param asyncCallback
-	 *            asyncCallback callback to handle response for sent IQ stanza.
+	 * @param stanza IQ stanza to send.
+	 * @param timeout maximum time to wait for response in miliseconds.
+	 * @param asyncCallback asyncCallback callback to handle response for sent IQ stanza.
 	 */
 	public void send(IQ stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		this.writer.write(stanza, timeout, asyncCallback);
@@ -494,8 +502,7 @@ public abstract class JaxmppCore {
 	/**
 	 * Sends stanza to XMPP Server in current connection.
 	 *
-	 * @param stanza
-	 *            stanza to send.
+	 * @param stanza stanza to send.
 	 */
 	public void send(Stanza stanza) throws JaxmppException {
 		this.writer.write(stanza);
@@ -508,20 +515,21 @@ public abstract class JaxmppCore {
 	/**
 	 * Implemented by handlers of {@linkplain LoggedInEvent LoggedInEvent}.
 	 */
-	public interface LoggedInHandler extends EventHandler {
+	public interface LoggedInHandler
+			extends EventHandler {
 
 		/**
 		 * Called when {@linkplain LoggedInEvent LoggedInEvent} is fired.
 		 *
-		 * @param sessionObject
-		 *            session object related to connection.
+		 * @param sessionObject session object related to connection.
 		 */
 		void onLoggedIn(SessionObject sessionObject);
 
 		/**
 		 * Fired when connection is fully established.
 		 */
-		class LoggedInEvent extends JaxmppEvent<LoggedInHandler> {
+		class LoggedInEvent
+				extends JaxmppEvent<LoggedInHandler> {
 
 			public LoggedInEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -537,22 +545,22 @@ public abstract class JaxmppCore {
 
 	/**
 	 * Implemented by handlers of {@linkplain LoggedOutEvent LoggedOutEvent}.
-	 *
 	 */
-	public interface LoggedOutHandler extends EventHandler {
+	public interface LoggedOutHandler
+			extends EventHandler {
 
 		/**
 		 * Called when {@linkplain LoggedOutEvent LoggedOutEvent} is fired.
 		 *
-		 * @param sessionObject
-		 *            session object related to connection.
+		 * @param sessionObject session object related to connection.
 		 */
 		void onLoggedOut(SessionObject sessionObject);
 
 		/**
 		 * Fired when jaxmpp is disconnected.
 		 */
-		class LoggedOutEvent extends JaxmppEvent<LoggedOutHandler> {
+		class LoggedOutEvent
+				extends JaxmppEvent<LoggedOutHandler> {
 
 			public LoggedOutEvent(SessionObject sessionObject) {
 				super(sessionObject);

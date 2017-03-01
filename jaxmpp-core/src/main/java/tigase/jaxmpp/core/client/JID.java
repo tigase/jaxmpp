@@ -1,10 +1,13 @@
 /*
+ * JID.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,13 +24,18 @@ package tigase.jaxmpp.core.client;
  * XMPP entity address form
  * <code>&lt;localpart@domainpart/resourcepart&gt;</code>
  */
-public class JID implements Comparable<JID> {
+public class JID
+		implements Comparable<JID> {
+
+	private final String $toString;
+	private final BareJID bareJid;
+	private final String resource;
 
 	/**
 	 * Creates intance of {@link JID JID} from {@link BareJID}.
-	 * 
-	 * @param bareJid
-	 *            bare JID
+	 *
+	 * @param bareJid bare JID
+	 *
 	 * @return full JID. Resource is <code>null</code>.
 	 */
 	public static JID jidInstance(BareJID bareJid) {
@@ -36,11 +44,10 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
-	 * @param bareJid
-	 *            bare JID
-	 * @param p_resource
-	 *            resource
+	 *
+	 * @param bareJid bare JID
+	 * @param p_resource resource
+	 *
 	 * @return full JID
 	 */
 	public static JID jidInstance(BareJID bareJid, String p_resource) {
@@ -49,9 +56,9 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
-	 * @param jid
-	 *            string contains JID
+	 *
+	 * @param jid string contains JID
+	 *
 	 * @return full JID.
 	 */
 	public static JID jidInstance(String jid) {
@@ -62,11 +69,10 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
-	 * @param localpart
-	 *            localpart
-	 * @param domain
-	 *            domainpart
+	 *
+	 * @param localpart localpart
+	 * @param domain domainpart
+	 *
 	 * @return full JID.Resource is <code>null</code>.
 	 */
 	public static JID jidInstance(String localpart, String domain) {
@@ -75,13 +81,11 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Creates intance of {@link JID JID}.
-	 * 
-	 * @param localpart
-	 *            localpart
-	 * @param domain
-	 *            domainpart
-	 * @param resource
-	 *            resource
+	 *
+	 * @param localpart localpart
+	 * @param domain domainpart
+	 * @param resource resource
+	 *
 	 * @return full JID.
 	 */
 	public static JID jidInstance(String localpart, String domain, String resource) {
@@ -91,12 +95,6 @@ public class JID implements Comparable<JID> {
 	private static String toString(BareJID bareJid, String p_resource) {
 		return bareJid.toString() + (((p_resource != null) && (p_resource.length() > 0)) ? "/" + p_resource : "");
 	}
-
-	private final String $toString;
-
-	private final BareJID bareJid;
-
-	private final String resource;
 
 	private JID(BareJID bareJid, String resource) {
 		this.bareJid = bareJid;
@@ -114,25 +112,30 @@ public class JID implements Comparable<JID> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (!(obj instanceof JID))
+		}
+		if (!(obj instanceof JID)) {
 			return false;
+		}
 		JID other = (JID) obj;
 		if ($toString == null) {
-			if (other.$toString != null)
+			if (other.$toString != null) {
 				return false;
-		} else if (!$toString.equals(other.$toString))
+			}
+		} else if (!$toString.equals(other.$toString)) {
 			return false;
+		}
 		return true;
 	}
 
 	/**
 	 * Returns bare JID part (<code>&lt;localpart@domainpart&gt;</code>) from
 	 * full JID.
-	 * 
+	 *
 	 * @return bare JID
 	 */
 	public BareJID getBareJid() {
@@ -141,7 +144,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return domainpart.
-	 * 
+	 *
 	 * @return domainpart
 	 */
 	public String getDomain() {
@@ -150,7 +153,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return localpart.
-	 * 
+	 *
 	 * @return localpart
 	 */
 	public String getLocalpart() {
@@ -159,7 +162,7 @@ public class JID implements Comparable<JID> {
 
 	/**
 	 * Return resource.
-	 * 
+	 *
 	 * @return resource
 	 */
 	public String getResource() {

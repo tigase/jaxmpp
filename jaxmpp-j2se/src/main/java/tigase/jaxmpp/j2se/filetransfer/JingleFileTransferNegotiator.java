@@ -1,10 +1,13 @@
 /*
+ * JingleFileTransferNegotiator.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -47,9 +50,13 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract implements ConnectionSessionHandler,
-		JingleModule.JingleSessionAcceptHandler, JingleModule.JingleSessionInitiationHandler,
-		JingleModule.JingleSessionTerminateHandler, ConnectionManager.ConnectionEstablishedHandler {
+public class JingleFileTransferNegotiator
+		extends FileTransferNegotiatorAbstract
+		implements ConnectionSessionHandler,
+				   JingleModule.JingleSessionAcceptHandler,
+				   JingleModule.JingleSessionInitiationHandler,
+				   JingleModule.JingleSessionTerminateHandler,
+				   ConnectionManager.ConnectionEstablishedHandler {
 
 	public static final String JINGLE_FT_XMLNS = "urn:xmpp:jingle:apps:file-transfer:3";
 	private static final String[] FEATURES = {JINGLE_FT_XMLNS, JingleSocks5BytestreamsConnectionManager.XMLNS};
@@ -75,7 +82,8 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 		}, TIMEOUT);
 
 		JingleModule jingleModule = jaxmpp.getModule(JingleModule.class);
-		jingleModule.acceptSession(ft.getPeer(), sid, "ex", ElementFactory.create("description", null, JINGLE_FT_XMLNS), null);
+		jingleModule.acceptSession(ft.getPeer(), sid, "ex", ElementFactory.create("description", null, JINGLE_FT_XMLNS),
+								   null);
 
 		connectionManager.connectTcp(jaxmpp, ft);
 	}
@@ -123,7 +131,9 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 				}
 			}
 
-			return (features != null && features.contains(JingleModule.JINGLE_XMLNS) && features.contains(JINGLE_FT_XMLNS) && features.contains(JingleSocks5BytestreamsConnectionManager.XMLNS));
+			return (features != null && features.contains(JingleModule.JINGLE_XMLNS) &&
+					features.contains(JINGLE_FT_XMLNS) &&
+					features.contains(JingleSocks5BytestreamsConnectionManager.XMLNS));
 		} catch (XMLException ex) {
 			return false;
 		}
@@ -224,9 +234,11 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 
 	@Override
 	public void registerListeners(JaxmppCore jaxmpp) {
-		jaxmpp.getEventBus().addHandler(JingleModule.JingleSessionInitiationHandler.JingleSessionInitiationEvent.class, this);
+		jaxmpp.getEventBus()
+				.addHandler(JingleModule.JingleSessionInitiationHandler.JingleSessionInitiationEvent.class, this);
 		jaxmpp.getEventBus().addHandler(JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent.class, this);
-		jaxmpp.getEventBus().addHandler(JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent.class, this);
+		jaxmpp.getEventBus()
+				.addHandler(JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent.class, this);
 	}
 
 	@Override
@@ -276,13 +288,14 @@ public class JingleFileTransferNegotiator extends FileTransferNegotiatorAbstract
 	public void setContext(Context context) {
 		super.setContext(context);
 		connectionManager.setContext(context);
-		context.getEventBus().addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class,
-				this);
+		context.getEventBus()
+				.addHandler(ConnectionManager.ConnectionEstablishedHandler.ConnectionEstablishedEvent.class, this);
 	}
 
 	@Override
 	public void unregisterListeners(JaxmppCore jaxmpp) {
-		jaxmpp.getEventBus().remove(JingleModule.JingleSessionInitiationHandler.JingleSessionInitiationEvent.class, this);
+		jaxmpp.getEventBus()
+				.remove(JingleModule.JingleSessionInitiationHandler.JingleSessionInitiationEvent.class, this);
 		jaxmpp.getEventBus().remove(JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent.class, this);
 		jaxmpp.getEventBus().remove(JingleModule.JingleSessionTerminateHandler.JingleSessionTerminateEvent.class, this);
 	}

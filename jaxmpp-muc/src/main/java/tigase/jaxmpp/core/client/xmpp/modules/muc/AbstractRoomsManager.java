@@ -1,10 +1,13 @@
 /*
+ * AbstractRoomsManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,20 +20,18 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class AbstractRoomsManager {
 
-	protected Context context;
-
 	protected final Map<BareJID, Room> rooms = new HashMap<BareJID, Room>();
-
+	protected Context context;
 	protected SessionObject sessionObject;
 
 	public boolean contains(BareJID roomJid) {
@@ -51,6 +52,10 @@ public abstract class AbstractRoomsManager {
 		return sessionObject;
 	}
 
+	void setSessionObject(SessionObject sessionObject) {
+		this.sessionObject = sessionObject;
+	}
+
 	protected void initialize() {
 
 	}
@@ -66,9 +71,5 @@ public abstract class AbstractRoomsManager {
 	public void setContext(Context context) {
 		this.context = context;
 		this.setSessionObject(context.getSessionObject());
-	}
-
-	void setSessionObject(SessionObject sessionObject) {
-		this.sessionObject = sessionObject;
 	}
 }

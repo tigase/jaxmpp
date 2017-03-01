@@ -1,10 +1,13 @@
 /*
+ * EventBus.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,7 +28,7 @@ public abstract class EventBus {
 	/**
 	 * Adds handler to receive given type of events.
 	 *
-	 * @param type    type of event.
+	 * @param type type of event.
 	 * @param handler event handler
 	 */
 	public abstract <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler);
@@ -33,11 +36,10 @@ public abstract class EventBus {
 	/**
 	 * Adds listener to receive given type of events.
 	 *
-	 * @param type     type of event.
+	 * @param type type of event.
 	 * @param listener event listener.
 	 */
 	public abstract <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener);
-
 
 	/**
 	 * Adds listener to receive all types events.
@@ -53,15 +55,13 @@ public abstract class EventBus {
 	 */
 	public abstract void fire(Event<?> e);
 
-
 	/**
 	 * Removes listener or handler of given type.
 	 *
-	 * @param type    type of event.
+	 * @param type type of event.
 	 * @param handler handler or listener to remove from EventBus.
 	 */
 	public abstract void remove(Class<? extends Event<?>> type, EventHandler handler);
-
 
 	/**
 	 * Removed listener or handler.
@@ -69,6 +69,5 @@ public abstract class EventBus {
 	 * @param handler handler or listener to remove from EventBus.
 	 */
 	public abstract void remove(EventHandler handler);
-
 
 }

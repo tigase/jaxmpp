@@ -1,10 +1,13 @@
 /*
+ * EventBusException.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,9 +27,11 @@ import java.util.Collection;
  * firing event. This exception is usually throwed after calling all listeners
  * and handlers.
  */
-public class EventBusException extends RuntimeException {
+public class EventBusException
+		extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
+	private final Collection<Throwable> causes;
 
 	protected static String createMessage(Collection<Throwable> causes) {
 		if (causes.isEmpty()) {
@@ -62,8 +67,6 @@ public class EventBusException extends RuntimeException {
 		return causes.iterator().next();
 	}
 
-	private final Collection<Throwable> causes;
-
 	public EventBusException(Collection<Throwable> causes) {
 		super(createMessage(causes), createThrowable(causes));
 		this.causes = causes;
@@ -71,7 +74,7 @@ public class EventBusException extends RuntimeException {
 
 	/**
 	 * Returns collection of all Exceptions throwed by handlers or listeners.
-	 * 
+	 *
 	 * @return collection of Exceptions.
 	 */
 	public Collection<Throwable> getCauses() {

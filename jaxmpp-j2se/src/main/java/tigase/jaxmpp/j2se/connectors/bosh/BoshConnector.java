@@ -1,10 +1,13 @@
 /*
+ * BoshConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,7 +32,8 @@ import tigase.xml.SingletonFactory;
 import java.net.URL;
 import java.util.logging.Level;
 
-public class BoshConnector extends AbstractBoshConnector {
+public class BoshConnector
+		extends AbstractBoshConnector {
 
 	public static final String URL_KEY = "bosh#url";
 
@@ -65,8 +69,9 @@ public class BoshConnector extends AbstractBoshConnector {
 
 		addToRequests(worker);
 
-		if (log.isLoggable(Level.FINEST))
+		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Send: " + element.getAsString());
+		}
 		Thread t = new Thread(worker);
 		t.setDaemon(true);
 		t.start();
@@ -76,8 +81,9 @@ public class BoshConnector extends AbstractBoshConnector {
 	public void start() throws JaxmppException {
 		try {
 			String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
-			if (u == null)
+			if (u == null) {
 				throw new JaxmppException("BOSH service URL not defined!");
+			}
 			URL url = new URL(u);
 			context.getSessionObject().setProperty(URL_KEY, url);
 			super.start();

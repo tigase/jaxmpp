@@ -1,10 +1,13 @@
 /*
+ * SocketXmppSessionLogic.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -27,7 +30,8 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceModule;
 import tigase.jaxmpp.core.client.xmpp.modules.presence.PresenceStore;
 
-public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<SocketConnector> {
+public class SocketXmppSessionLogic
+		extends AbstractSocketXmppSessionLogic<SocketConnector> {
 
 	public SocketXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager, Context context) {
 		super(connector, modulesManager, context);
@@ -50,7 +54,8 @@ public class SocketXmppSessionLogic extends AbstractSocketXmppSessionLogic<Socke
 	protected void processStreamFeatures(Element featuresElement) throws JaxmppException {
 		final Boolean tlsDisabled = context.getSessionObject().getProperty(SocketConnector.TLS_DISABLED_KEY);
 		final boolean tlsAvailable = SocketConnector.isTLSAvailable(context.getSessionObject());
-		final Boolean compressionDisabled = context.getSessionObject().getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
+		final Boolean compressionDisabled = context.getSessionObject()
+				.getProperty(SocketConnector.COMPRESSION_DISABLED_KEY);
 		final boolean zlibAvailable = SocketConnector.isZLibAvailable(context.getSessionObject());
 
 		final boolean isConnectionSecure = connector.isSecure();

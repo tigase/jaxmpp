@@ -1,10 +1,13 @@
 /*
+ * InBandRegistrationModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -35,7 +38,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class InBandRegistrationModule extends AbstractIQModule {
+public class InBandRegistrationModule
+		extends AbstractIQModule {
 
 	/**
 	 * Duplicate of
@@ -54,8 +58,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 	public static boolean isRegistrationAvailable(SessionObject sessionObject) throws JaxmppException {
 		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
-		boolean registrationSupported = features != null
-				&& features.getChildrenNS("register", "http://jabber.org/features/iq-register") != null;
+		boolean registrationSupported = features != null &&
+				features.getChildrenNS("register", "http://jabber.org/features/iq-register") != null;
 
 		return registrationSupported;
 	}
@@ -96,7 +100,8 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		throw new XMPPException(ErrorCondition.not_allowed);
 	}
 
-	public void register(String username, String password, String email, AsyncCallback asyncCallback) throws JaxmppException {
+	public void register(String username, String password, String email, AsyncCallback asyncCallback)
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
 
@@ -109,12 +114,15 @@ public class InBandRegistrationModule extends AbstractIQModule {
 
 		Element q = ElementFactory.create("query", null, "jabber:iq:register");
 		iq.addChild(q);
-		if (username != null && username.length() > 0)
+		if (username != null && username.length() > 0) {
 			q.addChild(ElementFactory.create("username", username, null));
-		if (password != null && password.length() > 0)
+		}
+		if (password != null && password.length() > 0) {
 			q.addChild(ElementFactory.create("password", password, null));
-		if (email != null && email.length() > 0)
+		}
+		if (email != null && email.length() > 0) {
 			q.addChild(ElementFactory.create("email", email, null));
+		}
 
 		write(iq, asyncCallback);
 
@@ -188,11 +196,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		}
 	}
 
-	public interface NotSupportedErrorHandler extends EventHandler {
+	public interface NotSupportedErrorHandler
+			extends EventHandler {
 
 		void onNotSupportedError(SessionObject sessionObject) throws JaxmppException;
 
-		class NotSupportedErrorEvent extends JaxmppEvent<NotSupportedErrorHandler> {
+		class NotSupportedErrorEvent
+				extends JaxmppEvent<NotSupportedErrorHandler> {
 
 			public NotSupportedErrorEvent(SessionObject sessionObject) {
 				super(sessionObject);
@@ -206,12 +216,14 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		}
 	}
 
-	public interface ReceivedErrorHandler extends EventHandler {
+	public interface ReceivedErrorHandler
+			extends EventHandler {
 
 		void onReceivedError(SessionObject sessionObject, IQ responseStanza, ErrorCondition errorCondition)
 				throws JaxmppException;
 
-		class ReceivedErrorEvent extends JaxmppEvent<ReceivedErrorHandler> {
+		class ReceivedErrorEvent
+				extends JaxmppEvent<ReceivedErrorHandler> {
 
 			private ErrorCondition errorCondition;
 
@@ -247,11 +259,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		}
 	}
 
-	public interface ReceivedRequestedFieldsHandler extends EventHandler {
+	public interface ReceivedRequestedFieldsHandler
+			extends EventHandler {
 
 		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza);
 
-		class ReceivedRequestedFieldsEvent extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
+		class ReceivedRequestedFieldsEvent
+				extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
 
 			private IQ responseStanza;
 
@@ -276,11 +290,13 @@ public class InBandRegistrationModule extends AbstractIQModule {
 		}
 	}
 
-	public interface ReceivedTimeoutHandler extends EventHandler {
+	public interface ReceivedTimeoutHandler
+			extends EventHandler {
 
 		void onReceivedTimeout(SessionObject sessionObject) throws JaxmppException;
 
-		class ReceivedTimeoutEvent extends JaxmppEvent<ReceivedTimeoutHandler> {
+		class ReceivedTimeoutEvent
+				extends JaxmppEvent<ReceivedTimeoutHandler> {
 
 			public ReceivedTimeoutEvent(SessionObject sessionObject) {
 				super(sessionObject);

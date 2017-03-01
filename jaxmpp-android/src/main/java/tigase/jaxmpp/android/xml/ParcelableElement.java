@@ -1,10 +1,13 @@
 /*
+ * ParcelableElement.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2011-2014 "Artur Hefczyc" <artur.hefczyc@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,19 +20,22 @@
  */
 package tigase.jaxmpp.android.xml;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
+import tigase.jaxmpp.core.client.xml.DefaultElement;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import tigase.jaxmpp.core.client.xml.DefaultElement;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
-import android.os.Parcel;
-import android.os.Parcelable;
-import android.util.Log;
+public class ParcelableElement
+		extends DefaultElement
+		implements Parcelable {
 
-public class ParcelableElement extends DefaultElement implements Parcelable {
-
+	private static final String TAG = "ParcelableElement";
 	public static final Parcelable.Creator<ParcelableElement> CREATOR = new Parcelable.Creator<ParcelableElement>() {
 		@Override
 		public ParcelableElement createFromParcel(Parcel source) {
@@ -65,8 +71,6 @@ public class ParcelableElement extends DefaultElement implements Parcelable {
 			return new ParcelableElement[size];
 		}
 	};
-
-	private static final String TAG = "ParcelableElement";
 
 	public static final ParcelableElement fromElement(Element element) throws XMLException {
 		if (element instanceof ParcelableElement) {

@@ -1,10 +1,13 @@
 /*
+ * BooleanField.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,15 +32,17 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * options. The default value is "false".</blockquote>
  * </p>
  */
-public class BooleanField extends AbstractField<Boolean> {
+public class BooleanField
+		extends AbstractField<Boolean> {
 
 	public static boolean parse(String value) {
-		if (value == null)
+		if (value == null) {
 			return Boolean.FALSE;
-		else if (value.equals("1") || value.equals("true"))
+		} else if (value.equals("1") || value.equals("true")) {
 			return Boolean.TRUE;
-		else
+		} else {
 			return Boolean.FALSE;
+		}
 	}
 
 	BooleanField(Element element) throws XMLException {
@@ -58,11 +63,12 @@ public class BooleanField extends AbstractField<Boolean> {
 	 */
 	@Override
 	public void setFieldValue(Boolean value) throws XMLException {
-		if (value == null)
+		if (value == null) {
 			setChildElementValue("value", "0");
-		else if (value.booleanValue())
+		} else if (value.booleanValue()) {
 			setChildElementValue("value", "1");
-		else
+		} else {
 			setChildElementValue("value", "0");
+		}
 	}
 }

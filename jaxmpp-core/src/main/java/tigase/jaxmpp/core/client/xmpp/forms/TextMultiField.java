@@ -1,10 +1,13 @@
 /*
+ * TextMultiField.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,12 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of text-multi field type.
@@ -32,7 +35,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * enables an entity to gather or provide multiple lines of text.</blockquote>
  * </p>
  */
-public class TextMultiField extends AbstractField<String[]> {
+public class TextMultiField
+		extends AbstractField<String[]> {
 
 	TextMultiField(Element element) throws XMLException {
 		super("text-multi", element);
@@ -40,15 +44,15 @@ public class TextMultiField extends AbstractField<String[]> {
 
 	/**
 	 * Adds value to field.
-	 * 
-	 * @param value
-	 *            value to add
+	 *
+	 * @param value value to add
 	 */
 	public void addFieldValue(String... value) throws XMLException {
-		if (value != null)
+		if (value != null) {
 			for (String string : value) {
 				addChild(ElementFactory.create("value", string, null));
 			}
+		}
 	}
 
 	/**
@@ -56,10 +60,11 @@ public class TextMultiField extends AbstractField<String[]> {
 	 */
 	public void clearValues() throws XMLException {
 		List<Element> lls = getChildren("value");
-		if (lls != null)
+		if (lls != null) {
 			for (Element element : lls) {
 				removeChild(element);
 			}
+		}
 	}
 
 	/**
@@ -69,11 +74,12 @@ public class TextMultiField extends AbstractField<String[]> {
 	public String[] getFieldValue() throws XMLException {
 		ArrayList<String> result = new ArrayList<String>();
 		List<Element> lls = getChildren("value");
-		if (lls != null)
+		if (lls != null) {
 			for (Element element : lls) {
 				result.add(element.getValue());
 			}
-		return result.toArray(new String[] {});
+		}
+		return result.toArray(new String[]{});
 	}
 
 	/**

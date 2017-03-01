@@ -1,10 +1,13 @@
 /*
+ * AbstractBoshConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -43,7 +46,8 @@ import java.util.logging.Logger;
 /**
  * Abstract class for implementing BOSH connector.
  */
-public abstract class AbstractBoshConnector implements Connector {
+public abstract class AbstractBoshConnector
+		implements Connector {
 
 	/**
 	 * Name of property that specify BOSH service URL.<br/>
@@ -98,7 +102,7 @@ public abstract class AbstractBoshConnector implements Connector {
 	}
 
 	protected void fireOnError(int responseCode, String responseData, Element response, Throwable caught,
-			SessionObject sessionObject) throws JaxmppException {
+							   SessionObject sessionObject) throws JaxmppException {
 		// XXX XXX FIXME
 		StreamError condition = StreamError.undefined_condition;
 		if (response != null) {
@@ -112,8 +116,8 @@ public abstract class AbstractBoshConnector implements Connector {
 		context.getEventBus().fire(e);
 	}
 
-	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response, SessionObject sessionObject)
-			throws JaxmppException {
+	protected void fireOnStanzaReceived(int responseCode, String responseData, Element response,
+										SessionObject sessionObject) throws JaxmppException {
 		try {
 			{
 				BoshPacketReceivedHandler.BoshPacketReceivedEvent event = new BoshPacketReceivedHandler.BoshPacketReceivedEvent(
@@ -179,8 +183,9 @@ public abstract class AbstractBoshConnector implements Connector {
 	public void keepalive() throws JaxmppException {
 		if (getState() == State.connected) {
 			processSendData(prepareBody((Element) null));
-		} else
+		} else {
 			throw new JaxmppException("Not connected");
+		}
 	}
 
 	protected Long nextRid() {
@@ -193,13 +198,15 @@ public abstract class AbstractBoshConnector implements Connector {
 		return i;
 	}
 
-	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught)
-			throws JaxmppException {
+	protected void onError(BoshRequest request, int responseCode, String responseData, Element response,
+						   Throwable caught) throws JaxmppException {
 		removeFromRequests(request);
-		if (log.isLoggable(Level.FINER))
+		if (log.isLoggable(Level.FINER)) {
 			log.log(Level.FINER, "responseCode=" + responseCode, caught);
-		if (getState() == State.disconnected)
+		}
+		if (getState() == State.disconnected) {
 			return;
+		}
 		setStage(State.disconnected);
 		terminateAllWorkers();
 		fireOnError(responseCode, responseData, response, caught, context.getSessionObject());
@@ -213,8 +220,9 @@ public abstract class AbstractBoshConnector implements Connector {
 			setStage(State.connected);
 			fireOnConnected(context.getSessionObject());
 		}
-		if (response != null)
+		if (response != null) {
 			fireOnStanzaReceived(responseCode, responseData, response, context.getSessionObject());
+		}
 
 		if (getState() == State.connected && countActiveRequests() == 0) {
 			final Element body = prepareBody((Element) null);
@@ -225,10 +233,12 @@ public abstract class AbstractBoshConnector implements Connector {
 	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response)
 			throws JaxmppException {
 		removeFromRequests(request);
-		if (getState() == State.disconnected)
+		if (getState() == State.disconnected) {
 			return;
-		if (log.isLoggable(Level.FINE))
+		}
+		if (log.isLoggable(Level.FINE)) {
 			log.fine("Stream terminated. responseCode=" + responseCode);
+		}
 		setStage(State.disconnected);
 		terminateAllWorkers();
 		fireOnTerminate(responseCode, responseData, response, context.getSessionObject());
@@ -240,8 +250,9 @@ public abstract class AbstractBoshConnector implements Connector {
 		e.setAttribute("sid", getSid());
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
 
-		if (payload != null)
+		if (payload != null) {
 			e.setValue(new String(payload));
+		}
 		return e;
 	}
 
@@ -251,8 +262,9 @@ public abstract class AbstractBoshConnector implements Connector {
 		e.setAttribute("sid", getSid());
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
 
-		if (payload != null)
+		if (payload != null) {
 			e.addChild(payload);
+		}
 
 		return e;
 	}
@@ -304,8 +316,9 @@ public abstract class AbstractBoshConnector implements Connector {
 		e.setAttribute("type", "terminate");
 		e.setAttribute("xmlns", "http://jabber.org/protocol/httpbind");
 
-		if (payload != null)
+		if (payload != null) {
 			e.addChild(payload);
+		}
 
 		return e;
 	}
@@ -331,8 +344,9 @@ public abstract class AbstractBoshConnector implements Connector {
 				final Element body = prepareBody(buffer);
 				processSendData(body);
 			}
-		} else
+		} else {
 			throw new JaxmppException("Not connected");
+		}
 	}
 
 	@Override
@@ -343,8 +357,9 @@ public abstract class AbstractBoshConnector implements Connector {
 				context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
 				processSendData(body);
 			}
-		} else
+		} else {
 			throw new JaxmppException("Not connected");
+		}
 	}
 
 	protected void setStage(State state) throws JaxmppException {
@@ -363,13 +378,16 @@ public abstract class AbstractBoshConnector implements Connector {
 		// == null)
 		// throw new JaxmppException("No user JID specified");
 
-		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null)
-			context.getSessionObject().setProperty(SessionObject.DOMAIN_NAME,
-					((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain());
+		if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) == null) {
+			context.getSessionObject()
+					.setProperty(SessionObject.DOMAIN_NAME, ((BareJID) context.getSessionObject()
+							.getProperty(SessionObject.USER_BARE_JID)).getDomain());
+		}
 
 		String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
-		if (u == null)
+		if (u == null) {
 			throw new JaxmppException("BOSH service URL not defined!");
+		}
 
 		if (getState() == State.connected) {
 			processSendData(prepareBody((Element) null));
@@ -394,13 +412,14 @@ public abstract class AbstractBoshConnector implements Connector {
 	@Override
 	public void stop(boolean terminate) throws JaxmppException {
 		State oldState = getState();
-		if (oldState == State.disconnected)
+		if (oldState == State.disconnected) {
 			return;
+		}
 
 		setStage(State.disconnecting);
-		if (terminate)
+		if (terminate) {
 			terminateAllWorkers();
-		else if (getState() != State.disconnected && oldState != State.disconnecting) {
+		} else if (getState() != State.disconnected && oldState != State.disconnecting) {
 			// if we already are in disconnecting state then we should not send termination
 			// of stream as it was already sent
 			processSendData(prepareTerminateBody(null));
@@ -422,22 +441,24 @@ public abstract class AbstractBoshConnector implements Connector {
 	 * Implemented by handlers of {@linkplain BoshPacketReceivedEvent
 	 * BoshPacketReceivedEvent}.
 	 */
-	public interface BoshPacketReceivedHandler extends EventHandler {
+	public interface BoshPacketReceivedHandler
+			extends EventHandler {
 
 		/**
 		 * Called when {@linkplain BoshPacketReceivedEvent
 		 * BoshPacketReceivedEvent} is fired.
 		 *
 		 * @param sessionObject session object related to connection.
-		 * @param responseCode  HTTP response code.
-		 * @param response      received BOSH packet.
+		 * @param responseCode HTTP response code.
+		 * @param response received BOSH packet.
 		 */
 		void onBoshPacketReceived(SessionObject sessionObject, int responseCode, Element response);
 
 		/**
 		 * Fired BOSH packet is received.
 		 */
-		class BoshPacketReceivedEvent extends JaxmppEvent<BoshPacketReceivedHandler> {
+		class BoshPacketReceivedEvent
+				extends JaxmppEvent<BoshPacketReceivedHandler> {
 
 			private String receivedData;
 
@@ -477,23 +498,23 @@ public abstract class AbstractBoshConnector implements Connector {
 	 * Implemented by handlers of {@linkplain BoshPacketSendingEvent
 	 * BoshPacketSendingEvent}.
 	 */
-	public interface BoshPacketSendingHandler extends EventHandler {
+	public interface BoshPacketSendingHandler
+			extends EventHandler {
 
 		/**
 		 * Called when {@linkplain BoshPacketSendingEvent
 		 * BoshPacketSendingEvent} is fired.
 		 *
-		 * @param sessionObject
-		 *            session object related to connection.
-		 * @param packet
-		 *            sending BOSH packet.
+		 * @param sessionObject session object related to connection.
+		 * @param packet sending BOSH packet.
 		 */
 		void onBoshPacketSending(SessionObject sessionObject, Element packet) throws JaxmppException;
 
 		/**
 		 * Fired when BOSH packet is sending.
 		 */
-		class BoshPacketSendingEvent extends JaxmppEvent<BoshPacketSendingHandler> {
+		class BoshPacketSendingEvent
+				extends JaxmppEvent<BoshPacketSendingHandler> {
 
 			private Element element;
 

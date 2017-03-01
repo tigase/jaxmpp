@@ -1,10 +1,13 @@
 /*
+ * PresenceModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -46,7 +49,9 @@ import java.util.logging.Level;
 /**
  * Module for handling presence information.
  */
-public class PresenceModule extends AbstractStanzaModule<Presence> implements InitializingModule, ContextAware, XmppSessionEstablishedHandler {
+public class PresenceModule
+		extends AbstractStanzaModule<Presence>
+		implements InitializingModule, ContextAware, XmppSessionEstablishedHandler {
 
 	public static final Criteria CRIT = ElementCriteria.name("presence");
 
@@ -55,10 +60,6 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	public static final String INITIAL_PRESENCE_ENABLED_KEY = "PresenceModule#INITIAL_PRESENCE_ENABLED";
 
 	public static final String OWN_PRESENCE_STANZA_FACTORY_KEY = "PresenceModule#OWN_PRESENCE_STANZA_FACTORY";
-
-	public PresenceModule() {
-		super();
-	}
 
 	public static PresenceStore getPresenceStore(SessionObject sessionObject) {
 		return sessionObject.getProperty(PRESENCE_STORE_KEY);
@@ -70,6 +71,10 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 	public static void setPresenceStore(SessionObject sessionObject, PresenceStore presenceStore) {
 		sessionObject.setProperty(Scope.user, PRESENCE_STORE_KEY, presenceStore);
+	}
+
+	public PresenceModule() {
+		super();
 	}
 
 	public void addBeforePresenceSendHandler(BeforePresenceSendHandler handler) {
@@ -106,7 +111,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 		PresenceStore presenceStore = getPresenceStore();
 
-		if (presenceStore == null) throw new RuntimeException("PresenceStore is not created!");
+		if (presenceStore == null) {
+			throw new RuntimeException("PresenceStore is not created!");
+		}
 
 		presenceStore.setHandler(new Handler() {
 
@@ -121,17 +128,17 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 			}
 		});
 		context.getEventBus()
-			   .addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
-						   new AbstractSessionObject.ClearedHandler() {
+				.addHandler(AbstractSessionObject.ClearedHandler.ClearedEvent.class,
+							new AbstractSessionObject.ClearedHandler() {
 
-							   @Override
-							   public void onCleared(SessionObject sessionObject,
-													 Set<Scope> scopes) throws JaxmppException {
-								   if (scopes.contains(Scope.session)) {
-									   getPresenceStore().clear();
-								   }
-							   }
-						   });
+								@Override
+								public void onCleared(SessionObject sessionObject, Set<Scope> scopes)
+										throws JaxmppException {
+									if (scopes.contains(Scope.session)) {
+										getPresenceStore().clear();
+									}
+								}
+							});
 		context.getEventBus().addHandler(XmppSessionEstablishedHandler.XmppSessionEstablishedEvent.class, this);
 	}
 
@@ -175,7 +182,9 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	public void process(final Presence presence) throws JaxmppException {
 		final JID fromJid = presence.getFrom();
 		log.finest("Presence received from " + fromJid + " :: " + presence.getAsString());
-		if (fromJid == null) return;
+		if (fromJid == null) {
+			return;
+		}
 
 		boolean availableOld = getPresenceStore().isAvailable(fromJid.getBareJid());
 		getPresenceStore().update(presence);
@@ -184,8 +193,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 		final StanzaType type = presence.getType();
 
 		if (type == StanzaType.unsubscribed) {
-			fireEvent(new ContactUnsubscribedEvent(context.getSessionObject(),
-												   presence,
+			fireEvent(new ContactUnsubscribedEvent(context.getSessionObject(), presence,
 												   presence.getFrom().getBareJid()));
 		} else if (type == StanzaType.subscribe) {
 			// subscribe
@@ -194,38 +202,23 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 		} else if (!availableOld && availableNow) {
 			// sontact available
 			log.finer("Presence online from " + fromJid);
-			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(),
-													  presence,
-													  presence.getFrom(),
-													  presence.getShow(),
-													  presence.getStatus(),
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+													  presence.getShow(), presence.getStatus(),
 													  presence.getPriority()));
-			fireEvent(new ContactAvailableEvent(context.getSessionObject(),
-												presence,
-												presence.getFrom(),
-												presence.getShow(),
-												presence.getStatus(),
-												presence.getPriority()));
+			fireEvent(new ContactAvailableEvent(context.getSessionObject(), presence, presence.getFrom(),
+												presence.getShow(), presence.getStatus(), presence.getPriority()));
 		} else if (availableOld && !availableNow) {
 			// contact unavailable
 			log.finer("Presence offline from " + fromJid);
-			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(),
-													  presence,
-													  presence.getFrom(),
-													  presence.getShow(),
-													  presence.getStatus(),
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+													  presence.getShow(), presence.getStatus(),
 													  presence.getPriority()));
-			fireEvent(new ContactUnavailableEvent(context.getSessionObject(),
-												  presence,
-												  presence.getFrom(),
+			fireEvent(new ContactUnavailableEvent(context.getSessionObject(), presence, presence.getFrom(),
 												  presence.getStatus()));
 		} else {
 			log.finer("Presence change from " + fromJid);
-			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(),
-													  presence,
-													  presence.getFrom(),
-													  presence.getShow(),
-													  presence.getStatus(),
+			fireEvent(new ContactChangedPresenceEvent(context.getSessionObject(), presence, presence.getFrom(),
+													  presence.getShow(), presence.getStatus(),
 													  presence.getPriority()));
 		}
 	}
@@ -275,52 +268,11 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 											  }));
 	}
 
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-	}
-
-	public void setInitialPresence(boolean enabled) {
-		context.getSessionObject().setProperty(INITIAL_PRESENCE_ENABLED_KEY, enabled);
-	}
-
 	/**
 	 * Sends own presence.
 	 *
-	 * @param show     presence substate.
-	 * @param status   human readable description of status.
-	 * @param priority priority.
-	 */
-	public void setPresence(Show show, String status, Integer priority) throws JaxmppException {
-		OwnPresenceStanzaFactory factory = context.getSessionObject().getProperty(OWN_PRESENCE_STANZA_FACTORY_KEY);
-		Presence presence = factory == null ? Presence.create() : factory.create(context.getSessionObject());
-
-		presence.setShow(show);
-		presence.setStatus(status);
-		presence.setPriority(priority);
-		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
-			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
-		}
-
-		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence,
-											  new JaxmppEventWithCallback.RunAfter<BeforePresenceSendEvent>() {
-												  @Override
-												  public void after(BeforePresenceSendEvent event) {
-			try {
-				write(event.presence);
-			} catch (JaxmppException ex) {
-				log.log(Level.WARNING, "Could not write stanza", ex);
-			}
-												  }
-											  }));
-
-	}
-
-	/**
-	 * Sends own presence.
-	 *
-	 * @param show     presence substate.
-	 * @param status   human readable description of status.
+	 * @param show presence substate.
+	 * @param status human readable description of status.
 	 * @param priority priority.
 	 */
 	public void sentDirectPresence(JID jid, Show show, String status, Integer priority) throws JaxmppException {
@@ -343,6 +295,47 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 		}
 
 		write(presence);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
+	public void setInitialPresence(boolean enabled) {
+		context.getSessionObject().setProperty(INITIAL_PRESENCE_ENABLED_KEY, enabled);
+	}
+
+	/**
+	 * Sends own presence.
+	 *
+	 * @param show presence substate.
+	 * @param status human readable description of status.
+	 * @param priority priority.
+	 */
+	public void setPresence(Show show, String status, Integer priority) throws JaxmppException {
+		OwnPresenceStanzaFactory factory = context.getSessionObject().getProperty(OWN_PRESENCE_STANZA_FACTORY_KEY);
+		Presence presence = factory == null ? Presence.create() : factory.create(context.getSessionObject());
+
+		presence.setShow(show);
+		presence.setStatus(status);
+		presence.setPriority(priority);
+		if (context.getSessionObject().getProperty(SessionObject.NICKNAME) != null) {
+			presence.setNickname((String) context.getSessionObject().getProperty(SessionObject.NICKNAME));
+		}
+
+		fireEvent(new BeforePresenceSendEvent(context.getSessionObject(), presence,
+											  new JaxmppEventWithCallback.RunAfter<BeforePresenceSendEvent>() {
+												  @Override
+												  public void after(BeforePresenceSendEvent event) {
+													  try {
+														  write(event.presence);
+													  } catch (JaxmppException ex) {
+														  log.log(Level.WARNING, "Could not write stanza", ex);
+													  }
+												  }
+											  }));
+
 	}
 
 	/**
@@ -385,15 +378,18 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	/**
 	 * Event fired before each presence sent by client.
 	 */
-	public interface BeforePresenceSendHandler extends EventHandler {
+	public interface BeforePresenceSendHandler
+			extends EventHandler {
 
 		void onBeforePresenceSend(SessionObject sessionObject, Presence presence) throws JaxmppException;
 
-		class BeforePresenceSendEvent extends JaxmppEventWithCallback<BeforePresenceSendHandler> {
+		class BeforePresenceSendEvent
+				extends JaxmppEventWithCallback<BeforePresenceSendHandler> {
 
 			protected Presence presence;
 
-			public BeforePresenceSendEvent(SessionObject sessionObject, Presence presence, RunAfter<BeforePresenceSendEvent> runAfter) {
+			public BeforePresenceSendEvent(SessionObject sessionObject, Presence presence,
+										   RunAfter<BeforePresenceSendEvent> runAfter) {
 				super(sessionObject, runAfter);
 				this.presence = presence;
 			}
@@ -418,12 +414,14 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	 * Event fired when contact (understood as bare JID) becomes available. Fired when first resource of JID becomes
 	 * available.
 	 */
-	public interface ContactAvailableHandler extends EventHandler {
+	public interface ContactAvailableHandler
+			extends EventHandler {
 
 		void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
 								Integer priority) throws JaxmppException;
 
-		class ContactAvailableEvent extends JaxmppEvent<ContactAvailableHandler> {
+		class ContactAvailableEvent
+				extends JaxmppEvent<ContactAvailableHandler> {
 
 			private JID jid;
 
@@ -435,12 +433,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 			private String status;
 
-			public ContactAvailableEvent(SessionObject sessionObject,
-										 Presence presence,
-										 JID jid,
-										 Show show,
-										 String statusMessage,
-										 Integer priority) {
+			public ContactAvailableEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
+										 String statusMessage, Integer priority) {
 				super(sessionObject);
 				this.stanza = presence;
 				this.jid = jid;
@@ -497,16 +491,17 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 		}
 	}
 
-
 	/**
 	 * Event fired when contact changed his presence.
 	 */
-	public interface ContactChangedPresenceHandler extends EventHandler {
+	public interface ContactChangedPresenceHandler
+			extends EventHandler {
 
 		void onContactChangedPresence(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
 									  Integer priority) throws JaxmppException;
 
-		class ContactChangedPresenceEvent extends JaxmppEvent<ContactChangedPresenceHandler> {
+		class ContactChangedPresenceEvent
+				extends JaxmppEvent<ContactChangedPresenceHandler> {
 
 			private JID jid;
 
@@ -518,12 +513,8 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 			private String status;
 
-			public ContactChangedPresenceEvent(SessionObject sessionObject,
-											   Presence presence,
-											   JID jid,
-											   Show show,
-											   String statusMessage,
-											   Integer priority) {
+			public ContactChangedPresenceEvent(SessionObject sessionObject, Presence presence, JID jid, Show show,
+											   String statusMessage, Integer priority) {
 				super(sessionObject);
 				this.stanza = presence;
 				this.jid = jid;
@@ -583,11 +574,13 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	/**
 	 * Event fired when contact (understood as bare JID) goes offline. Fired when no more resources are available.
 	 */
-	public interface ContactUnavailableHandler extends EventHandler {
+	public interface ContactUnavailableHandler
+			extends EventHandler {
 
 		void onContactUnavailable(SessionObject sessionObject, Presence stanza, JID jid, String status);
 
-		class ContactUnavailableEvent extends JaxmppEvent<ContactUnavailableHandler> {
+		class ContactUnavailableEvent
+				extends JaxmppEvent<ContactUnavailableHandler> {
 
 			private JID jid;
 
@@ -595,9 +588,7 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 
 			private String status;
 
-			public ContactUnavailableEvent(SessionObject sessionObject,
-										   Presence presence,
-										   JID jid,
+			public ContactUnavailableEvent(SessionObject sessionObject, Presence presence, JID jid,
 										   String statusMessage) {
 				super(sessionObject);
 				this.stanza = presence;
@@ -640,11 +631,13 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	/**
 	 * Event fired when contact is unsubscribed.
 	 */
-	public interface ContactUnsubscribedHandler extends EventHandler {
+	public interface ContactUnsubscribedHandler
+			extends EventHandler {
 
 		void onContactUnsubscribed(SessionObject sessionObject, Presence stanza, BareJID jid);
 
-		class ContactUnsubscribedEvent extends JaxmppEvent<ContactUnsubscribedHandler> {
+		class ContactUnsubscribedEvent
+				extends JaxmppEvent<ContactUnsubscribedHandler> {
 
 			private BareJID jid;
 
@@ -688,11 +681,13 @@ public class PresenceModule extends AbstractStanzaModule<Presence> implements In
 	/**
 	 * Event fired when subscription request is received.
 	 */
-	public interface SubscribeRequestHandler extends EventHandler {
+	public interface SubscribeRequestHandler
+			extends EventHandler {
 
 		void onSubscribeRequest(SessionObject sessionObject, Presence stanza, BareJID jid);
 
-		class SubscribeRequestEvent extends JaxmppEvent<SubscribeRequestHandler> {
+		class SubscribeRequestEvent
+				extends JaxmppEvent<SubscribeRequestHandler> {
 
 			private BareJID jid;
 

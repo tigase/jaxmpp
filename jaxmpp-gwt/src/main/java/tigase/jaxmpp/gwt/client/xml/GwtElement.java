@@ -1,10 +1,13 @@
 /*
+ * GwtElement.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,28 +20,28 @@
  */
 package tigase.jaxmpp.gwt.client.xml;
 
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
+import com.google.gwt.xml.client.XMLParser;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.ElementComparator;
+import tigase.jaxmpp.core.client.xml.XMLException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.gwt.xml.client.Node;
-import com.google.gwt.xml.client.NodeList;
-import com.google.gwt.xml.client.XMLParser;
+public class GwtElement
+		implements Element {
 
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.ElementComparator;
-import tigase.jaxmpp.core.client.xml.XMLException;
-
-public class GwtElement implements Element {
+	private final com.google.gwt.xml.client.Element xmlElement;
 
 	public static GwtElement parse(String data) {
 		com.google.gwt.xml.client.Element e = XMLParser.parse(data).getDocumentElement();
 		return new GwtElement(e);
 	}
-
-	private final com.google.gwt.xml.client.Element xmlElement;
 
 	public GwtElement(com.google.gwt.xml.client.Element xmlElement) {
 		this.xmlElement = xmlElement;
@@ -56,10 +59,11 @@ public class GwtElement implements Element {
 	public boolean equals(Object obj) {
 		if (obj instanceof com.google.gwt.xml.client.Element) {
 			return this.xmlElement.equals(obj);
-		} else if (obj instanceof Element)
+		} else if (obj instanceof Element) {
 			return ElementComparator.equal((Element) obj, this);
-		else
+		} else {
 			return false;
+		}
 	}
 
 	@Override
@@ -105,6 +109,13 @@ public class GwtElement implements Element {
 			result.put(a.getNodeName(), a.getNodeValue());
 		}
 		return result;
+	}
+
+	@Override
+	public void setAttributes(Map<String, String> attrs) throws XMLException {
+		for (Entry<String, String> a : attrs.entrySet()) {
+			setAttribute(a.getKey(), a.getValue());
+		}
 	}
 
 	@Override
@@ -227,6 +238,11 @@ public class GwtElement implements Element {
 	}
 
 	@Override
+	public void setParent(Element parent) throws XMLException {
+		// throw new XMLException("Unsupported in GwtElement");
+	}
+
+	@Override
 	public String getValue() throws XMLException {
 		Node x = xmlElement.getFirstChild();
 		if (x != null) {
@@ -236,8 +252,25 @@ public class GwtElement implements Element {
 	}
 
 	@Override
+	public void setValue(String value) throws XMLException {
+		final NodeList nodes = xmlElement.getChildNodes();
+		for (int index = 0; index < nodes.getLength(); index++) {
+			final Node child = nodes.item(index);
+			if (child.getNodeType() == Node.TEXT_NODE) {
+				xmlElement.removeChild(child);
+			}
+		}
+		xmlElement.appendChild(xmlElement.getOwnerDocument().createTextNode(value));
+	}
+
+	@Override
 	public String getXMLNS() throws XMLException {
 		return this.xmlElement.getAttribute("xmlns");
+	}
+
+	@Override
+	public void setXMLNS(String xmlns) throws XMLException {
+		this.xmlElement.setAttribute("xmlns", xmlns);
 	}
 
 	@Override
@@ -249,11 +282,13 @@ public class GwtElement implements Element {
 		for (int i = 0; i < this.xmlElement.getChildNodes().getLength(); i++) {
 			Node cc = this.xmlElement.getChildNodes().item(i);
 			if (child instanceof GwtElement) {
-				if (((GwtElement) child).xmlElement.equals(cc))
+				if (((GwtElement) child).xmlElement.equals(cc)) {
 					return i;
-			} else if (cc instanceof com.google.gwt.xml.client.Element
-					&& ElementComparator.equal(new GwtElement((com.google.gwt.xml.client.Element) cc), child))
+				}
+			} else if (cc instanceof com.google.gwt.xml.client.Element &&
+					ElementComparator.equal(new GwtElement((com.google.gwt.xml.client.Element) cc), child)) {
 				return i;
+			}
 		}
 		return -1;
 	}
@@ -271,34 +306,5 @@ public class GwtElement implements Element {
 	@Override
 	public void setAttribute(String key, String value) throws XMLException {
 		this.xmlElement.setAttribute(key, value);
-	}
-
-	@Override
-	public void setAttributes(Map<String, String> attrs) throws XMLException {
-		for (Entry<String, String> a : attrs.entrySet()) {
-			setAttribute(a.getKey(), a.getValue());
-		}
-	}
-
-	@Override
-	public void setParent(Element parent) throws XMLException {
-		// throw new XMLException("Unsupported in GwtElement");
-	}
-
-	@Override
-	public void setValue(String value) throws XMLException {
-		final NodeList nodes = xmlElement.getChildNodes();
-		for (int index = 0; index < nodes.getLength(); index++) {
-			final Node child = nodes.item(index);
-			if (child.getNodeType() == Node.TEXT_NODE) {
-				xmlElement.removeChild(child);
-			}
-		}
-		xmlElement.appendChild(xmlElement.getOwnerDocument().createTextNode(value));
-	}
-
-	@Override
-	public void setXMLNS(String xmlns) throws XMLException {
-		this.xmlElement.setAttribute("xmlns", xmlns);
 	}
 }

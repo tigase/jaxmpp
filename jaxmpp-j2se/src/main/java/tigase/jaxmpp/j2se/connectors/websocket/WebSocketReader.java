@@ -1,10 +1,13 @@
 /*
+ * WebSocketReader.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -31,44 +34,49 @@ import java.util.logging.Logger;
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
 /**
- *
  * @author andrzej
  */
-public class WebSocketReader implements Reader {
+public class WebSocketReader
+		implements Reader {
 
 	private static final Logger log = Logger.getLogger(WebSocketReader.class.getCanonicalName());
-	
+
+	public enum FrameType {
+		Text,
+		Ping,
+		Pong
+	}
+
 	private final ByteBuffer buf = ByteBuffer.allocate(DEFAULT_SOCKET_BUFFER_SIZE);
-
 	private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-
 	private final InputStream inputStream;
-	
-	private long remaining = 0;
 	private FrameType frameType = FrameType.Pong;
+	private long remaining = 0;
 
 	public WebSocketReader(InputStream inputStream) {
 		this.inputStream = inputStream;
 	}
-	
+
 	@Override
 	public int read(char[] cbuf) throws IOException {
 		byte[] arr = buf.array();
 		boolean closed = false;
 		int startBufPos = buf.position();
 		int read = inputStream.read(arr, startBufPos, buf.remaining());
-		if (read == 0)
+		if (read == 0) {
 			return 0;
+		}
 		if (read == -1) {
 			closed = true;
-			if (!buf.hasRemaining())
-				return -1;		
-			else
+			if (!buf.hasRemaining()) {
+				return -1;
+			} else {
 				read = 0;
+			}
 		}
 		buf.position(startBufPos + read);
 		buf.flip();
-		
+
 		CharBuffer cb = CharBuffer.wrap(cbuf);
 		//while (buf.hasRemaining()) {
 		while (buf.hasRemaining() && cb.hasRemaining()) {
@@ -87,8 +95,7 @@ public class WebSocketReader implements Reader {
 									buf.position(position);
 									break;
 								}
-							}
-							else {
+							} else {
 								if (len > 0) {
 									log.log(Level.FINE, "received WebSocket close with status = " + buf.getShort());
 								}
@@ -107,20 +114,23 @@ public class WebSocketReader implements Reader {
 				if (buf.hasRemaining()) {
 					long len = buf.get() & 0x7f;
 					if (len == 126) {
-						if (buf.remaining() >= 2)
+						if (buf.remaining() >= 2) {
 							remaining = buf.getShort() & 0xffff;
-						else 
+						} else {
 							reset = true;
+						}
 					} else if (len == 127) {
-						if (buf.remaining() >= 8)
+						if (buf.remaining() >= 8) {
 							remaining = buf.getLong();
-						else
+						} else {
 							reset = true;
+						}
 					} else {
 						remaining = len;
 					}
-				} else 
+				} else {
 					reset = true;
+				}
 				if (reset) {
 					buf.position(position);
 					break;
@@ -138,26 +148,24 @@ public class WebSocketReader implements Reader {
 				}
 				buf.limit(limit);
 				remaining -= (rem - buf.remaining());
-				if (remaining < 0) remaining = 0;
+				if (remaining < 0) {
+					remaining = 0;
+				}
 			}
 		}
 		buf.compact();
-		cb.flip();	
+		cb.flip();
 		if (log.isLoggable(Level.FINEST) && cb.hasRemaining()) {
 			char[] tmp = new char[cb.remaining()];
-			for (int i=0; i<tmp.length; i++) {
+			for (int i = 0; i < tmp.length; i++) {
 				tmp[i] = cb.get(cb.position() + i);
 			}
-			log.log(Level.FINEST, "read data = " + new String(tmp) + ", still remaining = " + remaining + " and in buffer " + buf.remaining());
+			log.log(Level.FINEST,
+					"read data = " + new String(tmp) + ", still remaining = " + remaining + " and in buffer " +
+							buf.remaining());
 		}
-		
-		return cb.remaining();
-	}
 
-	public enum FrameType {
-		Text,
-		Ping,
-		Pong
+		return cb.remaining();
 	}
 
 }

@@ -1,10 +1,13 @@
 /*
+ * J2seElement.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,12 +25,11 @@ import tigase.jaxmpp.core.client.xml.ElementComparator;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
-public class J2seElement implements Element {
+public class J2seElement
+		implements Element {
 
 	private final tigase.xml.Element xmlElement;
 	private J2seElement parent;
@@ -90,10 +92,11 @@ public class J2seElement implements Element {
 	public List<Element> getChildren() throws XMLException {
 		ArrayList<Element> result = new ArrayList<Element>();
 		List<tigase.xml.Element> x = this.xmlElement.getChildren();
-		if (x != null)
+		if (x != null) {
 			for (tigase.xml.Element e : x) {
 				result.add(new J2seElement(e, this));
 			}
+		}
 		return result;
 	}
 
@@ -101,11 +104,13 @@ public class J2seElement implements Element {
 	public List<Element> getChildren(String name) throws XMLException {
 		ArrayList<Element> result = new ArrayList<Element>();
 		List<tigase.xml.Element> x = this.xmlElement.getChildren();
-		if (x != null)
+		if (x != null) {
 			for (tigase.xml.Element e : x) {
-				if (e != null && name.equals(e.getName()))
+				if (e != null && name.equals(e.getName())) {
 					result.add(new J2seElement(e, this));
+				}
 			}
+		}
 		return result;
 	}
 
@@ -113,28 +118,32 @@ public class J2seElement implements Element {
 	public List<Element> getChildrenNS(String xmlns) throws XMLException {
 		ArrayList<Element> result = new ArrayList<Element>();
 		List<tigase.xml.Element> children = this.xmlElement.getChildren();
-		if (children != null)
+		if (children != null) {
 			for (tigase.xml.Element e : children) {
 				String x = e.getXMLNS();
-				if (x != null && x.equals(xmlns))
+				if (x != null && x.equals(xmlns)) {
 					result.add(new J2seElement(e, this));
+				}
 			}
+		}
 		return result;
 	}
 
 	@Override
 	public Element getChildrenNS(String name, String xmlns) throws XMLException {
 		tigase.xml.Element e = this.xmlElement.getChild(name, xmlns);
-		if (e != null)
+		if (e != null) {
 			return new J2seElement(e, this);
+		}
 		return null;
 	}
 
 	@Override
 	public Element getFirstChild() throws XMLException {
 		List<tigase.xml.Element> children = this.xmlElement.getChildren();
-		if (children != null && children.size() > 0)
+		if (children != null && children.size() > 0) {
 			return new J2seElement(children.get(0), this);
+		}
 		return null;
 	}
 
@@ -151,14 +160,17 @@ public class J2seElement implements Element {
 
 	@Override
 	public Element getNextSibling() throws XMLException {
-		if (this.parent == null)
+		if (this.parent == null) {
 			return null;
+		}
 		return this.parent.getChildAfter(this);
 	}
 
 	@Override
 	public Element getParent() throws XMLException {
-		return this.parent == null ? null : new J2seElement(this.parent.xmlElement, (J2seElement) this.parent.getParent());
+		return this.parent == null
+			   ? null
+			   : new J2seElement(this.parent.xmlElement, (J2seElement) this.parent.getParent());
 	}
 
 	@Override
@@ -188,15 +200,19 @@ public class J2seElement implements Element {
 
 	private int indexOf(final Element child) {
 		List<tigase.xml.Element> children = this.xmlElement.getChildren();
-		if (children != null)
+		if (children != null) {
 			for (int i = 0; i < children.size(); i++) {
 				tigase.xml.Element cc = children.get(i);
 				if (child instanceof J2seElement) {
-					if (((J2seElement) child).xmlElement.equals(cc))
+					if (((J2seElement) child).xmlElement.equals(cc)) {
 						return i;
-				} else if (cc instanceof tigase.xml.Element && ElementComparator.equal(new J2seElement(cc, null), child))
+					}
+				} else if (cc instanceof tigase.xml.Element &&
+						ElementComparator.equal(new J2seElement(cc, null), child)) {
 					return i;
+				}
 			}
+		}
 		return -1;
 	}
 
