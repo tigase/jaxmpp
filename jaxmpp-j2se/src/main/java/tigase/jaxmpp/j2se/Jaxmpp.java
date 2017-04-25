@@ -89,26 +89,26 @@ public class Jaxmpp
 				}
 			}
 		};
-		if (jaxmpp.getConnector().getState() != Connector.State.disconnected) {
-			try {
-				jaxmpp.getEventBus().addListener(eventListener);
+		try {
+			jaxmpp.getEventBus().addListener(eventListener);
 
+			if (jaxmpp.getConnector().getState() != Connector.State.disconnected) {
 				synchronized (jaxmpp) {
 					jaxmpp.wait(timeout);
 				}
 				Thread.sleep(50);
-				final SessionObject sessionObject = jaxmpp.getSessionObject();
-				if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
-					JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
-					sessionObject.setProperty(EXCEPTION_KEY, null);
-					JaxmppException e = new JaxmppException(r);
-					throw e;
-				}
-			} catch (InterruptedException e) {
-				throw new JaxmppException(e);
-			} finally {
-				jaxmpp.getEventBus().remove(eventListener);
 			}
+			final SessionObject sessionObject = jaxmpp.getSessionObject();
+			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
+				sessionObject.setProperty(EXCEPTION_KEY, null);
+				JaxmppException e = new JaxmppException(r);
+				throw e;
+			}
+		} catch (InterruptedException e) {
+			throw new JaxmppException(e);
+		} finally {
+			jaxmpp.getEventBus().remove(eventListener);
 		}
 	}
 

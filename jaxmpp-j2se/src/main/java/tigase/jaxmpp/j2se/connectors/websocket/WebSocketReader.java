@@ -143,8 +143,14 @@ public class WebSocketReader
 				int limit = buf.limit();
 				int rem = buf.remaining();
 				buf.limit((int) (buf.position() + waiting));
-				if (this.frameType == FrameType.Text) {
-					decoder.decode(buf, cb, false);
+				switch (this.frameType) {
+					case Text:
+						decoder.decode(buf, cb, false);
+						break;
+					case Pong:
+						buf.position((int) (buf.position() + remaining));
+					default:
+						break;
 				}
 				buf.limit(limit);
 				remaining -= (rem - buf.remaining());

@@ -95,6 +95,7 @@ public class WebSocketConnector
 			try {
 				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
 				socket.close();
+				worker.interrupt();
 			} catch (IOException ex) {
 				log.log(Level.FINEST, "Problem with closing socket", ex);
 			}
