@@ -38,6 +38,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.logging.Level;
+
 public class InBandRegistrationModule
 		extends AbstractIQModule {
 
@@ -100,6 +102,23 @@ public class InBandRegistrationModule
 		throw new XMPPException(ErrorCondition.not_allowed);
 	}
 
+	public void register(final UnifiedRegistrationForm form, AsyncCallback asyncCallback) throws JaxmppException {
+		IQ iq = IQ.create();
+		iq.setType(StanzaType.set);
+
+		JID userJID = context.getSessionObject().getProperty(BINDED_RESOURCE_JID);
+		if (userJID != null) {
+			iq.setTo(JID.jidInstance(userJID.getDomain()));
+		} else {
+			iq.setTo(JID.jidInstance((String) context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME)));
+		}
+
+		Element q = form.getRegistrationQuery();
+		iq.addChild(q);
+
+		write(iq, asyncCallback);
+	}
+
 	public void register(String username, String password, String email, AsyncCallback asyncCallback)
 			throws JaxmppException {
 		IQ iq = IQ.create();
@@ -125,7 +144,6 @@ public class InBandRegistrationModule
 		}
 
 		write(iq, asyncCallback);
-
 	}
 
 	public void removeAccount(AsyncCallback asyncCallback) throws JaxmppException {
@@ -185,7 +203,14 @@ public class InBandRegistrationModule
 
 				@Override
 				public void onSuccess(Stanza responseStanza) throws JaxmppException {
-					fireEvent(new ReceivedRequestedFieldsEvent(context.getSessionObject(), (IQ) responseStanza));
+					UnifiedRegistrationForm form;
+					try {
+						form = new UnifiedRegistrationForm((IQ) responseStanza);
+					} catch (Exception e) {
+						log.log(Level.WARNING, "Cannot create unified registration form", e);
+						form = null;
+					}
+					fireEvent(new ReceivedRequestedFieldsEvent(context.getSessionObject(), (IQ) responseStanza, form));
 				}
 
 				@Override
@@ -262,21 +287,25 @@ public class InBandRegistrationModule
 	public interface ReceivedRequestedFieldsHandler
 			extends EventHandler {
 
-		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza);
+		void onReceivedRequestedFields(SessionObject sessionObject, IQ responseStanza,
+									   UnifiedRegistrationForm unifiedRegistrationForm);
 
 		class ReceivedRequestedFieldsEvent
 				extends JaxmppEvent<ReceivedRequestedFieldsHandler> {
 
 			private IQ responseStanza;
+			private UnifiedRegistrationForm unifiedRegistrationForm;
 
-			public ReceivedRequestedFieldsEvent(SessionObject sessionObject, IQ responseStanza) {
+			public ReceivedRequestedFieldsEvent(SessionObject sessionObject, IQ responseStanza,
+												UnifiedRegistrationForm unifiedRegistrationForm) {
 				super(sessionObject);
 				this.responseStanza = responseStanza;
+				this.unifiedRegistrationForm = unifiedRegistrationForm;
 			}
 
 			@Override
 			public void dispatch(ReceivedRequestedFieldsHandler handler) {
-				handler.onReceivedRequestedFields(sessionObject, responseStanza);
+				handler.onReceivedRequestedFields(sessionObject, responseStanza, unifiedRegistrationForm);
 			}
 
 			public IQ getResponseStanza() {
@@ -285,6 +314,10 @@ public class InBandRegistrationModule
 
 			public void setResponseStanza(IQ responseStanza) {
 				this.responseStanza = responseStanza;
+			}
+
+			public UnifiedRegistrationForm getUnifiedRegistrationForm() {
+				return unifiedRegistrationForm;
 			}
 
 		}

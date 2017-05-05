@@ -22,10 +22,12 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 
 import org.junit.Test;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.ElementBuilder;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JabberDataElementTest {
 
@@ -182,6 +184,19 @@ public class JabberDataElementTest {
 		TextSingleField field = x.addTextSingleField("public", "once");
 		assertEquals("text-single", field.getAttribute("type"));
 		assertEquals("text-single", field.getType());
+	}
+
+	@Test
+	public void testReplacingField() throws JaxmppException {
+		JabberDataElement x = new JabberDataElement(XDataType.form);
+		x.addTextSingleField("public", "1");
+		x.addTextSingleField("public", "2");
+		x.addTextPrivateField("public", "3");
+
+		System.out.println(x.createSubmitableElement(XDataType.submit).getAsString());
+
+		assertTrue(x.getField("public") instanceof TextPrivateField);
+		assertEquals("3", ((TextPrivateField) x.getField("public")).getFieldValue());
 	}
 
 }

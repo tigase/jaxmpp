@@ -135,6 +135,12 @@ public class JabberDataElement
 	protected void addField(final AbstractField<?> f) throws XMLException {
 		String var = f.getVar();
 		if (var != null) {
+			AbstractField<?> old = this.fieldsMap.get(var);
+			if (old != null) {
+				this.fields.remove(old);
+				this.fieldsMap.remove(var);
+				removeChild(old);
+			}
 			this.fieldsMap.put(var, f);
 		}
 		this.fields.add(f);
