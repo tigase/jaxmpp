@@ -301,6 +301,23 @@ public class GwtElement
 	@Override
 	public void removeChild(Element child) throws XMLException {
 		// throw new XMLException("Unsupported in GwtElement");
+		Node node = null;
+		for (int i = 0; i < this.xmlElement.getChildNodes().getLength(); i++) {
+			Node cc = this.xmlElement.getChildNodes().item(i);
+			if (child instanceof GwtElement) {
+				if (((GwtElement) child).xmlElement.equals(cc)) {
+					node = cc;
+					break;
+				}
+			} else if (cc instanceof com.google.gwt.xml.client.Element &&
+					ElementComparator.equal(new GwtElement((com.google.gwt.xml.client.Element) cc), child)) {
+				node = cc;
+				break;
+			}
+		}
+		if (node != null) {
+			this.xmlElement.removeChild(node);
+		}
 	}
 
 	@Override
