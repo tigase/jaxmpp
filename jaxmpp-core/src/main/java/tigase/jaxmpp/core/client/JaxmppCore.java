@@ -80,45 +80,8 @@ public abstract class JaxmppCore {
 	protected XmppSessionLogic sessionLogic;
 	protected SessionObject sessionObject;
 	protected XmppStreamsManager streamsManager;
-	protected PacketWriter writer = new PacketWriter() {
-
-		@Override
-		public void write(final Element stanza) throws JaxmppException {
-			if (connector.getState() != Connector.State.connected) {
-				throw new JaxmppException("Not connected!");
-			}
-			try {
-				if (stanza != null && log.isLoggable(Level.FINEST)) {
-					log.finest("SENT: " + stanza.getAsString());
-				}
-
-				final Boolean autoId = sessionObject.getProperty(AUTOADD_STANZA_ID_KEY);
-				if (autoId != null && autoId.booleanValue() && !stanza.getAttributes().containsKey("id")) {
-					stanza.setAttribute("id", UIDGenerator.next());
-				}
-
-				context.getStreamsManager().writeToStream(stanza);
-
-			} catch (XMLException e) {
-				throw new JaxmppException(e);
-			}
-		}
-
-		@Override
-		public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
-			ResponseManager.registerResponseHandler(sessionObject, stanza, null, asyncCallback);
-			writer.write(stanza);
-		}
-
-		@Override
-		public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-			ResponseManager.registerResponseHandler(sessionObject, stanza, timeout, asyncCallback);
-			writer.write(stanza);
-		}
-
-	};
+	protected PacketWriter writer = new DefaultPacketWriter();
 	private StreamManagementModule ackModule;
-
 	public JaxmppCore() {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}
@@ -127,15 +90,15 @@ public abstract class JaxmppCore {
 		return new DefaultEventBus();
 	}
 
-	// public Chat createChat(JID jid) throws JaxmppException {
-	// return
-	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
-	// }
-
 	/**
 	 * Closes XMPP session.
 	 */
 	public abstract void disconnect() throws JaxmppException;
+
+	// public Chat createChat(JID jid) throws JaxmppException {
+	// return
+	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	// }
 
 	/**
 	 * Executes task in executor. Used to handle received stanzas.
@@ -214,15 +177,6 @@ public abstract class JaxmppCore {
 		return sessionObject;
 	}
 
-	// /**
-	// * Returns {@link PresenceStore}.
-	// *
-	// * @return {@link PresenceStore}.
-	// */
-	// public PresenceStore getPresence() {
-	// return PresenceModule.getPresenceStore(sessionObject);
-	// }
-
 	/**
 	 * Returns {@link SessionObject}.
 	 *
@@ -233,12 +187,12 @@ public abstract class JaxmppCore {
 	}
 
 	// /**
-	// * Returns {@link RosterStore}.
+	// * Returns {@link PresenceStore}.
 	// *
-	// * @return {@link RosterStore}.
+	// * @return {@link PresenceStore}.
 	// */
-	// public RosterStore getRoster() {
-	// return RosterModule.getRosterStore(sessionObject);
+	// public PresenceStore getPresence() {
+	// return PresenceModule.getPresenceStore(sessionObject);
 	// }
 
 	protected void init() {
@@ -363,6 +317,15 @@ public abstract class JaxmppCore {
 		});
 
 	}
+
+	// /**
+	// * Returns {@link RosterStore}.
+	// *
+	// * @return {@link RosterStore}.
+	// */
+	// public RosterStore getRoster() {
+	// return RosterModule.getRosterStore(sessionObject);
+	// }
 
 	/**
 	 * Returns connection state.
@@ -571,6 +534,44 @@ public abstract class JaxmppCore {
 				handler.onLoggedOut(sessionObject);
 			}
 
+		}
+	}
+
+	protected class DefaultPacketWriter
+			implements PacketWriter {
+
+		@Override
+		public void write(final Element stanza) throws JaxmppException {
+			if (connector.getState() != Connector.State.connected) {
+				throw new JaxmppException("Not connected!");
+			}
+			try {
+				if (stanza != null && log.isLoggable(Level.FINEST)) {
+					log.finest("SENT: " + stanza.getAsString());
+				}
+
+				final Boolean autoId = sessionObject.getProperty(AUTOADD_STANZA_ID_KEY);
+				if (autoId != null && autoId.booleanValue() && !stanza.getAttributes().containsKey("id")) {
+					stanza.setAttribute("id", UIDGenerator.next());
+				}
+
+				context.getStreamsManager().writeToStream(stanza);
+
+			} catch (XMLException e) {
+				throw new JaxmppException(e);
+			}
+		}
+
+		@Override
+		public void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+			ResponseManager.registerResponseHandler(sessionObject, stanza, null, asyncCallback);
+			write(stanza);
+		}
+
+		@Override
+		public void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+			ResponseManager.registerResponseHandler(sessionObject, stanza, timeout, asyncCallback);
+			write(stanza);
 		}
 	}
 	// /**

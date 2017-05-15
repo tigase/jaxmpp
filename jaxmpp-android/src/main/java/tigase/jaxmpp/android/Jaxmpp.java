@@ -21,9 +21,14 @@
 package tigase.jaxmpp.android;
 
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.factory.UniversalFactory;
 import tigase.jaxmpp.core.client.factory.UniversalFactory.FactorySpi;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DnsResolver;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class Jaxmpp
 		extends tigase.jaxmpp.j2se.Jaxmpp {
@@ -38,12 +43,54 @@ public class Jaxmpp
 		});
 	}
 
+	private final Executor stanzaSender = Executors.newSingleThreadExecutor();
+
 	public Jaxmpp() {
 		super();
+		writer = new ThreadBasedPacketWriter();
 	}
 
 	public Jaxmpp(SessionObject sessionObject) {
 		super(sessionObject);
+		writer = new ThreadBasedPacketWriter();
+	}
+
+	private class ThreadBasedPacketWriter
+			extends DefaultPacketWriter {
+
+		private void wakeUp() {
+			synchronized (ThreadBasedPacketWriter.this) {
+				this.notify();
+			}
+		}
+
+		@Override
+		public void write(final Element stanza) throws JaxmppException {
+			final JaxmppException[] exception = new JaxmppException[]{null};
+			stanzaSender.execute(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						ThreadBasedPacketWriter.super.write(stanza);
+					} catch (JaxmppException e) {
+						exception[0] = e;
+						e.printStackTrace();
+					} finally {
+						wakeUp();
+					}
+				}
+			});
+			synchronized (ThreadBasedPacketWriter.this) {
+				try {
+					this.wait(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			if (exception[0] != null) {
+				throw exception[0];
+			}
+		}
 	}
 
 }
