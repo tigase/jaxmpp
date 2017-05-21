@@ -160,7 +160,7 @@ public class ConnectionManager
 	@Override
 	public void onSeeOtherHost(final String seeHost, MutableBoolean handled) {
 		handled.setValue(true);
-		context.getSessionObject().setProperty(RECONNECTING_KEY, true);
+//		context.getSessionObject().setProperty(RECONNECTING_KEY, true);
 		context.getSessionObject().setProperty(SEE_OTHER_HOST_URI, seeHost);
 //		context.getSessionObject().setProperty(Scope.stream, Connector.CONNECTOR_STAGE_KEY, Connector.State.disconnecting);
 //		Timer timer = new Timer() {
@@ -174,7 +174,7 @@ public class ConnectionManager
 	}
 
 	@Override
-	public void onStateChanged(SessionObject sessionObject, Connector.State oldState, Connector.State newState)
+	public void onStateChanged(final SessionObject sessionObject, Connector.State oldState, Connector.State newState)
 			throws JaxmppException {
 		if (oldState == newState) {
 			return;
@@ -204,7 +204,7 @@ public class ConnectionManager
 					Timer timer = new Timer() {
 						@Override
 						public void run() {
-							connectionFailure(uri, true);
+							connectionFailure(uri != null ? uri : (String) sessionObject.getProperty(SEE_OTHER_HOST_URI), true);
 						}
 					};
 					timer.schedule(10);
