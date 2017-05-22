@@ -79,6 +79,7 @@ public class SocketConnector
 	public static final String SASL_EXTERNAL_ENABLED_KEY = "SASL_EXTERNAL_ENABLED_KEY";
 	public static final String SERVER_HOST = "socket#ServerHost";
 	public static final String SERVER_PORT = "socket#ServerPort";
+	public static final String USE_PLAIN_SSL_KEY = "USE_PLAIN_SSL_KEY";
 	/**
 	 * Socket timeout.
 	 */
@@ -359,7 +360,7 @@ public class SocketConnector
 			log.info("ZLIB Failure");
 		}
 	}
-
+	
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
@@ -771,9 +772,15 @@ public class SocketConnector
 
 			};
 			log.finest("Starting worker...");
-			worker.start();
 
-			restartStream();
+			Boolean plainSSL = context.getSessionObject().getProperty(USE_PLAIN_SSL_KEY);
+			if (plainSSL != null && plainSSL) {
+				proceedTLS();
+				worker.start();
+			} else {
+				worker.start();
+				restartStream();
+			}
 
 			setStage(State.connected);
 
