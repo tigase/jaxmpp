@@ -20,6 +20,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.UIDGenerator;
@@ -32,11 +33,13 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.Extension;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Module to handle messages.
@@ -63,6 +66,8 @@ public class MessageModule
 	};
 	private final AbstractChatManager chatManager;
 
+	private MucModule mucModule;
+
 	public MessageModule() {
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
@@ -70,6 +75,12 @@ public class MessageModule
 
 	public MessageModule(AbstractChatManager chatManager) {
 		this.chatManager = chatManager;
+	}
+
+	@Override
+	public void afterRegister() {
+		super.afterRegister();
+		this.mucModule = context.getModuleProvider().getModule(MucModule.class);
 	}
 
 	@Override
@@ -156,12 +167,29 @@ public class MessageModule
 		return getFeaturesWithExtensions(null);
 	}
 
+	protected boolean isMessageHandledByMUC(JID from) {
+		if (this.mucModule == null) {
+			return false;
+		}
+
+		final BareJID roomJid = from.getBareJid();
+		boolean result = mucModule.isRoomRegistered(roomJid);
+		return result;
+
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public void process(Message message) throws JaxmppException {
 		final JID interlocutorJid = message.getFrom();
+		if (isMessageHandledByMUC(interlocutorJid)) {
+			if (log.isLoggable(Level.FINE)) {
+				log.fine("Message from " + interlocutorJid + " skipped, because this is MUC Room");
+			}
+			return;
+		}
 		process(message, interlocutorJid, true);
 	}
 

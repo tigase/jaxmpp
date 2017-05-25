@@ -142,7 +142,11 @@ public class MucModule
 
 		final String type = element.getAttribute("type");
 
-		if (element.getName().equals("message") && type != null && type.equals("groupchat")) {
+		if (element.getName().equals("message") && type != null && type.equals("error")) {
+			final BareJID roomJid = BareJID.bareJIDInstance(from);
+			boolean result = this.roomsManager.contains(roomJid);
+			return result;
+		} else if (element.getName().equals("message") && type != null && type.equals("groupchat")) {
 			return true;
 		} else if (element.getName().equals("presence")) {
 			final BareJID roomJid = BareJID.bareJIDInstance(from);
@@ -246,6 +250,10 @@ public class MucModule
 		}
 
 		write(message);
+	}
+
+	public boolean isRoomRegistered(BareJID roomJid) {
+		return this.roomsManager.contains(roomJid);
 	}
 
 	public Room join(final Invitation invitation, final String nickname) throws JaxmppException {
