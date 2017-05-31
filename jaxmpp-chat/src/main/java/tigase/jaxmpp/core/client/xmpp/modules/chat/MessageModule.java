@@ -168,7 +168,7 @@ public class MessageModule
 	}
 
 	protected boolean isMessageHandledByMUC(JID from) {
-		if (this.mucModule == null) {
+		if (this.mucModule == null || from == null) {
 			return false;
 		}
 
