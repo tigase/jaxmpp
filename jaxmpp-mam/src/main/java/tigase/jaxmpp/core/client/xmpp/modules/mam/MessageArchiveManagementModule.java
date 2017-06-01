@@ -36,9 +36,7 @@ import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.Chat;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule;
-import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModuleExtension;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.Extension;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -57,7 +55,7 @@ import java.util.List;
  */
 public class MessageArchiveManagementModule
 		extends AbstractStanzaModule
-		implements PacketWriterAware, MessageModuleExtension, Extension {
+		implements PacketWriterAware, Extension {
 
 	private static final String MAM_XMLNS = "urn:xmpp:mam:1";
 
@@ -87,27 +85,14 @@ public class MessageArchiveManagementModule
 
 	@Override
 	public Element afterReceive(Element received) throws JaxmppException {
-		return received;
-	}
-
-	@Override
-	public void afterRegister() {
-		super.afterRegister();
-
-		MessageModule messageModule = context.getModuleProvider().getModule(MessageModule.class);
-		messageModule.addExtension(this);
-	}
-
-	@Override
-	public Message beforeMessageProcess(Message message, Chat chat) throws JaxmppException {
-		Element resultEl = message.getChildrenNS("result", MAM_XMLNS);
+		Element resultEl = received.getChildrenNS("result", MAM_XMLNS);
 		if (resultEl == null) {
-			return message;
+			return received;
 		}
 
 		Element forwarded = resultEl.getChildrenNS("forwarded", "urn:xmpp:forward:0");
 		if (forwarded == null) {
-			return message;
+			return received;
 		}
 
 		Element timestampEl = forwarded.getChildrenNS("delay", "urn:xmpp:delay");
@@ -123,8 +108,15 @@ public class MessageArchiveManagementModule
 																							 queryid, messageId,
 																							 timestamp,
 																							 forwarededMessage));
-
 		return null;
+	}
+
+	@Override
+	public void afterRegister() {
+		super.afterRegister();
+
+		MessageModule messageModule = context.getModuleProvider().getModule(MessageModule.class);
+		messageModule.addExtension(this);
 	}
 
 	@Override
