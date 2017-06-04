@@ -142,7 +142,7 @@ public class Jaxmpp
 
 				final SessionObject sessionObject = jaxmpp.getSessionObject();
 				synchronized (jaxmpp) {
-					if (sessionObject.getProperty(EXCEPTION_KEY) == null) {
+					if (sessionObject.getProperty(EXCEPTION_KEY) == null && !jaxmpp.isConnected()) {
 						jaxmpp.wait(timeout);
 					}
 				}
