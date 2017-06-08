@@ -340,12 +340,12 @@ public class Jaxmpp
 	public void login(boolean sync) throws JaxmppException {
 		try {
 			login();
-		} catch (JaxmppException ex) {
-			throw ex;
-		} finally {
+
 			if (sync) {
 				waitForLoginFinish(this, 0);
 			}
+		} catch (JaxmppException ex) {
+			throw ex;
 		}
 	}
 
