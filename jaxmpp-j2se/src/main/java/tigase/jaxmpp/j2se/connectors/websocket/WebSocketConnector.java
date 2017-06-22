@@ -461,7 +461,7 @@ public class WebSocketConnector
 			fireOnConnected(context.getSessionObject());
 		} catch (Exception e) {
 			terminateAllWorkers();
-			onError(null, e);
+			//onError(null, e);
 			throw new JaxmppException(e);
 		}
 	}
