@@ -75,10 +75,11 @@ public class RosterModule
 	}
 
 	final static RosterItem fill(final RosterItem rosterItem, String name, Subscription subscription,
-								 Collection<String> groups, boolean ask) {
+								 Collection<String> groups, boolean ask, boolean approved) {
 		rosterItem.setName(name);
 		rosterItem.setSubscription(subscription);
 		rosterItem.setAsk(ask);
+		rosterItem.setApproved(approved);
 		if (groups != null) {
 			rosterItem.getGroups().clear();
 			rosterItem.getGroups().addAll(groups);
@@ -114,7 +115,7 @@ public class RosterModule
 	protected void add(BareJID jid, String name, Collection<String> groups, AsyncCallback asyncCallback)
 			throws JaxmppException {
 		RosterItem item = new RosterItem(jid, context.getSessionObject());
-		fill(item, name, Subscription.none, groups, false);
+		fill(item, name, Subscription.none, groups, false, false);
 
 		IQ iq = IQ.create();
 		iq.setType(StanzaType.set);
@@ -263,6 +264,7 @@ public class RosterModule
 		final String name = item.getAttribute("name");
 		final Subscription subscription = getSubscription(item.getAttribute("subscription"));
 		final boolean ask = item.getAttribute("ask") != null && "subscribe".equals(item.getAttribute("ask"));
+		final boolean approved = item.getAttribute("approved") != null && "true".equals(item.getAttribute("approved"));
 		final ArrayList<String> groups = new ArrayList<String>();
 		for (Element group : item.getChildren("group")) {
 			groups.add(group.getValue());
@@ -272,7 +274,7 @@ public class RosterModule
 		if (subscription == Subscription.remove && currentItem != null) {
 			// remove item
 			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().getGroups());
-			fill(currentItem, name, subscription, null, ask);
+			fill(currentItem, name, subscription, null, ask, approved);
 			getRosterStore().removeItem(jid);
 			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);
 			fireEvent(new ItemRemovedEvent(context.getSessionObject(), currentItem, modifiedGroups));
@@ -280,14 +282,14 @@ public class RosterModule
 		} else if (currentItem == null) {
 			// add new item
 			currentItem = new RosterItem(jid, context.getSessionObject());
-			fill(currentItem, name, subscription, groups, ask);
+			fill(currentItem, name, subscription, groups, ask, approved);
 			Set<String> modifiedGroups = getRosterStore().addItem(currentItem);
 			fireEvent(new ItemAddedEvent(context.getSessionObject(), currentItem, modifiedGroups));
 			log.fine("Roster item " + jid + " added");
 		} else if (currentItem.isAsk() && ask &&
 				(subscription == Subscription.from || subscription == Subscription.none)) {
 			// ask cancelled
-			fill(currentItem, name, subscription, null, ask);
+			fill(currentItem, name, subscription, null, ask, approved);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.askCancelled, null));
@@ -295,7 +297,7 @@ public class RosterModule
 		} else if (currentItem.getSubscription() == Subscription.both && subscription == Subscription.from ||
 				currentItem.getSubscription() == Subscription.to && subscription == Subscription.none) {
 			// unsubscribed
-			fill(currentItem, name, subscription, null, ask);
+			fill(currentItem, name, subscription, null, ask, approved);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.unsubscribed, null));
@@ -303,14 +305,14 @@ public class RosterModule
 		} else if (currentItem.getSubscription() == Subscription.from && subscription == Subscription.both ||
 				currentItem.getSubscription() == Subscription.none && subscription == Subscription.to) {
 			// subscribed
-			fill(currentItem, name, subscription, null, ask);
+			fill(currentItem, name, subscription, null, ask, approved);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			fireEvent(new ItemUpdatedEvent(context.getSessionObject(), currentItem, Action.subscribed, null));
 			log.fine("Roster item " + jid + " subscribed");
 		} else {
 			HashSet<String> groupsOld = new HashSet<String>(getRosterStore().getGroups());
-			fill(currentItem, name, subscription, groups, ask);
+			fill(currentItem, name, subscription, groups, ask, approved);
 			// store needs to know that item has changed!
 			getRosterStore().addItem(currentItem);
 			Set<String> modifiedGroups = getRosterStore().calculateModifiedGroups(groupsOld);

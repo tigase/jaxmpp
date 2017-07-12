@@ -82,6 +82,7 @@ public class RosterItem {
 	private final BareJID jid;
 	private final SessionObject sessionObject;
 	private boolean ask;
+	private boolean approved;
 	private String name;
 	private Subscription subscription;
 
@@ -191,6 +192,14 @@ public class RosterItem {
 
 	public void setAsk(boolean ask) {
 		this.ask = ask;
+	}
+
+	public boolean isApproved() {
+		return approved;
+	}
+
+	public void setApproved(boolean approved) {
+		this.approved = approved;
 	}
 
 	/**
