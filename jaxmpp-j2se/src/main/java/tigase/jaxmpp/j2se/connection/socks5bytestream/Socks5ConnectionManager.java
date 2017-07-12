@@ -84,7 +84,7 @@ public abstract class Socks5ConnectionManager
 
 	private static TcpServerThread server = null;
 	// ---------------------------------------------------------------------------------------
-	private static Timer timer = new Timer(true);
+	private static Timer timer = new Timer("Socks5Timer", true);
 	protected Context context;
 
 	protected static boolean checkHash(String data, ConnectionSession session) {

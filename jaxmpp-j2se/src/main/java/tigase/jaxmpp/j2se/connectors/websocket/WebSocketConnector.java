@@ -286,7 +286,7 @@ public class WebSocketConnector
 			} catch (Exception e) {
 			}
 		}
-		timer = new Timer(true);
+		timer = new Timer("WebSocketConnectorTimer", true);
 
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
@@ -478,7 +478,7 @@ public class WebSocketConnector
 			if (closeTimer != null) {
 				closeTimer.cancel();
 			}
-			closeTimer = new Timer(true);
+			closeTimer = new Timer("WebSocketConnectorCloseTimer", true);
 			closeTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {

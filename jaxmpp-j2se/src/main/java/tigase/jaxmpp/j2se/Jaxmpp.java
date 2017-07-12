@@ -358,7 +358,7 @@ public class Jaxmpp
 				timer.cancel();
 			}
 
-			timer = new Timer(true);
+			timer = new Timer("JaxmppJ2SETimer", true);
 			timer.schedule(new CheckTimeoutsTask(), 30 * 1000, 30 * 1000);
 		}
 		this.modulesManager.initIfRequired();

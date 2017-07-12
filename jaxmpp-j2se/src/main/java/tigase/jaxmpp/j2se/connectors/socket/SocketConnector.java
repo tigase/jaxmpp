@@ -666,7 +666,7 @@ public class SocketConnector
 			} catch (Exception e) {
 			}
 		}
-		timer = new Timer(true);
+		timer = new Timer("SocketConnectorTimer", true);
 
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
@@ -905,7 +905,7 @@ public class SocketConnector
 				if (closeTimer != null) {
 					closeTimer.cancel();
 				}
-				closeTimer = new Timer(true);
+				closeTimer = new Timer("SocketConnectorCloseTimer", true);
 				closeTimer.schedule(new TimerTask() {
 					@Override
 					public void run() {

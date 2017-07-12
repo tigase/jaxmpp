@@ -66,7 +66,7 @@ public class JingleFileTransferNegotiator
 	private static DateTimeFormat dateTimeFormat = new DateTimeFormat();
 	private final JingleSocks5BytestreamsConnectionManager connectionManager = new JingleSocks5BytestreamsConnectionManager(
 			this);
-	private final Timer timer = new Timer(true);
+	private final Timer timer = new Timer("JingleFileTransferTimer", true);
 	private Map<String, FileTransfer> sessions = Collections.synchronizedMap(new HashMap<String, FileTransfer>());
 
 	@Override
