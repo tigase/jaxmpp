@@ -55,6 +55,7 @@ public class DiscoveryModule
 	public static final String INFO_XMLNS = "http://jabber.org/protocol/disco#info";
 	public static final String ITEMS_XMLNS = "http://jabber.org/protocol/disco#items";
 	public static final String SERVER_FEATURES_KEY = "SERVER_FEATURES_KEY";
+	public static final String ACCOUNT_FEATURES_KEY = "ACCOUNT_FEATURES_KEY";
 	private final NodeDetailsCallback NULL_NODE_DETAILS_CALLBACK = new DefaultNodeDetailsCallback(this);
 	private final Map<String, NodeDetailsCallback> callbacks = new HashMap<String, NodeDetailsCallback>();
 	private final Criteria criteria;
@@ -79,6 +80,45 @@ public class DiscoveryModule
 		this.moduleProvider = context.getModuleProvider();
 	}
 
+	public void discoverOwnerAccountFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {
+		final DiscoInfoAsyncCallback diac = new DiscoInfoAsyncCallback(null) {
+
+			@Override
+			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+				if (callback != null) {
+					callback.onError(responseStanza, error);
+				}
+			}
+
+			@Override
+			protected void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features)
+					throws XMLException {
+				HashSet<String> ff = new HashSet<String>();
+				ff.addAll(features);
+				context.getSessionObject().setProperty(ACCOUNT_FEATURES_KEY, ff);
+
+				final AccountFeaturesReceivedHandler.AccountFeaturesReceivedEvent event = new AccountFeaturesReceivedHandler.AccountFeaturesReceivedEvent(
+						context.getSessionObject(), (IQ) this.responseStanza, ff.toArray(new String[]{}));
+				fireEvent(event);
+				if (callback != null) {
+					callback.onInfoReceived(node, identities, features);
+				}
+			}
+
+			@Override
+			public void onTimeout() throws JaxmppException {
+				if (callback != null) {
+					callback.onTimeout();
+				}
+			}
+		};
+
+		JID jid = context.getSessionObject().getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
+		if (jid != null) {
+			getInfo(JID.jidInstance(jid.getBareJid()), null, (AsyncCallback) diac);
+		}
+	}
+
 	public void discoverServerFeatures(final DiscoInfoAsyncCallback callback) throws JaxmppException {
 		final DiscoInfoAsyncCallback diac = new DiscoInfoAsyncCallback(null) {
 
@@ -96,7 +136,8 @@ public class DiscoveryModule
 				ff.addAll(features);
 				context.getSessionObject().setProperty(SERVER_FEATURES_KEY, ff);
 
-				final ServerFeaturesReceivedEvent event = new ServerFeaturesReceivedEvent(context.getSessionObject(), (IQ) this.responseStanza,
+				final ServerFeaturesReceivedEvent event = new ServerFeaturesReceivedEvent(context.getSessionObject(),
+																						  (IQ) this.responseStanza,
 																						  ff.toArray(new String[]{}));
 				fireEvent(event);
 				if (callback != null) {
@@ -263,6 +304,32 @@ public class DiscoveryModule
 		this.callbacks.put(nodeName, callback == null ? NULL_NODE_DETAILS_CALLBACK : callback);
 	}
 
+	public interface AccountFeaturesReceivedHandler
+			extends EventHandler {
+
+		void onAccountFeaturesReceived(SessionObject sessionObject, IQ stanza, String[] features);
+
+		class AccountFeaturesReceivedEvent
+				extends JaxmppEvent<AccountFeaturesReceivedHandler> {
+
+			private final String[] features;
+
+			private final IQ stanza;
+
+			public AccountFeaturesReceivedEvent(SessionObject sessionObject, IQ responseStanza, String[] features) {
+				super(sessionObject);
+				this.stanza = responseStanza;
+				this.features = features;
+			}
+
+			@Override
+			public void dispatch(AccountFeaturesReceivedHandler handler) {
+				handler.onAccountFeaturesReceived(sessionObject, stanza, features);
+			}
+
+		}
+	}
+
 	public interface ServerFeaturesReceivedHandler
 			extends EventHandler {
 
@@ -335,7 +402,8 @@ public class DiscoveryModule
 			this.requestedNode = requestedNode;
 		}
 
-		protected abstract void onInfoReceived(String node, Collection<Identity> identities, Collection<String> features) throws XMLException;
+		protected abstract void onInfoReceived(String node, Collection<Identity> identities,
+											   Collection<String> features) throws XMLException;
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws XMLException {

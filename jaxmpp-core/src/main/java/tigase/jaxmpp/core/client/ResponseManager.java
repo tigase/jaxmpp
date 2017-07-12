@@ -73,6 +73,7 @@ public class ResponseManager {
 				tigase.jaxmpp.core.client.ResponseManager.Entry entry = e.getValue();
 				it.remove();
 				try {
+					log.fine("Request id=" + entry.stanzaId + "; Timeout.");
 					entry.callback.onTimeout();
 				} catch (XMLException e1) {
 				}
@@ -88,7 +89,6 @@ public class ResponseManager {
 	 * Returns handler for response of sent <code><iq/></code> stanza.
 	 *
 	 * @param element reponse <code><iq/></code> stanza.
-	 * @param writer Packet writer
 	 *
 	 * @return Runnable object with handler
 	 *
@@ -121,8 +121,10 @@ public class ResponseManager {
 				final String type = this.element.getAttribute("type");
 
 				if (type != null && type.equals("result")) {
+					log.fine("Request id=" + entry.stanzaId + "; Result received.");
 					entry.callback.onSuccess(Stanza.create(this.element));
 				} else if (type != null && type.equals("error")) {
+					log.fine("Request id=" + entry.stanzaId + "; Error received.");
 					List<Element> es = this.element.getChildren("error");
 					final Element error;
 					if (es != null && es.size() > 0) {
@@ -169,7 +171,7 @@ public class ResponseManager {
 		}
 
 		if (callback != null) {
-			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), (new Date()).getTime(),
+			Entry entry = new Entry(x == null ? null : JID.jidInstance(x), id, (new Date()).getTime(),
 									timeout == null ? DEFAULT_TIMEOUT : timeout, callback);
 			this.getHandlers().put(id, entry);
 		}
@@ -200,17 +202,17 @@ public class ResponseManager {
 		private final AsyncCallback callback;
 
 		private final JID jid;
-
+		private final String stanzaId;
 		private final long timeout;
-
 		private final long timestamp;
 
-		public Entry(JID jid, long timestamp, long timeout, AsyncCallback callback) {
+		public Entry(JID jid, String stanzaId, long timestamp, long timeout, AsyncCallback callback) {
 			super();
 			this.jid = jid;
 			this.timestamp = timestamp;
 			this.timeout = timeout;
 			this.callback = callback;
+			this.stanzaId = stanzaId;
 		}
 
 	}

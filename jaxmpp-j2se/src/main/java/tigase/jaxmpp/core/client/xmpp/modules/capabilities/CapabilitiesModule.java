@@ -249,7 +249,7 @@ public class CapabilitiesModule
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				System.out.println("Error: " + error);
+				System.out.println("Error disco#info request: " + error);
 			}
 
 			@Override
@@ -272,7 +272,7 @@ public class CapabilitiesModule
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				System.out.println("Timeout");
+				System.out.println("Error disco#info request: timeout");
 			}
 		});
 
