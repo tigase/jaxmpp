@@ -313,19 +313,19 @@ public abstract class JaxmppCore {
 			@Override
 			public void onDisconnected(SessionObject sessionObject) {
 				JaxmppCore.this.onConnectorStopped();
+
+				eventBus.addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
+									new Connector.StateChangedHandler() {
+										@Override
+										public void onStateChanged(SessionObject sessionObject, State oldState,
+																   State newState) throws JaxmppException {
+											JaxmppCore.this.onConnectorStateChanged(sessionObject, oldState, newState);
+										}
+									});
 			}
 		});
 
 	}
-
-	// /**
-	// * Returns {@link RosterStore}.
-	// *
-	// * @return {@link RosterStore}.
-	// */
-	// public RosterStore getRoster() {
-	// return RosterModule.getRosterStore(sessionObject);
-	// }
 
 	/**
 	 * Returns connection state.
@@ -336,6 +336,15 @@ public abstract class JaxmppCore {
 		return this.connector != null && this.connector.getState() == State.connected &&
 				this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
 	}
+
+	// /**
+	// * Returns {@link RosterStore}.
+	// *
+	// * @return {@link RosterStore}.
+	// */
+	// public RosterStore getRoster() {
+	// return RosterModule.getRosterStore(sessionObject);
+	// }
 
 	/**
 	 * Returns connection security state.
@@ -388,8 +397,13 @@ public abstract class JaxmppCore {
 
 	}
 
+	protected void onConnectorStateChanged(SessionObject sessionObject, State oldState, State newState) {
+		if (oldState != State.disconnected && newState == State.disconnected) {
+			eventBus.fire(new LoggedOutHandler.LoggedOutEvent(sessionObject));
+		}
+	}
+
 	protected void onConnectorStopped() {
-		eventBus.fire(new LoggedOutHandler.LoggedOutEvent(sessionObject));
 	}
 
 	protected abstract void onException(JaxmppException e) throws JaxmppException;
