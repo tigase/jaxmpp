@@ -179,6 +179,48 @@ public class SocketConnector
 		}
 	}
 
+	private Socket createSocket(Entry serverHost) throws IOException {
+		Socket socket;
+		InetAddress x = InetAddress.getByName(serverHost.getHostname());
+		log.info("Opening connection to " + x + ":" + serverHost.getPort());
+
+		if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
+			final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
+			final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
+			Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+			if (proxyType == null) {
+				proxyType = Proxy.Type.HTTP;
+			}
+
+			log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+			SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+			Proxy proxy = new Proxy(proxyType, addr);
+			socket = new Socket(proxy);
+		} else {
+			socket = new Socket();
+		}
+
+		// if
+		// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
+		// == null
+		// || ((Boolean)
+		// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+		// {
+		// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
+		// }
+		Integer soTimeout = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+		if (soTimeout != null) {
+			socket.setSoTimeout(soTimeout);
+		}
+		socket.setKeepAlive(false);
+		socket.setTcpNoDelay(true);
+		// writer = new BufferedOutputStream(socket.getOutputStream());
+		socket.connect(new InetSocketAddress(x, serverHost.getPort()));
+
+		return socket;
+	}
+
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
 		if (getState() == State.disconnected) {
 			return;
@@ -360,7 +402,7 @@ public class SocketConnector
 			log.info("ZLIB Failure");
 		}
 	}
-	
+
 	protected void proceedTLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
@@ -407,13 +449,12 @@ public class SocketConnector
 					log.info("TLS completed " + arg0);
 					context.getSessionObject().setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
 					context.getEventBus().fire(new EncryptionEstablishedEvent(context.getSessionObject()));
-
-					context.getSessionObject().setProperty(Scope.stream, TLS_SESSION_ID_KEY, arg0.getSession().getId());
+// Removed due to Java API limitations
+//					context.getSessionObject().setProperty(Scope.stream, TLS_SESSION_ID_KEY, arg0.getSession().getId());
 
 					try {
 						Certificate[] certs = arg0.getPeerCertificates();
-						Certificate peerCertificate =
-								certs == null || certs.length == 0 ? null : certs[certs.length - 1];
+						Certificate peerCertificate = certs == null || certs.length == 0 ? null : certs[0];
 						context.getSessionObject().setProperty(Scope.stream, TLS_PEER_CERTIFICATE_KEY, peerCertificate);
 					} catch (Exception e) {
 						log.log(Level.WARNING, "Cannot extract peer certificate", e);
@@ -677,21 +718,21 @@ public class SocketConnector
 		setStage(State.connecting);
 
 		try {
+			ArrayList<Entry> hosts = new ArrayList<>();
 			Entry serverHost = getHostFromSessionObject();
-			if (serverHost == null) {
+			if (serverHost != null) {
+				hosts.add(serverHost);
+			}
+			if (hosts.isEmpty()) {
 				String x = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
 				log.info("Resolving SRV recrd of domain '" + x + "'");
-				List<Entry> xx;
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
 				if (dnsResolver != null) {
-					xx = dnsResolver.resolve(x);
+					hosts.addAll(dnsResolver.resolve(x));
 				} else {
-					xx = DNSResolver.resolve(x);
+					hosts.addAll(DNSResolver.resolve(x));
 				}
 
-				if (xx.size() > 0) {
-					serverHost = xx.get(0);
-				}
 			}
 
 			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
@@ -700,42 +741,19 @@ public class SocketConnector
 				log.finer("Preparing connection to " + serverHost);
 			}
 
-			InetAddress x = InetAddress.getByName(serverHost.getHostname());
-			log.info("Opening connection to " + x + ":" + serverHost.getPort());
-
-			if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
-				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
-				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
-				Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
-				if (proxyType == null) {
-					proxyType = Proxy.Type.HTTP;
+			for (Entry host : hosts) {
+				try {
+					socket = createSocket(host);
+					break;
+				} catch (java.net.NoRouteToHostException | UnknownHostException e) {
+					log.fine(e.getMessage() + ". Trying next.");
 				}
-
-				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
-
-				SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
-				Proxy proxy = new Proxy(proxyType, addr);
-				socket = new Socket(proxy);
-			} else {
-				socket = new Socket();
 			}
 
-			// if
-			// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
-			// == null
-			// || ((Boolean)
-			// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
-			// {
-			// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
-			// }
-			Integer soTimeout = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
-			if (soTimeout != null) {
-				socket.setSoTimeout(soTimeout);
+			if (socket == null) {
+				throw new JaxmppException("Cannot create socket.");
 			}
-			socket.setKeepAlive(false);
-			socket.setTcpNoDelay(true);
-			// writer = new BufferedOutputStream(socket.getOutputStream());
-			socket.connect(new InetSocketAddress(x, serverHost.getPort()));
+
 			writer = socket.getOutputStream();
 			reader = new TextStreamReader(socket.getInputStream());
 			worker = new Worker(this) {

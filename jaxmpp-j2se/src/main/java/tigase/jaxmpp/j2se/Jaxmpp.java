@@ -333,7 +333,7 @@ public class Jaxmpp
 		SaslModule saslModule = getModule(SaslModule.class);
 		if (saslModule != null) {
 			saslModule.addMechanism(new ScramMechanism(), true);
-			saslModule.addMechanism(new ScramPlusMechanism(), true);
+//			saslModule.addMechanism(new ScramPlusMechanism(), true);
 		}
 	}
 
