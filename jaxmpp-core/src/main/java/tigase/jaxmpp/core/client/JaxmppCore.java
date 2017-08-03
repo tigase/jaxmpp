@@ -313,17 +313,17 @@ public abstract class JaxmppCore {
 			@Override
 			public void onDisconnected(SessionObject sessionObject) {
 				JaxmppCore.this.onConnectorStopped();
-
-				eventBus.addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
-									new Connector.StateChangedHandler() {
-										@Override
-										public void onStateChanged(SessionObject sessionObject, State oldState,
-																   State newState) throws JaxmppException {
-											JaxmppCore.this.onConnectorStateChanged(sessionObject, oldState, newState);
-										}
-									});
 			}
 		});
+
+		eventBus.addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
+							new Connector.StateChangedHandler() {
+								@Override
+								public void onStateChanged(SessionObject sessionObject, State oldState,
+														   State newState) throws JaxmppException {
+									JaxmppCore.this.onConnectorStateChanged(sessionObject, oldState, newState);
+								}
+							});
 
 	}
 
