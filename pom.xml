@@ -59,6 +59,7 @@
 		<module>jaxmpp-adhoc</module>
 		<module>jaxmpp-mam</module>
 		<module>jaxmpp-filetransfer</module>
+		<module>jaxmpp-httpfileupload</module>
 		<module>jaxmpp-jingle</module>
 		<module>jaxmpp-socks5</module>
 		<module>jaxmpp-vcard</module>
