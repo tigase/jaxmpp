@@ -34,6 +34,10 @@ public class ScramPlusMechanism
 		super("SCRAM-SHA-1-PLUS", "SHA1", "Client Key".getBytes(UTF_CHARSET), "Server Key".getBytes(UTF_CHARSET));
 	}
 
+	protected ScramPlusMechanism(String mechanismName, String algorithm, byte[] clientKey, byte[] serverKey) {
+		super(mechanismName, algorithm, clientKey, serverKey);
+	}
+
 	private byte[] calculateHash(final Certificate cert) {
 		try {
 			final String usealgo;
@@ -79,6 +83,7 @@ public class ScramPlusMechanism
 	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
 		return (sessionObject.getProperty(SocketConnector.TLS_SESSION_ID_KEY) != null ||
-				sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY) != null) && super.isAllowedToUse(sessionObject);
+				sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY) != null) &&
+				super.isAllowedToUse(sessionObject);
 	}
 }

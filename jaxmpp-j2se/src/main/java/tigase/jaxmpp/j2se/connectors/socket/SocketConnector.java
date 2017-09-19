@@ -20,6 +20,9 @@
  */
 package tigase.jaxmpp.j2se.connectors.socket;
 
+import org.bouncycastle.tls.*;
+import org.bouncycastle.tls.crypto.TlsCertificate;
+import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.Connector.ConnectedHandler.ConnectedEvent;
 import tigase.jaxmpp.core.client.Connector.EncryptionEstablishedHandler.EncryptionEstablishedEvent;
@@ -44,6 +47,7 @@ import tigase.jaxmpp.j2se.DNSResolver;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HostChangedHandler.HostChangedEvent;
 
 import javax.net.ssl.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
@@ -52,7 +56,9 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -99,6 +105,7 @@ public class SocketConnector
 	public static final String KEEP_ALIVE_DELAY_KEY = "KEEP_ALIVE_DELAY_KEY";
 	public static final String TLS_SESSION_ID_KEY = "TLS_SESSION_ID_KEY";
 	public static final String TLS_PEER_CERTIFICATE_KEY = "TLS_PEER_CERTIFICATE_KEY";
+	public static final String USE_BOUNCYCASTLE_KEY = "USE_BOUNCYCASTLE_KEY";
 	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 	/**
 	 * Instance of empty byte array used to force flush of compressed stream
@@ -125,8 +132,7 @@ public class SocketConnector
 	}
 
 	/**
-	 * Returns true if server send stream features in which it advertises
-	 * support for stream compression using ZLIB
+	 * Returns true if server send stream features in which it advertises support for stream compression using ZLIB
 	 *
 	 * @param sessionObject
 	 *
@@ -166,6 +172,20 @@ public class SocketConnector
 				log.log(Level.FINEST, "Problem with closing socket (oid=" + SocketConnector.this.hashCode() + ")", ex);
 			}
 		}
+	}
+
+	private X509Certificate[] convertChain(org.bouncycastle.tls.Certificate certificates)
+			throws CertificateException, IOException {
+		X509Certificate[] result = new X509Certificate[certificates.getLength()];
+
+		for (int i = 0; i < certificates.getLength(); i++) {
+			TlsCertificate cert = certificates.getCertificateAt(i);
+			java.security.cert.Certificate jsCert = CertificateFactory.getInstance("X.509")
+					.generateCertificate(new ByteArrayInputStream(cert.getEncoded()));
+			result[i] = (X509Certificate) jsCert;
+		}
+
+		return result;
 	}
 
 	@Override
@@ -253,6 +273,72 @@ public class SocketConnector
 		context.getEventBus().fire(new StreamTerminatedHandler.StreamTerminatedEvent(sessionObject));
 	}
 
+	protected String getAuthType(TlsKeyExchange tlsKeyExchange) {
+		try {
+			Field keyExchangeField = AbstractTlsKeyExchange.class.getDeclaredField("keyExchange");
+			keyExchangeField.setAccessible(true);
+			Object v = keyExchangeField.get(tlsKeyExchange);
+			final int i = Integer.valueOf(v.toString()).intValue();
+			switch (i) {
+				case 0:
+					return "NULL";
+				case 1:
+					return "RSA";
+				case 2:
+					return "RSA_EXPORT";
+				case 3:
+					return "DHE_DSS";
+				case 4:
+					return "DHE_DSS_EXPORT";
+				case 5:
+					return "DHE_RSA";
+				case 6:
+					return "DHE_RSA_EXPORT";
+				case 7:
+					return "DH_DSS";
+				case 8:
+					return "DH_DSS_EXPORT";
+				case 9:
+					return "DH_RSA";
+				case 10:
+					return "DH_RSA_EXPORT";
+				case 11:
+					return "DH_anon";
+				case 12:
+					return "DH_anon_EXPORT";
+				case 13:
+					return "PSK";
+				case 14:
+					return "DHE_PSK";
+				case 15:
+					return "RSA_PSK";
+				case 16:
+					return "ECDH_ECDSA";
+				case 17:
+					return "ECDHE_ECDSA";
+				case 18:
+					return "ECDH_RSA";
+				case 19:
+					return "ECDHE_RSA";
+				case 20:
+					return "ECDH_anon";
+				case 21:
+					return "SRP";
+				case 22:
+					return "SRP_DSS";
+				case 23:
+					return "SRP_RSA";
+				case 24:
+					return "ECDHE_PSK";
+				default:
+					return "UNKNOWN " + i;
+			}
+		} catch (Throwable e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	private Entry getHostFromSessionObject() {
 		String serverHost = context.getSessionObject().getProperty(SERVER_HOST);
 		Integer port = context.getSessionObject().getProperty(SERVER_PORT);
@@ -263,9 +349,30 @@ public class SocketConnector
 
 	}
 
+	protected String getHostname() {
+		final String hostname;
+		if (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID) != null) {
+			hostname = ((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain();
+		} else if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) != null) {
+			hostname = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
+		} else {
+			hostname = null;
+		}
+		return hostname;
+	}
+
 	protected KeyManager[] getKeyManagers() throws NoSuchAlgorithmException {
 		KeyManager[] result = context.getSessionObject().getProperty(KEY_MANAGERS_KEY);
 		return result == null ? new KeyManager[0] : result;
+	}
+
+	private java.security.cert.Certificate getPeerCertificate(SSLSession session) throws SSLPeerUnverifiedException {
+		java.security.cert.Certificate[] certificates = session.getPeerCertificates();
+
+		if (certificates == null || certificates.length == 0) {
+			return null;
+		}
+		return certificates[0];
 	}
 
 	/**
@@ -403,7 +510,114 @@ public class SocketConnector
 		}
 	}
 
-	protected void proceedTLS() throws JaxmppException {
+	private void proceedBCTLS() throws JaxmppException {
+		log.fine("Proceeding TLS with Bouncycastle");
+		try {
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+			final TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
+
+			BcTlsCrypto tlsCrypto = new BcTlsCrypto(new SecureRandom());
+
+			final String hostname = getHostname();
+
+			TlsClientProtocol tlsClientProtocol = new TlsClientProtocol(socket.getInputStream(),
+																		socket.getOutputStream());
+
+			DefaultTlsClient tlsClient = new DefaultTlsClient(tlsCrypto) {
+				public TlsAuthentication getAuthentication() throws IOException {
+					return new ServerOnlyTlsAuthentication() {
+
+						@Override
+						public void notifyServerCertificate(org.bouncycastle.tls.Certificate certificate)
+								throws IOException {
+							try {
+								final X509Certificate[] certChain = convertChain(certificate);
+
+								TlsAuthentication a = getAuthentication();
+								System.out.println(a);
+								TlsSession b = getSessionToResume();
+								System.out.println(b);
+								TlsKeyExchange c = getKeyExchange();
+								System.out.println(c);
+
+								Vector z = getSupportedSignatureAlgorithms();
+								for (Object o : z) {
+									System.out.println("++>" + o + "  " + o.getClass());
+								}
+
+								String authType = getAuthType(getKeyExchange());
+								System.out.println("AUTH_TYPE=" + authType);
+
+								if (trustManagers != null) {
+									for (TrustManager trustManager : trustManagers) {
+										if (trustManager instanceof X509TrustManager) {
+											((X509TrustManager) trustManager).checkServerTrusted(certChain, authType);
+										}
+									}
+								}
+
+								final Object hnv = SocketConnector.this.context.getSessionObject()
+										.getProperty(HOSTNAME_VERIFIER_KEY);
+
+								if (hnv != null && hnv instanceof JaxmppHostnameVerifier) {
+									if (!((JaxmppHostnameVerifier) hnv).verify(hostname, certChain[0])) {
+										throw new javax.net.ssl.SSLHandshakeException(
+												"Cerificate hostname doesn't match domain name you want to connect.");
+									}
+								} else if (hnv != null && hnv instanceof HostnameVerifier) {
+									throw new javax.net.ssl.SSLHandshakeException(
+											"javax.net.ssl.HostnameVerifier is not supported! Use tigase.jaxmpp.j2se" +
+													".connectors.socket.JaxmppHostnameVerifier instead.");
+								}
+
+								SocketConnector.this.context.getSessionObject()
+										.setProperty(Scope.stream, TLS_PEER_CERTIFICATE_KEY, certChain[0]);
+							} catch (javax.net.ssl.SSLHandshakeException e) {
+								e.printStackTrace();
+								throw new IOException("Cannot peer validate certificate", e);
+							} catch (Exception e) {
+								e.printStackTrace();
+								throw new RuntimeException(e);
+							}
+
+						}
+
+					};
+				}
+
+				@Override
+				public void notifyHandshakeComplete() throws IOException {
+					log.info("TLS completed ");
+					super.notifyHandshakeComplete();
+					byte[] cb = context.exportChannelBinding(ChannelBinding.tls_unique);
+					SocketConnector.this.context.getSessionObject().setProperty(Scope.stream, TLS_SESSION_ID_KEY, cb);
+
+					SocketConnector.this.context.getSessionObject()
+							.setProperty(Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
+					SocketConnector.this.context.getEventBus()
+							.fire(new EncryptionEstablishedHandler.EncryptionEstablishedEvent(
+									SocketConnector.this.context.getSessionObject()));
+
+				}
+			};
+			writer = tlsClientProtocol.getOutputStream();
+			reader = new TextStreamReader(tlsClientProtocol.getInputStream());
+
+			tlsClientProtocol.connect(tlsClient);
+
+			restartStream();
+		} catch (javax.net.ssl.SSLHandshakeException e) {
+			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
+			onError(null, e);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Can't establish encrypted connection", e);
+			onError(null, e);
+		} finally {
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
+		}
+	}
+
+	private void proceedJCETLS() throws JaxmppException {
 		log.fine("Proceeding TLS");
 		try {
 			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
@@ -453,9 +667,10 @@ public class SocketConnector
 //					context.getSessionObject().setProperty(Scope.stream, TLS_SESSION_ID_KEY, arg0.getSession().getId());
 
 					try {
-						Certificate[] certs = arg0.getPeerCertificates();
-						Certificate peerCertificate = certs == null || certs.length == 0 ? null : certs[0];
-						context.getSessionObject().setProperty(Scope.stream, TLS_PEER_CERTIFICATE_KEY, peerCertificate);
+						java.security.cert.Certificate[] certs = arg0.getPeerCertificates();
+						java.security.cert.Certificate peerCertificate =
+								certs == null || certs.length == 0 ? null : certs[0];
+						//	context.getSessionObject().setProperty(Scope.stream, TLS_PEER_CERTIFICATE_KEY, peerCertificate);
 					} catch (Exception e) {
 						log.log(Level.WARNING, "Cannot extract peer certificate", e);
 					}
@@ -465,19 +680,17 @@ public class SocketConnector
 			reader = null;
 			log.fine("Start handshake");
 
-			final String hostname;
-			if (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID) != null) {
-				hostname = ((BareJID) context.getSessionObject().getProperty(SessionObject.USER_BARE_JID)).getDomain();
-			} else if (context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME) != null) {
-				hostname = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
-			} else {
-				hostname = null;
-			}
+			final String hostname = getHostname();
 
 			s1.startHandshake();
 
-			final HostnameVerifier hnv = context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY);
-			if (hnv != null && !hnv.verify(hostname, s1.getSession())) {
+			final Object hnv = context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY);
+			if (hnv != null && hnv instanceof HostnameVerifier &&
+					!((HostnameVerifier) hnv).verify(hostname, s1.getSession())) {
+				throw new javax.net.ssl.SSLHandshakeException(
+						"Cerificate hostname doesn't match domain name you want to connect.");
+			} else if (hnv != null && hnv instanceof JaxmppHostnameVerifier &&
+					!((JaxmppHostnameVerifier) hnv).verify(hostname, getPeerCertificate(s1.getSession()))) {
 				throw new javax.net.ssl.SSLHandshakeException(
 						"Cerificate hostname doesn't match domain name you want to connect.");
 			}
@@ -497,9 +710,16 @@ public class SocketConnector
 		}
 	}
 
+	protected void proceedTLS() throws JaxmppException {
+		if (context.getSessionObject().getProperty(USE_BOUNCYCASTLE_KEY) == Boolean.TRUE) {
+			proceedBCTLS();
+		} else {
+			proceedJCETLS();
+		}
+	}
+
 	/**
-	 * Method activates stream compression by replacing reader and writer fields
-	 * values and restarting XMPP stream
+	 * Method activates stream compression by replacing reader and writer fields values and restarting XMPP stream
 	 *
 	 * @throws JaxmppException
 	 */

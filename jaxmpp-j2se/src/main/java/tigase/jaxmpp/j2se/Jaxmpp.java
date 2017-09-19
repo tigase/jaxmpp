@@ -36,6 +36,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramPlusMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramSHA256Mechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramSHA256PlusMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
@@ -333,7 +335,9 @@ public class Jaxmpp
 		SaslModule saslModule = getModule(SaslModule.class);
 		if (saslModule != null) {
 			saslModule.addMechanism(new ScramMechanism(), true);
-//			saslModule.addMechanism(new ScramPlusMechanism(), true);
+			saslModule.addMechanism(new ScramPlusMechanism(), true);
+			saslModule.addMechanism(new ScramSHA256Mechanism(), true);
+			saslModule.addMechanism(new ScramSHA256PlusMechanism(), true);
 		}
 	}
 

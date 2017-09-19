@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DefaultHostnameVerifier
-		implements HostnameVerifier {
+		implements HostnameVerifier, JaxmppHostnameVerifier {
 
 	private static final String IPv4_IPv6_PATTERN =
 			"^(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))" +
@@ -67,7 +67,8 @@ public class DefaultHostnameVerifier
 			return hostname.equals(normalizedAltName);
 		}
 
-		if (normalizedAltName.startsWith("*.") && hostname.regionMatches(0, normalizedAltName, 2, normalizedAltName.length() - 2)) {
+		if (normalizedAltName.startsWith("*.") &&
+				hostname.regionMatches(0, normalizedAltName, 2, normalizedAltName.length() - 2)) {
 			return true;
 		}
 
@@ -90,12 +91,32 @@ public class DefaultHostnameVerifier
 	}
 
 	@Override
+	public boolean verify(String hostname, Certificate certificate) {
+		try {
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("Peer certificate: " + certificate);
+			}
+
+			if (hostname.matches(IPv4_IPv6_PATTERN)) {
+				return verifyIp(hostname, (X509Certificate) certificate);
+			} else {
+				return verifyHostname(hostname, (X509Certificate) certificate);
+			}
+
+		} catch (Exception e) {
+			log.log(Level.FINE, "Can't validate hostname", e);
+			return false;
+		}
+	}
+
+	@Override
 	public boolean verify(String hostname, SSLSession session) {
 		try {
 			Certificate[] certificates = session.getPeerCertificates();
 
 			if (certificates == null || certificates.length == 0) {
-				log.warning("There is no Peer Certificate (The server does not provides it). Cannot validate hostname.");
+				log.warning(
+						"There is no Peer Certificate (The server does not provides it). Cannot validate hostname.");
 				return false;
 			}
 
@@ -103,12 +124,7 @@ public class DefaultHostnameVerifier
 				log.finest("Peer certificates: " + Arrays.toString(certificates));
 			}
 
-			if (hostname.matches(IPv4_IPv6_PATTERN)) {
-				return verifyIp(hostname, (X509Certificate) certificates[0]);
-			} else {
-				return verifyHostname(hostname, (X509Certificate) certificates[0]);
-			}
-
+			return verify(hostname, certificates[0]);
 		} catch (Exception e) {
 			log.log(Level.FINE, "Can't validate hostname", e);
 			return false;
