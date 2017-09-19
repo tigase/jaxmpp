@@ -50,8 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * MessageArchiveManagementModule class implements support for XEP-0313 Message
- * Archive Management.
+ * MessageArchiveManagementModule class implements support for XEP-0313 Message Archive Management.
  */
 public class MessageArchiveManagementModule
 		extends AbstractStanzaModule
@@ -255,8 +254,8 @@ public class MessageArchiveManagementModule
 	public interface MessageArchiveItemReceivedEventHandler
 			extends EventHandler {
 
-		void onArchiveItemReceived(String queryid, String messageId, Date timestamp, Message message)
-				throws JaxmppException;
+		void onArchiveItemReceived(SessionObject sessionObject, String queryid, String messageId, Date timestamp,
+								   Message message) throws JaxmppException;
 
 		class MessageArchiveItemReceivedEvent
 				extends JaxmppEvent<MessageArchiveItemReceivedEventHandler> {
@@ -277,7 +276,7 @@ public class MessageArchiveManagementModule
 
 			@Override
 			public void dispatch(MessageArchiveItemReceivedEventHandler handler) throws Exception {
-				handler.onArchiveItemReceived(queryid, messageId, timestamp, message);
+				handler.onArchiveItemReceived(sessionObject, queryid, messageId, timestamp, message);
 			}
 		}
 
