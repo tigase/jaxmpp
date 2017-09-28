@@ -600,10 +600,11 @@ public class SocketConnector
 
 				}
 			};
-			writer = tlsClientProtocol.getOutputStream();
-			reader = new TextStreamReader(tlsClientProtocol.getInputStream());
 
 			tlsClientProtocol.connect(tlsClient);
+
+			writer = tlsClientProtocol.getOutputStream();
+			reader = new TextStreamReader(tlsClientProtocol.getInputStream());
 
 			restartStream();
 		} catch (javax.net.ssl.SSLHandshakeException e) {
