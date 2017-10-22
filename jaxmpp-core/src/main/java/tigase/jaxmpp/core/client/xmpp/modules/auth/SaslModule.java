@@ -155,6 +155,11 @@ public class SaslModule
 		}
 	}
 
+	public void removeAllMechanisms() {
+		mechanisms.clear();
+		mechanismsOrder.clear();
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;

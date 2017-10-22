@@ -21,17 +21,11 @@
 
 package tigase.jaxmpp.core.client.xmpp.modules.auth.scram;
 
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
-
-import java.security.MessageDigest;
-import java.security.cert.Certificate;
-
 public class ScramSHA256PlusMechanism
 		extends ScramPlusMechanism {
 
 	public ScramSHA256PlusMechanism() {
-		super("SCRAM-SHA-256-PLUS", "SHA256", "Client Key".getBytes(UTF_CHARSET), "Server Key".getBytes(UTF_CHARSET));
+		super("SCRAM-SHA-256-PLUS", "SHA-256", "Client Key".getBytes(UTF_CHARSET), "Server Key".getBytes(UTF_CHARSET));
 	}
 
 }

@@ -74,12 +74,16 @@ public abstract class AbstractScram
 
 	private final String algorithm;
 	private final byte[] clientKeyData;
+	private final String hmacAlgorithm;
 	private final String mechanismName;
 	private final Random random = new SecureRandom();
 	private final byte[] serverKeyData;
 
 	public static byte[] hi(String algorithm, byte[] password, final byte[] salt, final int iterations)
 			throws InvalidKeyException, NoSuchAlgorithmException {
+		if (algorithm.startsWith("SHA-")) {
+			algorithm = algorithm.replace("SHA-", "SHA");
+		}
 		final SecretKeySpec k = new SecretKeySpec(password, "Hmac" + algorithm);
 
 		byte[] z = new byte[salt.length + 4];
@@ -116,6 +120,7 @@ public abstract class AbstractScram
 		this.clientKeyData = clientKey;
 		this.serverKeyData = serverKey;
 		this.algorithm = algorithm;
+		this.hmacAlgorithm = "Hmac" + (algorithm.startsWith("SHA-") ? algorithm.replace("SHA-", "SHA") : algorithm);
 		this.mechanismName = mechanismName;
 	}
 
@@ -146,12 +151,20 @@ public abstract class AbstractScram
 						break;
 				}
 				sb.append(",");
-				// sb.append("a=").append(userJID.toString());
+
+				String username = sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY);
+				boolean forceAuthzid = Boolean.TRUE.equals(sessionObject.getProperty(FORCE_AUTHZID));
+				if ((username != null && !username.equals(userJID.getLocalpart())) || forceAuthzid) {
+					sb.append("a=").append(userJID.toString());
+				}
+				if (username == null){
+					username = userJID.getLocalpart();
+				}
 				sb.append(',');
 				data.cb = sb.toString();
 
 				sb = new StringBuilder();
-				sb.append("n=").append(userJID.getLocalpart()).append(',');
+				sb.append("n=").append(username).append(',');
 				sb.append("r=").append(data.conce);
 				data.clientFirstMessageBare = sb.toString();
 
@@ -267,7 +280,7 @@ public abstract class AbstractScram
 	}
 
 	protected SecretKey key(final byte[] key) {
-		return new SecretKeySpec(key, "Hmac" + algorithm);
+		return new SecretKeySpec(key, hmacAlgorithm);
 	}
 
 	@Override

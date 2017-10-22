@@ -27,7 +27,7 @@ public class ScramSHA256Mechanism
 		extends AbstractScram {
 
 	public ScramSHA256Mechanism() {
-		super("SCRAM-SHA-256", "SHA256", "Client Key".getBytes(UTF_CHARSET), "Server Key".getBytes(UTF_CHARSET));
+		super("SCRAM-SHA-256", "SHA-256", "Client Key".getBytes(UTF_CHARSET), "Server Key".getBytes(UTF_CHARSET));
 	}
 
 	@Override

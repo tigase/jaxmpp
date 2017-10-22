@@ -27,6 +27,8 @@ import tigase.jaxmpp.core.client.SessionObject;
  */
 public interface SaslMechanism {
 
+	static final String FORCE_AUTHZID = "SASL#FORCE_AUTHZID";
+
 	/**
 	 * Evaluating challenge received from server.
 	 *
