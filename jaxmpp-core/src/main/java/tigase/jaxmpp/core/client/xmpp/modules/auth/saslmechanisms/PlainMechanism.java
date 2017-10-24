@@ -46,16 +46,21 @@ public class PlainMechanism
 			}
 			BareJID userJID = sessionObject.getProperty(SessionObject.USER_BARE_JID);
 
-			boolean forceAuthzid = Boolean.TRUE.equals(sessionObject.getProperty(FORCE_AUTHZID));
+			Boolean forceAuthzid = sessionObject.getProperty(FORCE_AUTHZID);
 
 			String authcid;
-			if (sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY) != null && forceAuthzid) {
+			if (sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY) != null) {
 				authcid = sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY);
 			} else {
 				authcid = userJID.getLocalpart();
 			}
 
-			String lreq = ((!authcid.equals(userJID.getLocalpart()) || forceAuthzid) ? userJID.toString() : "") + NULL + authcid + NULL +
+			String authzid = "";
+			if ((!authcid.equals(userJID.getLocalpart()) && !Boolean.FALSE.equals(forceAuthzid)) || Boolean.TRUE.equals(forceAuthzid)) {
+				authzid = userJID.toString();
+			}
+
+			String lreq = authzid + NULL + authcid + NULL +
 					callback.getCredential();
 
 			try {

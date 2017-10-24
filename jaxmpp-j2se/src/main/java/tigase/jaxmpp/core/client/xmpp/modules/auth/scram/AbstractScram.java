@@ -153,8 +153,9 @@ public abstract class AbstractScram
 				sb.append(",");
 
 				String username = sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY);
-				boolean forceAuthzid = Boolean.TRUE.equals(sessionObject.getProperty(FORCE_AUTHZID));
-				if ((username != null && !username.equals(userJID.getLocalpart())) || forceAuthzid) {
+				Boolean forceAuthzid = sessionObject.getProperty(FORCE_AUTHZID);
+				//boolean forceAuthzid = Boolean.TRUE.equals(sessionObject.getProperty(FORCE_AUTHZID));
+				if ((username != null && !username.equals(userJID.getLocalpart()) && !Boolean.FALSE.equals(forceAuthzid)) || Boolean.TRUE.equals(forceAuthzid)) {
 					sb.append("a=").append(userJID.toString());
 				}
 				if (username == null){
