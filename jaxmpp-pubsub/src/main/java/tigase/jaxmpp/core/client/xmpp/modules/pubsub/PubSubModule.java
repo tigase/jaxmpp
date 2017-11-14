@@ -523,6 +523,20 @@ public class PubSubModule
 			}
 		}
 
+		Element configuration = event == null ? null : event.getFirstChild("configuration");
+		if (configuration != null) {
+			JabberDataElement config = null;
+			String node = configuration.getAttribute("node");
+			if (node != null) {
+				Element x = configuration.getFirstChild("x");
+				if (x != null && "jabber:x:data".equals(x.getXMLNS())) {
+					config = new JabberDataElement(x);
+				}
+				fireEvent(new NodeConfigurationChangeNotificationReceivedHandler.NodeConfigurationChangeNotificationReceivedEvent(
+						context.getSessionObject(), message, message.getFrom(), node, config));
+			}
+		}
+
 	}
 
 	/**
@@ -1199,6 +1213,49 @@ public class PubSubModule
 			}
 
 		}
+	}
+
+	public interface NodeConfigurationChangeNotificationReceivedHandler extends EventHandler {
+
+		void onNodeConfigurationChangeNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID, String node, JabberDataElement nodeConfig);
+
+		class NodeConfigurationChangeNotificationReceivedEvent extends JaxmppEvent<NodeConfigurationChangeNotificationReceivedHandler> {
+
+			private Message message;
+			private JID pubSubJID;
+			private String node;
+			private JabberDataElement nodeConfig;
+
+			public NodeConfigurationChangeNotificationReceivedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String node, JabberDataElement nodeConfig) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.node = node;
+				this.nodeConfig = nodeConfig;
+			}
+
+			@Override
+			public void dispatch(NodeConfigurationChangeNotificationReceivedHandler handler) throws Exception {
+				handler.onNodeConfigurationChangeNotificationReceived(sessionObject, message, pubSubJID, node, nodeConfig);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+			public String getNode() {
+				return node;
+			}
+
+			public JabberDataElement getNodeConfig() {
+				return nodeConfig;
+			}
+		}
+
 	}
 
 	public static class AffiliationElement
