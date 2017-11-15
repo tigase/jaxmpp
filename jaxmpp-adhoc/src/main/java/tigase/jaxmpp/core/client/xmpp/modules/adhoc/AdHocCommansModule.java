@@ -378,7 +378,11 @@ public class AdHocCommansModule
 							   ? null
 							   : State.valueOf(this.command.getAttribute("status"));
 
-				JabberDataElement data = new JabberDataElement(this.command.getChildrenNS("x", "jabber:x:data"));
+				JabberDataElement data = null;
+				Element x = this.command.getChildrenNS("x", "jabber:x:data");
+				if (x != null) {
+					data = new JabberDataElement(x);
+				}
 
 				onResponseReceived(sessionid, node, status, data);
 			}

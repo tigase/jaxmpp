@@ -272,7 +272,7 @@ public class ElementWrapper
 			removeChild(b);
 		} else if (value != null && b == null) {
 			b = ElementFactory.create(elemName);
-			addChild(b);
+			b = addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {
 			b.setValue(value);
@@ -286,7 +286,7 @@ public class ElementWrapper
 			removeChild(b);
 		} else if (value != null && b == null) {
 			b = ElementFactory.create(elemName, null, xmlns);
-			addChild(b);
+			b = addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {
 			b.setValue(value);
