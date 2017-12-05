@@ -949,8 +949,14 @@ public class SocketConnector
 				log.info("Resolving SRV recrd of domain '" + x + "'");
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
 				if (dnsResolver != null) {
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Using resolver provided by user: " + dnsResolver);
+					}
 					hosts.addAll(dnsResolver.resolve(x));
 				} else {
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Using built-in resolver");
+					}
 					hosts.addAll(DNSResolver.resolve(x));
 				}
 
@@ -959,7 +965,7 @@ public class SocketConnector
 			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
 			if (log.isLoggable(Level.FINER)) {
-				log.finer("Preparing connection to " + serverHost);
+				log.finer("Preparing connection to " + hosts);
 			}
 
 			for (Entry host : hosts) {
