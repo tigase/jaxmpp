@@ -86,8 +86,32 @@
 			<artifactId>jaxmpp-xep0013_flexible_offline</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-	</dependencies>
-
+        <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>jaxmpp-httpfileupload</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>jaxmpp-j2se</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>jaxmpp-mam</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>jaxmpp-im</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tigase</groupId>
+            <artifactId>jaxmpp-push</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 	<build>
 			<plugins>
 				<plugin>
