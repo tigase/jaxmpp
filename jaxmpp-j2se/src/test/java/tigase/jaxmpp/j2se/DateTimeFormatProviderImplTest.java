@@ -23,7 +23,9 @@ package tigase.jaxmpp.j2se;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class DateTimeFormatProviderImplTest
 		extends TestCase {
@@ -32,12 +34,39 @@ public class DateTimeFormatProviderImplTest
 
 	public void testFormat() {
 		String t = "2002-09-10T23:41:07Z";
-		Assert.assertEquals(t, dtf.format(dtf.parse(t)));
+		final Date d = dtf.parse(t);
+		Assert.assertEquals(t, dtf.format(d));
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2002, c.get(Calendar.YEAR));
+		Assert.assertEquals(8, c.get(Calendar.MONTH));
+		Assert.assertEquals(10, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(23, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(41, c.get(Calendar.MINUTE));
+		Assert.assertEquals(7, c.get(Calendar.SECOND));
+		Assert.assertEquals(0, c.get(Calendar.MILLISECOND));
+
 	}
 
 	public void testParse() {
 		Date d = new Date();
 		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
+
+		d = dtf.parse("2017-12-27T07:56:26.453+01:00");
+		Assert.assertNotNull("It should not be null", d);
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2017, c.get(Calendar.YEAR));
+		Assert.assertEquals(11, c.get(Calendar.MONTH));
+		Assert.assertEquals(27, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(56, c.get(Calendar.MINUTE));
+		Assert.assertEquals(26, c.get(Calendar.SECOND));
+		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
 	}
 
 }

@@ -35,7 +35,7 @@ public class DateTimeFormatProviderImpl
 
 	private static final String DATE = "(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)";
 
-	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)";
+	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)(\\.(\\d\\d\\d))?";
 
 	private static final String TIME_ZONE = "(([+-]\\d\\d:?\\d\\d)|Z)";
 
@@ -103,7 +103,8 @@ public class DateTimeFormatProviderImpl
 			int hh = Integer.valueOf(m.group(4));
 			int mm = Integer.valueOf(m.group(5));
 			int ss = Integer.valueOf(m.group(6));
-			String tzValue = m.group(7);
+			int ms = m.group(8)==null?0:Integer.valueOf(m.group(8));
+			String tzValue = m.group(9);
 			TimeZone tz;
 			if (tzValue.equals("Z")) {
 				tz = timeZoneUTC;
@@ -113,6 +114,7 @@ public class DateTimeFormatProviderImpl
 			Calendar calendar = Calendar.getInstance(tz);
 			calendar.clear();
 			calendar.set(yyyy, MM - 1, dd, hh, mm, ss);
+			calendar.set(Calendar.MILLISECOND, ms);
 			return calendar;
 		}
 
