@@ -537,6 +537,32 @@ public class PubSubModule
 			}
 		}
 
+		Element collection = event.getFirstChild("collection");
+		if (collection != null) {
+			String node = collection.getAttribute("node");
+			if (node != null) {
+				for (Element child : collection.getChildren()) {
+					String childNode = child.getAttribute("node");
+					if (childNode != null) {
+						try {
+							NotificationCollectionChildrenChangedHandler.Action action = NotificationCollectionChildrenChangedHandler.Action
+									.valueOf(child.getName());
+							fireEvent(new NotificationCollectionChildrenChangedHandler.NotificationCollectionChildrenChangedEvent(context.getSessionObject(), message, message.getFrom(), node, childNode, action, delayTime));
+						} catch (IllegalArgumentException e) {
+							// nothing to do, ignoring...
+						}
+					}
+				}
+			}
+		}
+
+		Element delete = event.getFirstChild("delete");
+		if (delete != null) {
+			String node = delete.getAttribute("node");
+			if (node != null) {
+				fireEvent(new NotificationNodeDeletedHander.NotificationNodeDeletedEvent(context.getSessionObject(), message, message.getFrom(), node));
+			}
+		}
 	}
 
 	/**
@@ -1256,6 +1282,119 @@ public class PubSubModule
 			}
 		}
 
+	}
+
+	public interface NotificationCollectionChildrenChangedHandler
+			extends EventHandler {
+
+		void onNotificationCollectionChildrenChangedReceived(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName, String childNode, Action action, Date delayTime);
+
+		class NotificationCollectionChildrenChangedEvent
+				extends JaxmppEvent<NotificationCollectionChildrenChangedHandler> {
+
+			private final Action action;
+
+			private final Date delayTime;
+
+			private final Message message;
+
+			private final String nodeName;
+
+			private final String childNodeName;
+
+			private final JID pubSubJID;
+
+			public NotificationCollectionChildrenChangedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName, String childNode, Action action, Date delayTime) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.nodeName = nodeName;
+				this.childNodeName = childNode;
+				this.action = action;
+				this.delayTime = delayTime;
+			}
+
+			@Override
+			public void dispatch(NotificationCollectionChildrenChangedHandler handler) {
+				handler.onNotificationCollectionChildrenChangedReceived(sessionObject, message, pubSubJID, nodeName, childNodeName, action, delayTime);
+			}
+
+			public Action getAction() {
+				return action;
+			}
+
+			public String getChildNodeName() {
+				return childNodeName;
+			}
+
+			public Date getDelayTime() {
+				return delayTime;
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNodeName() {
+				return nodeName;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+		}
+
+		public enum Action {
+			associate,
+			dissociate
+		}
+	}
+
+	public interface NotificationNodeDeletedHander
+			extends EventHandler {
+
+		void onNodeDeleted(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName);
+
+		class NotificationNodeDeletedEvent
+				extends JaxmppEvent<NotificationNodeDeletedHander> {
+
+			private final Message message;
+
+			private final String nodeName;
+
+			private final JID pubSubJID;
+
+			public NotificationNodeDeletedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.nodeName = nodeName;
+			}
+
+			@Override
+			public void dispatch(NotificationNodeDeletedHander handler) {
+				handler.onNodeDeleted(sessionObject, message, pubSubJID, nodeName);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNodeName() {
+				return nodeName;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+		}
+
+		public enum Action {
+			associate,
+			dissociate
+		}
 	}
 
 	public static class AffiliationElement
