@@ -109,6 +109,16 @@ public abstract class Stanza
 		return errorCondition;
 	}
 
+	public String getErrorMessage() throws XMLException {
+		Element errorEl = getFirstChild("error");
+		if (errorEl == null) {
+			return null;
+		}
+
+		Element textEl = errorEl.getChildrenNS("text", XMPPException.XMLNS);
+		return textEl == null ? null : textEl.getValue();
+	}
+
 	/**
 	 * Returns 'from' attribute.
 	 *
