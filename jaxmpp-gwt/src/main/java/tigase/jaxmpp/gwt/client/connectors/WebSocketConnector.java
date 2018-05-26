@@ -238,7 +238,12 @@ public class WebSocketConnector
 		// This would only reduce number of roundtrips in case of an error.
 		// WARNING: old Tigase will not throw an exception when new protocol is tried - it will just hang.
 		// Good idea would be also to allow user to pass protocol version (new, old, autodetection [old and if failed try the new one])
-		socket = new WebSocket(url, new String[]{"xmpp", "xmpp-framing"}, socketCallback);
+		try {
+			socket = new WebSocket(url, new String[]{"xmpp", "xmpp-framing"}, socketCallback);
+		} catch (Exception ex) {
+			setStage(State.disconnected);
+			throw ex;
+		}
 	}
 
 	@Override

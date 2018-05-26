@@ -153,6 +153,9 @@ public class ConnectionManager
 	}
 
 	private boolean isUsableUrl(String url) {
+		if (com.google.gwt.user.client.Window.Location.getProtocol().startsWith("https")) {
+			return url != null && (url.startsWith("https://") || url.startsWith("wss://"));
+		}
 		return url != null && (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("ws://") ||
 				url.startsWith("wss://"));
 	}

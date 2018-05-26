@@ -22,6 +22,8 @@ package tigase.jaxmpp.gwt.client.connectors;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.user.client.Window.Location;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +40,10 @@ public class WebSocket {
         return $wnd.WebSocket != undefined;
     }-*/;
 
-	public WebSocket(String url, String protocol, WebSocketCallback callback) {
+	public WebSocket(String url, String protocol, WebSocketCallback callback) throws SecurityException {
+		if (url.startsWith("ws://") && Location.getProtocol().startsWith("https")) {
+			throw new SecurityException("Cannot connect using unsecured WebSocket connection from the HTTPS site.");
+		}
 		this.callback = callback;
 		JsArrayString jsProtocols = (JsArrayString) JsArrayString.createArray();
 		if (protocol != null) {
@@ -47,7 +52,10 @@ public class WebSocket {
 		this.jsWebSocket = createJSWebSocket(url, jsProtocols, this);
 	}
 
-	public WebSocket(String url, String[] protocols, WebSocketCallback callback) {
+	public WebSocket(String url, String[] protocols, WebSocketCallback callback) throws SecurityException {
+		if (url.startsWith("ws://") && Location.getProtocol().startsWith("https")) {
+			throw new SecurityException("Cannot connect using unsecured WebSocket connection from the HTTPS site.");
+		}
 		this.callback = callback;
 		JsArrayString jsProtocols = (JsArrayString) JsArrayString.createArray();
 		if (protocols != null) {
@@ -137,4 +145,12 @@ public class WebSocket {
         if (!message) return;
         this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.send(message);
     }-*/;
+	
+	public static class SecurityException extends JaxmppException {
+		
+		public SecurityException(String message) {
+			super(message);
+		}
+		
+	}
 }
