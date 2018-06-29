@@ -110,7 +110,8 @@ public class UnifiedRegistrationForm
 					case "FORM_TYPE":
 						break;
 					default:
-						String v = f.getFieldValue().toString();
+						Object o = f.getFieldValue();
+						String v = o == null ? null : o.toString();
 						result.addChild(ElementFactory.create(f.getVar(), v, null));
 				}
 			}
