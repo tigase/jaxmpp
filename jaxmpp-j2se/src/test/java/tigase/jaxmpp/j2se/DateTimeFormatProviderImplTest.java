@@ -33,7 +33,7 @@ public class DateTimeFormatProviderImplTest
 	private final DateTimeFormatProviderImpl dtf = new DateTimeFormatProviderImpl();
 
 	public void testFormat() {
-		String t = "2002-09-10T23:41:07Z";
+		String t = "2002-09-10T23:41:07.000Z";
 		final Date d = dtf.parse(t);
 		Assert.assertEquals(t, dtf.format(d));
 
@@ -48,6 +48,12 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(7, c.get(Calendar.SECOND));
 		Assert.assertEquals(0, c.get(Calendar.MILLISECOND));
 
+	}
+
+	public void testFormatWithMilis() {
+		String t = "2017-12-27T07:56:26.453Z";
+		final Date d = dtf.parse(t);
+		Assert.assertEquals(t, dtf.format(d));
 	}
 
 	public void testParse() {

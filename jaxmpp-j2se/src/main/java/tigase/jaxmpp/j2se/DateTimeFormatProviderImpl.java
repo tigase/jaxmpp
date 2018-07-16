@@ -57,7 +57,7 @@ public class DateTimeFormatProviderImpl
 		this.dateTimePattern = Pattern.compile("^" + DATE + "T" + TIME + TIME_ZONE + "?$");
 		this.datePattern = Pattern.compile("^" + DATE + "$");
 		this.timePattern = Pattern.compile("^" + TIME + TIME_ZONE + "?$");
-		this.dateTimeFormatUTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		this.dateTimeFormatUTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		this.dateTimeFormatUTC.setTimeZone(timeZoneUTC);
 
 		this.dateFormat = new SimpleDateFormat("yyyy-MM-dd");
