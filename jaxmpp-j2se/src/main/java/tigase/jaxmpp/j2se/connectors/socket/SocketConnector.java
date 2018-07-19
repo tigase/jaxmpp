@@ -942,11 +942,12 @@ public class SocketConnector
 			ArrayList<Entry> hosts = new ArrayList<>();
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost != null) {
+				log.info("DNS entry stored in session object: "+serverHost);
 				hosts.add(serverHost);
 			}
 			if (hosts.isEmpty()) {
 				String x = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
-				log.info("Resolving SRV recrd of domain '" + x + "'");
+				log.info("Resolving SRV record of domain '" + x + "'");
 				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
 				if (dnsResolver != null) {
 					if (log.isLoggable(Level.FINE)) {

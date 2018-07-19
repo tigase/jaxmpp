@@ -20,17 +20,17 @@
  */
 package tigase.jaxmpp.android;
 
+import android.util.Log;
 import org.xbill.DNS.*;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DnsResolver;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class AndroidDNSResolver
 		implements DnsResolver {
+
+	private static String TAG = "AndroidDNSResolver";
 
 	private final HashMap<String, Entry> cache = new HashMap<String, Entry>();
 	private long lastAccess = -1;
@@ -42,12 +42,18 @@ public class AndroidDNSResolver
 		int weight = 0;
 		Lookup lookup;
 
+		Log.v(TAG, "Looking for DNS record of domain " + domain);
 		try {
 			lookup = new Lookup(domain, Type.SRV);
+			lookup.setResolver(new ExtendedResolver());
 			Record recs[] = lookup.run();
 			if (recs == null) {
+				Log.v(TAG, "SRV records for " + domain + " not found.");
 				return null;
 			}
+
+			Log.v(TAG, "SRV records for " + domain + " found: " + Arrays.toString(recs));
+
 			for (Record rec : recs) {
 				SRVRecord record = (SRVRecord) rec;
 				if (record != null && record.getTarget() != null) {
@@ -67,14 +73,16 @@ public class AndroidDNSResolver
 					}
 				}
 			}
-		} catch (TextParseException e) {
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
+			Log.e(TAG, "Problem with resolving " + domain, e);
 		}
 		if (hostName == null) {
+			Log.v(TAG, "Returning null");
 			return null;
 		} else if (hostName.endsWith(".")) {
 			hostName = hostName.substring(0, hostName.length() - 1);
 		}
+		Log.v(TAG, "Returning " + hostName + ":" + hostPort);
 		return new Entry(hostName, hostPort);
 	}
 
@@ -83,10 +91,13 @@ public class AndroidDNSResolver
 
 	@Override
 	public List<Entry> resolve(final String hostname) {
+		Log.v(TAG, "Resolving domain " + hostname);
+
 		ArrayList<Entry> result = new ArrayList<Entry>();
 		synchronized (cache) {
 			long now = (new Date()).getTime();
 			if (now - lastAccess > 1000 * 60 * 10) {
+				Log.v(TAG, "Clearing cache");
 				cache.clear();
 			}
 			lastAccess = now;
@@ -94,6 +105,7 @@ public class AndroidDNSResolver
 				Entry address = cache.get(hostname);
 				if (address != null) {
 					result.add(address);
+					Log.v(TAG, "Found record for domain " + hostname + " in cache: " + result);
 					return result;
 				}
 			}
@@ -104,14 +116,17 @@ public class AndroidDNSResolver
 
 			if (rr == null) {
 				rr = new Entry(hostname, 5222);
+				Log.v(TAG, "Nothing found. Using default entry " + rr);
 			}
 
 			synchronized (cache) {
+				Log.v(TAG, "Adding entry do cache: " + hostname + "->" + rr);
 				cache.put(hostname, rr);
 			}
 
 			result.add(rr);
 		} catch (Exception e) {
+			Log.w(TAG, "Something goes wrong during resolving DNS entry for domain " + hostname, e);
 			result.add(new Entry(hostname, 5222));
 		}
 		return result;
