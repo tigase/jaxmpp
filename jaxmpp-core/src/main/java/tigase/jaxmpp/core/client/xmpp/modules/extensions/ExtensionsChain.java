@@ -29,7 +29,8 @@ import java.util.logging.Logger;
 
 public class ExtensionsChain {
 
-	protected final Collection<Extension> extensions = new ArrayList<Extension>();
+	// any method which tries to modify this collection needs to be synchronized and replace collection instead modify it directly
+	private Collection<Extension> extensions = Collections.emptyList();
 
 	private Logger log;
 
@@ -37,12 +38,14 @@ public class ExtensionsChain {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}
 
-	public void addExtension(Extension f) {
-		this.extensions.add(f);
+	public synchronized void addExtension(Extension f) {
+		ArrayList<Extension> tmp = new ArrayList<>(extensions);
+		tmp.add(f);
+		this.extensions = Collections.unmodifiableCollection(tmp);
 	}
 
 	public Element executeAfterReceiveChain(final Element element) {
-		Iterator<Extension> it = extensions.iterator();
+		Iterator<Extension> it = getExtensionIterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
 			Extension x = it.next();
@@ -56,7 +59,7 @@ public class ExtensionsChain {
 	}
 
 	public Element executeBeforeSendChain(final Element element) {
-		Iterator<Extension> it = extensions.iterator();
+		Iterator<Extension> it = getExtensionIterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
 			Extension x = it.next();
@@ -69,12 +72,12 @@ public class ExtensionsChain {
 		return e;
 	}
 
-	public Collection<Extension> getExtension() {
-		return Collections.unmodifiableCollection(extensions);
+	public synchronized Collection<Extension> getExtension() {
+		return extensions;
 	}
 
 	public <T extends Extension> T getExtension(Class<T> cls) {
-		Iterator<Extension> it = extensions.iterator();
+		Iterator<Extension> it = getExtensionIterator();
 		while (it.hasNext()) {
 			Extension x = it.next();
 			// in GWT there is no support for isAssignableFrom so following
@@ -90,8 +93,9 @@ public class ExtensionsChain {
 
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
-		for (Extension e : this.extensions) {
-			final String[] fs = e.getFeatures();
+		Iterator<Extension> it = getExtensionIterator();
+		while (it.hasNext()) {
+			final String[] fs = it.next().getFeatures();
 			if (fs != null) {
 				for (String string : fs) {
 					result.add(string);
@@ -101,8 +105,14 @@ public class ExtensionsChain {
 		return result;
 	}
 
-	public void removeExtension(Extension f) {
-		this.extensions.remove(f);
+	public synchronized void removeExtension(Extension f) {
+		ArrayList<Extension> tmp = new ArrayList<>(extensions);
+		tmp.remove(f);
+		this.extensions = Collections.unmodifiableCollection(tmp);
+	}
+
+	private synchronized Iterator<Extension> getExtensionIterator() {
+		return this.extensions.iterator();
 	}
 
 }
