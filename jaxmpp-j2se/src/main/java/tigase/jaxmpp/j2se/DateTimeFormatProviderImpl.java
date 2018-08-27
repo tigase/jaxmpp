@@ -35,7 +35,7 @@ public class DateTimeFormatProviderImpl
 
 	private static final String DATE = "(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)";
 
-	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)(\\.(\\d\\d\\d))?";
+	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)(\\.(\\d+))?";
 
 	private static final String TIME_ZONE = "(([+-]\\d\\d:?\\d\\d)|Z)";
 
@@ -103,7 +103,19 @@ public class DateTimeFormatProviderImpl
 			int hh = Integer.valueOf(m.group(4));
 			int mm = Integer.valueOf(m.group(5));
 			int ss = Integer.valueOf(m.group(6));
-			int ms = m.group(8)==null?0:Integer.valueOf(m.group(8));
+			String msStr = m.group(8);
+			int ms = 0;
+			if (msStr != null && !msStr.isEmpty()) {
+				if (msStr.length() > 3) {
+					msStr = msStr.substring(0, 3);
+					ms = Integer.valueOf(msStr);
+				} else {
+					ms = Integer.valueOf(msStr);
+					for (int i=0; i<3-msStr.length(); i++) {
+						ms = ms * 10;
+					}
+				}
+			}
 			String tzValue = m.group(9);
 			TimeZone tz;
 			if (tzValue.equals("Z")) {

@@ -75,4 +75,80 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
 	}
 
+	public void testParseWithoutMillis() {
+		Date d = new Date();
+		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
+
+		d = dtf.parse("2017-12-27T07:56:26+01:00");
+		Assert.assertNotNull("It should not be null", d);
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2017, c.get(Calendar.YEAR));
+		Assert.assertEquals(11, c.get(Calendar.MONTH));
+		Assert.assertEquals(27, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(56, c.get(Calendar.MINUTE));
+		Assert.assertEquals(26, c.get(Calendar.SECOND));
+	}
+
+	public void testParseWithMillisOnOnePosition() {
+		Date d = new Date();
+		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
+
+		d = dtf.parse("2017-12-27T07:56:26.4+01:00");
+		Assert.assertNotNull("It should not be null", d);
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2017, c.get(Calendar.YEAR));
+		Assert.assertEquals(11, c.get(Calendar.MONTH));
+		Assert.assertEquals(27, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(56, c.get(Calendar.MINUTE));
+		Assert.assertEquals(26, c.get(Calendar.SECOND));
+		Assert.assertEquals(400, c.get(Calendar.MILLISECOND));
+	}
+
+
+	public void testParseWithMillisOnTwoPositions() {
+		Date d = new Date();
+		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
+
+		d = dtf.parse("2017-12-27T07:56:26.45+01:00");
+		Assert.assertNotNull("It should not be null", d);
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2017, c.get(Calendar.YEAR));
+		Assert.assertEquals(11, c.get(Calendar.MONTH));
+		Assert.assertEquals(27, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(56, c.get(Calendar.MINUTE));
+		Assert.assertEquals(26, c.get(Calendar.SECOND));
+		Assert.assertEquals(450, c.get(Calendar.MILLISECOND));
+	}
+
+	public void testParseWithMillisOnFourPositions() {
+		Date d = new Date();
+		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
+
+		d = dtf.parse("2017-12-27T07:56:26.4531+01:00");
+		Assert.assertNotNull("It should not be null", d);
+
+		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c.setTime(d);
+
+		Assert.assertEquals(2017, c.get(Calendar.YEAR));
+		Assert.assertEquals(11, c.get(Calendar.MONTH));
+		Assert.assertEquals(27, c.get(Calendar.DAY_OF_MONTH));
+		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
+		Assert.assertEquals(56, c.get(Calendar.MINUTE));
+		Assert.assertEquals(26, c.get(Calendar.SECOND));
+		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
+	}
+
 }
