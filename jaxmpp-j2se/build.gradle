@@ -42,5 +42,4 @@ dependencies {
     compile project(':jaxmpp-presence')
     compile project(':jaxmpp-registration')
     compile 'tigase:tigase-xmltools:4.0.0-SNAPSHOT'
-    compile 'dnsjava:dnsjava:2.1.7'
 }
