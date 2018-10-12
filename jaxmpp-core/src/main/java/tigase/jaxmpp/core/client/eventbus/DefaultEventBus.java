@@ -102,10 +102,14 @@ public class DefaultEventBus
 
 	protected void doFire(Event<EventHandler> event, ArrayList<EventHandler> handlers) {
 		final Set<Throwable> causes = new HashSet<Throwable>();
-
+		if (log.isLoggable(Level.FINER)) {
+			log.finer("Fire event: " + event);
+		}
 		for (EventHandler eventHandler : handlers) {
 			try {
-				log.finest("Calling handler class " + eventHandler.getClass() + " with event " + event.getClass());
+				if (log.isLoggable(Level.FINEST)) {
+					log.finest("Calling handler " + eventHandler.getClass() + " with event " + event.getClass());
+				}
 				if (eventHandler instanceof EventListener) {
 					((EventListener) eventHandler).onEvent(event);
 				} else {

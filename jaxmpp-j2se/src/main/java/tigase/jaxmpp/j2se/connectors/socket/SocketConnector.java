@@ -856,6 +856,7 @@ public class SocketConnector
 			log.finest("Restarting XMPP Stream");
 		}
 		send(sb.toString().getBytes(UTF_CHARSET));
+		context.getEventBus().fire(new StreamRestartedHandler.StreamRestaredEvent(context.getSessionObject()));
 	}
 
 	public void send(byte[] buffer) throws JaxmppException {

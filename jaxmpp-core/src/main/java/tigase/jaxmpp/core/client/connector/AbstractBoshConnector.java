@@ -335,6 +335,7 @@ public abstract class AbstractBoshConnector
 	public void restartStream() throws JaxmppException {
 		if (getState() != State.disconnected) {
 			processSendData(prepareRetartBody());
+			context.getEventBus().fire(new StreamRestartedHandler.StreamRestaredEvent(context.getSessionObject()));
 		}
 	}
 

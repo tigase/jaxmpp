@@ -281,6 +281,7 @@ public abstract class AbstractWebSocketConnector
 			log.finest("Restarting XMPP Stream");
 		}
 		send(sb.toString());
+		context.getEventBus().fire(new StreamRestartedHandler.StreamRestaredEvent(context.getSessionObject()));
 	}
 
 	@Override

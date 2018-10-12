@@ -482,6 +482,26 @@ public interface Connector {
 		}
 	}
 
+	interface StreamRestartedHandler
+			extends EventHandler {
+
+		void onStreamRestarted(SessionObject sessionObject) throws JaxmppException;
+
+		class StreamRestaredEvent
+				extends JaxmppEvent<StreamRestartedHandler> {
+
+			public StreamRestaredEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(StreamRestartedHandler handler) throws JaxmppException {
+				handler.onStreamRestarted(sessionObject);
+			}
+
+		}
+	}
+
 	/**
 	 * Implemented by handlers of {@linkplain StreamTerminatedEvent
 	 * StreamTerminatedEvent}.
@@ -514,5 +534,4 @@ public interface Connector {
 
 		}
 	}
-
 }

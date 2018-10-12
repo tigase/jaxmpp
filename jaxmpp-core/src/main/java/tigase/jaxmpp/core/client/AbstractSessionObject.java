@@ -70,13 +70,12 @@ public abstract class AbstractSessionObject
 	}
 
 	public synchronized void clear(Set<Scope> scopes) throws JaxmppException {
-		log.fine("Clearing properties!");
-
 		if (scopes == null || scopes.isEmpty()) {
 			scopes = new HashSet<SessionObject.Scope>();
 			scopes.add(Scope.session);
 			scopes.add(Scope.stream);
 		}
+		log.fine("Clearing properties in scopes " + scopes);
 
 		Iterator<java.util.Map.Entry<String, Entry>> iterator = this.properties.entrySet().iterator();
 		while (iterator.hasNext()) {
