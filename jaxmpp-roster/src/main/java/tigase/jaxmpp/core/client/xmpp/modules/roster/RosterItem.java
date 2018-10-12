@@ -81,8 +81,8 @@ public class RosterItem {
 	private final ArrayList<String> groups = new ArrayList<String>();
 	private final BareJID jid;
 	private final SessionObject sessionObject;
-	private boolean ask;
 	private boolean approved;
+	private boolean ask;
 	private String name;
 	private Subscription subscription;
 
@@ -181,6 +181,14 @@ public class RosterItem {
 		return jid.hashCode();
 	}
 
+	public boolean isApproved() {
+		return approved;
+	}
+
+	public void setApproved(boolean approved) {
+		this.approved = approved;
+	}
+
 	/**
 	 * Checks if subscription was requested.
 	 *
@@ -192,14 +200,6 @@ public class RosterItem {
 
 	public void setAsk(boolean ask) {
 		this.ask = ask;
-	}
-
-	public boolean isApproved() {
-		return approved;
-	}
-
-	public void setApproved(boolean approved) {
-		this.approved = approved;
 	}
 
 	/**

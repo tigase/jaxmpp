@@ -106,7 +106,8 @@ public abstract class AbstractScram
 		return result;
 	}
 
-	protected static byte[] hmac(final SecretKey key, byte[] data) throws NoSuchAlgorithmException, InvalidKeyException {
+	protected static byte[] hmac(final SecretKey key, byte[] data)
+			throws NoSuchAlgorithmException, InvalidKeyException {
 		Mac mac = Mac.getInstance(key.getAlgorithm());
 		mac.init(key);
 		return mac.doFinal(data);
@@ -155,10 +156,11 @@ public abstract class AbstractScram
 				String username = sessionObject.getProperty(AuthModule.LOGIN_USER_NAME_KEY);
 				Boolean forceAuthzid = sessionObject.getProperty(FORCE_AUTHZID);
 				//boolean forceAuthzid = Boolean.TRUE.equals(sessionObject.getProperty(FORCE_AUTHZID));
-				if ((username != null && !username.equals(userJID.getLocalpart()) && !Boolean.FALSE.equals(forceAuthzid)) || Boolean.TRUE.equals(forceAuthzid)) {
+				if ((username != null && !username.equals(userJID.getLocalpart()) &&
+						!Boolean.FALSE.equals(forceAuthzid)) || Boolean.TRUE.equals(forceAuthzid)) {
 					sb.append("a=").append(userJID.toString());
 				}
-				if (username == null){
+				if (username == null) {
 					username = userJID.getLocalpart();
 				}
 				sb.append(',');

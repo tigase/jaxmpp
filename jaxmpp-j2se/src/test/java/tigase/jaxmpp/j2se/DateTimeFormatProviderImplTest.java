@@ -75,11 +75,11 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
 	}
 
-	public void testParseWithoutMillis() {
+	public void testParseWithMillisOnFourPositions() {
 		Date d = new Date();
 		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
 
-		d = dtf.parse("2017-12-27T07:56:26+01:00");
+		d = dtf.parse("2017-12-27T07:56:26.4531+01:00");
 		Assert.assertNotNull("It should not be null", d);
 
 		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -91,6 +91,7 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
 		Assert.assertEquals(56, c.get(Calendar.MINUTE));
 		Assert.assertEquals(26, c.get(Calendar.SECOND));
+		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
 	}
 
 	public void testParseWithMillisOnOnePosition() {
@@ -112,7 +113,6 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(400, c.get(Calendar.MILLISECOND));
 	}
 
-
 	public void testParseWithMillisOnTwoPositions() {
 		Date d = new Date();
 		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
@@ -132,11 +132,11 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(450, c.get(Calendar.MILLISECOND));
 	}
 
-	public void testParseWithMillisOnFourPositions() {
+	public void testParseWithoutMillis() {
 		Date d = new Date();
 		Assert.assertEquals(d.toString(), dtf.parse(dtf.format(d)).toString());
 
-		d = dtf.parse("2017-12-27T07:56:26.4531+01:00");
+		d = dtf.parse("2017-12-27T07:56:26+01:00");
 		Assert.assertNotNull("It should not be null", d);
 
 		Calendar c = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -148,7 +148,6 @@ public class DateTimeFormatProviderImplTest
 		Assert.assertEquals(6, c.get(Calendar.HOUR_OF_DAY));
 		Assert.assertEquals(56, c.get(Calendar.MINUTE));
 		Assert.assertEquals(26, c.get(Calendar.SECOND));
-		Assert.assertEquals(453, c.get(Calendar.MILLISECOND));
 	}
 
 }

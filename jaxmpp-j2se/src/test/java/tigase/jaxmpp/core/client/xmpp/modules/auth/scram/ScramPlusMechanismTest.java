@@ -49,7 +49,8 @@ public class ScramPlusMechanismTest {
 		Assert.assertEquals("p=tls-unique,,n=bmalkow,r=SpiXKmhi57DBp5sdE5G3H3ms", firstClientMessage);
 
 		String serverFirstMessage = "r=SpiXKmhi57DBp5sdE5G3H3ms5kLrhitKUHVoSOmzdR,s=Ey6OJnGx7JEJAIJp,i=4096";
-		String clientLastMessage = new String(Base64.decode(scram.evaluateChallenge(Base64.encode(serverFirstMessage.getBytes()), sessionObject)));
+		String clientLastMessage = new String(
+				Base64.decode(scram.evaluateChallenge(Base64.encode(serverFirstMessage.getBytes()), sessionObject)));
 		Assert.assertEquals(
 				"c=cD10bHMtdW5pcXVlLCxEUEk=,r=SpiXKmhi57DBp5sdE5G3H3ms5kLrhitKUHVoSOmzdR,p=+zQvUd4nQqo03thSCcc2K6gueD4=",
 				clientLastMessage);

@@ -207,7 +207,8 @@ public class ConnectionManager
 					Timer timer = new Timer() {
 						@Override
 						public void run() {
-							connectionFailure(uri != null ? uri : (String) sessionObject.getProperty(SEE_OTHER_HOST_URI), true);
+							connectionFailure(
+									uri != null ? uri : (String) sessionObject.getProperty(SEE_OTHER_HOST_URI), true);
 						}
 					};
 					timer.schedule(10);

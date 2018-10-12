@@ -39,14 +39,108 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HttpFileUploadModule implements XmppModule, ContextAware {
+public class HttpFileUploadModule
+		implements XmppModule, ContextAware {
 
 	private static final Logger log = Logger.getLogger(HttpFileUploadModule.class.getCanonicalName());
-	private static final String[] DISCO_FORM_PATH = { "iq", "query", "x" };
-	private static final String[] IQ_SLOT_PATH = { "iq", "slot" };
+	private static final String[] DISCO_FORM_PATH = {"iq", "query", "x"};
+	private static final String[] IQ_SLOT_PATH = {"iq", "slot"};
 	private static final String XMLNS = "urn:xmpp:http:upload:0";
 
 	private Context context;
+
+	public static void addFileInfoFormToStanza(Stanza stanza, String fileName, long size, String type)
+			throws XMLException {
+		JabberDataElement data = new JabberDataElement(XDataType.result);
+		data.addFORM_TYPE("http://tigase.org/protocol#fileinfo");
+		data.setInstructions("Information about a file");
+		data.addTextSingleField("filename", fileName);
+		data.addTextSingleField("size", String.valueOf(size));
+		if (type != null) {
+			data.addTextSingleField("type", type);
+		}
+		stanza.addChild(data);
+	}
+
+	public static void addOobLink(Stanza stanza, String url) throws XMLException {
+		Element x = ElementFactory.create("x", null, "jabber:x:oob");
+		x.addChild(ElementFactory.create("url", url, null));
+		stanza.addChild(x);
+	}
+
+	public void findHttpUploadComponents(BareJID domain, final DiscoveryResultHandler handler) throws JaxmppException {
+		context.getModuleProvider()
+				.getModule(DiscoveryModule.class)
+				.getItems(JID.jidInstance(domain), new DiscoveryModule.DiscoItemsAsyncCallback() {
+					@Override
+					public void onError(Stanza responseStanza, XMPPException.ErrorCondition error)
+							throws JaxmppException {
+						handler.onResult(Collections.<JID, Long>emptyMap());
+					}
+
+					@Override
+					public void onInfoReceived(String attribute, ArrayList<DiscoveryModule.Item> items)
+							throws XMLException {
+						final DiscoveryResultCollector collector = new DiscoveryResultCollector(items.size(), handler);
+						for (DiscoveryModule.Item item : items) {
+							final JID jid = item.getJid();
+							try {
+								context.getModuleProvider()
+										.getModule(DiscoveryModule.class)
+										.getInfo(item.getJid(),
+												 new DiscoveryModule.DiscoInfoAsyncCallback(item.getNode()) {
+													 @Override
+													 public void onError(Stanza responseStanza,
+																		 XMPPException.ErrorCondition error)
+															 throws JaxmppException {
+														 collector.error();
+													 }
+
+													 @Override
+													 protected void onInfoReceived(String node,
+																				   Collection<DiscoveryModule.Identity> identities,
+																				   Collection<String> features)
+															 throws XMLException {
+														 if (!features.contains(XMLNS)) {
+															 collector.onResponse();
+															 return;
+														 }
+
+														 long maxFileSize = Long.MAX_VALUE;
+														 Element x = this.responseStanza.findChild(DISCO_FORM_PATH);
+														 if (x != null && "jabber:x:data".equals(x.getXMLNS())) {
+															 try {
+																 TextSingleField field = ((TextSingleField) new JabberDataElement(
+																		 x).getField("max-file-size"));
+																 if (field != null && field.getFieldValue() != null) {
+																	 maxFileSize = Long.parseLong(
+																			 field.getFieldValue());
+																 }
+															 } catch (JaxmppException ex) {
+																 log.log(Level.FINE, "Form retrieval failed", ex);
+															 }
+														 }
+														 collector.found(jid, maxFileSize);
+													 }
+
+													 @Override
+													 public void onTimeout() throws JaxmppException {
+														 collector.error();
+													 }
+												 });
+							} catch (JaxmppException ex) {
+								log.log(Level.FINE, "Service discovery failed", ex);
+								collector.error();
+							}
+						}
+					}
+
+					@Override
+					public void onTimeout() throws JaxmppException {
+						handler.onResult(Collections.<JID, Long>emptyMap());
+					}
+				});
+	}
 
 	@Override
 	public Criteria getCriteria() {
@@ -62,76 +156,9 @@ public class HttpFileUploadModule implements XmppModule, ContextAware {
 	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
 
 	}
-	
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-	}
 
-	public void findHttpUploadComponents(BareJID domain, final DiscoveryResultHandler handler) throws JaxmppException {
-		context.getModuleProvider().getModule(DiscoveryModule.class).getItems(JID.jidInstance(domain), new DiscoveryModule.DiscoItemsAsyncCallback() {
-			@Override
-			public void onInfoReceived(String attribute, ArrayList<DiscoveryModule.Item> items) throws XMLException {
-				final DiscoveryResultCollector collector =  new DiscoveryResultCollector(items.size(), handler);
-				for (DiscoveryModule.Item item : items) {
-					final JID jid = item.getJid();
-					try {
-						context.getModuleProvider().getModule(DiscoveryModule.class).getInfo(item.getJid(), new DiscoveryModule.DiscoInfoAsyncCallback(item.getNode()) {
-							@Override
-							protected void onInfoReceived(String node, Collection<DiscoveryModule.Identity> identities,
-														  Collection<String> features) throws XMLException {
-								if (!features.contains(XMLNS)) {
-									collector.onResponse();
-									return;
-								}
-
-								long maxFileSize = Long.MAX_VALUE;
-								Element x = this.responseStanza.findChild(DISCO_FORM_PATH);
-								if (x != null && "jabber:x:data".equals(x.getXMLNS())) {
-									try {
-										TextSingleField field = ((TextSingleField) new JabberDataElement(x).getField("max-file-size"));
-										if (field != null && field.getFieldValue() != null) {
-											maxFileSize = Long.parseLong(field.getFieldValue());
-										}
-									} catch (JaxmppException ex) {
-										log.log(Level.FINE, "Form retrieval failed", ex);
-									}
-								}
-								collector.found(jid, maxFileSize);
-							}
-
-							@Override
-							public void onError(Stanza responseStanza, XMPPException.ErrorCondition error)
-									throws JaxmppException {
-								collector.error();
-							}
-
-							@Override
-							public void onTimeout() throws JaxmppException {
-								collector.error();
-							}
-						});
-					} catch (JaxmppException ex) {
-						log.log(Level.FINE, "Service discovery failed", ex);
-						collector.error();
-					}
-				}
-			}
-
-			@Override
-			public void onError(Stanza responseStanza, XMPPException.ErrorCondition error) throws JaxmppException {
-				handler.onResult(Collections.<JID, Long>emptyMap());
-			}
-
-			@Override
-			public void onTimeout() throws JaxmppException {
-				handler.onResult(Collections.<JID, Long>emptyMap());
-			}
-		});
-	}
-
-	public void requestUploadSlot(JID componentJid, String filename, Long size, String contentType, RequestUploadSlotHandler callback)
-			throws JaxmppException {
+	public void requestUploadSlot(JID componentJid, String filename, Long size, String contentType,
+								  RequestUploadSlotHandler callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(componentJid);
 		iq.setType(StanzaType.get);
@@ -142,29 +169,51 @@ public class HttpFileUploadModule implements XmppModule, ContextAware {
 			request.setAttribute("content-type", contentType);
 		}
 		iq.addChild(request);
-		
+
 		context.getWriter().write(iq, callback);
 	}
 
-	public static void addOobLink(Stanza stanza, String url) throws XMLException {
-		Element x = ElementFactory.create("x", null, "jabber:x:oob");
-		x.addChild(ElementFactory.create("url", url, null));
-		stanza.addChild(x);
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
-	public static void addFileInfoFormToStanza(Stanza stanza, String fileName, long size, String type) throws XMLException {
-		JabberDataElement data = new JabberDataElement(XDataType.result);
-		data.addFORM_TYPE("http://tigase.org/protocol#fileinfo");
-		data.setInstructions("Information about a file");
-		data.addTextSingleField("filename", fileName);
-		data.addTextSingleField("size", String.valueOf(size));
-		if (type != null) {
-			data.addTextSingleField("type", type);
+	public interface DiscoveryResultHandler {
+
+		void onResult(Map<JID, Long> results);
+
+	}
+
+	private static final class DiscoveryResultCollector {
+
+		private final DiscoveryResultHandler callback;
+		private final Map<JID, Long> results = new HashMap<>();
+		private int counter;
+
+		public DiscoveryResultCollector(int count, DiscoveryResultHandler callback) {
+			this.counter = count;
+			this.callback = callback;
 		}
-		stanza.addChild(data);
+
+		public synchronized void error() {
+			onResponse();
+		}
+
+		public synchronized void found(JID jid, long maxFileSize) {
+			results.put(jid, maxFileSize);
+			onResponse();
+		}
+
+		public synchronized void onResponse() {
+			counter--;
+			if (counter <= 0) {
+				this.callback.onResult(results);
+			}
+		}
 	}
 
-	public static abstract class RequestUploadSlotHandler implements AsyncCallback {
+	public static abstract class RequestUploadSlotHandler
+			implements AsyncCallback {
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -197,9 +246,9 @@ public class HttpFileUploadModule implements XmppModule, ContextAware {
 
 	public static class Slot {
 
-		private final String putUri;
-		private final Map<String, String> putHeaders;
 		private final String getUri;
+		private final Map<String, String> putHeaders;
+		private final String putUri;
 
 		public Slot(String putUri, Map<String, String> putHeaders, String getUri) {
 			this.putUri = putUri;
@@ -207,50 +256,16 @@ public class HttpFileUploadModule implements XmppModule, ContextAware {
 			this.getUri = getUri;
 		}
 
-		public String getPutUri() {
-			return putUri;
+		public String getGetUri() {
+			return getUri;
 		}
 
 		public Map<String, String> getPutHeaders() {
 			return putHeaders;
 		}
 
-		public String getGetUri() {
-			return getUri;
+		public String getPutUri() {
+			return putUri;
 		}
-	}
-
-	private static final class DiscoveryResultCollector {
-
-		private int counter;
-		private final DiscoveryResultHandler callback;
-		private final Map<JID, Long> results = new HashMap<>();
-
-		public DiscoveryResultCollector(int count, DiscoveryResultHandler callback) {
-			this.counter = count;
-			this.callback = callback;
-		}
-
-		public synchronized void found(JID jid, long maxFileSize) {
-			results.put(jid, maxFileSize);
-			onResponse();
-		}
-
-		public synchronized void error() {
-			onResponse();
-		}
-
-		public synchronized void onResponse() {
-			counter--;
-			if (counter <= 0) {
-				this.callback.onResult(results);
-			}
-		}
-	}
-
-	public interface DiscoveryResultHandler {
-
-		void onResult(Map<JID,Long> results);
-
 	}
 }

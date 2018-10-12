@@ -111,7 +111,7 @@ public class DateTimeFormatProviderImpl
 					ms = Integer.valueOf(msStr);
 				} else {
 					ms = Integer.valueOf(msStr);
-					for (int i=0; i<3-msStr.length(); i++) {
+					for (int i = 0; i < 3 - msStr.length(); i++) {
 						ms = ms * 10;
 					}
 				}

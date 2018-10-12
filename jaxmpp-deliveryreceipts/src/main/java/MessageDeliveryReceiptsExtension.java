@@ -73,7 +73,8 @@ public class MessageDeliveryReceiptsExtension
 		if (received != null) {
 			String id = received.getAttribute("id");
 			context.getEventBus()
-					.fire(new ReceiptReceivedHandler.ReceiptReceivedEvent(context.getSessionObject(), chat, message, id));
+					.fire(new ReceiptReceivedHandler.ReceiptReceivedEvent(context.getSessionObject(), chat, message,
+																		  id));
 		}
 		return message;
 	}

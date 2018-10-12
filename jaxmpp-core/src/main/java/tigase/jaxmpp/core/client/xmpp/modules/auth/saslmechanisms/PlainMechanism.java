@@ -56,12 +56,12 @@ public class PlainMechanism
 			}
 
 			String authzid = "";
-			if ((!authcid.equals(userJID.getLocalpart()) && !Boolean.FALSE.equals(forceAuthzid)) || Boolean.TRUE.equals(forceAuthzid)) {
+			if ((!authcid.equals(userJID.getLocalpart()) && !Boolean.FALSE.equals(forceAuthzid)) ||
+					Boolean.TRUE.equals(forceAuthzid)) {
 				authzid = userJID.toString();
 			}
 
-			String lreq = authzid + NULL + authcid + NULL +
-					callback.getCredential();
+			String lreq = authzid + NULL + authcid + NULL + callback.getCredential();
 
 			try {
 				String base64 = Base64.encode(lreq.getBytes("UTF-8"));

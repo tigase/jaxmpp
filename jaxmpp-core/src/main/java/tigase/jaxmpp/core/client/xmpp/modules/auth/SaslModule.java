@@ -155,11 +155,6 @@ public class SaslModule
 		}
 	}
 
-	public void removeAllMechanisms() {
-		mechanisms.clear();
-		mechanismsOrder.clear();
-	}
-
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
@@ -309,6 +304,11 @@ public class SaslModule
 					.fire(new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(),
 																		SaslError.server_not_trusted));
 		}
+	}
+
+	public void removeAllMechanisms() {
+		mechanisms.clear();
+		mechanismsOrder.clear();
 	}
 
 	@Override

@@ -82,6 +82,7 @@ public abstract class JaxmppCore {
 	protected XmppStreamsManager streamsManager;
 	protected PacketWriter writer = new DefaultPacketWriter();
 	private StreamManagementModule ackModule;
+
 	public JaxmppCore() {
 		this.log = Logger.getLogger(this.getClass().getName());
 	}

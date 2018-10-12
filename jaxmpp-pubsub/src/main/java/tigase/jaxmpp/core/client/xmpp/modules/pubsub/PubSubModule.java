@@ -532,8 +532,9 @@ public class PubSubModule
 				if (x != null && "jabber:x:data".equals(x.getXMLNS())) {
 					config = new JabberDataElement(x);
 				}
-				fireEvent(new NodeConfigurationChangeNotificationReceivedHandler.NodeConfigurationChangeNotificationReceivedEvent(
-						context.getSessionObject(), message, message.getFrom(), node, config));
+				fireEvent(
+						new NodeConfigurationChangeNotificationReceivedHandler.NodeConfigurationChangeNotificationReceivedEvent(
+								context.getSessionObject(), message, message.getFrom(), node, config));
 			}
 		}
 
@@ -547,7 +548,10 @@ public class PubSubModule
 						try {
 							NotificationCollectionChildrenChangedHandler.Action action = NotificationCollectionChildrenChangedHandler.Action
 									.valueOf(child.getName());
-							fireEvent(new NotificationCollectionChildrenChangedHandler.NotificationCollectionChildrenChangedEvent(context.getSessionObject(), message, message.getFrom(), node, childNode, action, delayTime));
+							fireEvent(
+									new NotificationCollectionChildrenChangedHandler.NotificationCollectionChildrenChangedEvent(
+											context.getSessionObject(), message, message.getFrom(), node, childNode,
+											action, delayTime));
 						} catch (IllegalArgumentException e) {
 							// nothing to do, ignoring...
 						}
@@ -560,7 +564,9 @@ public class PubSubModule
 		if (delete != null) {
 			String node = delete.getAttribute("node");
 			if (node != null) {
-				fireEvent(new NotificationNodeDeletedHander.NotificationNodeDeletedEvent(context.getSessionObject(), message, message.getFrom(), node));
+				fireEvent(new NotificationNodeDeletedHander.NotificationNodeDeletedEvent(context.getSessionObject(),
+																						 message, message.getFrom(),
+																						 node));
 			}
 		}
 	}
@@ -1149,6 +1155,169 @@ public class PubSubModule
 		unsubscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
 	}
 
+	public interface NodeConfigurationChangeNotificationReceivedHandler
+			extends EventHandler {
+
+		void onNodeConfigurationChangeNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID,
+														   String node, JabberDataElement nodeConfig);
+
+		class NodeConfigurationChangeNotificationReceivedEvent
+				extends JaxmppEvent<NodeConfigurationChangeNotificationReceivedHandler> {
+
+			private Message message;
+			private String node;
+			private JabberDataElement nodeConfig;
+			private JID pubSubJID;
+
+			public NodeConfigurationChangeNotificationReceivedEvent(SessionObject sessionObject, Message message,
+																	JID pubSubJID, String node,
+																	JabberDataElement nodeConfig) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.node = node;
+				this.nodeConfig = nodeConfig;
+			}
+
+			@Override
+			public void dispatch(NodeConfigurationChangeNotificationReceivedHandler handler) throws Exception {
+				handler.onNodeConfigurationChangeNotificationReceived(sessionObject, message, pubSubJID, node,
+																	  nodeConfig);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNode() {
+				return node;
+			}
+
+			public JabberDataElement getNodeConfig() {
+				return nodeConfig;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+		}
+
+	}
+
+	public interface NotificationCollectionChildrenChangedHandler
+			extends EventHandler {
+
+		public enum Action {
+			associate,
+			dissociate
+		}
+
+		void onNotificationCollectionChildrenChangedReceived(SessionObject sessionObject, Message message,
+															 JID pubSubJID, String nodeName, String childNode,
+															 Action action, Date delayTime);
+
+		class NotificationCollectionChildrenChangedEvent
+				extends JaxmppEvent<NotificationCollectionChildrenChangedHandler> {
+
+			private final Action action;
+			private final String childNodeName;
+			private final Date delayTime;
+			private final Message message;
+			private final String nodeName;
+			private final JID pubSubJID;
+
+			public NotificationCollectionChildrenChangedEvent(SessionObject sessionObject, Message message,
+															  JID pubSubJID, String nodeName, String childNode,
+															  Action action, Date delayTime) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.nodeName = nodeName;
+				this.childNodeName = childNode;
+				this.action = action;
+				this.delayTime = delayTime;
+			}
+
+			@Override
+			public void dispatch(NotificationCollectionChildrenChangedHandler handler) {
+				handler.onNotificationCollectionChildrenChangedReceived(sessionObject, message, pubSubJID, nodeName,
+																		childNodeName, action, delayTime);
+			}
+
+			public Action getAction() {
+				return action;
+			}
+
+			public String getChildNodeName() {
+				return childNodeName;
+			}
+
+			public Date getDelayTime() {
+				return delayTime;
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNodeName() {
+				return nodeName;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+		}
+	}
+
+	public interface NotificationNodeDeletedHander
+			extends EventHandler {
+
+		public enum Action {
+			associate,
+			dissociate
+		}
+
+		void onNodeDeleted(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName);
+
+		class NotificationNodeDeletedEvent
+				extends JaxmppEvent<NotificationNodeDeletedHander> {
+
+			private final Message message;
+
+			private final String nodeName;
+
+			private final JID pubSubJID;
+
+			public NotificationNodeDeletedEvent(SessionObject sessionObject, Message message, JID pubSubJID,
+												String nodeName) {
+				super(sessionObject);
+				this.message = message;
+				this.pubSubJID = pubSubJID;
+				this.nodeName = nodeName;
+			}
+
+			@Override
+			public void dispatch(NotificationNodeDeletedHander handler) {
+				handler.onNodeDeleted(sessionObject, message, pubSubJID, nodeName);
+			}
+
+			public Message getMessage() {
+				return message;
+			}
+
+			public String getNodeName() {
+				return nodeName;
+			}
+
+			public JID getPubSubJID() {
+				return pubSubJID;
+			}
+
+		}
+	}
+
 	public interface NotificationReceivedHandler
 			extends EventHandler {
 
@@ -1238,162 +1407,6 @@ public class PubSubModule
 				this.pubSubJID = pubSubJID;
 			}
 
-		}
-	}
-
-	public interface NodeConfigurationChangeNotificationReceivedHandler extends EventHandler {
-
-		void onNodeConfigurationChangeNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID, String node, JabberDataElement nodeConfig);
-
-		class NodeConfigurationChangeNotificationReceivedEvent extends JaxmppEvent<NodeConfigurationChangeNotificationReceivedHandler> {
-
-			private Message message;
-			private JID pubSubJID;
-			private String node;
-			private JabberDataElement nodeConfig;
-
-			public NodeConfigurationChangeNotificationReceivedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String node, JabberDataElement nodeConfig) {
-				super(sessionObject);
-				this.message = message;
-				this.pubSubJID = pubSubJID;
-				this.node = node;
-				this.nodeConfig = nodeConfig;
-			}
-
-			@Override
-			public void dispatch(NodeConfigurationChangeNotificationReceivedHandler handler) throws Exception {
-				handler.onNodeConfigurationChangeNotificationReceived(sessionObject, message, pubSubJID, node, nodeConfig);
-			}
-
-			public Message getMessage() {
-				return message;
-			}
-
-			public JID getPubSubJID() {
-				return pubSubJID;
-			}
-
-			public String getNode() {
-				return node;
-			}
-
-			public JabberDataElement getNodeConfig() {
-				return nodeConfig;
-			}
-		}
-
-	}
-
-	public interface NotificationCollectionChildrenChangedHandler
-			extends EventHandler {
-
-		void onNotificationCollectionChildrenChangedReceived(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName, String childNode, Action action, Date delayTime);
-
-		class NotificationCollectionChildrenChangedEvent
-				extends JaxmppEvent<NotificationCollectionChildrenChangedHandler> {
-
-			private final Action action;
-
-			private final Date delayTime;
-
-			private final Message message;
-
-			private final String nodeName;
-
-			private final String childNodeName;
-
-			private final JID pubSubJID;
-
-			public NotificationCollectionChildrenChangedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName, String childNode, Action action, Date delayTime) {
-				super(sessionObject);
-				this.message = message;
-				this.pubSubJID = pubSubJID;
-				this.nodeName = nodeName;
-				this.childNodeName = childNode;
-				this.action = action;
-				this.delayTime = delayTime;
-			}
-
-			@Override
-			public void dispatch(NotificationCollectionChildrenChangedHandler handler) {
-				handler.onNotificationCollectionChildrenChangedReceived(sessionObject, message, pubSubJID, nodeName, childNodeName, action, delayTime);
-			}
-
-			public Action getAction() {
-				return action;
-			}
-
-			public String getChildNodeName() {
-				return childNodeName;
-			}
-
-			public Date getDelayTime() {
-				return delayTime;
-			}
-
-			public Message getMessage() {
-				return message;
-			}
-
-			public String getNodeName() {
-				return nodeName;
-			}
-
-			public JID getPubSubJID() {
-				return pubSubJID;
-			}
-
-		}
-
-		public enum Action {
-			associate,
-			dissociate
-		}
-	}
-
-	public interface NotificationNodeDeletedHander
-			extends EventHandler {
-
-		void onNodeDeleted(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName);
-
-		class NotificationNodeDeletedEvent
-				extends JaxmppEvent<NotificationNodeDeletedHander> {
-
-			private final Message message;
-
-			private final String nodeName;
-
-			private final JID pubSubJID;
-
-			public NotificationNodeDeletedEvent(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName) {
-				super(sessionObject);
-				this.message = message;
-				this.pubSubJID = pubSubJID;
-				this.nodeName = nodeName;
-			}
-
-			@Override
-			public void dispatch(NotificationNodeDeletedHander handler) {
-				handler.onNodeDeleted(sessionObject, message, pubSubJID, nodeName);
-			}
-
-			public Message getMessage() {
-				return message;
-			}
-
-			public String getNodeName() {
-				return nodeName;
-			}
-
-			public JID getPubSubJID() {
-				return pubSubJID;
-			}
-
-		}
-
-		public enum Action {
-			associate,
-			dissociate
 		}
 	}
 

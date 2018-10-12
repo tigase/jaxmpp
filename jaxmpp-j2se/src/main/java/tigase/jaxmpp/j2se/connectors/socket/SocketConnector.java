@@ -943,7 +943,7 @@ public class SocketConnector
 			ArrayList<Entry> hosts = new ArrayList<>();
 			Entry serverHost = getHostFromSessionObject();
 			if (serverHost != null) {
-				log.info("DNS entry stored in session object: "+serverHost);
+				log.info("DNS entry stored in session object: " + serverHost);
 				hosts.add(serverHost);
 			}
 			if (hosts.isEmpty()) {

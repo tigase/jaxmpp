@@ -123,18 +123,22 @@ public class StreamManagementModule
 		log = Logger.getLogger(this.getClass().getName());
 		this.jaxmpp = jaxmpp;
 
-		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class, new Connector.StanzaSendingHandler() {
+		jaxmpp.getEventBus()
+				.addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
+							new Connector.StanzaSendingHandler() {
 
-			@Override
-			public void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException {
-				processOutgoingElement(stanza);
-			}
-		});
+								@Override
+								public void onStanzaSending(SessionObject sessionObject, Element stanza)
+										throws JaxmppException {
+									processOutgoingElement(stanza);
+								}
+							});
 
 	}
 
 	public void addStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
-		this.context.getEventBus().addHandler(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
+		this.context.getEventBus()
+				.addHandler(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
 	}
 
 	public void addStreamManagementFailedHandler(StreamManagementFailedHandler handler) {
@@ -296,11 +300,14 @@ public class StreamManagementModule
 		if (!isAckEnabled(context.getSessionObject())) {
 			if (XMLNS.equals(element.getXMLNS())) {
 				try {
-					if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+					if ("resumed".equals(element.getName()) && element.getXMLNS() != null &&
+							XMLNS.endsWith(element.getXMLNS())) {
 						processResumed(element);
-					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null &&
+							XMLNS.endsWith(element.getXMLNS())) {
 						processFailed(element);
-					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null &&
+							XMLNS.endsWith(element.getXMLNS())) {
 						processStreamManagementEnabled(element);
 					}
 					return true;
@@ -341,7 +348,8 @@ public class StreamManagementModule
 		if (!isAckEnabled(context.getSessionObject())) {
 			return;
 		}
-		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
+		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null &&
+				XMLNS.endsWith(element.getXMLNS())) {
 			return;
 		}
 
@@ -387,7 +395,8 @@ public class StreamManagementModule
 			}
 		}
 
-		StreamResumedEvent event = new StreamResumedEvent(context.getSessionObject(), newH, element.getAttribute("previd"));
+		StreamResumedEvent event = new StreamResumedEvent(context.getSessionObject(), newH,
+														  element.getAttribute("previd"));
 		context.getEventBus().fire(event);
 	}
 
@@ -452,7 +461,8 @@ public class StreamManagementModule
 		Element resume = ElementFactory.create("resume", null, XMLNS);
 
 		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
-		resume.setAttribute("previd", (String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
+		resume.setAttribute("previd",
+							(String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
 
 		if (log.isLoggable(Level.INFO)) {
 			log.info("Stream resumption");

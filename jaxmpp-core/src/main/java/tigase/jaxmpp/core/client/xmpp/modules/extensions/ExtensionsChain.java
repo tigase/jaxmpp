@@ -91,6 +91,10 @@ public class ExtensionsChain {
 		return null;
 	}
 
+	private synchronized Iterator<Extension> getExtensionIterator() {
+		return this.extensions.iterator();
+	}
+
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		Iterator<Extension> it = getExtensionIterator();
@@ -109,10 +113,6 @@ public class ExtensionsChain {
 		ArrayList<Extension> tmp = new ArrayList<>(extensions);
 		tmp.remove(f);
 		this.extensions = Collections.unmodifiableCollection(tmp);
-	}
-
-	private synchronized Iterator<Extension> getExtensionIterator() {
-		return this.extensions.iterator();
 	}
 
 }

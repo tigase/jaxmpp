@@ -133,7 +133,8 @@ public class MessageCarbonsModule
 			JID interlocutorJid = encapsulatedMessage.getFrom();
 			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
-			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(context.getSessionObject(), CarbonEventType.received, encapsulatedMessage, chat);
+			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
+					context.getSessionObject(), CarbonEventType.received, encapsulatedMessage, chat);
 			fireEvent(event);
 		}
 	}
@@ -147,7 +148,8 @@ public class MessageCarbonsModule
 			JID interlocutorJid = encapsulatedMessage.getTo();
 			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
-			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(context.getSessionObject(), CarbonEventType.sent, encapsulatedMessage, chat);
+			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
+					context.getSessionObject(), CarbonEventType.sent, encapsulatedMessage, chat);
 
 			fireEvent(event);
 		}
@@ -156,7 +158,8 @@ public class MessageCarbonsModule
 	public interface CarbonReceivedHandler
 			extends EventHandler {
 
-		void onCarbonReceived(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage, Chat chat);
+		void onCarbonReceived(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage,
+							  Chat chat);
 
 		class CarbonReceivedEvent
 				extends JaxmppEvent<CarbonReceivedHandler> {
@@ -165,7 +168,8 @@ public class MessageCarbonsModule
 			private Chat chat;
 			private Message encapsulatedMessage;
 
-			public CarbonReceivedEvent(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage, Chat chat) {
+			public CarbonReceivedEvent(SessionObject sessionObject, CarbonEventType carbonType,
+									   Message encapsulatedMessage, Chat chat) {
 				super(sessionObject);
 				this.carbonType = carbonType;
 				this.encapsulatedMessage = encapsulatedMessage;

@@ -145,12 +145,13 @@ public class WebSocket {
         if (!message) return;
         this.@tigase.jaxmpp.gwt.client.connectors.WebSocket::jsWebSocket.send(message);
     }-*/;
-	
-	public static class SecurityException extends JaxmppException {
-		
+
+	public static class SecurityException
+			extends JaxmppException {
+
 		public SecurityException(String message) {
 			super(message);
 		}
-		
+
 	}
 }

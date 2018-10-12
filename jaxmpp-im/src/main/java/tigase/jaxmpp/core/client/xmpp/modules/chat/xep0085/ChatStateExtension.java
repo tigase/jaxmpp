@@ -180,7 +180,8 @@ public class ChatStateExtension
 					}
 					if (holder != null) {
 						if (holder.getRecipientChatState() != null) {
-							context.getEventBus().fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
+							context.getEventBus()
+									.fire(new ChatStateChangedEvent(context.getSessionObject(), chat, null));
 						}
 						if (holder.getOwnChatState() != null && (holder.getOwnChatState() != ChatState.active ||
 								holder.getOwnChatState() != ChatState.gone)) {
