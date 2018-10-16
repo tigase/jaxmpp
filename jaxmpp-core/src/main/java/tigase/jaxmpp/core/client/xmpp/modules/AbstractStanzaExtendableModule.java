@@ -1,10 +1,13 @@
 /*
+ * AbstractStanzaExtendableModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,8 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -27,24 +28,15 @@ import tigase.jaxmpp.core.client.xmpp.modules.extensions.Extension;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtensionsChain;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends AbstractStanzaModule<T> implements
-		ExtendableModule {
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public abstract class AbstractStanzaExtendableModule<T extends Stanza>
+		extends AbstractStanzaModule<T>
+		implements ExtendableModule {
 
 	private final ExtensionsChain extensionsChain = new ExtensionsChain();
 
-	public String[] getFeaturesWithExtensions(String[] superFeatures) {
-		ArrayList<String> features = new ArrayList<String>();
-		if (superFeatures != null)
-			features.addAll(Arrays.asList(superFeatures));
-		for (Extension e : extensionsChain.getExtension()) {
-			String[] f = e.getFeatures();
-			if (f != null && f.length > 0) {
-				features.addAll(Arrays.asList(f));
-			}
-		}
-		return features.toArray(new String[features.size()]);
-	}
-	
 	@Override
 	public void addExtension(Extension e) {
 		extensionsChain.addExtension(e);
@@ -58,6 +50,20 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 		return extensionsChain;
 	}
 
+	public String[] getFeaturesWithExtensions(String[] superFeatures) {
+		ArrayList<String> features = new ArrayList<String>();
+		if (superFeatures != null) {
+			features.addAll(Arrays.asList(superFeatures));
+		}
+		for (Extension e : extensionsChain.getExtension()) {
+			String[] f = e.getFeatures();
+			if (f != null && f.length > 0) {
+				features.addAll(Arrays.asList(f));
+			}
+		}
+		return features.toArray(new String[features.size()]);
+	}
+
 	@Override
 	public void removeExtension(Extension e) {
 		extensionsChain.removeExtension(e);
@@ -66,22 +72,25 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza> extends A
 	@Override
 	protected void write(Element stanza) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
-		if (s != null)
+		if (s != null) {
 			context.getWriter().write(s);
+		}
 	}
 
 	@Override
 	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
-		if (s != null)
+		if (s != null) {
 			context.getWriter().write(s, asyncCallback);
+		}
 	}
 
 	@Override
 	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
-		if (s != null)
+		if (s != null) {
 			context.getWriter().write(s, timeout, asyncCallback);
+		}
 	}
 
 }

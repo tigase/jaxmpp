@@ -1,10 +1,33 @@
+/*
+ * build.gradle
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 buildscript {
     repositories {
         jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+//        classpath 'com.android.tools.build:gradle:2.2.0'
+        classpath 'com.android.tools.build:gradle:2.3.+'
+
     }
 }
 
@@ -22,9 +45,13 @@ publishing {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
 
+    lintOptions {
+        abortOnError false
+    }
+    
     compileOptions {
         sourceCompatibility defaultSourceCompatibility
         targetCompatibility defaultTargetCompatibility
@@ -33,7 +60,7 @@ android {
 
 dependencies {
     testCompile 'junit:junit:4.12'
-    compile 'dnsjava:dnsjava:2.1.7'
+    compile "org.minidns:minidns-hla:0.3.1"
     compile project(':jaxmpp-core')
     compile project(':jaxmpp-j2se')
     compile project(':jaxmpp-chat')

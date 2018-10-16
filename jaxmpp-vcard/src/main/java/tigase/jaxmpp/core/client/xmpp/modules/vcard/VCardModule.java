@@ -1,10 +1,13 @@
 /*
+ * VCardModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -29,23 +32,8 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class VCardModule extends AbstractStanzaModule<Stanza> {
-
-	public static abstract class VCardAsyncCallback implements AsyncCallback {
-
-		@Override
-		public void onSuccess(final Stanza responseStanza) throws XMLException {
-			Element query = responseStanza.getChildrenNS("vCard", "vcard-temp");
-			if (query != null) {
-				VCard v = new VCard();
-				v.loadData(query);
-				onVCardReceived(v);
-			}
-		}
-
-		protected abstract void onVCardReceived(VCard vcard) throws XMLException;
-
-	}
+public class VCardModule
+		extends AbstractStanzaModule<Stanza> {
 
 	public VCardModule() {
 	}
@@ -57,7 +45,7 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "vcard-temp" };
+		return new String[]{"vcard-temp"};
 	}
 
 	@Override
@@ -79,5 +67,22 @@ public class VCardModule extends AbstractStanzaModule<Stanza> {
 
 	public void retrieveVCard(JID jid, VCardAsyncCallback asyncCallback) throws JaxmppException {
 		retrieveVCard(jid, (AsyncCallback) asyncCallback);
+	}
+
+	public static abstract class VCardAsyncCallback
+			implements AsyncCallback {
+
+		@Override
+		public void onSuccess(final Stanza responseStanza) throws XMLException {
+			Element query = responseStanza.getChildrenNS("vCard", "vcard-temp");
+			if (query != null) {
+				VCard v = new VCard();
+				v.loadData(query);
+				onVCardReceived(v);
+			}
+		}
+
+		protected abstract void onVCardReceived(VCard vcard) throws XMLException;
+
 	}
 }

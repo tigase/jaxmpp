@@ -1,10 +1,13 @@
 /*
+ * AbstractWebSocketConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,7 +23,6 @@ package tigase.jaxmpp.core.client.connector;
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StreamPacket;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
@@ -33,7 +35,8 @@ import java.util.logging.Logger;
 /**
  * @author andrzej
  */
-public abstract class AbstractWebSocketConnector implements Connector {
+public abstract class AbstractWebSocketConnector
+		implements Connector {
 
 	public static final String FORCE_RFC_KEY = "websocket-force-rfc-mode";
 
@@ -76,12 +79,14 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	protected void fireOnStanzaReceived(StreamPacket response, SessionObject sessionObject) throws JaxmppException {
-		StanzaReceivedHandler.StanzaReceivedEvent event = new StanzaReceivedHandler.StanzaReceivedEvent(sessionObject, response);
+		StanzaReceivedHandler.StanzaReceivedEvent event = new StanzaReceivedHandler.StanzaReceivedEvent(sessionObject,
+																										response);
 		context.getEventBus().fire(event);
 	}
 
 	protected void fireOnTerminate(SessionObject sessionObject) throws JaxmppException {
-		StreamTerminatedHandler.StreamTerminatedEvent event = new StreamTerminatedHandler.StreamTerminatedEvent(sessionObject);
+		StreamTerminatedHandler.StreamTerminatedEvent event = new StreamTerminatedHandler.StreamTerminatedEvent(
+				sessionObject);
 		context.getEventBus().fire(event);
 	}
 
@@ -96,6 +101,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	 *
 	 * @param propertyName name of property
 	 * @param defaultValue default value if property is <code>null</code>.
+	 *
 	 * @return timeout value or <code>null</code> if value is less than 0.
 	 */
 	protected Integer getTimeout(String propertyName, int defaultValue) {
@@ -105,8 +111,9 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
-		if (response == null)
+		if (response == null) {
 			return false;
+		}
 
 		Element seeOtherHost = response.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
 		if (seeOtherHost != null) {
@@ -116,7 +123,8 @@ public abstract class AbstractWebSocketConnector implements Connector {
 				log.fine("Received see-other-host=" + seeHost);
 			}
 			MutableBoolean handled = new MutableBoolean();
-			context.getEventBus().fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+			context.getEventBus()
+					.fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
 
 			return false;
 		}
@@ -132,7 +140,8 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			log.log(Level.SEVERE, "could not properly handle see-other-host", ex);
 		}
 		MutableBoolean handled = new MutableBoolean();
-		context.getEventBus().fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeOtherUri, handled));
+		context.getEventBus()
+				.fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeOtherUri, handled));
 
 		return false;
 	}
@@ -148,17 +157,20 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	@Override
 	public void keepalive() throws JaxmppException {
-		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE)
+		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE) {
 			return;
-		if (getState() == Connector.State.connected)
+		}
+		if (getState() == Connector.State.connected) {
 			send(" ");
+		}
 	}
 
 	protected void onError(Element response, Throwable ex) {
 		try {
 			if (response != null) {
-				if (handleSeeOtherHost(response))
+				if (handleSeeOtherHost(response)) {
 					return;
+				}
 			}
 			onStreamTerminate();
 			fireOnError(response, ex, AbstractWebSocketConnector.this.context.getSessionObject());
@@ -184,8 +196,9 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			setStage(State.disconnected);
 		}
 
-		if (log.isLoggable(Level.FINE))
+		if (log.isLoggable(Level.FINE)) {
 			log.fine("Stream terminated");
+		}
 
 		terminateAllWorkers();
 		fireOnTerminate(context.getSessionObject());
@@ -215,9 +228,9 @@ public abstract class AbstractWebSocketConnector implements Connector {
 			}
 		}
 
-		if (("error".equals(child.getName()) && child.getXMLNS() != null && child.getXMLNS().equals(
-				"http://etherx.jabber.org/streams"))
-				|| "stream:error".equals(child.getName())) {
+		if (("error".equals(child.getName()) && child.getXMLNS() != null &&
+				child.getXMLNS().equals("http://etherx.jabber.org/streams")) ||
+				"stream:error".equals(child.getName())) {
 			onError(child, null);
 		} else {
 			StreamPacket p;
@@ -233,7 +246,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	@Override
-	public void restartStream() throws XMLException, JaxmppException {
+	public void restartStream() throws JaxmppException {
 		StringBuilder sb = new StringBuilder();
 		if (isRfc()) {
 			sb.append("<open ");
@@ -271,7 +284,7 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	@Override
-	public void send(Element stanza) throws XMLException, JaxmppException {
+	public void send(Element stanza) throws JaxmppException {
 		if (stanza == null) {
 			return;
 		}
@@ -289,8 +302,8 @@ public abstract class AbstractWebSocketConnector implements Connector {
 		this.context.getSessionObject().setProperty(SessionObject.Scope.stream, CONNECTOR_STAGE_KEY, state);
 		if (s != state) {
 			log.fine("Connector state changed: " + s + "->" + state);
-			StateChangedHandler.StateChangedEvent e = new StateChangedHandler.StateChangedEvent(context.getSessionObject(), s,
-					state);
+			StateChangedHandler.StateChangedEvent e = new StateChangedHandler.StateChangedEvent(
+					context.getSessionObject(), s, state);
 			context.getEventBus().fire(e);
 			if (state == State.disconnected) {
 				setStage(State.disconnected);
@@ -300,18 +313,20 @@ public abstract class AbstractWebSocketConnector implements Connector {
 	}
 
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		if (rfcCompatible == null) {
 			rfcCompatible = context.getSessionObject().getProperty(AbstractWebSocketConnector.FORCE_RFC_KEY);
 		}
-		if (rfcCompatible == null)
+		if (rfcCompatible == null) {
 			rfcCompatible = false;
+		}
 	}
 
 	@Override
 	public void stop() throws JaxmppException {
-		if (getState() == State.disconnected)
+		if (getState() == State.disconnected) {
 			return;
+		}
 		setStage(State.disconnecting);
 		try {
 			terminateStream();
@@ -324,10 +339,11 @@ public abstract class AbstractWebSocketConnector implements Connector {
 
 	@Override
 	public void stop(boolean terminate) throws JaxmppException {
-		if (terminate)
+		if (terminate) {
 			this.onStreamTerminate();
-		else
+		} else {
 			this.stop();
+		}
 	}
 
 	protected abstract void terminateAllWorkers() throws JaxmppException;

@@ -1,10 +1,13 @@
 /*
+ * Criteria.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,10 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.xep0136;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
@@ -28,52 +27,28 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.core.client.xmpp.utils.RSM;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- *
  * @author andrzej
  */
 public class Criteria {
 
 	private static final String QUERY_XMLNS = "http://tigase.org/protocol/archive#query";
-	
+
 	private static final DateTimeFormat format = new DateTimeFormat();
-	
-	private JID with;
-	private Date startTimestamp;
+	private Set<String> contains = new HashSet<String>();
 	private Date endTimestamp;
 	private RSM rsm = new RSM();
+	private Date startTimestamp;
 	private Set<String> tags = new HashSet<String>();
-	private Set<String> contains = new HashSet<String>();
-	
+	private JID with;
+
 	public Criteria() {
-		
-	}
-	
-	public Criteria setWith(JID jid) {
-		this.with = jid;
-		return this;
-	}
-	
-	public JID getWith() {
-		return with;
-	}
-	
-	public Criteria setStart(Date date) {
-		this.startTimestamp = date;
-		return this;
-	}
-	
-	public Date getStart() {
-		return startTimestamp;
-	}
-	
-	public Criteria setEnd(Date date) {
-		this.endTimestamp = date;
-		return this;
-	}
-	
-	public Date getEnd() {
-		return endTimestamp;
+
 	}
 
 	public Criteria addContains(String... contains) {
@@ -82,66 +57,98 @@ public class Criteria {
 		}
 		return this;
 	}
-	
-	public Criteria setContains(Collection<String> contains) {
-		this.contains.clear();
-		if (contains != null)
-			this.contains.addAll(contains);
-		return this;
-	}
-	
+
 	public Criteria addTags(String... tags) {
 		for (String tag : tags) {
 			this.tags.add(tag);
 		}
 		return this;
 	}
-	
-	public Criteria setTags(Collection<String> tags) {
-		this.tags.clear();
-		if (tags != null)
-			this.tags.addAll(tags);
+
+	public Date getEnd() {
+		return endTimestamp;
+	}
+
+	public Criteria setEnd(Date date) {
+		this.endTimestamp = date;
 		return this;
 	}
-	
-	public Criteria setBefore(String before) {
-		rsm.setBefore(before);
+
+	public Integer getLimit() {
+		return rsm.getMax();
+	}
+
+	public Criteria setLimit(Integer limit) {
+		rsm.setMax(limit);
 		return this;
 	}
-	
+
+	public Date getStart() {
+		return startTimestamp;
+	}
+
+	public Criteria setStart(Date date) {
+		this.startTimestamp = date;
+		return this;
+	}
+
+	public JID getWith() {
+		return with;
+	}
+
+	public Criteria setWith(JID jid) {
+		this.with = jid;
+		return this;
+	}
+
 	public Criteria setAfter(String after) {
 		rsm.setAfter(after);
 		return this;
 	}
-	
-	public Criteria setLastPage(Boolean val) {
-		rsm.setLastPage(val);
+
+	public Criteria setBefore(String before) {
+		rsm.setBefore(before);
+		return this;
+	}
+
+	public Criteria setContains(Collection<String> contains) {
+		this.contains.clear();
+		if (contains != null) {
+			this.contains.addAll(contains);
+		}
 		return this;
 	}
 
 	public Criteria setIndex(Integer index) {
 		rsm.setIndex(index);
 		return this;
-	}	
-	
-	public Integer getLimit() {
-		return rsm.getMax();
 	}
-	
-	public Criteria setLimit(Integer limit) {
-		rsm.setMax(limit);
+
+	public Criteria setLastPage(Boolean val) {
+		rsm.setLastPage(val);
 		return this;
 	}
-	
+
+	public Criteria setTags(Collection<String> tags) {
+		this.tags.clear();
+		if (tags != null) {
+			this.tags.addAll(tags);
+		}
+		return this;
+	}
+
 	public void toElement(Element e) throws XMLException {
-		if (with != null)
+		if (with != null) {
 			e.setAttribute("with", with.toString());
-		
-		if (startTimestamp != null)
+		}
+
+		if (startTimestamp != null) {
 			e.setAttribute("start", format.format(startTimestamp));
-		if (endTimestamp != null)
+		}
+		if (endTimestamp != null) {
 			e.setAttribute("end", format.format(endTimestamp));
-		
+		}
+
 		if (!tags.isEmpty() || !contains.isEmpty()) {
 			Element query = ElementFactory.create("query", null, QUERY_XMLNS);
 			for (String tag : tags) {
@@ -152,9 +159,10 @@ public class Criteria {
 			}
 			e.addChild(query);
 		}
-		
+
 		Element rsmEl = rsm.toElement();
-		if (rsmEl != null)
+		if (rsmEl != null) {
 			e.addChild(rsmEl);
+		}
 	}
 }

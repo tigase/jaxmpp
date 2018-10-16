@@ -1,10 +1,13 @@
 /*
+ * BoshConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,23 +36,22 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import java.util.List;
 import java.util.logging.Level;
 
-public class BoshConnector extends AbstractBoshConnector {
+public class BoshConnector
+		extends AbstractBoshConnector {
 
-	/** 
-	 * property used to disable usage of <bosh/> host attribute to redirect 
-	 * next requests to other hostname 
+	/**
+	 * property used to disable usage of <bosh/> host attribute to redirect
+	 * next requests to other hostname
 	 */
 	public static final String BOSH_IGNORE_SERVER_HOST = "BOSH#IGNORE_SERVER_HOST";
-			
-	private static final String HOST_ATTR = "host";
-	
-	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 
+	private static final String HOST_ATTR = "host";
+
+	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
+	private BoshWorker currentWorker = null;
 	private String host = null;
 	private RequestBuilder requestBuilder;
 
-    private BoshWorker currentWorker = null;
-        
 	public BoshConnector(Context context) {
 		super(context);
 
@@ -68,6 +70,74 @@ public class BoshConnector extends AbstractBoshConnector {
 		// requestBuilder.setHeader("Connection", "close");
 	}
 
+	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
+		if (response == null) {
+			return false;
+		}
+
+		List<Element> streamErrors = response.getChildren("stream:error");
+		if (streamErrors == null || streamErrors.isEmpty()) {
+			return false;
+		}
+		for (Element streamError : streamErrors) {
+			Element seeOtherHost = streamError.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
+			if (seeOtherHost != null) {
+				String seeHost = seeOtherHost.getValue();
+				if (log.isLoggable(Level.FINE)) {
+					log.fine("Received see-other-host=" + seeHost);
+				}
+				MutableBoolean handled = new MutableBoolean();
+				context.getEventBus()
+						.fire(new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
+				setStage(State.disconnecting);
+
+				return false;//handled.isValue();
+			}
+		}
+		return false;
+	}
+
+	@Override
+	protected void onError(BoshRequest request, int responseCode, String responseData, Element response,
+						   Throwable caught) throws JaxmppException {
+		if (response != null) {
+			if (handleSeeOtherHost(response)) {
+				return;
+			}
+		}
+		super.onError(request, responseCode, responseData, response, caught);
+	}
+
+	@Override
+	protected void onResponse(BoshRequest request, int responseCode, String responseData, Element response)
+			throws JaxmppException {
+		if (response != null && this.host != null) {
+			String host = response.getAttribute(HOST_ATTR);
+			if (host != null && !this.host.equals(host)) {
+				// if host of current request does not match host sent as attribute
+				// from server, then we need to recreate request builder to use
+				// new host for next request
+				this.host = host;
+
+				MatchResult result = URL_PARSER.exec(requestBuilder.getUrl());
+				String url =
+						result.getGroup(1) + "://" + host + (result.getGroup(3) != null ? result.getGroup(3) : "") +
+								result.getGroup(4);
+				requestBuilder = new RequestBuilder(RequestBuilder.POST, url.toString());
+			}
+		}
+		super.onResponse(request, responseCode, responseData, response);
+	}
+
+	@Override
+	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response)
+			throws JaxmppException {
+		if (handleSeeOtherHost(response)) {
+			return;
+		}
+		super.onTerminate(request, responseCode, responseData, response);
+	}
+
 	@Override
 	protected Element prepareBody(Element payload) throws XMLException {
 		// trying to reuse BoshWorker if data is not sent yet
@@ -80,27 +150,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	}
 
 	@Override
-	protected void onResponse(BoshRequest request, int responseCode, String responseData, Element response) throws JaxmppException {
-		if (response != null && this.host != null) {
-			String host = response.getAttribute(HOST_ATTR);
-			if (host != null && !this.host.equals(host)) {
-				// if host of current request does not match host sent as attribute
-				// from server, then we need to recreate request builder to use
-				// new host for next request
-				this.host = host;
-				
-				MatchResult result = URL_PARSER.exec(requestBuilder.getUrl());
-				String url = result.getGroup(1) + "://" + host 
-						+ (result.getGroup(3) != null ? result.getGroup(3) : "") 
-						+ result.getGroup(4);
-				requestBuilder = new RequestBuilder(RequestBuilder.POST, url.toString());
-			}
-		}
-		super.onResponse(request, responseCode, responseData, response);
-	}
-	
-	@Override
-	protected void processSendData(Element element) throws XMLException, JaxmppException {
+	protected void processSendData(Element element) throws JaxmppException {
 		if (element == null) {
 			return;
 		}
@@ -129,61 +179,21 @@ public class BoshConnector extends AbstractBoshConnector {
 
 		BoshPacketSendingHandler.BoshPacketSendingEvent event = new BoshPacketSendingHandler.BoshPacketSendingEvent(
 				context.getSessionObject(), element);
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 
-		if (log.isLoggable(Level.FINEST))
+		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Send: " + element.getAsString());
+		}
 
 		Scheduler.get().scheduleDeferred(worker);
 	}
 
 	/**
 	 * Keep handle to current BoshWorker instance until stanza is sent
-	 * 
+	 *
 	 * @param worker
 	 */
 	protected void setCurrentWorker(BoshWorker worker) {
 		this.currentWorker = worker;
-	}
-
-	@Override
-	protected void onError(BoshRequest request, int responseCode, String responseData, Element response, Throwable caught) throws JaxmppException {
-		if (response != null) {
-			if (handleSeeOtherHost(response)) 
-				return;
-		}
-		super.onError(request, responseCode, responseData, response, caught);
-	}
-	
-	@Override
-	protected void onTerminate(BoshRequest request, int responseCode, String responseData, Element response) throws JaxmppException {
-		if (handleSeeOtherHost(response)) 
-			return;
-		super.onTerminate(request, responseCode, responseData, response); 
-	}
-	
-	protected boolean handleSeeOtherHost(Element response) throws JaxmppException {
-		if (response == null) 
-			return false;
-		
-		List<Element> streamErrors = response.getChildren("stream:error");
-		if (streamErrors == null || streamErrors.isEmpty())
-			return false;
-		for (Element streamError : streamErrors) {
-			Element seeOtherHost = streamError.getChildrenNS("see-other-host", "urn:ietf:params:xml:ns:xmpp-streams");
-			if (seeOtherHost != null) {
-				String seeHost = seeOtherHost.getValue();
-				if (log.isLoggable(Level.FINE)) {
-					log.fine("Received see-other-host=" + seeHost);
-				}
-				MutableBoolean handled = new MutableBoolean();
-				context.getEventBus().fire(
-						new SeeOtherHostHandler.SeeOtherHostEvent(context.getSessionObject(), seeHost, handled));
-				setStage(State.disconnecting);
-
-				return false;//handled.isValue();
-			}
-		}
-		return false;
 	}
 }

@@ -1,10 +1,13 @@
 /*
+ * Field.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,34 +24,54 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 
 /**
  * Base interface for fields.
- * 
+ *
+ * @param <T> type of value
+ *
  * @author bmalkow
- * 
- * @param <T>
- *            type of value
  */
 public interface Field<T> {
 
 	/**
 	 * Returns natural-language description of field.
-	 * 
+	 *
 	 * @return description of field
 	 */
 	public String getDesc() throws XMLException;
 
 	/**
+	 * Set natural-language description of field.
+	 *
+	 * @param desc description of field
+	 */
+	public void setDesc(String desc) throws XMLException;
+
+	/**
 	 * Returns value of field.
-	 * 
+	 *
 	 * @return value
 	 */
 	T getFieldValue() throws XMLException;
 
 	/**
+	 * Sets value of field.
+	 *
+	 * @param value value of field
+	 */
+	void setFieldValue(T value) throws XMLException;
+
+	/**
 	 * Returns label of field.
-	 * 
+	 *
 	 * @return label
 	 */
 	public String getLabel() throws XMLException;
+
+	/**
+	 * Sets label of field.
+	 *
+	 * @param label label of field.
+	 */
+	public void setLabel(String label) throws XMLException;
 
 	/**
 	 * Returns field type. Types described in <a
@@ -68,62 +91,36 @@ public interface Field<T> {
 	 * <li><b>text-single</b> - implementation class
 	 * {@linkplain TextSingleField}</li>
 	 * </ul>
-	 * 
+	 *
 	 * @return field type.
 	 */
 	public String getType() throws XMLException;
 
 	/**
 	 * Returns name of field.
-	 * 
+	 *
 	 * @return name of field
 	 */
 	public String getVar() throws XMLException;
 
 	/**
+	 * Sets name of field.
+	 *
+	 * @param var name of field.
+	 */
+	public void setVar(String var) throws XMLException;
+
+	/**
 	 * Get is this field is required.
-	 * 
+	 *
 	 * @return <code>true</code> is field is required.
 	 */
 	public boolean isRequired() throws XMLException;
 
 	/**
-	 * Set natural-language description of field.
-	 * 
-	 * @param desc
-	 *            description of field
-	 */
-	public void setDesc(String desc) throws XMLException;
-
-	/**
-	 * Sets value of field.
-	 * 
-	 * @param value
-	 *            value of field
-	 */
-	void setFieldValue(T value) throws XMLException;
-
-	/**
-	 * Sets label of field.
-	 * 
-	 * @param label
-	 *            label of field.
-	 */
-	public void setLabel(String label) throws XMLException;
-
-	/**
 	 * Set if this field is required one.
-	 * 
-	 * @param isRequired
-	 *            <code>true</code> is field is required
+	 *
+	 * @param isRequired <code>true</code> is field is required
 	 */
 	public void setRequired(boolean isRequired) throws XMLException;
-
-	/**
-	 * Sets name of field.
-	 * 
-	 * @param var
-	 *            name of field.
-	 */
-	public void setVar(String var) throws XMLException;
 }

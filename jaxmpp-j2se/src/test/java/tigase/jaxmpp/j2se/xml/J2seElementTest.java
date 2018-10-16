@@ -1,10 +1,13 @@
 /*
+ * J2seElementTest.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,9 +20,6 @@
  */
 package tigase.jaxmpp.j2se.xml;
 
-import java.util.List;
-import java.util.Queue;
-
 import junit.framework.TestCase;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -27,7 +27,11 @@ import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
-public class J2seElementTest extends TestCase {
+import java.util.List;
+import java.util.Queue;
+
+public class J2seElementTest
+		extends TestCase {
 
 	private final SimpleParser parser = SingletonFactory.getParserInstance();
 

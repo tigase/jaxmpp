@@ -5,11 +5,19 @@
 	<artifactId>tigase-jaxmpp</artifactId>
 	<packaging>pom</packaging>
 	<name>Tigase XMPP Client Library</name>
-	<version>3.1.6-SNAPSHOT</version>
+	<version>3.2.0</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
+
+		<sign-keystore>/path/to/jks.keystore</sign-keystore>
+		<sign-alias>alias</sign-alias>
+		<sign-storepass>storepass</sign-storepass>
+		<sign-keypass>keypass</sign-keypass>
+		<sign-skip>true</sign-skip>
+		<verbose-log>false</verbose-log>
+		<tsa>${tsa-uri}</tsa>
 	</properties>
 
 	<inceptionYear>2006</inceptionYear>
@@ -48,7 +56,9 @@
 		<module>jaxmpp-deliveryreceipts</module>
 		<module>jaxmpp-pubsub</module>
 		<module>jaxmpp-adhoc</module>
+		<module>jaxmpp-mam</module>
 		<module>jaxmpp-filetransfer</module>
+		<module>jaxmpp-httpfileupload</module>
 		<module>jaxmpp-jingle</module>
 		<module>jaxmpp-socks5</module>
 		<module>jaxmpp-vcard</module>
@@ -57,6 +67,7 @@
 		<module>jaxmpp-im</module>
 		<module>jaxmpp-all</module>
 		<module>jaxmpp-j2se</module>
+		<module>jaxmpp-push</module>
 	</modules>
 
 	<profiles>
@@ -122,13 +133,52 @@
 		</profile>
 	</profiles>
 
+
 	<scm>
-		<developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
-    <tag>3.1.0</tag>
+		<connection>scm:git:https://git.tigase.tech/jaxmpp2.git</connection>
+		<developerConnection>scm:git:https://git.tigase.tech/jaxmpp2.git</developerConnection>
+		<url>https://tigase.tech/projects/jaxmpp2/repository</url>
+	  <tag>3.2.0</tag>
   </scm>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.gmaven</groupId>
+				<artifactId>gmaven-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>gitver</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>execute</goal>
+						</goals>
+						<configuration>
+							<providerSelection>2.0</providerSelection>
+							<properties>
+								<script>git rev-list HEAD --count</script>
+							</properties>
+							<source>
+								def version
+								try {
+								def command = project.properties.script
+								def process = command.execute()
+								process.waitFor()
+
+								version = process.in.text.trim()
+								} catch (Exception e) {
+								version = '0'
+								}
+								println "setting revision to: " + version
+
+								project.properties.setProperty( 'gitVersion' , version )
+
+							</source>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
 				<version>2.5.2</version>
@@ -143,8 +193,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
@@ -187,11 +237,41 @@
 							<reportOutputDirectory>docs/javadoc</reportOutputDirectory>
 							<destDir>docs/javadoc</destDir>
 							<additionalparam>-Xdoclint:none</additionalparam>
+							<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jarsigner-plugin</artifactId>
+				<version>1.4</version>
+				<executions>
+					<execution>
+						<id>sign</id>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<archiveDirectory>${project.basedir}</archiveDirectory>
+					<includes>
+						<include>target/tigase*.?ar</include>
+						<include>jars/tigase*.?ar</include>
+					</includes>
+					<processMainArtifact>false</processMainArtifact>
+					<processAttachedArtifacts>false</processAttachedArtifacts>
+					<tsa>${tsa-uri}</tsa>
+					<skip>${sign-skip}</skip>
 
+					<keystore>${sign-keystore}</keystore>
+					<alias>${sign-alias}</alias>
+					<storepass>${sign-storepass}</storepass>
+					<keypass>${sign-keypass}</keypass>
+					<verbose>${verbose-log}</verbose>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -208,12 +288,12 @@
 		<repository>
 			<id>tigase</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/release</url>
+			<url>https://maven-repo.tigase.net/repository/release</url>
 		</repository>
 		<repository>
 			<id>tigase-snapshot</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/snapshot</url>
+			<url>https://maven-repo.tigase.net/repository/snapshot</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
@@ -223,12 +303,12 @@
 		<repository>
 			<id>tigase</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/release</url>
+			<url>https://maven-repo.tigase.net/repository/release</url>
 		</repository>
 		<snapshotRepository>
 			<id>tigase-snapshot</id>
 			<name>Tigase snapshot repository</name>
-			<url>http://maven-repo.tigase.org/repository/snapshot</url>
+			<url>https://maven-repo.tigase.net/repository/snapshot</url>
 		</snapshotRepository>
 	</distributionManagement>
 

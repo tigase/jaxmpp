@@ -1,10 +1,13 @@
 /*
+ * StreamhostsCallback.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,13 +20,14 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.socks5;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public abstract class StreamhostsCallback implements AsyncCallback {
+import java.util.List;
+
+public abstract class StreamhostsCallback
+		implements AsyncCallback {
 
 	private Socks5BytestreamsModule socks5Manager;
 

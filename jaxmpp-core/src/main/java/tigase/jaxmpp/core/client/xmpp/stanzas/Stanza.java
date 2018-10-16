@@ -1,10 +1,13 @@
 /*
+ * Stanza.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,8 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.stanzas;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -27,38 +28,18 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.List;
+
 /**
  * Abstract representation of Stanza.
- *
  */
-public abstract class Stanza extends StreamPacket {
-
-	public static class UnkownStanzaTypeException extends JaxmppException {
-
-		private static final long serialVersionUID = 1L;
-
-		public UnkownStanzaTypeException() {
-			super();
-		}
-
-		public UnkownStanzaTypeException(String message) {
-			super(message);
-		}
-
-		public UnkownStanzaTypeException(String message, Throwable cause) {
-			super(message, cause);
-		}
-
-		public UnkownStanzaTypeException(Throwable cause) {
-			super(cause);
-		}
-
-	}
+public abstract class Stanza
+		extends StreamPacket {
 
 	public static boolean canBeConverted(final Element element) throws XMLException {
-		if (element instanceof Stanza)
+		if (element instanceof Stanza) {
 			return true;
-		else {
+		} else {
 			final String name = element.getName();
 			return ("presence".equals(name) || "message".equals(name) || "iq".equals(name));
 		}
@@ -67,22 +48,22 @@ public abstract class Stanza extends StreamPacket {
 	/**
 	 * Creates new stanza.
 	 *
-	 * @param element
-	 *            element containing stanza.
-	 * @return specific implementation od Stanza: {@linkplain IQ},
-	 *         {@linkplain Message} or {@linkplain Presence}.
+	 * @param element element containing stanza.
+	 *
+	 * @return specific implementation od Stanza: {@linkplain IQ}, {@linkplain Message} or {@linkplain Presence}.
 	 */
 	public static final Stanza create(final Element element) throws JaxmppException {
-		if (element instanceof Stanza)
+		if (element instanceof Stanza) {
 			return (Stanza) element;
+		}
 		final String name = element.getName();
-		if ("iq".equals(name))
+		if ("iq".equals(name)) {
 			return new IQ(element);
-		else if ("message".equals(name))
+		} else if ("message".equals(name)) {
 			return new Message(element);
-		else if ("presence".equals(name))
+		} else if ("presence".equals(name)) {
 			return new Presence(element);
-		else {
+		} else {
 			JaxmppException e = new UnkownStanzaTypeException("Unkown stanza type '" + name + "'");
 			throw e;
 		}
@@ -107,16 +88,16 @@ public abstract class Stanza extends StreamPacket {
 	/**
 	 * Returns {@linkplain ErrorCondition} element.
 	 *
-	 * @return {@linkplain ErrorCondition}. <code>null</code> is element not
-	 *         present.
+	 * @return {@linkplain ErrorCondition}. <code>null</code> is element not present.
 	 */
 	public ErrorCondition getErrorCondition() throws XMLException {
 		List<Element> es = getChildren("error");
 		final Element error;
-		if (es != null && es.size() > 0)
+		if (es != null && es.size() > 0) {
 			error = es.get(0);
-		else
+		} else {
 			error = null;
+		}
 
 		ErrorCondition errorCondition = null;
 		if (error != null) {
@@ -126,6 +107,16 @@ public abstract class Stanza extends StreamPacket {
 			}
 		}
 		return errorCondition;
+	}
+
+	public String getErrorMessage() throws XMLException {
+		Element errorEl = getFirstChild("error");
+		if (errorEl == null) {
+			return null;
+		}
+
+		Element textEl = errorEl.getChildrenNS("text", XMPPException.XMLNS);
+		return textEl == null ? null : textEl.getValue();
 	}
 
 	/**
@@ -139,12 +130,36 @@ public abstract class Stanza extends StreamPacket {
 	}
 
 	/**
+	 * Sets 'from' attribute.
+	 *
+	 * @param jid {@linkplain JID}
+	 */
+	public void setFrom(JID jid) throws XMLException {
+		if (jid == null) {
+			removeAttribute("from");
+		} else {
+			setAttribute("from", jid.toString());
+		}
+	}
+
+	/**
 	 * Returns id of stanza.
 	 *
 	 * @return id of stanza
 	 */
 	public String getId() throws XMLException {
 		return getAttribute("id");
+	}
+
+	/**
+	 * Sets id of stanza
+	 *
+	 * @param id id
+	 *
+	 * @throws XMLException
+	 */
+	public void setId(String id) throws XMLException {
+		setAttribute("id", id);
 	}
 
 	/**
@@ -158,6 +173,19 @@ public abstract class Stanza extends StreamPacket {
 	}
 
 	/**
+	 * Sets 'to' attribute.
+	 *
+	 * @param jid {@linkplain JID}
+	 */
+	public void setTo(JID jid) throws XMLException {
+		if (jid == null) {
+			removeAttribute("to");
+		} else {
+			setAttribute("to", jid.toString());
+		}
+	}
+
+	/**
 	 * Returns type of stanza.
 	 *
 	 * @return {@linkplain StanzaType}. <code>null</code> if type not present.
@@ -167,13 +195,24 @@ public abstract class Stanza extends StreamPacket {
 	}
 
 	/**
+	 * Sets type of stanza.
+	 *
+	 * @param type {@linkplain StanzaType}
+	 */
+	public void setType(StanzaType type) throws XMLException {
+		if (type != null) {
+			setAttribute("type", type.name());
+		} else {
+			removeAttribute("type");
+		}
+	}
+
+	/**
 	 * Returns type of stanza.
 	 *
-	 * @param defaultValue
-	 *            default value. Will be returned if type of stanza id
-	 *            <code>null</code>.
-	 * @return {@linkplain StanzaType}. <code>defaultValue</code> if type not
-	 *         present.
+	 * @param defaultValue default value. Will be returned if type of stanza id <code>null</code>.
+	 *
+	 * @return {@linkplain StanzaType}. <code>defaultValue</code> if type not present.
 	 */
 	public StanzaType getType(StanzaType defaultValue) throws XMLException {
 		try {
@@ -186,54 +225,27 @@ public abstract class Stanza extends StreamPacket {
 		}
 	}
 
-	/**
-	 * Sets 'from' attribute.
-	 *
-	 * @param jid
-	 *            {@linkplain JID}
-	 */
-	public void setFrom(JID jid) throws XMLException {
-		if (jid == null)
-			removeAttribute("from");
-		else
-			setAttribute("from", jid.toString());
-	}
+	public static class UnkownStanzaTypeException
+			extends JaxmppException {
 
-	/**
-	 * Sets id of stanza
-	 *
-	 * @param id
-	 *            id
-	 * @throws XMLException
-	 */
-	public void setId(String id) throws XMLException {
-		setAttribute("id", id);
-	}
+		private static final long serialVersionUID = 1L;
 
-	/**
-	 * Sets 'to' attribute.
-	 *
-	 * @param jid
-	 *            {@linkplain JID}
-	 */
-	public void setTo(JID jid) throws XMLException {
-		if (jid == null)
-			removeAttribute("to");
-		else
-			setAttribute("to", jid.toString());
-	}
+		public UnkownStanzaTypeException() {
+			super();
+		}
 
-	/**
-	 * Sets type of stanza.
-	 *
-	 * @param type
-	 *            {@linkplain StanzaType}
-	 */
-	public void setType(StanzaType type) throws XMLException {
-		if (type != null)
-			setAttribute("type", type.name());
-		else
-			removeAttribute("type");
+		public UnkownStanzaTypeException(String message) {
+			super(message);
+		}
+
+		public UnkownStanzaTypeException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public UnkownStanzaTypeException(Throwable cause) {
+			super(cause);
+		}
+
 	}
 
 }

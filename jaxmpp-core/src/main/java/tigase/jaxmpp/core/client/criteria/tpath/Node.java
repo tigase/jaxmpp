@@ -1,10 +1,13 @@
 /*
+ * Node.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,12 +20,12 @@
  */
 package tigase.jaxmpp.core.client.criteria.tpath;
 
-import java.util.Collection;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import java.util.Collection;
+import java.util.List;
 
 public class Node {
 
@@ -44,18 +47,21 @@ public class Node {
 	}
 
 	public void evaluate(final Collection<Object> result, Element src) throws XMLException {
-		if (criteria != null && !criteria.match(src))
+		if (criteria != null && !criteria.match(src)) {
 			return;
+		}
 
 		if (subnode == null && function != null) {
 			Object r = function.value(src);
-			if (r != null)
+			if (r != null) {
 				result.add(r);
+			}
 			return;
 		} else if (subnode == null && function == null) {
 			Object r = src;
-			if (r != null)
+			if (r != null) {
 				result.add(r);
+			}
 			return;
 		}
 
@@ -71,20 +77,20 @@ public class Node {
 		return criteria;
 	}
 
-	public Function getFunction() {
-		return function;
-	}
-
-	public Node getSubnode() {
-		return subnode;
-	}
-
 	public void setCriteria(Criteria criteria) {
 		this.criteria = criteria;
 	}
 
+	public Function getFunction() {
+		return function;
+	}
+
 	public void setFunction(Function function) {
 		this.function = function;
+	}
+
+	public Node getSubnode() {
+		return subnode;
 	}
 
 	public void setSubnode(Node subnode) {

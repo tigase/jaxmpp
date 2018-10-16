@@ -1,10 +1,13 @@
 /*
+ * XmppModulesManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,37 +20,25 @@
  */
 package tigase.jaxmpp.core.client;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
-import tigase.jaxmpp.core.client.xmpp.modules.EventBusAware;
-import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
-import tigase.jaxmpp.core.client.xmpp.modules.ModuleProvider;
-import tigase.jaxmpp.core.client.xmpp.modules.PacketWriterAware;
+import tigase.jaxmpp.core.client.xmpp.modules.*;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.modules.extensions.ExtensionsChain;
+
+import java.util.*;
 
 /**
  * XMPP Modules Manager. This manager finds correct module to handle given
  * incoming stanza.
  */
-public class XmppModulesManager implements ModuleProvider {
-
-	private Context context;
+public class XmppModulesManager
+		implements ModuleProvider {
 
 	private final Set<XmppModule> initializationRequired = new HashSet<XmppModule>();
-
 	private final ArrayList<XmppModule> modules = new ArrayList<XmppModule>();
-
 	private final HashMap<Class<XmppModule>, XmppModule> modulesByClasses = new HashMap<Class<XmppModule>, XmppModule>();
+	private Context context;
 
 	public XmppModulesManager(Context context) {
 		this.context = context;
@@ -55,10 +46,11 @@ public class XmppModulesManager implements ModuleProvider {
 
 	/**
 	 * Finds collection of modules that can handle stanza.
-	 * 
-	 * @param element
-	 *            incoming stanza.
+	 *
+	 * @param element incoming stanza.
+	 *
 	 * @return list of modules that can handle stanza.
+	 *
 	 * @throws XMLException
 	 */
 	public List<XmppModule> findModules(final Element element) throws XMLException {
@@ -76,7 +68,7 @@ public class XmppModulesManager implements ModuleProvider {
 
 	/**
 	 * Returns all features registered by modules.
-	 * 
+	 *
 	 * @return Set of features.
 	 */
 	@Override
@@ -92,8 +84,9 @@ public class XmppModulesManager implements ModuleProvider {
 			if (module instanceof ExtendableModule) {
 				ExtensionsChain ec = ((ExtendableModule) module).getExtensionChain();
 				Collection<String> ef = ec == null ? null : ec.getFeatures();
-				if (ef != null)
+				if (ef != null) {
 					result.addAll(ef);
+				}
 			}
 
 		}
@@ -102,9 +95,9 @@ public class XmppModulesManager implements ModuleProvider {
 
 	/**
 	 * Return module implementation by module class.
-	 * 
-	 * @param moduleClass
-	 *            module class
+	 *
+	 * @param moduleClass module class
+	 *
 	 * @return module implementation
 	 */
 	@Override
@@ -126,9 +119,9 @@ public class XmppModulesManager implements ModuleProvider {
 
 	/**
 	 * Register XmppModule.
-	 * 
-	 * @param plugin
-	 *            module
+	 *
+	 * @param plugin module
+	 *
 	 * @return module
 	 */
 	@SuppressWarnings("unchecked")
@@ -159,11 +152,10 @@ public class XmppModulesManager implements ModuleProvider {
 
 	/**
 	 * Unregisters module.
-	 * 
-	 * @param plugin
-	 *            module to unregister
-	 * @return unregistered module. <code>null</code> if module wasn't
-	 *         registered.
+	 *
+	 * @param plugin module to unregister
+	 *
+	 * @return unregistered module. <code>null</code> if module wasn't registered.
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends XmppModule> T unregister(final T plugin) {

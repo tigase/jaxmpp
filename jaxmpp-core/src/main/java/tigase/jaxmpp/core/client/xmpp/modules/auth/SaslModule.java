@@ -1,10 +1,13 @@
 /*
+ * SaslModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,18 +20,10 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.auth;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
-import tigase.jaxmpp.core.client.XMPPException;
 import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -45,88 +40,21 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.AnonymousMecha
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.PlainMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.saslmechanisms.XOAuth2Mechanism;
 
+import java.util.*;
+import java.util.logging.Logger;
+
 /**
  * Module for SASL authentication.
  */
-public class SaslModule implements XmppModule, ContextAware {
+public class SaslModule
+		implements XmppModule, ContextAware {
 
-	public interface SaslAuthFailedHandler extends EventHandler {
+	public static final String SASL_MECHANISM = "jaxmpp#saslMechanism";
+	private final static Criteria CRIT = new Or(ElementCriteria.name("success", "urn:ietf:params:xml:ns:xmpp-sasl"),
+												ElementCriteria.name("failure", "urn:ietf:params:xml:ns:xmpp-sasl"),
+												ElementCriteria.name("challenge", "urn:ietf:params:xml:ns:xmpp-sasl"));
 
-		public static class SaslAuthFailedEvent extends JaxmppEvent<SaslAuthFailedHandler> {
-
-			private SaslError error;
-
-			public SaslAuthFailedEvent(SessionObject sessionObject, SaslError error) {
-				super(sessionObject);
-				this.error = error;
-			}
-
-			@Override
-			protected void dispatch(SaslAuthFailedHandler handler) {
-				handler.onAuthFailed(sessionObject, error);
-			}
-
-			public SaslError getError() {
-				return error;
-			}
-
-			public void setError(SaslError error) {
-				this.error = error;
-			}
-
-		}
-
-		void onAuthFailed(SessionObject sessionObject, SaslError error);
-	}
-
-	public interface SaslAuthStartHandler extends EventHandler {
-
-		public static class SaslAuthStartEvent extends JaxmppEvent<SaslAuthStartHandler> {
-
-			private String mechanismName;
-
-			public SaslAuthStartEvent(SessionObject sessionObject, String mechanismName) {
-				super(sessionObject);
-				this.mechanismName = mechanismName;
-			}
-
-			@Override
-			protected void dispatch(SaslAuthStartHandler handler) {
-				handler.onAuthStart(sessionObject, mechanismName);
-			}
-
-			public String getMechanismName() {
-				return mechanismName;
-			}
-
-			public void setMechanismName(String mechanismName) {
-				this.mechanismName = mechanismName;
-			}
-
-		}
-
-		void onAuthStart(SessionObject sessionObject, String mechanismName);
-	}
-
-	public interface SaslAuthSuccessHandler extends EventHandler {
-
-		public static class SaslAuthSuccessEvent extends JaxmppEvent<SaslAuthSuccessHandler> {
-
-			public SaslAuthSuccessEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(SaslAuthSuccessHandler handler) {
-				handler.onAuthSuccess(sessionObject);
-			}
-
-		}
-
-		void onAuthSuccess(SessionObject sessionObject);
-	}
-
-	public static enum SaslError {
+	public enum SaslError {
 		/**
 		 * The receiving entity acknowledges an &lt;abort/&gt; element sent by
 		 * the initiating entity; sent in reply to the &lt;abort/&gt; element.
@@ -178,32 +106,25 @@ public class SaslModule implements XmppModule, ContextAware {
 
 	}
 
-	public static class UnsupportedSaslMechanisms extends JaxmppException {
-		private static final long serialVersionUID = 1L;
-
-		public UnsupportedSaslMechanisms() {
-			super("Not found supported SASL mechanisms.");
-		}
-	}
-
-	private final static Criteria CRIT = new Or(new Criteria[] {
-			ElementCriteria.name("success", "urn:ietf:params:xml:ns:xmpp-sasl"),
-			ElementCriteria.name("failure", "urn:ietf:params:xml:ns:xmpp-sasl"),
-			ElementCriteria.name("challenge", "urn:ietf:params:xml:ns:xmpp-sasl") });
-
-	public static final String SASL_MECHANISM = "jaxmpp#saslMechanism";
+	protected final Logger log;
+	private final Map<String, SaslMechanism> mechanisms = new HashMap<String, SaslMechanism>();
+	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
+	private Context context;
 
 	public static List<String> getAllowedSASLMechanisms(SessionObject sessionObject) throws XMLException {
 		final Element sf = StreamFeaturesModule.getStreamFeatures(sessionObject);
-		if (sf == null)
+		if (sf == null) {
 			return null;
+		}
 		Element m = sf.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
-		if (m == null)
+		if (m == null) {
 			return null;
+		}
 
 		List<Element> ml = m.getChildren("mechanism");
-		if (ml == null)
+		if (ml == null) {
 			return null;
+		}
 
 		ArrayList<String> result = new ArrayList<String>();
 		for (Element element : ml) {
@@ -213,24 +134,12 @@ public class SaslModule implements XmppModule, ContextAware {
 		return result;
 	}
 
-	private Context context;
-
-	protected final Logger log;
-
-	private final Map<String, SaslMechanism> mechanisms = new HashMap<String, SaslMechanism>();
-
-	private final ArrayList<String> mechanismsOrder = new ArrayList<String>();
-
 	public SaslModule() {
 		log = Logger.getLogger(this.getClass().getName());
 
-		this.mechanisms.put("ANONYMOUS", new AnonymousMechanism());
-		this.mechanisms.put("PLAIN", new PlainMechanism());
-		this.mechanisms.put("X-OAUTH2", new XOAuth2Mechanism());
-
-		this.mechanismsOrder.add("X-OAUTH2");
-		this.mechanismsOrder.add("PLAIN");
-		this.mechanismsOrder.add("ANONYMOUS");
+		addMechanism(new PlainMechanism());
+		addMechanism(new XOAuth2Mechanism());
+		addMechanism(new AnonymousMechanism());
 	}
 
 	public void addMechanism(SaslMechanism mechanism) {
@@ -246,6 +155,11 @@ public class SaslModule implements XmppModule, ContextAware {
 		}
 	}
 
+	public void removeAllMechanisms() {
+		mechanisms.clear();
+		mechanismsOrder.clear();
+	}
+
 	@Override
 	public Criteria getCriteria() {
 		return CRIT;
@@ -257,21 +171,24 @@ public class SaslModule implements XmppModule, ContextAware {
 	}
 
 	public ArrayList<String> getMechanismsOrder() {
+
 		return mechanismsOrder;
 	}
 
 	protected Collection<String> getSupportedMechanisms() throws XMLException {
 		ArrayList<String> result = new ArrayList<String>();
-		Element x = StreamFeaturesModule.getStreamFeatures(this.context.getSessionObject()).getChildrenNS("mechanisms",
-				"urn:ietf:params:xml:ns:xmpp-sasl");
+		Element x = StreamFeaturesModule.getStreamFeatures(this.context.getSessionObject())
+				.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
 		if (x != null) {
 			List<Element> mms = x.getChildren("mechanism");
-			if (mms != null)
+			if (mms != null) {
 				for (Element element : mms) {
 					String n = element.getValue();
-					if (n != null && n.length() != 0)
+					if (n != null && n.length() != 0) {
 						result.add(n);
+					}
 				}
+			}
 		}
 
 		return result;
@@ -282,11 +199,13 @@ public class SaslModule implements XmppModule, ContextAware {
 
 		for (final String name : this.mechanismsOrder) {
 			final SaslMechanism mechanism = this.mechanisms.get(name);
-			if (mechanism == null || !supportedMechanisms.contains(name))
+			if (mechanism == null || !supportedMechanisms.contains(name)) {
 				continue;
+			}
 
-			if (mechanism.isAllowedToUse(context.getSessionObject()))
+			if (mechanism.isAllowedToUse(context.getSessionObject())) {
 				return mechanism;
+			}
 
 		}
 
@@ -303,7 +222,7 @@ public class SaslModule implements XmppModule, ContextAware {
 		// return result;
 	}
 
-	public void login() throws XMLException, JaxmppException {
+	public void login() throws JaxmppException {
 		log.fine("Try login with SASL");
 
 		SaslMechanism saslM = guessSaslMechanism();
@@ -321,15 +240,15 @@ public class SaslModule implements XmppModule, ContextAware {
 
 		context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 
-		SaslAuthStartHandler.SaslAuthStartEvent event = new SaslAuthStartHandler.SaslAuthStartEvent(context.getSessionObject(),
-				mechanism.name());
+		SaslAuthStartHandler.SaslAuthStartEvent event = new SaslAuthStartHandler.SaslAuthStartEvent(
+				context.getSessionObject(), mechanism.name());
 		context.getEventBus().fire(event);
 
 		context.getWriter().write(auth);
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element element) throws JaxmppException {
 		try {
 			if ("success".equals(element.getName())) {
 				context.getSessionObject().setProperty(Scope.stream, Connector.DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
@@ -343,15 +262,16 @@ public class SaslModule implements XmppModule, ContextAware {
 		} catch (ClientSaslException e) {
 			SaslAuthFailedHandler.SaslAuthFailedEvent event = new SaslAuthFailedHandler.SaslAuthFailedEvent(
 					context.getSessionObject(), null);
-			context.getEventBus().fire(event, this);
+			context.getEventBus().fire(event);
 			throw e;
 		}
 	}
 
-	protected void processChallenge(Element element) throws XMPPException, XMLException, JaxmppException {
+	protected void processChallenge(Element element) throws JaxmppException {
 		SaslMechanism mechanism = context.getSessionObject().getProperty(SASL_MECHANISM);
-		if (mechanism.isComplete(context.getSessionObject()))
+		if (mechanism.isComplete(context.getSessionObject())) {
 			throw new ClientSaslException("Mechanism " + mechanism.name() + " is finished but Server sent challenge.");
+		}
 		String v = element.getValue();
 		String r = mechanism.evaluateChallenge(v, context.getSessionObject());
 		Element auth = ElementFactory.create("response", r, "urn:ietf:params:xml:ns:xmpp-sasl");
@@ -370,7 +290,7 @@ public class SaslModule implements XmppModule, ContextAware {
 
 		SaslAuthFailedHandler.SaslAuthFailedEvent event = new SaslAuthFailedHandler.SaslAuthFailedEvent(
 				context.getSessionObject(), error);
-		context.getEventBus().fire(event, this);
+		context.getEventBus().fire(event);
 	}
 
 	protected void processSuccess(Element element) throws JaxmppException {
@@ -382,18 +302,110 @@ public class SaslModule implements XmppModule, ContextAware {
 		if (mechanism.isComplete(context.getSessionObject())) {
 			context.getSessionObject().setProperty(Scope.stream, AuthModule.AUTHORIZED, Boolean.TRUE);
 			log.fine("Authenticated");
-			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()), this);
+			context.getEventBus().fire(new SaslAuthSuccessHandler.SaslAuthSuccessEvent(context.getSessionObject()));
 		} else {
 			log.fine("Authenticated by server but responses are not accepted by client.");
-			context.getEventBus().fire(
-					new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(), SaslError.server_not_trusted),
-					this);
+			context.getEventBus()
+					.fire(new SaslAuthFailedHandler.SaslAuthFailedEvent(context.getSessionObject(),
+																		SaslError.server_not_trusted));
 		}
 	}
 
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	public interface SaslAuthFailedHandler
+			extends EventHandler {
+
+		void onAuthFailed(SessionObject sessionObject, SaslError error);
+
+		class SaslAuthFailedEvent
+				extends JaxmppEvent<SaslAuthFailedHandler> {
+
+			private SaslError error;
+
+			public SaslAuthFailedEvent(SessionObject sessionObject, SaslError error) {
+				super(sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			public void dispatch(SaslAuthFailedHandler handler) {
+				handler.onAuthFailed(sessionObject, error);
+			}
+
+			public SaslError getError() {
+				return error;
+			}
+
+			public void setError(SaslError error) {
+				this.error = error;
+			}
+
+		}
+	}
+
+	public interface SaslAuthStartHandler
+			extends EventHandler {
+
+		void onAuthStart(SessionObject sessionObject, String mechanismName);
+
+		class SaslAuthStartEvent
+				extends JaxmppEvent<SaslAuthStartHandler> {
+
+			private String mechanismName;
+
+			public SaslAuthStartEvent(SessionObject sessionObject, String mechanismName) {
+				super(sessionObject);
+				this.mechanismName = mechanismName;
+			}
+
+			@Override
+			public void dispatch(SaslAuthStartHandler handler) {
+				handler.onAuthStart(sessionObject, mechanismName);
+			}
+
+			public String getMechanismName() {
+				return mechanismName;
+			}
+
+			public void setMechanismName(String mechanismName) {
+				this.mechanismName = mechanismName;
+			}
+
+		}
+	}
+
+	public interface SaslAuthSuccessHandler
+			extends EventHandler {
+
+		void onAuthSuccess(SessionObject sessionObject);
+
+		class SaslAuthSuccessEvent
+				extends JaxmppEvent<SaslAuthSuccessHandler> {
+
+			public SaslAuthSuccessEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(SaslAuthSuccessHandler handler) {
+				handler.onAuthSuccess(sessionObject);
+			}
+
+		}
+	}
+
+	public static class UnsupportedSaslMechanisms
+			extends JaxmppException {
+
+		private static final long serialVersionUID = 1L;
+
+		public UnsupportedSaslMechanisms() {
+			super("Not found supported SASL mechanisms.");
+		}
 	}
 
 }

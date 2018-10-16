@@ -1,10 +1,13 @@
 /*
+ * SessionEstablishmentModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,14 +20,8 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
 
-import java.util.logging.Logger;
-
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModule;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
 import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
@@ -36,60 +33,18 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.logging.Logger;
+
 /**
  * Module for <a href='http://xmpp.org/rfcs/rfc3921.html#session'>Session
  * Establishment</a>.
  */
-public class SessionEstablishmentModule implements XmppModule, ContextAware {
-
-	public interface SessionEstablishmentErrorHandler extends EventHandler {
-
-		public static class SessionEstablishmentErrorEvent extends JaxmppEvent<SessionEstablishmentErrorHandler> {
-
-			private ErrorCondition error;
-
-			public SessionEstablishmentErrorEvent(SessionObject sessionObject, ErrorCondition error) {
-				super(sessionObject);
-				this.error = error;
-			}
-
-			@Override
-			protected void dispatch(SessionEstablishmentErrorHandler handler) throws JaxmppException {
-				handler.onSessionEstablishmentError(sessionObject, error);
-			}
-
-			public ErrorCondition getError() {
-				return error;
-			}
-
-			public void setError(ErrorCondition error) {
-				this.error = error;
-			}
-
-		}
-
-		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException;
-	}
-
-	public interface SessionEstablishmentSuccessHandler extends EventHandler {
-
-		public static class SessionEstablishmentSuccessEvent extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
-
-			public SessionEstablishmentSuccessEvent(SessionObject sessionObject) {
-				super(sessionObject);
-			}
-
-			@Override
-			protected void dispatch(SessionEstablishmentSuccessHandler handler) throws JaxmppException {
-				handler.onSessionEstablishmentSuccess(sessionObject);
-			}
-
-		}
-
-		void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException;
-	}
+public class SessionEstablishmentModule
+		implements XmppModule, ContextAware {
 
 	public static final String SESSION_ESTABLISHED = "jaxmpp#sessionEstablished";
+	protected final Logger log;
+	private Context context;
 
 	public static boolean isSessionEstablishingAvailable(final SessionObject sessionObject) throws XMLException {
 
@@ -98,23 +53,21 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 		return features != null && features.getChildrenNS("session", "urn:ietf:params:xml:ns:xmpp-session") != null;
 	}
 
-	private Context context;
-
-	protected final Logger log;
-
 	public SessionEstablishmentModule() {
 		log = Logger.getLogger(this.getClass().getName());
 	}
 
 	public void addSessionEstablishmentErrorHandler(SessionEstablishmentErrorHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
+		context.getEventBus()
+				.addHandler(SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent.class, handler);
 	}
 
 	public void addSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
+		context.getEventBus()
+				.addHandler(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
-	public void establish() throws XMLException, JaxmppException {
+	public void establish() throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setXMLNS("jabber:client");
 		iq.setType(StanzaType.set);
@@ -129,7 +82,7 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.FALSE);
 				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
 						context.getSessionObject(), error);
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 
 			@Override
@@ -137,14 +90,14 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 				context.getSessionObject().setProperty(SESSION_ESTABLISHED, Boolean.TRUE);
 				SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent event = new SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent(
 						context.getSessionObject());
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
 				SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent event = new SessionEstablishmentErrorHandler.SessionEstablishmentErrorEvent(
 						context.getSessionObject(), null);
-				context.getEventBus().fire(event, SessionEstablishmentModule.this);
+				context.getEventBus().fire(event);
 			}
 		});
 	}
@@ -168,12 +121,64 @@ public class SessionEstablishmentModule implements XmppModule, ContextAware {
 	}
 
 	public void removeSessionEstablishmentSuccessHandler(SessionEstablishmentSuccessHandler handler) {
-		context.getEventBus().remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
+		context.getEventBus()
+				.remove(SessionEstablishmentSuccessHandler.SessionEstablishmentSuccessEvent.class, handler);
 	}
 
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
+	}
+
+	public interface SessionEstablishmentErrorHandler
+			extends EventHandler {
+
+		void onSessionEstablishmentError(SessionObject sessionObject, ErrorCondition error) throws JaxmppException;
+
+		class SessionEstablishmentErrorEvent
+				extends JaxmppEvent<SessionEstablishmentErrorHandler> {
+
+			private ErrorCondition error;
+
+			public SessionEstablishmentErrorEvent(SessionObject sessionObject, ErrorCondition error) {
+				super(sessionObject);
+				this.error = error;
+			}
+
+			@Override
+			public void dispatch(SessionEstablishmentErrorHandler handler) throws JaxmppException {
+				handler.onSessionEstablishmentError(sessionObject, error);
+			}
+
+			public ErrorCondition getError() {
+				return error;
+			}
+
+			public void setError(ErrorCondition error) {
+				this.error = error;
+			}
+
+		}
+	}
+
+	public interface SessionEstablishmentSuccessHandler
+			extends EventHandler {
+
+		void onSessionEstablishmentSuccess(SessionObject sessionObject) throws JaxmppException;
+
+		class SessionEstablishmentSuccessEvent
+				extends JaxmppEvent<SessionEstablishmentSuccessHandler> {
+
+			public SessionEstablishmentSuccessEvent(SessionObject sessionObject) {
+				super(sessionObject);
+			}
+
+			@Override
+			public void dispatch(SessionEstablishmentSuccessHandler handler) throws JaxmppException {
+				handler.onSessionEstablishmentSuccess(sessionObject);
+			}
+
+		}
 	}
 
 }

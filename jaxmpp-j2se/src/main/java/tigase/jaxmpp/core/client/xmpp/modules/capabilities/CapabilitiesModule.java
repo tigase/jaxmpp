@@ -1,10 +1,13 @@
 /*
+ * CapabilitiesModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,13 +19,6 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
-
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.logging.Logger;
 
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
@@ -46,7 +42,15 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Presence.Show;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
-public class CapabilitiesModule implements XmppModule, ContextAware, InitializingModule {
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.logging.Logger;
+
+public class CapabilitiesModule
+		implements XmppModule, ContextAware, InitializingModule {
 
 	public final static String NODE_NAME_KEY = "NODE_NAME_KEY";
 	public static final String VERIFICATION_STRING_KEY = "XEP115VerificationString";
@@ -68,16 +72,19 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 	@Override
 	public void beforeRegister() {
-		if (context == null)
+		if (context == null) {
 			throw new RuntimeException("Context cannot be null");
+		}
 
 		this.discoveryModule = context.getModuleProvider().getModule(DiscoveryModule.class);
-		if (this.discoveryModule == null)
+		if (this.discoveryModule == null) {
 			throw new RuntimeException("Required module: DiscoveryModule not available.");
+		}
 
 		PresenceModule presenceModule = context.getModuleProvider().getModule(PresenceModule.class);
-		if (presenceModule == null)
+		if (presenceModule == null) {
 			throw new RuntimeException("Required module: PresenceModule not available.");
+		}
 
 		final BeforePresenceSendHandler beforePresenceSendHandler = new BeforePresenceSendHandler() {
 
@@ -90,8 +97,8 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 		final ContactAvailableHandler contactAvailableHandler = new ContactAvailableHandler() {
 
 			@Override
-			public void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show, String status,
-					Integer priority) throws JaxmppException {
+			public void onContactAvailable(SessionObject sessionObject, Presence stanza, JID jid, Show show,
+										   String status, Integer priority) throws JaxmppException {
 				CapabilitiesModule.this.onReceivedPresence(stanza);
 			}
 		};
@@ -99,7 +106,7 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 			@Override
 			public void onContactChangedPresence(SessionObject sessionObject, Presence stanza, JID jid, Show show,
-					String status, Integer priority) throws JaxmppException {
+												 String status, Integer priority) throws JaxmppException {
 				CapabilitiesModule.this.onReceivedPresence(stanza);
 			}
 		};
@@ -125,8 +132,9 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 		String identity = category + "/" + type + "//" + nme + " " + v;
 
-		String ver = generateVerificationString(new String[] { identity },
-				context.getModuleProvider().getAvailableFeatures().toArray(new String[] {}));
+		String ver = generateVerificationString(new String[]{identity}, context.getModuleProvider()
+				.getAvailableFeatures()
+				.toArray(new String[]{}));
 
 		String oldVer = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
 		if (oldVer != null && !oldVer.equals(ver)) {
@@ -180,7 +188,7 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 
 	@Override
 	public String[] getFeatures() {
-		return new String[] { "http://jabber.org/protocol/caps" };
+		return new String[]{"http://jabber.org/protocol/caps"};
 	}
 
 	protected String getNodeName() {
@@ -193,51 +201,60 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 	}
 
 	protected void onBeforePresenceSend(final Presence presence) throws XMLException {
-		if (!isEnabled())
+		if (!isEnabled()) {
 			return;
+		}
 		String ver = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
 		if (ver == null) {
 			ver = calculateVerificationString();
 		}
-		if (ver == null)
+		if (ver == null) {
 			return;
+		}
 
 		if (presence != null) {
-			final Element c = ElementFactory.create("c", null, "http://jabber.org/protocol/caps");
-			c.setAttribute("hash", "sha-1");
-			c.setAttribute("node", getNodeName());
-			c.setAttribute("ver", ver);
-			presence.addChild(c);
+			synchronized (presence) {
+				final Element c = ElementFactory.create("c", null, "http://jabber.org/protocol/caps");
+				c.setAttribute("hash", "sha-1");
+				c.setAttribute("node", getNodeName());
+				c.setAttribute("ver", ver);
+				presence.addChild(c);
+			}
 		}
 	}
 
 	protected void onReceivedPresence(final Presence presence) throws JaxmppException {
-		if (cache == null)
+		if (cache == null) {
 			return;
-		if (presence == null)
+		}
+		if (presence == null) {
 			return;
+		}
 		Element c = presence.getChildrenNS("c", "http://jabber.org/protocol/caps");
-		if (c == null)
+		if (c == null) {
 			return;
+		}
 
 		String node = c.getAttribute("node");
 		String ver = c.getAttribute("ver");
-		if (node == null || ver == null)
+		if (node == null || ver == null) {
 			return;
+		}
 
-		if (cache.isCached(node + "#" + ver))
+		if (cache.isCached(node + "#" + ver)) {
 			return;
+		}
 
 		discoveryModule.getInfo(presence.getFrom(), node + "#" + ver, new DiscoInfoAsyncCallback(node + "#" + ver) {
 
 			@Override
 			public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-				System.out.println("Error: " + error);
+				System.out.println("Error disco#info request: " + error);
 			}
 
 			@Override
-			protected void onInfoReceived(final String node, Collection<Identity> identities, final Collection<String> features)
-					throws XMLException {
+			protected void onInfoReceived(final String node, Collection<Identity> identities,
+										  final Collection<String> features) throws XMLException {
 				String name = "?";
 				String category = "?";
 				String type = "?";
@@ -248,20 +265,21 @@ public class CapabilitiesModule implements XmppModule, ContextAware, Initializin
 					category = identity.getCategory();
 					type = identity.getType();
 				}
-				if (cache != null)
+				if (cache != null) {
 					cache.store(node, name, category, type, features);
+				}
 			}
 
 			@Override
 			public void onTimeout() throws JaxmppException {
-				System.out.println("Timeout");
+				System.out.println("Error disco#info request: timeout");
 			}
 		});
 
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element element) throws JaxmppException {
 	}
 
 	@Override

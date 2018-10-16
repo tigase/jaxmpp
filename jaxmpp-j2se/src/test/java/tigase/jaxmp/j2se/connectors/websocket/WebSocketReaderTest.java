@@ -1,10 +1,13 @@
 /*
+ * WebSocketReaderTest.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,24 +20,7 @@
  */
 package tigase.jaxmp.j2se.connectors.websocket;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayDeque;
-import java.util.Map;
-import java.util.Queue;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.junit.Test;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
@@ -45,13 +31,25 @@ import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Map;
+import java.util.Queue;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
- *
  * @author andrzej
  */
 public class WebSocketReaderTest {
-
-
 
 	private static final Logger log = Logger.getLogger(WebSocketReaderTest.class.getCanonicalName());
 
@@ -90,8 +88,8 @@ public class WebSocketReaderTest {
 		Handler handler = new ConsoleHandler();
 		handler.setLevel(Level.ALL);
 
-		String[] list = { WebSocketReader.class.getCanonicalName(),
-				"tigase.jaxmp.j2se.connectors.websocket.WebSocketReaderTest" };
+		String[] list = {WebSocketReader.class.getCanonicalName(),
+						 "tigase.jaxmp.j2se.connectors.websocket.WebSocketReaderTest"};
 
 		// for (String x : list) {
 		// Logger logger = Logger.getLogger(x);
@@ -134,7 +132,8 @@ public class WebSocketReaderTest {
 		testReadingData(10000, 100);
 	}
 
-	static class StreamListenerImpl implements StreamListener {
+	static class StreamListenerImpl
+			implements StreamListener {
 
 		private Queue<Element> queue;
 

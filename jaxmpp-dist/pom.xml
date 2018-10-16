@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>tigase</groupId>
 		<artifactId>tigase-jaxmpp</artifactId>
-		<version>3.1.6-SNAPSHOT</version>
+		<version>3.2.0</version>
 	</parent>
 	<artifactId>jaxmpp-dist</artifactId>
 	<packaging>pom</packaging>
@@ -160,7 +160,7 @@
 									<descriptor>src/main/assembly/dist.xml</descriptor>
 								</descriptors>
 								<tarLongFileMode>gnu</tarLongFileMode>
-								<finalName>${project.artifactId}-${project.version}</finalName>
+								<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
 								<outputDirectory>dist</outputDirectory>
 								<appendAssemblyId>false</appendAssemblyId>
 							</configuration>

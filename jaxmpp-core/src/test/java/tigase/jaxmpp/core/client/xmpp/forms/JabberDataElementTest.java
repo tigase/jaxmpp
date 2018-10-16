@@ -1,10 +1,13 @@
 /*
+ * JabberDataElementTest.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,13 +20,14 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
-
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.ElementBuilder;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JabberDataElementTest {
 
@@ -36,8 +40,13 @@ public class JabberDataElementTest {
 
 		x.addFORM_TYPE("jabber:bot");
 
-		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
-				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot");
+		expected = ElementBuilder.create("x")
+				.setXMLNS("jabber:x:data")
+				.setAttribute("type", "form")
+				.child("field")
+				.setAttribute("var", "FORM_TYPE")
+				.setAttribute("type", "hidden")
+				.setValue("jabber:bot");
 		assertEquals(expected.getElement(), x);
 	}
 
@@ -50,20 +59,42 @@ public class JabberDataElementTest {
 
 		x.addFORM_TYPE("jabber:bot");
 
-		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
-				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot");
+		expected = ElementBuilder.create("x")
+				.setXMLNS("jabber:x:data")
+				.setAttribute("type", "form")
+				.child("field")
+				.setAttribute("var", "FORM_TYPE")
+				.setAttribute("type", "hidden")
+				.setValue("jabber:bot");
 		assertEquals(expected.getElement(), x);
 
 		x.setInstructions("in");
-		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
-				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot").up().child("instructions").setValue(
-						"in");
+		expected = ElementBuilder.create("x")
+				.setXMLNS("jabber:x:data")
+				.setAttribute("type", "form")
+				.child("field")
+				.setAttribute("var", "FORM_TYPE")
+				.setAttribute("type", "hidden")
+				.setValue("jabber:bot")
+				.up()
+				.child("instructions")
+				.setValue("in");
 		assertEquals(expected.getElement(), x);
 
 		x.setTitle("tt");
-		expected = ElementBuilder.create("x").setXMLNS("jabber:x:data").setAttribute("type", "form").child("field").setAttribute(
-				"var", "FORM_TYPE").setAttribute("type", "hidden").setValue("jabber:bot").up().child("instructions").setValue(
-						"in").up().child("title").setValue("tt");
+		expected = ElementBuilder.create("x")
+				.setXMLNS("jabber:x:data")
+				.setAttribute("type", "form")
+				.child("field")
+				.setAttribute("var", "FORM_TYPE")
+				.setAttribute("type", "hidden")
+				.setValue("jabber:bot")
+				.up()
+				.child("instructions")
+				.setValue("in")
+				.up()
+				.child("title")
+				.setValue("tt");
 		assertEquals(expected.getElement(), x);
 	}
 
@@ -74,8 +105,11 @@ public class JabberDataElementTest {
 		assertEquals("boolean", field.getAttribute("type"));
 		assertEquals("boolean", field.getType());
 
-		ElementBuilder expected = ElementBuilder.create("field").setAttribute("type", "boolean").setAttribute("var", "public").child(
-				"value").setValue("1");
+		ElementBuilder expected = ElementBuilder.create("field")
+				.setAttribute("type", "boolean")
+				.setAttribute("var", "public")
+				.child("value")
+				.setValue("1");
 
 		assertEquals(expected.getElement(), field);
 	}
@@ -150,6 +184,19 @@ public class JabberDataElementTest {
 		TextSingleField field = x.addTextSingleField("public", "once");
 		assertEquals("text-single", field.getAttribute("type"));
 		assertEquals("text-single", field.getType());
+	}
+
+	@Test
+	public void testReplacingField() throws JaxmppException {
+		JabberDataElement x = new JabberDataElement(XDataType.form);
+		x.addTextSingleField("public", "1");
+		x.addTextSingleField("public", "2");
+		x.addTextPrivateField("public", "3");
+
+		System.out.println(x.createSubmitableElement(XDataType.submit).getAsString());
+
+		assertTrue(x.getField("public") instanceof TextPrivateField);
+		assertEquals("3", ((TextPrivateField) x.getField("public")).getFieldValue());
 	}
 
 }

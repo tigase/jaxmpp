@@ -1,10 +1,13 @@
 /*
+ * Occupant.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -38,10 +41,12 @@ public class Occupant {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
+		if (obj == this) {
 			return true;
-		if (!(obj instanceof Occupant))
+		}
+		if (!(obj instanceof Occupant)) {
 			return false;
+		}
 		return ((Occupant) obj).id == id;
 	}
 
@@ -67,6 +72,12 @@ public class Occupant {
 		return presence;
 	}
 
+	public void setPresence(Presence presence) {
+		cacheAffiliation = null;
+		cacheRole = null;
+		this.presence = presence;
+	}
+
 	public Role getRole() {
 		try {
 			if (cacheRole == null) {
@@ -84,12 +95,6 @@ public class Occupant {
 	@Override
 	public int hashCode() {
 		return ("occupant" + id).hashCode();
-	}
-
-	public void setPresence(Presence presence) {
-		cacheAffiliation = null;
-		cacheRole = null;
-		this.presence = presence;
 	}
 
 }

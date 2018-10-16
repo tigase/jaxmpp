@@ -1,10 +1,13 @@
 /*
+ * Event.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,9 +22,8 @@ package tigase.jaxmpp.core.client.eventbus;
 
 /**
  * Base event object.
- * 
- * @param <H>
- *            handler type.
+ *
+ * @param <H> handler type.
  */
 public abstract class Event<H extends EventHandler> {
 
@@ -33,15 +35,14 @@ public abstract class Event<H extends EventHandler> {
 
 	/**
 	 * Invokes handlers method.
-	 * 
-	 * @param handler
-	 *            handler
+	 *
+	 * @param handler handler
 	 */
-	protected abstract void dispatch(H handler) throws Exception;
+	public abstract void dispatch(H handler) throws Exception;
 
 	/**
 	 * Returns events source.
-	 * 
+	 *
 	 * @return events source. May be <code>null</code>.
 	 */
 	public Object getSource() {
@@ -50,12 +51,11 @@ public abstract class Event<H extends EventHandler> {
 
 	/**
 	 * Sets source.
-	 * 
-	 * @param source
-	 *            event source.
+	 *
+	 * @param source event source.
 	 */
 	void setSource(Object source) {
 		this.source = source;
-	};
+	}
 
 }

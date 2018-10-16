@@ -1,10 +1,13 @@
 /*
+ * JabberDataElement.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,11 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -29,11 +27,19 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Implementation of Data Form.
- * 
  */
-public class JabberDataElement extends ElementWrapper {
+public class JabberDataElement
+		extends ElementWrapper {
+
+	private final ArrayList<AbstractField<?>> fields = new ArrayList<AbstractField<?>>();
+	private final Map<String, AbstractField<?>> fieldsMap = new HashMap<String, AbstractField<?>>();
 
 	private static AbstractField<?> create(Element element) throws XMLException {
 		final String type = element.getAttribute("type");
@@ -60,33 +66,31 @@ public class JabberDataElement extends ElementWrapper {
 		}
 	}
 
-	private final ArrayList<AbstractField<?>> fields = new ArrayList<AbstractField<?>>();
-
-	private final Map<String, AbstractField<?>> fieldsMap = new HashMap<String, AbstractField<?>>();
-
 	/**
 	 * Creates instance of JabberDataElement and parse fields.
-	 * 
-	 * @param x
-	 *            &lt;x xmlns='jabber:x:data'/&gt; element.
+	 *
+	 * @param x &lt;x xmlns='jabber:x:data'/&gt; element.
 	 */
 	public JabberDataElement(Element x) throws JaxmppException {
 		super(x);
 		try {
-			if (!"x".equals(x.getName()) || !"jabber:x:data".equals(x.getXMLNS()))
+			if (!"x".equals(x.getName()) || !"jabber:x:data".equals(x.getXMLNS())) {
 				throw new JaxmppException("Invalid jabber:x:form element");
+			}
 
 			List<Element> fs = x.getChildren("field");
-			if (fs != null)
+			if (fs != null) {
 				for (Element element : fs) {
 					AbstractField<?> af = create(element);
 					if (af != null) {
 						this.fields.add(af);
 						String var = af.getVar();
-						if (var != null)
+						if (var != null) {
 							this.fieldsMap.put(var, af);
+						}
 					}
 				}
+			}
 
 		} catch (XMLException e) {
 			throw new JaxmppException(e);
@@ -95,9 +99,8 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Creates empty form instance.
-	 * 
-	 * @param type
-	 *            type of data.
+	 *
+	 * @param type type of data.
 	 */
 	public JabberDataElement(XDataType type) throws XMLException {
 		super(ElementFactory.create("x", null, "jabber:x:data"));
@@ -106,11 +109,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds boolean field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            value of field
+	 *
+	 * @param var name of field
+	 * @param value value of field
+	 *
 	 * @return {@linkplain BooleanField}
 	 */
 	public final BooleanField addBooleanField(String var, Boolean value) throws XMLException {
@@ -121,35 +123,51 @@ public class JabberDataElement extends ElementWrapper {
 		return result;
 	}
 
+	/**
+	 * Adds field "FORM_TYPE" hidded field to form.
+	 *
+	 * @param value value of field
+	 */
+	public void addFORM_TYPE(String value) throws XMLException {
+		addHiddenField("FORM_TYPE", value);
+	}
+
 	protected void addField(final AbstractField<?> f) throws XMLException {
 		String var = f.getVar();
-		if (var != null)
+		if (var != null) {
+			AbstractField<?> old = this.fieldsMap.get(var);
+			if (old != null) {
+				this.fields.remove(old);
+				this.fieldsMap.remove(var);
+				removeChild(old);
+			}
 			this.fieldsMap.put(var, f);
+		}
 		this.fields.add(f);
 		addChild(f);
 	}
 
 	/**
 	 * Adds fixed field to form.
-	 * 
-	 * @param value
-	 *            value of field
+	 *
+	 * @param value value of field
+	 *
 	 * @return {@linkplain FixedField}
 	 */
 	public final FixedField addFixedField(String value) throws XMLException {
-		return addFixedField( null, value);
+		return addFixedField(null, value);
 	}
 
 	/**
 	 * Adds fixed field to form.
 	 *
-	 * @param value
-	 *            value of field
+	 * @param value value of field
+	 *
 	 * @return {@linkplain FixedField}
 	 */
 	public final FixedField addFixedField(String var, String value) throws XMLException {
 		FixedField result = new FixedField(ElementFactory.create("field"));
-		if ( null != var ) {
+		if (null != var) {
 			result.setVar(var);
 		}
 		result.setFieldValue(value);
@@ -158,22 +176,11 @@ public class JabberDataElement extends ElementWrapper {
 	}
 
 	/**
-	 * Adds field "FORM_TYPE" hidded field to form.
-	 * 
-	 * @param value
-	 *            value of field
-	 */
-	public void addFORM_TYPE(String value) throws XMLException {
-		addHiddenField("FORM_TYPE", value);
-	}
-
-	/**
 	 * Adds hidden field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            value of field
+	 *
+	 * @param var name of field
+	 * @param value value of field
+	 *
 	 * @return {@linkplain HiddenField}
 	 */
 	public final HiddenField addHiddenField(String var, String value) throws XMLException {
@@ -186,11 +193,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds jid-multi field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            values of field
+	 *
+	 * @param var name of field
+	 * @param value values of field
+	 *
 	 * @return {@linkplain JidMultiField}
 	 */
 	public final JidMultiField addJidMultiField(String var, JID... value) throws XMLException {
@@ -203,11 +209,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds jid-single field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            value of field
+	 *
+	 * @param var name of field
+	 * @param value value of field
+	 *
 	 * @return {@linkplain JidSingleField}
 	 */
 	public final JidSingleField addJidSingleField(String var, JID value) throws XMLException {
@@ -220,11 +225,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds list-multi field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            values of field
+	 *
+	 * @param var name of field
+	 * @param value values of field
+	 *
 	 * @return {@linkplain ListMultiField}
 	 */
 	public final ListMultiField addListMultiField(String var, String... value) throws XMLException {
@@ -237,11 +241,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds list-single field to form.
-	 * 
-	 * @param var
-	 *            name of field.
-	 * @param value
-	 *            value of field
+	 *
+	 * @param var name of field.
+	 * @param value value of field
+	 *
 	 * @return {@linkplain ListSingleField}
 	 */
 	public final ListSingleField addListSingleField(String var, String value) throws XMLException {
@@ -254,11 +257,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds text-multi field to form.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @param value
-	 *            values of field
+	 *
+	 * @param var name of field
+	 * @param value values of field
+	 *
 	 * @return {@linkplain TextMultiField}
 	 */
 	public final TextMultiField addTextMultiField(String var, String... value) throws XMLException {
@@ -271,11 +273,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds text-private field to form.
-	 * 
-	 * @param var
-	 *            name of field.
-	 * @param value
-	 *            value of field
+	 *
+	 * @param var name of field.
+	 * @param value value of field
+	 *
 	 * @return {@link TextPrivateField}
 	 */
 	public final TextPrivateField addTextPrivateField(String var, String value) throws XMLException {
@@ -288,11 +289,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Adds text-single field to form.
-	 * 
-	 * @param var
-	 *            name of field.
-	 * @param value
-	 *            value od field.
+	 *
+	 * @param var name of field.
+	 * @param value value od field.
+	 *
 	 * @return {@linkplain TextSingleField}
 	 */
 	public final TextSingleField addTextSingleField(String var, String value) throws XMLException {
@@ -305,11 +305,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Creates {@linkplain Element XML Element} contains only values of fields.
-	 * 
-	 * @param type
-	 *            data type
-	 * @return &lt;x xmlns='jabber:x:data'/&gt; {@linkplain Element XML Element}
-	 *         with form
+	 *
+	 * @param type data type
+	 *
+	 * @return &lt;x xmlns='jabber:x:data'/&gt; {@linkplain Element XML Element} with form
 	 */
 	public Element createSubmitableElement(final XDataType type) throws JaxmppException {
 		Element e = ElementFactory.create(this);
@@ -319,11 +318,10 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Returns field with given name.
-	 * 
-	 * @param var
-	 *            name of field
-	 * @return field or <code>null</code> is field with given name doesn't
-	 *         exists in form.
+	 *
+	 * @param var name of field
+	 *
+	 * @return field or <code>null</code> is field with given name doesn't exists in form.
 	 */
 	@SuppressWarnings("unchecked")
 	public <X extends AbstractField<?>> X getField(final String var) {
@@ -332,7 +330,7 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Returns all fields of form.
-	 * 
+	 *
 	 * @return list of all fields in form.
 	 */
 	public ArrayList<AbstractField<?>> getFields() {
@@ -341,7 +339,7 @@ public class JabberDataElement extends ElementWrapper {
 
 	/**
 	 * Returns natural language instruction.
-	 * 
+	 *
 	 * @return natural language instruction.
 	 */
 	public String getInstructions() throws XMLException {
@@ -349,8 +347,17 @@ public class JabberDataElement extends ElementWrapper {
 	}
 
 	/**
+	 * Sets natural-language instruction.
+	 *
+	 * @param instructions instruction.
+	 */
+	public void setInstructions(String instructions) throws XMLException {
+		setChildElementValue("instructions", instructions);
+	}
+
+	/**
 	 * Returns title.
-	 * 
+	 *
 	 * @return title
 	 */
 	public String getTitle() throws XMLException {
@@ -358,33 +365,22 @@ public class JabberDataElement extends ElementWrapper {
 	}
 
 	/**
+	 * Sets form title.
+	 *
+	 * @param title title
+	 */
+	public void setTitle(String title) throws XMLException {
+		setChildElementValue("title", title);
+	}
+
+	/**
 	 * Return data type.
-	 * 
+	 *
 	 * @return {@linkplain XDataType}
 	 */
 	public XDataType getType() throws XMLException {
 		String x = getAttribute("type");
 		return x == null ? null : XDataType.valueOf(x);
-	}
-
-	/**
-	 * Sets natural-language instruction.
-	 * 
-	 * @param instructions
-	 *            instruction.
-	 */
-	public void setInstructions(String instructions) throws XMLException {
-		setChildElementValue("instructions", instructions);
-	}
-
-	/**
-	 * Sets form title.
-	 * 
-	 * @param title
-	 *            title
-	 */
-	public void setTitle(String title) throws XMLException {
-		setChildElementValue("title", title);
 	}
 
 }

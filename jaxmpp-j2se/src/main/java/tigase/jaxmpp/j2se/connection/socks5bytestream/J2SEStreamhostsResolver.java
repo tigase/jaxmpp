@@ -1,10 +1,13 @@
 /*
+ * J2SEStreamhostsResolver.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +20,9 @@
  */
 package tigase.jaxmpp.j2se.connection.socks5bytestream;
 
+import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -27,14 +33,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.xmpp.modules.socks5.Streamhost;
-
 /**
- * 
  * @author andrzej
  */
-public class J2SEStreamhostsResolver implements StreamhostsResolver {
+public class J2SEStreamhostsResolver
+		implements StreamhostsResolver {
 
 	@Override
 	public List<Streamhost> getLocalStreamHosts(JID jid, int port) {
@@ -42,10 +45,12 @@ public class J2SEStreamhostsResolver implements StreamhostsResolver {
 		try {
 			Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
 			for (NetworkInterface netint : Collections.list(nets)) {
-				if (netint.isLoopback())
+				if (netint.isLoopback()) {
 					continue;
-				if (!netint.isUp())
+				}
+				if (!netint.isUp()) {
 					continue;
+				}
 
 				Enumeration<InetAddress> addrs = netint.getInetAddresses();
 				while (addrs.hasMoreElements()) {

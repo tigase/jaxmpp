@@ -1,10 +1,13 @@
 /*
+ * DNSResolver.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,17 +20,16 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-
-import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
 
 public class DNSResolver {
 
@@ -37,10 +39,10 @@ public class DNSResolver {
 		DirContext ctx = new InitialDirContext(env);
 		List<Entry> xresult = new ArrayList<Entry>();
 		try {
-			Attributes attrs = ctx.getAttributes("_xmpp-client._tcp." + hostname, new String[] { "SRV" });
+			Attributes attrs = ctx.getAttributes("_xmpp-client._tcp." + hostname, new String[]{"SRV"});
 			Attribute att = attrs.get("SRV");
 
-			if (att != null)
+			if (att != null) {
 				for (int i = 0; i < att.size(); i++) {
 					String[] dns_resp = att.get(i).toString().split(" ");
 					Integer port = 5222;
@@ -51,8 +53,9 @@ public class DNSResolver {
 						continue;
 					}
 
-					if (name == null)
+					if (name == null) {
 						continue;
+					}
 
 					if (name.endsWith(".")) {
 						name = name.substring(0, name.length() - 1);
@@ -61,7 +64,7 @@ public class DNSResolver {
 					Entry e = new Entry(name, port);
 					xresult.add(e);
 				}
-			else {
+			} else {
 				Entry e = new Entry(hostname, 5222);
 				xresult.add(e);
 			}

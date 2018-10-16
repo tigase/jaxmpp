@@ -1,10 +1,13 @@
 /*
+ * JingleModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +20,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.jingle;
 
-import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
-import java.util.ArrayList;
-import java.util.List;
-
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.XMPPException;
-import tigase.jaxmpp.core.client.XmppModule;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
 import tigase.jaxmpp.core.client.eventbus.EventHandler;
@@ -33,7 +28,6 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionAcceptHandler.JingleSessionAcceptEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleSessionInfoHandler.JingleSessionInfoEvent;
@@ -43,346 +37,18 @@ import tigase.jaxmpp.core.client.xmpp.modules.jingle.JingleModule.JingleTranspor
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 
-public class JingleModule implements XmppModule {
+import java.util.ArrayList;
+import java.util.List;
 
-	public interface JingleSessionAcceptHandler extends EventHandler {
-
-		public static class JingleSessionAcceptEvent extends JaxmppEvent<JingleSessionAcceptHandler> {
-
-			private Element description;
-
-			private MutableBoolean handled;
-
-			private JID sender;
-
-			private String sid;
-
-			private List<Transport> transports;
-
-			public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-					List<Transport> transports, MutableBoolean handled) {
-				super(sessionObject);
-				this.sender = sender;
-				this.sid = sid;
-				this.description = description;
-				this.transports = transports;
-				this.handled = handled;
-			}
-
-			@Override
-			protected void dispatch(JingleSessionAcceptHandler handler) {
-				handler.onJingleSessionAccept(sessionObject, sender, sid, description, transports, handled);
-			}
-
-			public Element getDescription() {
-				return description;
-			}
-
-			public MutableBoolean getHandled() {
-				return handled;
-			}
-
-			public JID getSender() {
-				return sender;
-			}
-
-			public String getSid() {
-				return sid;
-			}
-
-			public List<Transport> getTransports() {
-				return transports;
-			}
-
-			public void setDescription(Element description) {
-				this.description = description;
-			}
-
-			public void setHandled(MutableBoolean handled) {
-				this.handled = handled;
-			}
-
-			public void setSender(JID sender) {
-				this.sender = sender;
-			}
-
-			public void setSid(String sid) {
-				this.sid = sid;
-			}
-
-			public void setTransports(List<Transport> transports) {
-				this.transports = transports;
-			}
-
-		}
-
-		void onJingleSessionAccept(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Transport> transports, MutableBoolean handled);
-	}
-
-	public interface JingleSessionInfoHandler extends EventHandler {
-
-		public static class JingleSessionInfoEvent extends JaxmppEvent<JingleSessionInfoHandler> {
-
-			private List<Element> content;
-
-			private MutableBoolean handled;
-
-			private JID sender;
-
-			private String sid;
-
-			public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content,
-					MutableBoolean handled) {
-				super(sessionObject);
-				this.sender = sender;
-				this.sid = sid;
-				this.content = content;
-				this.handled = handled;
-			}
-
-			@Override
-			protected void dispatch(JingleSessionInfoHandler handler) {
-				handler.onJingleSessionInfo(sessionObject, sender, sid, content, handled);
-			}
-
-			public List<Element> getContent() {
-				return content;
-			}
-
-			public MutableBoolean getHandled() {
-				return handled;
-			}
-
-			public JID getSender() {
-				return sender;
-			}
-
-			public String getSid() {
-				return sid;
-			}
-
-			public void setContent(List<Element> content) {
-				this.content = content;
-			}
-
-			public void setHandled(MutableBoolean handled) {
-				this.handled = handled;
-			}
-
-			public void setSender(JID sender) {
-				this.sender = sender;
-			}
-
-			public void setSid(String sid) {
-				this.sid = sid;
-			}
-
-		}
-
-		void onJingleSessionInfo(SessionObject sessionObject, JID sender, String sid, List<Element> content,
-				MutableBoolean handled);
-	}
-
-	public interface JingleSessionInitiationHandler extends EventHandler {
-
-		public static class JingleSessionInitiationEvent extends JaxmppEvent<JingleSessionInitiationHandler> {
-
-			private Element description;
-
-			private MutableBoolean handled;
-
-			private JID sender;
-
-			private String sid;
-
-			private List<Transport> transports;
-
-			public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid, Element description,
-					List<Transport> transports, MutableBoolean handled) {
-				super(sessionObject);
-				this.sender = sender;
-				this.sid = sid;
-				this.description = description;
-				this.transports = transports;
-				this.handled = handled;
-			}
-
-			@Override
-			protected void dispatch(JingleSessionInitiationHandler handler) {
-				handler.onJingleSessionInitiation(sessionObject, sender, sid, description, transports, handled);
-			}
-
-			public Element getDescription() {
-				return description;
-			}
-
-			public MutableBoolean getHandled() {
-				return handled;
-			}
-
-			public JID getSender() {
-				return sender;
-			}
-
-			public String getSid() {
-				return sid;
-			}
-
-			public List<Transport> getTransports() {
-				return transports;
-			}
-
-			public void setDescription(Element description) {
-				this.description = description;
-			}
-
-			public void setHandled(MutableBoolean handled) {
-				this.handled = handled;
-			}
-
-			public void setSender(JID sender) {
-				this.sender = sender;
-			}
-
-			public void setSid(String sid) {
-				this.sid = sid;
-			}
-
-			public void setTransports(List<Transport> transports) {
-				this.transports = transports;
-			}
-
-		}
-
-		void onJingleSessionInitiation(SessionObject sessionObject, JID sender, String sid, Element description,
-				List<Transport> transports, MutableBoolean handled);
-	}
-
-	public interface JingleSessionTerminateHandler extends EventHandler {
-
-		public static class JingleSessionTerminateEvent extends JaxmppEvent<JingleSessionTerminateHandler> {
-
-			private MutableBoolean handled;
-
-			private JID sender;
-
-			private String sid;
-
-			public JingleSessionTerminateEvent(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled) {
-				super(sessionObject);
-				this.sender = sender;
-				this.sid = sid;
-				this.handled = handled;
-			}
-
-			@Override
-			protected void dispatch(JingleSessionTerminateHandler handler) {
-				handler.onJingleSessionTerminate(sessionObject, sender, sid, handled);
-			}
-
-			public MutableBoolean getHandled() {
-				return handled;
-			}
-
-			public JID getSender() {
-				return sender;
-			}
-
-			public String getSid() {
-				return sid;
-			}
-
-			public void setHandled(MutableBoolean handled) {
-				this.handled = handled;
-			}
-
-			public void setSender(JID sender) {
-				this.sender = sender;
-			}
-
-			public void setSid(String sid) {
-				this.sid = sid;
-			}
-
-		}
-
-		void onJingleSessionTerminate(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled);
-	}
-
-	public interface JingleTransportInfoHandler extends EventHandler {
-
-		public static class JingleTransportInfoEvent extends JaxmppEvent<JingleTransportInfoHandler> {
-
-			private Element content;
-
-			private MutableBoolean handled;
-
-			private JID sender;
-
-			private String sid;
-
-			public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content,
-					MutableBoolean handled) {
-				super(sessionObject);
-				this.sender = sender;
-				this.sid = sid;
-				this.content = content;
-				this.handled = handled;
-			}
-
-			@Override
-			protected void dispatch(JingleTransportInfoHandler handler) throws JaxmppException {
-				handler.onJingleTransportInfo(sessionObject, sender, sid, content, handled);
-			}
-
-			public Element getContent() {
-				return content;
-			}
-
-			public MutableBoolean getHandled() {
-				return handled;
-			}
-
-			public JID getSender() {
-				return sender;
-			}
-
-			public String getSid() {
-				return sid;
-			}
-
-			public void setContent(Element content) {
-				this.content = content;
-			}
-
-			public void setHandled(MutableBoolean handled) {
-				this.handled = handled;
-			}
-
-			public void setSender(JID sender) {
-				this.sender = sender;
-			}
-
-			public void setSid(String sid) {
-				this.sid = sid;
-			}
-
-		}
-
-		void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content, MutableBoolean handled)
-				throws JaxmppException;
-	}
+public class JingleModule
+		implements XmppModule {
 
 	public static final String JINGLE_RTP1_XMLNS = "urn:xmpp:jingle:apps:rtp:1";
-
 	public static final String JINGLE_XMLNS = "urn:xmpp:jingle:1";
-
 	public static final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("jingle", JINGLE_XMLNS));
-
-	public static final String[] FEATURES = { JINGLE_XMLNS, JINGLE_RTP1_XMLNS };
-
+	public static final String[] FEATURES = {JINGLE_XMLNS, JINGLE_RTP1_XMLNS};
 	private Context context;
 
 	public JingleModule(Context context) {
@@ -468,7 +134,7 @@ public class JingleModule implements XmppModule {
 	}
 
 	@Override
-	public void process(Element element) throws XMPPException, XMLException, JaxmppException {
+	public void process(Element element) throws JaxmppException {
 		if ("iq".equals(element.getName())) {
 			IQ iq = (IQ) Stanza.create(element);
 			processIq(iq);
@@ -491,15 +157,16 @@ public class JingleModule implements XmppModule {
 
 		final MutableBoolean handled = new MutableBoolean();
 		if ("session-terminate".equals(action)) {
-			JingleSessionTerminateEvent event = new JingleSessionTerminateEvent(context.getSessionObject(), from, sid, handled);
+			JingleSessionTerminateEvent event = new JingleSessionTerminateEvent(context.getSessionObject(), from, sid,
+																				handled);
 			context.getEventBus().fire(event);
 		} else if ("session-info".equals(action)) {
 			JingleSessionInfoEvent event = new JingleSessionInfoEvent(context.getSessionObject(), from, sid,
-					jingle.getChildren(), handled);
+																	  jingle.getChildren(), handled);
 			context.getEventBus().fire(event);
 		} else if ("transport-info".equals(action)) {
 			JingleTransportInfoEvent event = new JingleTransportInfoEvent(context.getSessionObject(), from, sid,
-					contents.get(0), handled);
+																		  contents.get(0), handled);
 			context.getEventBus().fire(event);
 		} else {
 			Element content = contents.get(0);
@@ -515,12 +182,13 @@ public class JingleModule implements XmppModule {
 			}
 
 			if ("session-initiate".equals(action)) {
-				JingleSessionInitiationEvent event = new JingleSessionInitiationEvent(context.getSessionObject(), from, sid,
-						description, transports, handled);
+				JingleSessionInitiationEvent event = new JingleSessionInitiationEvent(context.getSessionObject(), from,
+																					  sid, description, transports,
+																					  handled);
 				context.getEventBus().fire(event);
 			} else if ("session-accept".equals(action)) {
 				JingleSessionAcceptEvent event = new JingleSessionAcceptEvent(context.getSessionObject(), from, sid,
-						description, transports, handled);
+																			  description, transports, handled);
 				context.getEventBus().fire(event);
 			}
 		}
@@ -578,6 +246,347 @@ public class JingleModule implements XmppModule {
 		jingle.addChild(content);
 
 		context.getWriter().write(iq);
+	}
+
+	public interface JingleSessionAcceptHandler
+			extends EventHandler {
+
+		void onJingleSessionAccept(SessionObject sessionObject, JID sender, String sid, Element description,
+								   List<Transport> transports, MutableBoolean handled);
+
+		class JingleSessionAcceptEvent
+				extends JaxmppEvent<JingleSessionAcceptHandler> {
+
+			private Element description;
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			private List<Transport> transports;
+
+			public JingleSessionAcceptEvent(SessionObject sessionObject, JID sender, String sid, Element description,
+											List<Transport> transports, MutableBoolean handled) {
+				super(sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.description = description;
+				this.transports = transports;
+				this.handled = handled;
+			}
+
+			@Override
+			public void dispatch(JingleSessionAcceptHandler handler) {
+				handler.onJingleSessionAccept(sessionObject, sender, sid, description, transports, handled);
+			}
+
+			public Element getDescription() {
+				return description;
+			}
+
+			public void setDescription(Element description) {
+				this.description = description;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+			public List<Transport> getTransports() {
+				return transports;
+			}
+
+			public void setTransports(List<Transport> transports) {
+				this.transports = transports;
+			}
+
+		}
+	}
+
+	public interface JingleSessionInfoHandler
+			extends EventHandler {
+
+		void onJingleSessionInfo(SessionObject sessionObject, JID sender, String sid, List<Element> content,
+								 MutableBoolean handled);
+
+		class JingleSessionInfoEvent
+				extends JaxmppEvent<JingleSessionInfoHandler> {
+
+			private List<Element> content;
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			public JingleSessionInfoEvent(SessionObject sessionObject, JID sender, String sid, List<Element> content,
+										  MutableBoolean handled) {
+				super(sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.content = content;
+				this.handled = handled;
+			}
+
+			@Override
+			public void dispatch(JingleSessionInfoHandler handler) {
+				handler.onJingleSessionInfo(sessionObject, sender, sid, content, handled);
+			}
+
+			public List<Element> getContent() {
+				return content;
+			}
+
+			public void setContent(List<Element> content) {
+				this.content = content;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+		}
+	}
+
+	public interface JingleSessionInitiationHandler
+			extends EventHandler {
+
+		void onJingleSessionInitiation(SessionObject sessionObject, JID sender, String sid, Element description,
+									   List<Transport> transports, MutableBoolean handled);
+
+		class JingleSessionInitiationEvent
+				extends JaxmppEvent<JingleSessionInitiationHandler> {
+
+			private Element description;
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			private List<Transport> transports;
+
+			public JingleSessionInitiationEvent(SessionObject sessionObject, JID sender, String sid,
+												Element description, List<Transport> transports,
+												MutableBoolean handled) {
+				super(sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.description = description;
+				this.transports = transports;
+				this.handled = handled;
+			}
+
+			@Override
+			public void dispatch(JingleSessionInitiationHandler handler) {
+				handler.onJingleSessionInitiation(sessionObject, sender, sid, description, transports, handled);
+			}
+
+			public Element getDescription() {
+				return description;
+			}
+
+			public void setDescription(Element description) {
+				this.description = description;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+			public List<Transport> getTransports() {
+				return transports;
+			}
+
+			public void setTransports(List<Transport> transports) {
+				this.transports = transports;
+			}
+
+		}
+	}
+
+	public interface JingleSessionTerminateHandler
+			extends EventHandler {
+
+		void onJingleSessionTerminate(SessionObject sessionObject, JID sender, String sid, MutableBoolean handled);
+
+		class JingleSessionTerminateEvent
+				extends JaxmppEvent<JingleSessionTerminateHandler> {
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			public JingleSessionTerminateEvent(SessionObject sessionObject, JID sender, String sid,
+											   MutableBoolean handled) {
+				super(sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.handled = handled;
+			}
+
+			@Override
+			public void dispatch(JingleSessionTerminateHandler handler) {
+				handler.onJingleSessionTerminate(sessionObject, sender, sid, handled);
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+		}
+	}
+
+	public interface JingleTransportInfoHandler
+			extends EventHandler {
+
+		void onJingleTransportInfo(SessionObject sessionObject, JID sender, String sid, Element content,
+								   MutableBoolean handled) throws JaxmppException;
+
+		class JingleTransportInfoEvent
+				extends JaxmppEvent<JingleTransportInfoHandler> {
+
+			private Element content;
+
+			private MutableBoolean handled;
+
+			private JID sender;
+
+			private String sid;
+
+			public JingleTransportInfoEvent(SessionObject sessionObject, JID sender, String sid, Element content,
+											MutableBoolean handled) {
+				super(sessionObject);
+				this.sender = sender;
+				this.sid = sid;
+				this.content = content;
+				this.handled = handled;
+			}
+
+			@Override
+			public void dispatch(JingleTransportInfoHandler handler) throws JaxmppException {
+				handler.onJingleTransportInfo(sessionObject, sender, sid, content, handled);
+			}
+
+			public Element getContent() {
+				return content;
+			}
+
+			public void setContent(Element content) {
+				this.content = content;
+			}
+
+			public MutableBoolean getHandled() {
+				return handled;
+			}
+
+			public void setHandled(MutableBoolean handled) {
+				this.handled = handled;
+			}
+
+			public JID getSender() {
+				return sender;
+			}
+
+			public void setSender(JID sender) {
+				this.sender = sender;
+			}
+
+			public String getSid() {
+				return sid;
+			}
+
+			public void setSid(String sid) {
+				this.sid = sid;
+			}
+
+		}
 	}
 
 }

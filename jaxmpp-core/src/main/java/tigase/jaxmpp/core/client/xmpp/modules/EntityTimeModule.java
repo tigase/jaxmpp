@@ -1,10 +1,13 @@
 /*
+ * EntityTimeModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -16,10 +19,6 @@
  * If not, see http://www.gnu.org/licenses/.
  */
 package tigase.jaxmpp.core.client.xmpp.modules;
-
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
@@ -37,24 +36,30 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+
 /**
  * Implementation of
  * <a href='http://xmpp.org/extensions/xep-0202.html'>XEP-0202: Entity Time</a>.
  */
-public class EntityTimeModule extends AbstractIQModule {
+public class EntityTimeModule
+		extends AbstractIQModule {
 
 	private static final DateTimeFormat format = new DateTimeFormat();
 	private final Criteria CRIT = ElementCriteria.name("iq").add(ElementCriteria.name("time", "urn:xmpp:time"));
-	private final String[] FEATURES = new String[] { "urn:xmpp:time" };
-
-	public EntityTimeModule() {
-	}
+	private final String[] FEATURES = new String[]{"urn:xmpp:time"};
 
 	private static String getFirst(List<Element> list) throws XMLException {
-		if (list == null || list.size() == 0)
+		if (list == null || list.size() == 0) {
 			return null;
+		}
 		Element x = list.get(0);
 		return x == null ? null : x.getValue();
+	}
+
+	public EntityTimeModule() {
 	}
 
 	@Override
@@ -65,10 +70,8 @@ public class EntityTimeModule extends AbstractIQModule {
 	/**
 	 * Request for XMPP entity time.
 	 *
-	 * @param jid
-	 *            entity to request.
-	 * @param asyncCallback
-	 *            general callback
+	 * @param jid entity to request.
+	 * @param asyncCallback general callback
 	 */
 	public void getEntityTime(JID jid, AsyncCallback asyncCallback) throws JaxmppException {
 		IQ iq = IQ.create();
@@ -82,10 +85,8 @@ public class EntityTimeModule extends AbstractIQModule {
 	/**
 	 * Request for XMPP entity time.
 	 *
-	 * @param jid
-	 *            entity to request.
-	 * @param asyncCallback
-	 *            entity time callback
+	 * @param jid entity to request.
+	 * @param asyncCallback entity time callback
 	 */
 	public void getEntityTime(JID jid, EntityTimeAsyncCallback asyncCallback) throws JaxmppException {
 		getEntityTime(jid, (AsyncCallback) asyncCallback);
@@ -120,15 +121,15 @@ public class EntityTimeModule extends AbstractIQModule {
 	/**
 	 * Ping callback.
 	 */
-	public static abstract class EntityTimeAsyncCallback implements AsyncCallback {
+	public static abstract class EntityTimeAsyncCallback
+			implements AsyncCallback {
 
 		private Date time;
 
 		/**
 		 * Called on success.
 		 *
-		 * @param time
-		 *            entity time
+		 * @param time entity time
 		 */
 		protected abstract void onEntityTimeReceived(String tzo, Date time);
 

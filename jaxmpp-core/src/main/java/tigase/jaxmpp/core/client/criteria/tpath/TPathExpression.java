@@ -1,10 +1,13 @@
 /*
+ * TPathExpression.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,11 +20,11 @@
  */
 package tigase.jaxmpp.core.client.criteria.tpath;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TPathExpression {
 
@@ -33,12 +36,13 @@ public class TPathExpression {
 
 	public Object evaluate(Element element) throws XMLException {
 		List<Object> r = evaluateAsArray(element);
-		if (r.isEmpty())
+		if (r.isEmpty()) {
 			return null;
-		else if (r.size() == 1) {
+		} else if (r.size() == 1) {
 			return r.get(0);
-		} else
+		} else {
 			return r;
+		}
 	}
 
 	public List<Object> evaluateAsArray(Element element) throws XMLException {

@@ -1,10 +1,13 @@
 /*
+ * WebSocketConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,7 +29,6 @@ import tigase.jaxmpp.core.client.connector.AbstractWebSocketConnector;
 import tigase.jaxmpp.core.client.connector.SeeOtherHostHandler;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.j2se.connectors.socket.Reader;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
@@ -49,7 +51,8 @@ import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.*;
 /**
  * @author andrzej
  */
-public class WebSocketConnector extends AbstractWebSocketConnector {
+public class WebSocketConnector
+		extends AbstractWebSocketConnector {
 
 	private final static Charset UTF_CHARSET = Charset.forName("UTF-8");
 
@@ -59,24 +62,21 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	private static final String SEC_UUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 	/**
-	 * Property to specify custom {@linkplain Socket#setSoTimeout(int) socket timeout} for Socket. Default is {@link SocketConnector#DEFAULT_SOCKET_TIMEOUT 180000 ms}.
+	 * Property to specify custom {@linkplain Socket#setSoTimeout(int) socket timeout} for Socket. Default is {@link
+	 * SocketConnector#DEFAULT_SOCKET_TIMEOUT 180000 ms}.
 	 */
 	private static final String WEB_SOCKET_TIMEOUT_KEY = "WEB_SOCKET_TIMEOUT_KEY";
 
 	private final Object ioMutex = new Object();
+	private Timer closeTimer;
+	private byte[] mask = new byte[4];
 	private TimerTask pingTask;
+	private Random random = new SecureRandom();
 	private Reader reader = null;
 	private Socket socket = null;
-
 	private Timer timer = null;
-
 	private Worker worker = null;
-
 	private OutputStream writer = null;
-
-	private Random random = new SecureRandom();
-	private byte[] mask = new byte[4];
-	private Timer closeTimer;
 
 	public WebSocketConnector(Context context) {
 		super(context);
@@ -84,8 +84,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 			@Override
 			public void onSeeOtherHost(String seeHost, MutableBoolean handled) {
-				WebSocketConnector.this.context.getSessionObject().setUserProperty(
-						AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
+				WebSocketConnector.this.context.getSessionObject()
+						.setUserProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY, seeHost);
 			}
 		});
 	}
@@ -95,6 +95,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			try {
 				writer.write(new byte[]{(byte) 0x88, (byte) 0x00});
 				socket.close();
+				worker.interrupt();
 			} catch (IOException ex) {
 				log.log(Level.FINEST, "Problem with closing socket", ex);
 			}
@@ -111,8 +112,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		StringBuilder sb = new StringBuilder();
 		sb.append("GET ").append(uri.getPath() != null ? uri.getPath() : "/").append(" HTTP/1.1").append(EOL);
 		sb.append("Host: ").append(uri.getHost());
-		if (uri.getPort() != -1)
+		if (uri.getPort() != -1) {
 			sb.append(":").append(uri.getPort());
+		}
 		sb.append(EOL);
 		sb.append("Connection: Upgrade").append(EOL);
 		sb.append("Upgrade: websocket").append(EOL);
@@ -133,8 +135,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		while ((read = socket.getInputStream().read(buffer, 0, buffer.length)) != -1) {
 			if (!httpResponseOk) {
 				for (int i = 0; i < HTTP_RESPONSE_101.length; i++) {
-					if (buffer[i] != HTTP_RESPONSE_101[i])
+					if (buffer[i] != HTTP_RESPONSE_101[i]) {
 						throw new IOException("Wrong HTTP response, got: " + new String(buffer));
+					}
 				}
 			}
 			boolean headersRead = false;
@@ -170,19 +173,23 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 						eol = false;
 						break;
 				}
-				if (headersRead)
+				if (headersRead) {
 					break;
+				}
 			}
-			if (headersRead)
+			if (headersRead) {
 				break;
+			}
 		}
 		// if (!"websocket".equals(headers.get("Upgrade"))) {
 		// throw new IOException("Bad upgrade header in HTTP response");
 		// }
 		try {
-			String accept = Base64.encode(MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes(UTF_CHARSET)));
-			if (!accept.equals(headers.get("Sec-WebSocket-Accept")))
+			String accept = Base64.encode(
+					MessageDigest.getInstance("SHA-1").digest((wskey + SEC_UUID).getBytes(UTF_CHARSET)));
+			if (!accept.equals(headers.get("Sec-WebSocket-Accept"))) {
 				throw new IOException("Invalid Sec-WebSocket-Accept header value");
+			}
 		} catch (NoSuchAlgorithmException ex) {
 			throw new IOException("Could not validate 'Sec-WebSocket-Accept' header", ex);
 		}
@@ -196,22 +203,24 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 	@Override
 	public boolean isSecure() {
-		return ((Boolean) context.getSessionObject().getProperty(ENCRYPTED_KEY)) == Boolean.TRUE;
+		return context.getSessionObject().getProperty(ENCRYPTED_KEY) == Boolean.TRUE;
 	}
 
 	protected void onErrorInThread(Exception e) throws JaxmppException {
-		if (getState() == State.disconnected)
+		if (getState() == State.disconnected) {
 			return;
+		}
 		terminateAllWorkers();
 		fireOnError(null, e, context.getSessionObject());
 	}
 
 	protected void send(byte[] buffer) throws JaxmppException {
 		synchronized (ioMutex) {
-			if (writer != null)
+			if (writer != null) {
 				try {
-					if (log.isLoggable(Level.FINEST))
+					if (log.isLoggable(Level.FINEST)) {
 						log.finest("Send: " + new String(buffer));
+					}
 
 					// prepare WebSocket header according to Hybi specification
 					int size = buffer.length;
@@ -245,14 +254,16 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					throw new JaxmppException(e);
 
 				}
+			}
 		}
 	}
 
 	@Override
-	public void send(Element stanza) throws XMLException, JaxmppException {
+	public void send(Element stanza) throws JaxmppException {
 		synchronized (ioMutex) {
-			if (writer != null)
+			if (writer != null) {
 				super.send(stanza);
+			}
 		}
 	}
 
@@ -266,7 +277,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 	}
 
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		log.fine("Start connector.");
 		super.start();
 		if (timer != null) {
@@ -275,7 +286,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			} catch (Exception e) {
 			}
 		}
-		timer = new Timer(true);
+		timer = new Timer("WebSocketConnectorTimer", true);
 
 		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
 			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
@@ -293,8 +304,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 			context.getSessionObject().setProperty(SessionObject.Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
-			if (log.isLoggable(Level.FINER))
+			if (log.isLoggable(Level.FINER)) {
 				log.finer("Preparing connection to " + uri.getHost());
+			}
 
 			int port = uri.getPort() == -1 ? (isSecure ? 443 : 80) : uri.getPort();
 
@@ -304,8 +316,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 				final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
 				final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
 				Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
-				if (proxyType == null)
+				if (proxyType == null) {
 					proxyType = Proxy.Type.HTTP;
+				}
 
 				log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
 
@@ -317,8 +330,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			}
 
 			Integer soTimeout = getTimeout(WEB_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
-			if (soTimeout != null)
+			if (soTimeout != null) {
 				socket.setSoTimeout(soTimeout);
+			}
 			socket.setKeepAlive(false);
 			socket.setTcpNoDelay(true);
 			socket.connect(new InetSocketAddress(x, port));
@@ -348,8 +362,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 					public void handshakeCompleted(HandshakeCompletedEvent arg0) {
 						log.info("TLS completed " + arg0);
 						context.getSessionObject().setProperty(SessionObject.Scope.stream, ENCRYPTED_KEY, Boolean.TRUE);
-						context.getEventBus().fire(
-								new EncryptionEstablishedHandler.EncryptionEstablishedEvent(context.getSessionObject()));
+						context.getEventBus()
+								.fire(new EncryptionEstablishedHandler.EncryptionEstablishedEvent(
+										context.getSessionObject()));
 					}
 				});
 			}
@@ -413,7 +428,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 
 				@Override
 				public void run() {
-					new Thread() {
+					Thread t = new Thread("Keep-Alive-Thread") {
 						@Override
 						public void run() {
 							try {
@@ -422,27 +437,31 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 								log.log(Level.SEVERE, "Can't ping!", e);
 							}
 						}
-					}.start();
+					};
+					t.setDaemon(true);
+					t.start();
 				}
 			};
-			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null
-					|| ((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null ||
+					((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
 				Integer defaultDelay = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
 				defaultDelay = defaultDelay == null ? -1 : defaultDelay - 1000 * 5;
 
 				Integer delay = getTimeout(SocketConnector.KEEP_ALIVE_DELAY_KEY, defaultDelay);
 
-				if (log.isLoggable(Level.CONFIG))
+				if (log.isLoggable(Level.CONFIG)) {
 					log.config("Whitespace ping period is setted to " + delay + "ms");
+				}
 
-				if (delay != null)
+				if (delay != null) {
 					timer.schedule(pingTask, delay, delay);
+				}
 			}
 
 			fireOnConnected(context.getSessionObject());
 		} catch (Exception e) {
 			terminateAllWorkers();
-			onError(null, e);
+			//onError(null, e);
 			throw new JaxmppException(e);
 		}
 	}
@@ -459,7 +478,7 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 			if (closeTimer != null) {
 				closeTimer.cancel();
 			}
-			closeTimer = new Timer();
+			closeTimer = new Timer("WebSocketConnectorCloseTimer", true);
 			closeTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -488,8 +507,9 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 //			log.log(Level.FINEST, "Problem with interrupting w2", e);
 //		}
 		try {
-			if (timer != null)
+			if (timer != null) {
 				timer.cancel();
+			}
 		} catch (Exception e) {
 			log.log(Level.FINEST, "Problem with canceling timer", e);
 		} finally {
@@ -510,7 +530,8 @@ public class WebSocketConnector extends AbstractWebSocketConnector {
 		try {
 			if (this.context.getSessionObject().getProperty(SocketConnector.RECONNECTING_KEY) == Boolean.TRUE) {
 				this.context.getSessionObject().setProperty(SocketConnector.RECONNECTING_KEY, null);
-				context.getEventBus().fire(new SocketConnector.HostChangedHandler.HostChangedEvent(context.getSessionObject()));
+				context.getEventBus()
+						.fire(new SocketConnector.HostChangedHandler.HostChangedEvent(context.getSessionObject()));
 				log.finest("Restarting...");
 				start();
 			} else {

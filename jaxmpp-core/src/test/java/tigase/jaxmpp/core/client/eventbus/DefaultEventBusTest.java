@@ -1,63 +1,35 @@
+/*
+ * DefaultEventBusTest.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 package tigase.jaxmpp.core.client.eventbus;
 
 import junit.framework.TestCase;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test01Handler.Test01Event;
 import tigase.jaxmpp.core.client.eventbus.DefaultEventBusTest.Test02Handler.Test02Event;
 
-public class DefaultEventBusTest extends TestCase {
-
-	public interface Test01Handler extends EventHandler {
-
-		public static class Test01Event extends Event<Test01Handler> {
-
-			private final String data;
-
-			public Test01Event(String data) {
-				this.data = data;
-			}
-
-			@Override
-			protected void dispatch(Test01Handler handler) {
-				handler.onTest01Event(data);
-			}
-
-			public String getData() {
-				return data;
-			}
-
-		}
-
-		void onTest01Event(String data);
-	}
-
-	public interface Test02Handler extends EventHandler {
-
-		public static class Test02Event extends Event<Test02Handler> {
-
-			private final String data;
-
-			public Test02Event(String data) {
-				this.data = data;
-			}
-
-			@Override
-			protected void dispatch(Test02Handler handler) {
-				handler.onTest02Event(data);
-			}
-
-			public String getData() {
-				return data;
-			}
-
-		}
-
-		void onTest02Event(String data);
-	}
+public class DefaultEventBusTest
+		extends TestCase {
 
 	private EventBus eventBus;
 
@@ -69,18 +41,8 @@ public class DefaultEventBusTest extends TestCase {
 
 	@Test
 	public void test0() {
-		Object fakeSource1 = new Object();
-		Object fakeSource2 = new Object();
 		final String[] value = new String[1];
-		Test01Handler h1 = new Test01Handler() {
-
-			@Override
-			public void onTest01Event(String data) {
-				Assert.fail("It shouldn't be called!");
-			}
-		};
-		eventBus.addHandler(Test01Event.class, fakeSource1, h1);
-		eventBus.addHandler(Test01Event.class, fakeSource2, new Test01Handler() {
+		eventBus.addHandler(Test01Event.class, new Test01Handler() {
 
 			@Override
 			public void onTest01Event(String data) {
@@ -89,17 +51,15 @@ public class DefaultEventBusTest extends TestCase {
 		});
 
 		Test01Event event = new Test01Event("test0.1");
-		eventBus.fire(event, this);
+		eventBus.fire(event);
 
 		event = new Test01Event("test0.2");
-		eventBus.fire(event, fakeSource2);
+		eventBus.fire(event);
 
 		Assert.assertEquals("htest0.2", value[0]);
 
-		eventBus.remove(h1);
-
 		event = new Test01Event("test0.3");
-		eventBus.fire(event, fakeSource1);
+		eventBus.fire(event);
 	}
 
 	@Test
@@ -142,7 +102,7 @@ public class DefaultEventBusTest extends TestCase {
 		});
 
 		Test01Event event = new Test01Event("test01");
-		eventBus.fire(event, this);
+		eventBus.fire(event);
 
 		Assert.assertEquals("htest01", value[0]);
 		Assert.assertEquals("ltest01", value[1]);
@@ -172,7 +132,7 @@ public class DefaultEventBusTest extends TestCase {
 		eventBus.addListener(Test01Event.class, l1);
 
 		Test01Event event = new Test01Event("t1");
-		eventBus.fire(event, this);
+		eventBus.fire(event);
 
 		Assert.assertEquals("t1", value[0]);
 		Assert.assertEquals("t1", value[1]);
@@ -180,7 +140,7 @@ public class DefaultEventBusTest extends TestCase {
 		eventBus.remove(h1);
 
 		event = new Test01Event("t2");
-		eventBus.fire(event, this);
+		eventBus.fire(event);
 
 		Assert.assertEquals("t1", value[0]);
 		Assert.assertEquals("t2", value[1]);
@@ -188,9 +148,61 @@ public class DefaultEventBusTest extends TestCase {
 		eventBus.remove(Test01Event.class, l1);
 
 		event = new Test01Event("t3");
-		eventBus.fire(event, this);
+		eventBus.fire(event);
 
 		Assert.assertEquals("t1", value[0]);
 		Assert.assertEquals("t2", value[1]);
+	}
+
+	public interface Test01Handler
+			extends EventHandler {
+
+		void onTest01Event(String data);
+
+		class Test01Event
+				extends Event<Test01Handler> {
+
+			private final String data;
+
+			public Test01Event(String data) {
+				this.data = data;
+			}
+
+			@Override
+			public void dispatch(Test01Handler handler) {
+				handler.onTest01Event(data);
+			}
+
+			public String getData() {
+				return data;
+			}
+
+		}
+	}
+
+	public interface Test02Handler
+			extends EventHandler {
+
+		void onTest02Event(String data);
+
+		class Test02Event
+				extends Event<Test02Handler> {
+
+			private final String data;
+
+			public Test02Event(String data) {
+				this.data = data;
+			}
+
+			@Override
+			public void dispatch(Test02Handler handler) {
+				handler.onTest02Event(data);
+			}
+
+			public String getData() {
+				return data;
+			}
+
+		}
 	}
 }

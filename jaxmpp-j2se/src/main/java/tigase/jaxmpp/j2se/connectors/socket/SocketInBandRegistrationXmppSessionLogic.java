@@ -1,10 +1,13 @@
 /*
+ * SocketInBandRegistrationXmppSessionLogic.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -32,30 +35,23 @@ import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationMod
 import tigase.jaxmpp.core.client.xmpp.modules.registration.InBandRegistrationModule.ReceivedTimeoutHandler;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
-public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogic {
+public class SocketInBandRegistrationXmppSessionLogic
+		implements XmppSessionLogic {
 
 	private final SocketConnector connector;
 
 	private final Context context;
-
-	private StreamFeaturesModule featuresModule;
-
 	private final XmppModulesManager modulesManager;
-
+	private final StreamFeaturesReceivedHandler streamFeaturesEventHandler;
+	private StreamFeaturesModule featuresModule;
 	private NotSupportedErrorHandler notSupportedErrorHandler;
-
 	private ReceivedErrorHandler receivedErrorHandler;
-
 	private ReceivedTimeoutHandler receivedTimeoutHandler;
-
 	private InBandRegistrationModule registrationModule;
-
 	private SessionListener sessionListener;
 
-	private final StreamFeaturesReceivedHandler streamFeaturesEventHandler;
-
 	public SocketInBandRegistrationXmppSessionLogic(SocketConnector connector, XmppModulesManager modulesManager,
-			Context context) {
+													Context context) {
 		this.connector = connector;
 		this.modulesManager = modulesManager;
 		this.context = context;
@@ -63,7 +59,8 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 		this.streamFeaturesEventHandler = new StreamFeaturesReceivedHandler() {
 
 			@Override
-			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
+			public void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement)
+					throws JaxmppException {
 				SocketInBandRegistrationXmppSessionLogic.this.processStreamFeatures(sessionObject, featuresElement);
 			}
 		};
@@ -100,8 +97,9 @@ public class SocketInBandRegistrationXmppSessionLogic implements XmppSessionLogi
 	}
 
 	protected void processException(JaxmppException e) throws JaxmppException {
-		if (sessionListener != null)
+		if (sessionListener != null) {
 			sessionListener.onException(e);
+		}
 	}
 
 	protected void processStreamFeatures(SessionObject sessionObject, Element featuresElement) throws JaxmppException {

@@ -1,10 +1,13 @@
 /*
+ * SeeOtherHostHandler.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,28 +26,29 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 
 /**
- *
  * @author andrzej
  */
-public interface SeeOtherHostHandler extends EventHandler {
+public interface SeeOtherHostHandler
+		extends EventHandler {
 
-	public static class SeeOtherHostEvent extends JaxmppEvent<SeeOtherHostHandler> {
+	void onSeeOtherHost(String seeHost, MutableBoolean handled);
 
-		private final String seeHost;
+	class SeeOtherHostEvent
+			extends JaxmppEvent<SeeOtherHostHandler> {
+
 		private final MutableBoolean handled;
-		
+		private final String seeHost;
+
 		public SeeOtherHostEvent(SessionObject sessionObject, String seeHost, MutableBoolean handled) {
 			super(sessionObject);
 			this.seeHost = seeHost;
 			this.handled = handled;
 		}
-		
+
 		@Override
-		protected void dispatch(SeeOtherHostHandler handler) throws Exception {
+		public void dispatch(SeeOtherHostHandler handler) throws Exception {
 			handler.onSeeOtherHost(seeHost, handled);
 		}
-		
+
 	}
-	
-	public abstract void onSeeOtherHost(String seeHost, MutableBoolean handled);
 }

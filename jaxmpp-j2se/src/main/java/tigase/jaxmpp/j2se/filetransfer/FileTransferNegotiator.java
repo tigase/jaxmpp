@@ -1,10 +1,13 @@
 /*
+ * FileTransferNegotiator.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,90 +29,10 @@ import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.filetransfer.FileTransfer;
 
 /**
- * 
  * @author andrzej
  */
-public interface FileTransferNegotiator extends ContextAware {
-
-	public interface NegotiationFailureHandler extends EventHandler {
-
-		public static class FileTransferNegotiationFailureEvent extends JaxmppEvent<NegotiationFailureHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferNegotiationFailureEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(NegotiationFailureHandler handler) throws Exception {
-				handler.onFileTransferNegotiationFailure(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferNegotiationFailure(SessionObject sessionObject, FileTransfer fileTransfer) throws JaxmppException;
-	}
-
-	public interface NegotiationRejectHandler extends EventHandler {
-
-		public static class FileTransferNegotiationRejectEvent extends JaxmppEvent<NegotiationRejectHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferNegotiationRejectEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(NegotiationRejectHandler handler) throws Exception {
-				handler.onFileTransferNegotiationReject(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferNegotiationReject(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface NegotiationRequestHandler extends EventHandler {
-
-		public static class FileTransferNegotiationRequestEvent extends JaxmppEvent<NegotiationRequestHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferNegotiationRequestEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(NegotiationRequestHandler handler) throws Exception {
-				handler.onFileTransferNegotiationRequest(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferNegotiationRequest(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
-
-	public interface NegotiationSuccessHandler extends EventHandler {
-
-		public static class FileTransferNegotiationSuccessEvent extends JaxmppEvent<NegotiationSuccessHandler> {
-
-			private FileTransfer fileTransfer;
-
-			public FileTransferNegotiationSuccessEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
-				super(sessionObject);
-				this.fileTransfer = fileTransfer;
-			}
-
-			@Override
-			protected void dispatch(NegotiationSuccessHandler handler) throws Exception {
-				handler.onFileTransferNegotiationSuccess(sessionObject, fileTransfer);
-			}
-		}
-
-		void onFileTransferNegotiationSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
-	}
+public interface FileTransferNegotiator
+		extends ContextAware {
 
 	void acceptFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
 
@@ -124,4 +47,93 @@ public interface FileTransferNegotiator extends ContextAware {
 	void sendFile(JaxmppCore jaxmpp, FileTransfer ft) throws JaxmppException;
 
 	void unregisterListeners(JaxmppCore jaxmpp);
+
+	interface NegotiationFailureHandler
+			extends EventHandler {
+
+		void onFileTransferNegotiationFailure(SessionObject sessionObject, FileTransfer fileTransfer)
+				throws JaxmppException;
+
+		class FileTransferNegotiationFailureEvent
+				extends JaxmppEvent<NegotiationFailureHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferNegotiationFailureEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(NegotiationFailureHandler handler) throws Exception {
+				handler.onFileTransferNegotiationFailure(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	interface NegotiationRejectHandler
+			extends EventHandler {
+
+		void onFileTransferNegotiationReject(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferNegotiationRejectEvent
+				extends JaxmppEvent<NegotiationRejectHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferNegotiationRejectEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(NegotiationRejectHandler handler) throws Exception {
+				handler.onFileTransferNegotiationReject(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	interface NegotiationRequestHandler
+			extends EventHandler {
+
+		void onFileTransferNegotiationRequest(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferNegotiationRequestEvent
+				extends JaxmppEvent<NegotiationRequestHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferNegotiationRequestEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(NegotiationRequestHandler handler) throws Exception {
+				handler.onFileTransferNegotiationRequest(sessionObject, fileTransfer);
+			}
+		}
+	}
+
+	interface NegotiationSuccessHandler
+			extends EventHandler {
+
+		void onFileTransferNegotiationSuccess(SessionObject sessionObject, FileTransfer fileTransfer);
+
+		class FileTransferNegotiationSuccessEvent
+				extends JaxmppEvent<NegotiationSuccessHandler> {
+
+			private FileTransfer fileTransfer;
+
+			public FileTransferNegotiationSuccessEvent(SessionObject sessionObject, FileTransfer fileTransfer) {
+				super(sessionObject);
+				this.fileTransfer = fileTransfer;
+			}
+
+			@Override
+			public void dispatch(NegotiationSuccessHandler handler) throws Exception {
+				handler.onFileTransferNegotiationSuccess(sessionObject, fileTransfer);
+			}
+		}
+	}
 }

@@ -1,10 +1,13 @@
 /*
+ * EscapeUtils.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,14 +25,16 @@ package tigase.jaxmpp.core.client.xmpp.utils;
  */
 public class EscapeUtils {
 
-	private static final String[][] ENTITIES = { { "&", "&amp;" }, { "<", "&lt;" }, { ">", "&gt;" }, { "\"", "&quot;" },
-			{ "'", "&apos;" }, };
+	private static final String[][] ENTITIES = {{"&", "&amp;"}, {"<", "&lt;"}, {">", "&gt;"}, {"\"", "&quot;"},
+												{"'", "&apos;"},};
 
 	public static String escape(String str) {
-		if (str == null)
+		if (str == null) {
 			return null;
-		if (str.length() == 0)
+		}
+		if (str.length() == 0) {
 			return str;
+		}
 		for (int i = 0; i < ENTITIES.length; i++) {
 			str = str.replace(ENTITIES[i][0], ENTITIES[i][1]);
 		}
@@ -37,10 +42,12 @@ public class EscapeUtils {
 	}
 
 	public static String unescape(String str) {
-		if (str == null)
+		if (str == null) {
 			return null;
-		if (str.length() == 0)
+		}
+		if (str.length() == 0) {
 			return str;
+		}
 		for (int i = ENTITIES.length - 1; i >= 0; i--) {
 			str = str.replace(ENTITIES[i][1], ENTITIES[i][0]);
 		}

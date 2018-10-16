@@ -1,10 +1,13 @@
 /*
+ * ElementWrapper.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,11 +25,11 @@ import java.util.Map;
 
 /**
  * Wrapper for {@linkplain Element} class.
- * 
+ *
  * @author bmalkow
- * 
  */
-public class ElementWrapper implements Element {
+public class ElementWrapper
+		implements Element {
 
 	private final Element element;
 
@@ -47,18 +50,21 @@ public class ElementWrapper implements Element {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (!(obj instanceof Element))
+		}
+		if (!(obj instanceof Element)) {
 			return false;
+		}
 		return this.element.equals(obj);
 	}
 
 	@Override
 	public Element findChild(String[] elemPath) throws XMLException {
-		return element.findChild( elemPath );
+		return element.findChild(elemPath);
 	}
 
 	/**
@@ -83,6 +89,14 @@ public class ElementWrapper implements Element {
 	@Override
 	public Map<String, String> getAttributes() throws XMLException {
 		return element.getAttributes();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setAttributes(Map<String, String> attrs) throws XMLException {
+		element.setAttributes(attrs);
 	}
 
 	/**
@@ -144,11 +158,11 @@ public class ElementWrapper implements Element {
 	}
 
 	@Override
-	public Element getFirstChild( String name ) throws XMLException {
-		List<Element> l = getChildren( name );
-		return l != null && !l.isEmpty() ? l.get( 0 ) : null;
+	public Element getFirstChild(String name) throws XMLException {
+		List<Element> l = getChildren(name);
+		return l != null && !l.isEmpty() ? l.get(0) : null;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -177,8 +191,24 @@ public class ElementWrapper implements Element {
 	 * {@inheritDoc}
 	 */
 	@Override
+	public void setParent(Element parent) throws XMLException {
+		element.setParent(parent);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	public String getValue() throws XMLException {
 		return element.getValue();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setValue(String value) throws XMLException {
+		element.setValue(value);
 	}
 
 	/**
@@ -194,6 +224,14 @@ public class ElementWrapper implements Element {
 	@Override
 	public String getXMLNS() throws XMLException {
 		return element.getXMLNS();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setXMLNS(String xmlns) throws XMLException {
+		element.setXMLNS(xmlns);
 	}
 
 	/**
@@ -228,61 +266,30 @@ public class ElementWrapper implements Element {
 		element.setAttribute(key, value);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setAttributes(Map<String, String> attrs) throws XMLException {
-		element.setAttributes(attrs);
-	}
-
 	protected void setChildElementValue(final String elemName, final String value) throws XMLException {
 		Element b = getFirstChild(elemName);
-		if (value == null && b != null)
+		if (value == null && b != null) {
 			removeChild(b);
-		else if (value != null && b == null) {
+		} else if (value != null && b == null) {
 			b = ElementFactory.create(elemName);
-			addChild(b);
+			b = addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {
 			b.setValue(value);
 		}
 	}
 
-	protected void setChildElementValue(final String elemName, final String xmlns, final String value) throws XMLException {
+	protected void setChildElementValue(final String elemName, final String xmlns, final String value)
+			throws XMLException {
 		Element b = getChildrenNS(elemName, xmlns);
-		if (value == null && b != null)
+		if (value == null && b != null) {
 			removeChild(b);
-		else if (value != null && b == null) {
+		} else if (value != null && b == null) {
 			b = ElementFactory.create(elemName, null, xmlns);
-			addChild(b);
+			b = addChild(b);
 			b.setValue(value);
 		} else if (value != null && b != null) {
 			b.setValue(value);
 		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setParent(Element parent) throws XMLException {
-		element.setParent(parent);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setValue(String value) throws XMLException {
-		element.setValue(value);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setXMLNS(String xmlns) throws XMLException {
-		element.setXMLNS(xmlns);
 	}
 }

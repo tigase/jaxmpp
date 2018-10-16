@@ -1,23 +1,51 @@
+/*
+ * build.gradle
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
+
 subprojects {
-    apply plugin: 'maven-publish'
+	apply plugin: 'maven-publish'
 
+	group = 'tigase'
+	version = jaxmppVersion
 
-
-    group = 'tigase'
-    version = jaxmppVersion
-
-    publishing {
-        repositories {
-            mavenLocal()
-        }
-    }
+	publishing {
+		repositories {
+			maven {
+				credentials {
+					username "$tigaseMavenUser"
+					password "$tigaseMavenPassword"
+				}
+				url "http://maven-repo.tigase.org/repository/snapshot"
+			}
+		}
+		repositories {
+			mavenLocal()
+		}
+	}
 }
 
 allprojects {
-    repositories {
-        mavenLocal()
-        maven { url "http://maven.tigase.org" }
-        maven { url "http://build.xmpp-test.net/maven/" }
-        jcenter()
-    }
+	repositories {
+		mavenLocal()
+		maven {url "http://maven-repo.tigase.org/repository/release"}
+		maven {url "http://maven-repo.tigase.org/repository/snapshot"}
+		jcenter()
+	}
 }

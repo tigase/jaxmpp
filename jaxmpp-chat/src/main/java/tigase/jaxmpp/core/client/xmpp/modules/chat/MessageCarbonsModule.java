@@ -1,6 +1,25 @@
-package tigase.jaxmpp.core.client.xmpp.modules.chat;
+/*
+ * MessageCarbonsModule.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 
-import java.util.List;
+package tigase.jaxmpp.core.client.xmpp.modules.chat;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
@@ -20,77 +39,28 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
-public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
+import java.util.List;
 
-	public static enum CarbonEventType {
-		received,
-		sent
-	}
-
-	public interface CarbonReceivedHandler extends EventHandler {
-
-		public static class CarbonReceivedEvent extends JaxmppEvent<CarbonReceivedHandler> {
-
-			private CarbonEventType carbonType;
-			private Chat chat;
-			private Message encapsulatedMessage;
-
-			public CarbonReceivedEvent(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage,
-					Chat chat) {
-				super(sessionObject);
-				this.carbonType = carbonType;
-				this.encapsulatedMessage = encapsulatedMessage;
-				this.chat = chat;
-			}
-
-			@Override
-			protected void dispatch(CarbonReceivedHandler handler) {
-				handler.onCarbonReceived(sessionObject, carbonType, encapsulatedMessage, chat);
-			}
-
-			public CarbonEventType getCarbonType() {
-				return carbonType;
-			}
-
-			public Chat getChat() {
-				return chat;
-			}
-
-			public Message getEncapsulatedMessage() {
-				return encapsulatedMessage;
-			}
-
-			public void setCarbonType(CarbonEventType carbonType) {
-				this.carbonType = carbonType;
-			}
-
-			public void setChat(Chat chat) {
-				this.chat = chat;
-			}
-
-			public void setEncapsulatedMessage(Message encapsulatedMessage) {
-				this.encapsulatedMessage = encapsulatedMessage;
-			}
-
-		}
-
-		void onCarbonReceived(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage, Chat chat);
-	}
+public class MessageCarbonsModule
+		extends AbstractStanzaModule<Message> {
 
 	/**
 	 * XMLNS of <a href='http://xmpp.org/extensions/xep-0280.html'>Message
 	 * Carbons</a>.
 	 */
 	public static final String XMLNS_MC = "urn:xmpp:carbons:2";
-
 	/**
 	 * XMLNS of <a href='http://xmpp.org/extensions/xep-0297.html'>Stanza
 	 * Forwarding</a>.
 	 */
 	static final String XMLNS_SF = "urn:xmpp:forward:0";
 
-	private final Criteria criteria;
+	public enum CarbonEventType {
+		received,
+		sent
+	}
 
+	private final Criteria criteria;
 	private MessageModule messageModule;
 
 	public MessageCarbonsModule() throws JaxmppException {
@@ -109,9 +79,8 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 
 	/**
 	 * Disable carbons.
-	 * 
-	 * @param callback
-	 *            callback
+	 *
+	 * @param callback callback
 	 */
 	public void disable(AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -122,9 +91,8 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 
 	/**
 	 * Enable carbons.
-	 * 
-	 * @param callback
-	 *            callback
+	 *
+	 * @param callback callback
 	 */
 	public void enable(AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
@@ -150,8 +118,9 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 				processReceivedCarbon(message, carb);
 			} else if ("sent".equals(carb.getName())) {
 				processSentCarbon(message, carb);
-			} else
+			} else {
 				throw new XMPPException(ErrorCondition.bad_request);
+			}
 		}
 	}
 
@@ -164,8 +133,7 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 			JID interlocutorJid = encapsulatedMessage.getFrom();
 			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
-			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
-					context.getSessionObject(), CarbonEventType.received, encapsulatedMessage, chat);
+			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(context.getSessionObject(), CarbonEventType.received, encapsulatedMessage, chat);
 			fireEvent(event);
 		}
 	}
@@ -179,10 +147,60 @@ public class MessageCarbonsModule extends AbstractStanzaModule<Message> {
 			JID interlocutorJid = encapsulatedMessage.getTo();
 			Chat chat = this.messageModule.process(encapsulatedMessage, interlocutorJid, false);
 
-			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(
-					context.getSessionObject(), CarbonEventType.sent, encapsulatedMessage, chat);
+			CarbonReceivedHandler.CarbonReceivedEvent event = new CarbonReceivedHandler.CarbonReceivedEvent(context.getSessionObject(), CarbonEventType.sent, encapsulatedMessage, chat);
 
 			fireEvent(event);
+		}
+	}
+
+	public interface CarbonReceivedHandler
+			extends EventHandler {
+
+		void onCarbonReceived(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage, Chat chat);
+
+		class CarbonReceivedEvent
+				extends JaxmppEvent<CarbonReceivedHandler> {
+
+			private CarbonEventType carbonType;
+			private Chat chat;
+			private Message encapsulatedMessage;
+
+			public CarbonReceivedEvent(SessionObject sessionObject, CarbonEventType carbonType, Message encapsulatedMessage, Chat chat) {
+				super(sessionObject);
+				this.carbonType = carbonType;
+				this.encapsulatedMessage = encapsulatedMessage;
+				this.chat = chat;
+			}
+
+			@Override
+			public void dispatch(CarbonReceivedHandler handler) {
+				handler.onCarbonReceived(sessionObject, carbonType, encapsulatedMessage, chat);
+			}
+
+			public CarbonEventType getCarbonType() {
+				return carbonType;
+			}
+
+			public void setCarbonType(CarbonEventType carbonType) {
+				this.carbonType = carbonType;
+			}
+
+			public Chat getChat() {
+				return chat;
+			}
+
+			public void setChat(Chat chat) {
+				this.chat = chat;
+			}
+
+			public Message getEncapsulatedMessage() {
+				return encapsulatedMessage;
+			}
+
+			public void setEncapsulatedMessage(Message encapsulatedMessage) {
+				this.encapsulatedMessage = encapsulatedMessage;
+			}
+
 		}
 	}
 

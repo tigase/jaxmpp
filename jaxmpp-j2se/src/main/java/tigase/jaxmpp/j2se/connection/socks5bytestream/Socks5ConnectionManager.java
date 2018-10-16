@@ -1,10 +1,13 @@
 /*
+ * Socks5ConnectionManager.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -50,10 +53,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
  * @author andrzej
  */
-public abstract class Socks5ConnectionManager implements ConnectionManager {
+public abstract class Socks5ConnectionManager
+		implements ConnectionManager {
 
 	public static final String PACKET_ID = "packet-id";
 	protected static final String JAXMPP_KEY = "jaxmpp";
@@ -65,9 +68,23 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	private static final Logger log = Logger.getLogger(Socks5ConnectionManager.class.getCanonicalName());
 	private static final Map<String, ConnectionSession> sessions = new HashMap<String, ConnectionSession>();
 	private static final long TIMEOUT = 15 * 60 * 1000;
+
+	public enum State {
+
+		Active,
+		ActiveServ,
+		Auth,
+		AuthResp,
+		Closed,
+		Command,
+		Welcome,
+		WelcomeResp,
+		WelcomeServ
+	}
+
 	private static TcpServerThread server = null;
 	// ---------------------------------------------------------------------------------------
-	private static Timer timer = new Timer();
+	private static Timer timer = new Timer("Socks5Timer", true);
 	protected Context context;
 
 	protected static boolean checkHash(String data, ConnectionSession session) {
@@ -77,7 +94,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected static void clearSessions() {
 		synchronized (sessions) {
 			for (ConnectionSession session : new HashSet<ConnectionSession>(sessions.values())) {
-				Socks5ConnectionManager connectionManager = session.getData(Socks5ConnectionManager.class.getCanonicalName());
+				Socks5ConnectionManager connectionManager = session.getData(
+						Socks5ConnectionManager.class.getCanonicalName());
 				connectionManager.fireOnFailure(session);
 			}
 			sessions.clear();
@@ -88,9 +106,10 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		try {
 			String sid = session.getData(SID_KEY);
 			String data = session.isIncoming()
-					? sid + session.getPeer().toString()
-							+ ResourceBinderModule.getBindedJID(session.getSessionObject()).toString()
-					: sid + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + session.getPeer();
+						  ? sid + session.getPeer().toString() +
+								  ResourceBinderModule.getBindedJID(session.getSessionObject()).toString()
+						  : sid + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() +
+								  session.getPeer();
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
 			md.update(data.getBytes(UTF_CHARSET));
 			byte[] buff = md.digest();
@@ -102,8 +121,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				enc.append(ch);
 			} // end of for (b : digest)
 			if (log.isLoggable(Level.FINEST)) {
-				log.finest("for " + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() + " generated "
-						+ data + " hash = " + enc.toString());
+				log.finest("for " + ResourceBinderModule.getBindedJID(session.getSessionObject()).toString() +
+								   " generated " + data + " hash = " + enc.toString());
 			}
 			return enc.toString();
 		} catch (NoSuchAlgorithmException e) {
@@ -126,142 +145,144 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			}
 
 			switch (state) {
-			case WelcomeServ:
-				byte ver1 = buf.get();
-				if (ver1 != 0x05) {
-					log.fine("bad protocol version! ver = " + ver1);
-					socket.close();
-					return State.Closed;
-				} else {
-					int count = buf.get();
-					boolean ok = false;
-					for (int i = 0; i < count; i++) {
-						if (buf.get() == 0x00) {
-							ok = true;
-							break;
-						}
-					}
-
-					buf.clear();
-
-					state = State.Command;
-
-					if (ok) {
-						if (log.isLoggable(Level.FINEST)) {
-							log.log(Level.FINEST, "sending welcome 0x05 0x00");
-						}
-						socket.write(ByteBuffer.wrap(new byte[] { 0x05, 0x00 }));
+				case WelcomeServ:
+					byte ver1 = buf.get();
+					if (ver1 != 0x05) {
+						log.fine("bad protocol version! ver = " + ver1);
+						socket.close();
+						return State.Closed;
 					} else {
-						if (log.isLoggable(Level.FINEST)) {
-							log.log(Level.FINEST, "stopping service {0} after failure during WELCOME step", socket.toString());
-						}
-						socket.close();
-						return State.Closed;
-					}
-				}
-				break;
-
-			case Command:
-				if (log.isLoggable(Level.FINEST)) {
-					log.finest("for Command read = " + buf.remaining());
-				}
-				if (buf.get() != 0x05) {
-					log.fine("bad protocol version!");
-					socket.close();
-					return State.Closed;
-				}
-				byte cmd = buf.get();
-				buf.get();
-				byte atype = buf.get();
-				if (cmd == 0x01 && atype == 0x03) {
-					byte len = buf.get();
-					byte[] data = new byte[len];
-					buf.get(data);
-					buf.clear();
-					ByteBuffer tmp = ByteBuffer.allocate(len + 7);
-					tmp.put((byte) 0x05);
-					tmp.put((byte) 0x00);
-					tmp.put((byte) 0x00);
-					tmp.put(atype);
-					tmp.put(len);
-					tmp.put(data);
-					tmp.put((byte) 0x00);
-					tmp.put((byte) 0x00);
-					tmp.flip();
-
-					ft = getSession(new String(data));
-					if (ft == null) {
-						// if (!checkHash(new String(data), ft)) {
-						if (log.isLoggable(Level.FINEST)) {
-							log.log(Level.FINEST, "stopping service {0} without file transfer", socket.toString());
-						}
-						socket.close();
-						return State.Closed;
-					}
-
-					if (log.isLoggable(Level.FINEST)) {
-						log.log(Level.FINEST, "sending response to COMMAND");
-					}
-					socket.write(tmp);
-					try {
-						// small delay to workaround issue with Psi+
-						Thread.sleep(100);
-					} catch (Exception ex) {
-					}
-					if (!socket.socket().isClosed()) {
-						synchronized (ft) {
-							List<Socket> sockets = ft.getData("sockets");
-							if (sockets == null) {
-								sockets = new ArrayList<Socket>();
-								ft.setData("sockets", sockets);
+						int count = buf.get();
+						boolean ok = false;
+						for (int i = 0; i < count; i++) {
+							if (buf.get() == 0x00) {
+								ok = true;
+								break;
 							}
-							sockets.add(socket.socket());
 						}
-						state = State.ActiveServ;
-					} else
+
+						buf.clear();
+
+						state = State.Command;
+
+						if (ok) {
+							if (log.isLoggable(Level.FINEST)) {
+								log.log(Level.FINEST, "sending welcome 0x05 0x00");
+							}
+							socket.write(ByteBuffer.wrap(new byte[]{0x05, 0x00}));
+						} else {
+							if (log.isLoggable(Level.FINEST)) {
+								log.log(Level.FINEST, "stopping service {0} after failure during WELCOME step",
+										socket.toString());
+							}
+							socket.close();
+							return State.Closed;
+						}
+					}
+					break;
+
+				case Command:
+					if (log.isLoggable(Level.FINEST)) {
+						log.finest("for Command read = " + buf.remaining());
+					}
+					if (buf.get() != 0x05) {
+						log.fine("bad protocol version!");
+						socket.close();
 						return State.Closed;
-				}
-				break;
+					}
+					byte cmd = buf.get();
+					buf.get();
+					byte atype = buf.get();
+					if (cmd == 0x01 && atype == 0x03) {
+						byte len = buf.get();
+						byte[] data = new byte[len];
+						buf.get(data);
+						buf.clear();
+						ByteBuffer tmp = ByteBuffer.allocate(len + 7);
+						tmp.put((byte) 0x05);
+						tmp.put((byte) 0x00);
+						tmp.put((byte) 0x00);
+						tmp.put(atype);
+						tmp.put(len);
+						tmp.put(data);
+						tmp.put((byte) 0x00);
+						tmp.put((byte) 0x00);
+						tmp.flip();
 
-			case WelcomeResp:
-				if (log.isLoggable(Level.FINEST)) {
-					log.finest("for WELCOME response read = " + buf.remaining());
-				}
-				int ver = buf.get();
-				if (ver != 0x05) {
-					log.fine("bad protocol version!");
-					socket.close();
-					return State.Closed;
-				}
-				int status = buf.get();
-				buf.clear();
-				if (status == 0) {
-					state = State.Auth;
-				}
-				break;
+						ft = getSession(new String(data));
+						if (ft == null) {
+							// if (!checkHash(new String(data), ft)) {
+							if (log.isLoggable(Level.FINEST)) {
+								log.log(Level.FINEST, "stopping service {0} without file transfer", socket.toString());
+							}
+							socket.close();
+							return State.Closed;
+						}
 
-			case AuthResp:
-				if (log.isLoggable(Level.FINEST)) {
-					log.finest("for AUTH response read = " + buf.remaining());
-				}
-				if (buf.get() != 0x05) {
-					log.fine("bad protocol version!");
-				}
+						if (log.isLoggable(Level.FINEST)) {
+							log.log(Level.FINEST, "sending response to COMMAND");
+						}
+						socket.write(tmp);
+						try {
+							// small delay to workaround issue with Psi+
+							Thread.sleep(100);
+						} catch (Exception ex) {
+						}
+						if (!socket.socket().isClosed()) {
+							synchronized (ft) {
+								List<Socket> sockets = ft.getData("sockets");
+								if (sockets == null) {
+									sockets = new ArrayList<Socket>();
+									ft.setData("sockets", sockets);
+								}
+								sockets.add(socket.socket());
+							}
+							state = State.ActiveServ;
+						} else {
+							return State.Closed;
+						}
+					}
+					break;
 
-				// let's ignore response for now
-				buf.clear();
-				state = State.Active;
+				case WelcomeResp:
+					if (log.isLoggable(Level.FINEST)) {
+						log.finest("for WELCOME response read = " + buf.remaining());
+					}
+					int ver = buf.get();
+					if (ver != 0x05) {
+						log.fine("bad protocol version!");
+						socket.close();
+						return State.Closed;
+					}
+					int status = buf.get();
+					buf.clear();
+					if (status == 0) {
+						state = State.Auth;
+					}
+					break;
 
-				break;
+				case AuthResp:
+					if (log.isLoggable(Level.FINEST)) {
+						log.finest("for AUTH response read = " + buf.remaining());
+					}
+					if (buf.get() != 0x05) {
+						log.fine("bad protocol version!");
+					}
 
-			case Active:
-				// this state should not be processed by this method
-				buf.clear();
-				break;
+					// let's ignore response for now
+					buf.clear();
+					state = State.Active;
 
-			default:
-				log.log(Level.FINE, "wrong state, buffer has remainging = {0}", buf.remaining());
-				buf.clear();
+					break;
+
+				case Active:
+					// this state should not be processed by this method
+					buf.clear();
+					break;
+
+				default:
+					log.log(Level.FINE, "wrong state, buffer has remainging = {0}", buf.remaining());
+					buf.clear();
 			}
 			if (log.isLoggable(Level.FINEST)) {
 				log.log(Level.FINEST, "after processing received data set in state = {0}", state);
@@ -312,7 +333,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			int wrote = socket.write(out);
 			if (out.hasRemaining()) {
 				log.log(Level.FINE, "we wrote to stream = {0} but we have remaining = {1}",
-						new Object[] { wrote, out.remaining() });
+						new Object[]{wrote, out.remaining()});
 			}
 		}
 
@@ -354,8 +375,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		handleConnection(session, channel.socket(), false);
 	}
 
-	public void discoverProxy(final JaxmppCore jaxmpp, final ConnectionSession session, final InitializedCallback callback)
-			throws JaxmppException {
+	public void discoverProxy(final JaxmppCore jaxmpp, final ConnectionSession session,
+							  final InitializedCallback callback) throws JaxmppException {
 		session.setData(JAXMPP_KEY, jaxmpp);
 		final DiscoveryModule discoItemsModule = jaxmpp.getModule(DiscoveryModule.class);
 		JID jid = ResourceBinderModule.getBindedJID(jaxmpp.getSessionObject());
@@ -366,7 +387,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 			}
 
 			@Override
-			public void onInfoReceived(String attribute, final ArrayList<DiscoveryModule.Item> items) throws XMLException {
+			public void onInfoReceived(String attribute, final ArrayList<DiscoveryModule.Item> items)
+					throws XMLException {
 				final int all = items.size();
 				if (all == 0) {
 					proxyDiscoveryError(jaxmpp, session, callback, "not supported by this server");
@@ -392,12 +414,13 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 								}
 
 								@Override
-								protected void onInfoReceived(String node, Collection<DiscoveryModule.Identity> identities,
-										Collection<String> features) throws XMLException {
+								protected void onInfoReceived(String node,
+															  Collection<DiscoveryModule.Identity> identities,
+															  Collection<String> features) throws XMLException {
 									if (identities != null) {
 										for (DiscoveryModule.Identity identity : identities) {
-											if ("proxy".equals(identity.getCategory())
-													&& "bytestreams".equals(identity.getType())) {
+											if ("proxy".equals(identity.getCategory()) &&
+													"bytestreams".equals(identity.getType())) {
 												proxyComponents.add(item.getJid());
 											}
 										}
@@ -434,24 +457,26 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnConnected(ConnectionSession session) {
 		List<Socket> sockets = session.getData("sockets");
 		for (Socket socket : sockets) {
-			if (socket.isClosed())
+			if (socket.isClosed()) {
 				continue;
+			}
 			try {
 				socket.getInputStream().read(new byte[0]);
 				socket.getOutputStream().write(new byte[0]);
 			} catch (Exception ex) {
 			}
-			if (socket.isClosed())
+			if (socket.isClosed()) {
 				continue;
+			}
 			fireOnConnected(session, socket);
 		}
 	}
 
 	protected void fireOnConnected(ConnectionSession session, Socket socket) {
 		try {
-			context.getEventBus().fire(
-					new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(), session, socket),
-					this);
+			context.getEventBus()
+					.fire(new ConnectionEstablishedHandler.ConnectionEstablishedEvent(session.getSessionObject(),
+																					  session, socket));
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionEstablished event", ex);
 		}
@@ -460,8 +485,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	protected void fireOnFailure(ConnectionSession session) {
 		try {
 			unregisterSession(session);
-			context.getEventBus().fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session),
-					this);
+			context.getEventBus()
+					.fire(new ConnectionFailedHandler.ConnectionFailedEvent(session.getSessionObject(), session));
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "failure firing ConnectionFailed event", ex);
 		}
@@ -482,8 +507,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 				registerSession(session, sid, this);
 			}
-			return streamhostsResolver.getLocalStreamHosts(ResourceBinderModule.getBindedJID(session.getSessionObject()),
-					server.getPort());
+			return streamhostsResolver.getLocalStreamHosts(
+					ResourceBinderModule.getBindedJID(session.getSessionObject()), server.getPort());
 		} catch (Exception ex) {
 			throw new JaxmppException("problem in getting local streamhosts", ex);
 		}
@@ -516,7 +541,7 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				}
 
 				if (log.isLoggable(Level.FINEST)) {
-					log.log(Level.FINEST, "read data = {0} state = {1}", new Object[] { read, state.name() });
+					log.log(Level.FINEST, "read data = {0} state = {1}", new Object[]{read, state.name()});
 				}
 				buf.flip();
 			}
@@ -529,57 +554,57 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		}
 
 		switch (state) {
-		case Active:
-			if (session.isIncoming()) {
-				fireOnConnected(session, socket);
-			} else {
-				try {
-					requestActivate(session, socket);
-				} catch (JaxmppException ex) {
-					socket.close();
-					fireOnFailure(session);
+			case Active:
+				if (session.isIncoming()) {
+					fireOnConnected(session, socket);
+				} else {
+					try {
+						requestActivate(session, socket);
+					} catch (JaxmppException ex) {
+						socket.close();
+						fireOnFailure(session);
+					}
 				}
-			}
-			break;
-		case ActiveServ:
-			// synchronized (session) {
-			// if (((Boolean) session.getData("streamhost-received") == null)
-			// || ((Boolean) session.getData("streamhost-received") == false)) {
-			// session.setData("socket", socket);
-			// } else {
-			// session.setData("socket", socket);
-			// }
-			// }
+				break;
+			case ActiveServ:
+				// synchronized (session) {
+				// if (((Boolean) session.getData("streamhost-received") == null)
+				// || ((Boolean) session.getData("streamhost-received") == false)) {
+				// session.setData("socket", socket);
+				// } else {
+				// session.setData("socket", socket);
+				// }
+				// }
 
-			// why do we need this? activation is done only for outgoing
-			// connections
-			// try {
-			// requestActivate(session, socket);
-			// } catch (JaxmppException ex) {
-			// socket.close();
-			// fireOnFailure(session);
-			// }
-
-			break;
-		case Closed:
-			if (!incoming) {
+				// why do we need this? activation is done only for outgoing
+				// connections
+				// try {
+				// requestActivate(session, socket);
+				// } catch (JaxmppException ex) {
+				// socket.close();
 				// fireOnFailure(session);
-				throw new IOException("Could not establish Socks5 connection");
-			}
-			break;
+				// }
+
+				break;
+			case Closed:
+				if (!incoming) {
+					// fireOnFailure(session);
+					throw new IOException("Could not establish Socks5 connection");
+				}
+				break;
 		}
 		buf.clear();
 	}
 
 	protected void proxyDiscoveryError(JaxmppCore jaxmpp, ConnectionSession ft, InitializedCallback callback,
-			String errorText) {
+									   String errorText) {
 		log.log(Level.FINE, "error during Socks5 proxy discovery = {0}", errorText);
 		ft.setData(PROXY_JID_KEY, null);
 		callback.initialized(jaxmpp, ft);
 	}
 
 	protected void proxyDiscoveryFinished(JaxmppCore jaxmpp, ConnectionSession ft, InitializedCallback callback,
-			List<JID> proxyComponents) {
+										  List<JID> proxyComponents) {
 		JID proxyJid = (proxyComponents == null || proxyComponents.isEmpty()) ? null : proxyComponents.get(0);
 		ft.setData(PROXY_JID_KEY, proxyJid);
 		callback.initialized(jaxmpp, ft);
@@ -593,8 +618,8 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 		} else if (session.getPeer() == null) {
 			log.fine("no peer");
 		}
-		jaxmpp.getModule(Socks5BytestreamsModule.class).requestActivate(usedProxyJid, session.getSid(), session.getPeer(),
-				new ActivateCallback() {
+		jaxmpp.getModule(Socks5BytestreamsModule.class)
+				.requestActivate(usedProxyJid, session.getSid(), session.getPeer(), new ActivateCallback() {
 					@Override
 					public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
 						fireOnFailure(session);
@@ -615,36 +640,28 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class,
-				new FileTransferManager.FileTransferSuccessHandler() {
-					@Override
-					public void onFileTransferSuccess(SessionObject sessionObject, FileTransfer fileTransfer) {
-						unregisterSession(fileTransfer);
-					}
-				});
-		this.context.getEventBus().addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class,
-				new FileTransferManager.FileTransferFailureHandler() {
-					@Override
-					public void onFileTransferFailure(SessionObject sessionObject, FileTransfer fileTransfer) {
-						unregisterSession(fileTransfer);
-					}
-				});
+		this.context.getEventBus()
+				.addHandler(FileTransferManager.FileTransferSuccessHandler.FileTransferSuccessEvent.class,
+							new FileTransferManager.FileTransferSuccessHandler() {
+								@Override
+								public void onFileTransferSuccess(SessionObject sessionObject,
+																  FileTransfer fileTransfer) {
+									unregisterSession(fileTransfer);
+								}
+							});
+		this.context.getEventBus()
+				.addHandler(FileTransferManager.FileTransferFailureHandler.FileTransferFailureEvent.class,
+							new FileTransferManager.FileTransferFailureHandler() {
+								@Override
+								public void onFileTransferFailure(SessionObject sessionObject,
+																  FileTransfer fileTransfer) {
+									unregisterSession(fileTransfer);
+								}
+							});
 	}
 
-	public static enum State {
-
-		Active,
-		ActiveServ,
-		Auth,
-		AuthResp,
-		Closed,
-		Command,
-		Welcome,
-		WelcomeResp,
-		WelcomeServ
-	}
-
-	private class IncomingConnectionHandlerThread extends Thread {
+	private class IncomingConnectionHandlerThread
+			extends Thread {
 
 		private final SocketChannel socketChannel;
 
@@ -660,12 +677,13 @@ public abstract class Socks5ConnectionManager implements ConnectionManager {
 				log.log(Level.SEVERE, null, ex);
 			}
 		}
-	};
+	}
 
 	/**
 	 * Internal TCP connection manager
 	 */
-	private class TcpServerThread extends Thread {
+	private class TcpServerThread
+			extends Thread {
 
 		// private ConnectionSession session = null;
 		private ServerSocketChannel serverSocket = null;

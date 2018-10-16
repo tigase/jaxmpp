@@ -1,10 +1,13 @@
 /*
+ * BoshXmppSessionLogic.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,14 +20,9 @@
  */
 package tigase.jaxmpp.core.client.connector;
 
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.XmppModulesManager;
-import tigase.jaxmpp.core.client.XmppSessionLogic;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -38,31 +36,21 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule.AuthSuccessHandler
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule.SaslError;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule;
 
-public class BoshXmppSessionLogic implements XmppSessionLogic {
+public class BoshXmppSessionLogic
+		implements XmppSessionLogic {
 
 	private final AuthModule.AuthFailedHandler authFailedHandler;
-
-	private AuthModule authModule;
-
 	private final AuthModule.AuthSuccessHandler authSuccessHandler;
-
 	private final Connector connector;
-
 	private final Context context;
-
-	private StreamFeaturesModule featuresModule;
-
 	private final XmppModulesManager modulesManager;
-
-	private ResourceBinderModule resourceBinder;
-
 	private final ResourceBindErrorHandler resourceBindErrorHandler;
-
 	private final ResourceBindSuccessHandler resourceBindSuccessHandler;
-
-	private SessionListener sessionListener;
-
 	private final StreamFeaturesReceivedHandler streamFeaturesReceivedHandler;
+	private AuthModule authModule;
+	private StreamFeaturesModule featuresModule;
+	private ResourceBinderModule resourceBinder;
+	private SessionListener sessionListener;
 
 	public BoshXmppSessionLogic(Context context, Connector connector, XmppModulesManager modulesManager) {
 		this.context = context;
@@ -140,7 +128,8 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 		context.getEventBus().fire(new XmppSessionEstablishedHandler.XmppSessionEstablishedEvent(sessionObject));
 	}
 
-	protected void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement) throws JaxmppException {
+	protected void onStreamFeaturesReceived(SessionObject sessionObject, Element featuresElement)
+			throws JaxmppException {
 		if (sessionObject.getProperty(AuthModule.AUTHORIZED) != Boolean.TRUE) {
 			authModule.login();
 		} else if (sessionObject.getProperty(AuthModule.AUTHORIZED) == Boolean.TRUE) {
@@ -159,8 +148,9 @@ public class BoshXmppSessionLogic implements XmppSessionLogic {
 
 	protected void processException(JaxmppException e) {
 		try {
-			if (sessionListener != null)
+			if (sessionListener != null) {
 				sessionListener.onException(e);
+			}
 		} catch (Exception ex) {
 			throw new RuntimeException(ex);
 		}

@@ -1,10 +1,13 @@
 /*
+ * EventBus.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -24,110 +27,47 @@ public abstract class EventBus {
 
 	/**
 	 * Adds handler to receive given type of events.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param handler
-	 *            event handler
+	 *
+	 * @param type type of event.
+	 * @param handler event handler
 	 */
 	public abstract <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, H handler);
 
 	/**
-	 * Adds handler to receive given type of events from specified source.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param source
-	 *            source of event.
-	 * @param handler
-	 *            event handler.
-	 */
-	public abstract <H extends EventHandler> void addHandler(Class<? extends Event<H>> type, Object source, H handler);
-
-	/**
 	 * Adds listener to receive given type of events.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param listener
-	 *            event listener.
+	 *
+	 * @param type type of event.
+	 * @param listener event listener.
 	 */
 	public abstract <H extends EventHandler> void addListener(Class<? extends Event<H>> type, EventListener listener);
 
 	/**
-	 * Adds listener to receive given type of events from specified source.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param source
-	 *            source of event.
-	 * @param listener
-	 *            event listener.
-	 */
-	public abstract <H extends EventHandler> void addListener(Class<? extends Event<H>> type, Object source,
-			EventListener listener);
-
-	/**
 	 * Adds listener to receive all types events.
-	 * 
-	 * @param listener
-	 *            event listener.
+	 *
+	 * @param listener event listener.
 	 */
 	public abstract <H extends EventHandler> void addListener(EventListener listener);
 
 	/**
 	 * Fires event.
-	 * 
-	 * @param e
-	 *            event to fire
+	 *
+	 * @param e event to fire
 	 */
 	public abstract void fire(Event<?> e);
 
 	/**
-	 * Fires event.
-	 * 
-	 * @param e
-	 *            event to fire.
-	 * @param source
-	 *            source of event.
-	 */
-	public abstract void fire(Event<?> e, Object source);
-
-	/**
 	 * Removes listener or handler of given type.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param handler
-	 *            handler or listener to remove from EventBus.
+	 *
+	 * @param type type of event.
+	 * @param handler handler or listener to remove from EventBus.
 	 */
 	public abstract void remove(Class<? extends Event<?>> type, EventHandler handler);
 
 	/**
-	 * Removes listener or handler of given type added registered to receive
-	 * event from specified source.
-	 * 
-	 * @param type
-	 *            type of event.
-	 * @param source
-	 *            source of event.
-	 * @param handler
-	 *            handler or listener to remove from EventBus.
-	 */
-	public abstract void remove(Class<? extends Event<?>> type, Object source, EventHandler handler);
-
-	/**
 	 * Removed listener or handler.
-	 * 
-	 * @param handler
-	 *            handler or listener to remove from EventBus.
+	 *
+	 * @param handler handler or listener to remove from EventBus.
 	 */
 	public abstract void remove(EventHandler handler);
 
-	/**
-	 * Puts event source to event.
-	 */
-	protected void setEventSource(Event<EventHandler> event, Object source) {
-		event.setSource(source);
-	}
 }

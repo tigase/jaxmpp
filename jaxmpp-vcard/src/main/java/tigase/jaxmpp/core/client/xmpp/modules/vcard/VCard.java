@@ -1,10 +1,13 @@
 /*
+ * VCard.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,20 +20,55 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.vcard;
 
-import java.io.Serializable;
-import java.util.List;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-public class VCard implements Serializable {
+import java.io.Serializable;
+import java.util.List;
+
+public class VCard
+		implements Serializable {
 
 	private static final long serialVersionUID = 1L;
+	private String bday;
+	private String description;
+	private String fullName;
+	private String homeAddressCtry;
+	private String homeAddressLocality;
+	private String homeAddressPCode;
+	private String homeAddressRegion;
+	private String homeAddressStreet;
+	private String homeEmail;
+	private String homeTelFax;
+	private String homeTelMsg;
+	private String homeTelVoice;
+	private String jabberID;
+	private String nameFamily;
+	private String nameGiven;
+	private String nameMiddle;
+	private String nickName;
+	private String orgName;
+	private String orgUnit;
+	private String photoType;
+	private String photoVal;
+	private String role;
+	private String title;
+	private String url;
+	private String workAddressCtry;
+	private String workAddressLocality;
+	private String workAddressPCode;
+	private String workAddressRegion;
+	private String workAddressStreet;
+	private String workEmail;
+	private String workTelFax;
+	private String workTelMsg;
+	private String workTelVoice;
 
 	private static void add(Element vcard, String name, String value) throws XMLException {
-		if (value != null)
+		if (value != null) {
 			vcard.addChild(ElementFactory.create(name, value, null));
+		}
 	}
 
 	private static void add(Element vcard, String name, String[] childNames, String[] values) throws XMLException {
@@ -48,204 +86,299 @@ public class VCard implements Serializable {
 		vcard.loadData(elem);
 		return vcard;
 	}
-	
+
 	private static String getChildValue(Element it, String string) throws XMLException {
 		List<Element> l = it.getChildren(string);
-		if (l == null || l.size() == 0)
+		if (l == null || l.size() == 0) {
 			return null;
+		}
 		return l.get(0).getValue();
 	}
 
-	private static boolean match(final Element it, final String elemName, final String... children) throws XMLException {
-		if (!elemName.equals(it.getName()))
+	private static boolean match(final Element it, final String elemName, final String... children)
+			throws XMLException {
+		if (!elemName.equals(it.getName())) {
 			return false;
+		}
 
 		for (String string : children) {
 			List<Element> l = it.getChildren(string);
-			if (l == null || l.size() == 0)
+			if (l == null || l.size() == 0) {
 				return false;
+			}
 		}
 
 		return true;
 	}
 
-	private String bday;
-	private String description;
-	private String fullName;
-	private String homeAddressCtry;
-	private String homeAddressLocality;
-
-	private String homeAddressPCode;
-
-	private String homeAddressRegion;
-
-	private String homeAddressStreet;
-	private String homeEmail;
-	private String homeTelFax;
-	private String homeTelMsg;
-
-	private String homeTelVoice;
-	private String jabberID;
-	private String nameFamily;
-	private String nameGiven;
-	private String nameMiddle;
-	private String nickName;
-	private String orgName;
-	private String orgUnit;
-	private String photoType;
-
-	private String photoVal;
-	private String role;
-	private String title;
-	private String url;
-	private String workAddressCtry;
-	private String workAddressLocality;
-	private String workAddressPCode;
-	private String workAddressRegion;
-	private String workAddressStreet;
-
-	private String workEmail;
-	private String workTelFax;
-
-	private String workTelMsg;
-
-	private String workTelVoice;
-
 	public String getBday() {
 		return bday;
+	}
+
+	public void setBday(String bday) {
+		this.bday = bday;
 	}
 
 	public String getDescription() {
 		return description;
 	}
 
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	public String getFullName() {
 		return fullName;
+	}
+
+	public void setFullName(String fullName) {
+		this.fullName = fullName;
 	}
 
 	public String getHomeAddressCtry() {
 		return homeAddressCtry;
 	}
 
+	public void setHomeAddressCtry(String homeAddressCtry) {
+		this.homeAddressCtry = homeAddressCtry;
+	}
+
 	public String getHomeAddressLocality() {
 		return homeAddressLocality;
+	}
+
+	public void setHomeAddressLocality(String homeAddressLocality) {
+		this.homeAddressLocality = homeAddressLocality;
 	}
 
 	public String getHomeAddressPCode() {
 		return homeAddressPCode;
 	}
 
+	public void setHomeAddressPCode(String homeAddressPCode) {
+		this.homeAddressPCode = homeAddressPCode;
+	}
+
 	public String getHomeAddressRegion() {
 		return homeAddressRegion;
+	}
+
+	public void setHomeAddressRegion(String homeAddressRegion) {
+		this.homeAddressRegion = homeAddressRegion;
 	}
 
 	public String getHomeAddressStreet() {
 		return homeAddressStreet;
 	}
 
+	public void setHomeAddressStreet(String homeAddressStreet) {
+		this.homeAddressStreet = homeAddressStreet;
+	}
+
 	public String getHomeEmail() {
 		return homeEmail;
+	}
+
+	public void setHomeEmail(String homeEmail) {
+		this.homeEmail = homeEmail;
 	}
 
 	public String getHomeTelFax() {
 		return homeTelFax;
 	}
 
+	public void setHomeTelFax(String homeTelFax) {
+		this.homeTelFax = homeTelFax;
+	}
+
 	public String getHomeTelMsg() {
 		return homeTelMsg;
+	}
+
+	public void setHomeTelMsg(String homeTelMsg) {
+		this.homeTelMsg = homeTelMsg;
 	}
 
 	public String getHomeTelVoice() {
 		return homeTelVoice;
 	}
 
+	public void setHomeTelVoice(String homeTelVoice) {
+		this.homeTelVoice = homeTelVoice;
+	}
+
 	public String getJabberID() {
 		return jabberID;
+	}
+
+	public void setJabberID(String jabberID) {
+		this.jabberID = jabberID;
 	}
 
 	public String getNameFamily() {
 		return nameFamily;
 	}
 
+	public void setNameFamily(String nameFamily) {
+		this.nameFamily = nameFamily;
+	}
+
 	public String getNameGiven() {
 		return nameGiven;
+	}
+
+	public void setNameGiven(String nameGiven) {
+		this.nameGiven = nameGiven;
 	}
 
 	public String getNameMiddle() {
 		return nameMiddle;
 	}
 
+	public void setNameMiddle(String nameMiddle) {
+		this.nameMiddle = nameMiddle;
+	}
+
 	public String getNickName() {
 		return nickName;
+	}
+
+	public void setNickName(String nickName) {
+		this.nickName = nickName;
 	}
 
 	public String getOrgName() {
 		return orgName;
 	}
 
+	public void setOrgName(String orgName) {
+		this.orgName = orgName;
+	}
+
 	public String getOrgUnit() {
 		return orgUnit;
+	}
+
+	public void setOrgUnit(String orgUnit) {
+		this.orgUnit = orgUnit;
 	}
 
 	public String getPhotoType() {
 		return photoType;
 	}
 
+	public void setPhotoType(String photoType) {
+		this.photoType = photoType;
+	}
+
 	public String getPhotoVal() {
 		return photoVal;
+	}
+
+	public void setPhotoVal(String photoVal) {
+		this.photoVal = photoVal;
 	}
 
 	public String getRole() {
 		return role;
 	}
 
+	public void setRole(String role) {
+		this.role = role;
+	}
+
 	public String getTitle() {
 		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
 	}
 
 	public String getUrl() {
 		return url;
 	}
 
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
 	public String getWorkAddressCtry() {
 		return workAddressCtry;
+	}
+
+	public void setWorkAddressCtry(String workAddressCtry) {
+		this.workAddressCtry = workAddressCtry;
 	}
 
 	public String getWorkAddressLocality() {
 		return workAddressLocality;
 	}
 
+	public void setWorkAddressLocality(String workAddressLocality) {
+		this.workAddressLocality = workAddressLocality;
+	}
+
 	public String getWorkAddressPCode() {
 		return workAddressPCode;
+	}
+
+	public void setWorkAddressPCode(String workAddressPCode) {
+		this.workAddressPCode = workAddressPCode;
 	}
 
 	public String getWorkAddressRegion() {
 		return workAddressRegion;
 	}
 
+	public void setWorkAddressRegion(String workAddressRegion) {
+		this.workAddressRegion = workAddressRegion;
+	}
+
 	public String getWorkAddressStreet() {
 		return workAddressStreet;
+	}
+
+	public void setWorkAddressStreet(String workAddressStreet) {
+		this.workAddressStreet = workAddressStreet;
 	}
 
 	public String getWorkEmail() {
 		return workEmail;
 	}
 
+	public void setWorkEmail(String workEmail) {
+		this.workEmail = workEmail;
+	}
+
 	public String getWorkTelFax() {
 		return workTelFax;
+	}
+
+	public void setWorkTelFax(String workTelFax) {
+		this.workTelFax = workTelFax;
 	}
 
 	public String getWorkTelMsg() {
 		return workTelMsg;
 	}
 
+	public void setWorkTelMsg(String workTelMsg) {
+		this.workTelMsg = workTelMsg;
+	}
+
 	public String getWorkTelVoice() {
 		return workTelVoice;
 	}
 
+	public void setWorkTelVoice(String workTelVoice) {
+		this.workTelVoice = workTelVoice;
+	}
+
 	void loadData(final Element element) throws XMLException {
-		if (!element.getName().equals("vCard") || !element.getXMLNS().equals("vcard-temp"))
+		if (!element.getName().equals("vCard") || !element.getXMLNS().equals("vcard-temp")) {
 			throw new RuntimeException("Element isn't correct <vCard xmlns='vcard-temp'> vcard element");
+		}
 		for (final Element it : element.getChildren()) {
 			if (match(it, "EMAIL", "WORK")) {
 				this.workEmail = getChildValue(it, "USERID");
@@ -335,8 +468,9 @@ public class VCard implements Serializable {
 						this.photoType = pit.getValue();
 					} else if ("BINVAL".equals(pit.getName())) {
 						this.photoVal = pit.getValue();
-						if (this.photoVal != null)
+						if (this.photoVal != null) {
 							this.photoVal = this.photoVal.replace("\n", "").trim();
+						}
 					}
 				}
 			}
@@ -347,169 +481,37 @@ public class VCard implements Serializable {
 	public Element makeElement() throws XMLException {
 		Element vcard = ElementFactory.create("vCard", null, "vcard-temp");
 		add(vcard, "FN", this.fullName);
-		add(vcard, "N", new String[] { "FAMILY", "GIVEN", "MIDDLE" }, new String[] { this.nameFamily, this.nameGiven,
-				this.nameMiddle });
+		add(vcard, "N", new String[]{"FAMILY", "GIVEN", "MIDDLE"},
+			new String[]{this.nameFamily, this.nameGiven, this.nameMiddle});
 		add(vcard, "NICKNAME", this.nickName);
 		add(vcard, "URL", this.url);
 		add(vcard, "BDAY", this.bday);
-		add(vcard, "ORG", new String[] { "ORGNAME", "ORGUNIT" }, new String[] { this.orgName, this.orgUnit });
+		add(vcard, "ORG", new String[]{"ORGNAME", "ORGUNIT"}, new String[]{this.orgName, this.orgUnit});
 		add(vcard, "TITLE", this.title);
 		add(vcard, "ROLE", this.role);
 
-		add(vcard, "TEL", new String[] { "WORK", "VOICE", "NUMBER" }, new String[] { null, null, this.workTelVoice });
-		add(vcard, "TEL", new String[] { "WORK", "FAX", "NUMBER" }, new String[] { null, null, this.workTelFax });
-		add(vcard, "TEL", new String[] { "WORK", "MSG", "NUMBER" }, new String[] { null, null, this.workTelMsg });
-		add(vcard, "ADR", new String[] { "WORK", "STREET", "LOCALITY", "REGION", "PCODE", "CTRY" }, new String[] { null,
-				this.workAddressStreet, this.workAddressLocality, this.workAddressRegion, this.workAddressPCode,
-				this.workAddressCtry });
+		add(vcard, "TEL", new String[]{"WORK", "VOICE", "NUMBER"}, new String[]{null, null, this.workTelVoice});
+		add(vcard, "TEL", new String[]{"WORK", "FAX", "NUMBER"}, new String[]{null, null, this.workTelFax});
+		add(vcard, "TEL", new String[]{"WORK", "MSG", "NUMBER"}, new String[]{null, null, this.workTelMsg});
+		add(vcard, "ADR", new String[]{"WORK", "STREET", "LOCALITY", "REGION", "PCODE", "CTRY"},
+			new String[]{null, this.workAddressStreet, this.workAddressLocality, this.workAddressRegion,
+						 this.workAddressPCode, this.workAddressCtry});
 
-		add(vcard, "TEL", new String[] { "HOME", "VOICE", "NUMBER" }, new String[] { null, null, this.homeTelVoice });
-		add(vcard, "TEL", new String[] { "HOME", "FAX", "NUMBER" }, new String[] { null, null, this.homeTelFax });
-		add(vcard, "TEL", new String[] { "HOME", "MSG", "NUMBER" }, new String[] { null, null, this.homeTelMsg });
-		add(vcard, "ADR", new String[] { "HOME", "STREET", "LOCALITY", "REGION", "PCODE", "CTRY" }, new String[] { null,
-				this.homeAddressStreet, this.homeAddressLocality, this.homeAddressRegion, this.homeAddressPCode,
-				this.homeAddressCtry });
+		add(vcard, "TEL", new String[]{"HOME", "VOICE", "NUMBER"}, new String[]{null, null, this.homeTelVoice});
+		add(vcard, "TEL", new String[]{"HOME", "FAX", "NUMBER"}, new String[]{null, null, this.homeTelFax});
+		add(vcard, "TEL", new String[]{"HOME", "MSG", "NUMBER"}, new String[]{null, null, this.homeTelMsg});
+		add(vcard, "ADR", new String[]{"HOME", "STREET", "LOCALITY", "REGION", "PCODE", "CTRY"},
+			new String[]{null, this.homeAddressStreet, this.homeAddressLocality, this.homeAddressRegion,
+						 this.homeAddressPCode, this.homeAddressCtry});
 
 		add(vcard, "JABBERID", this.jabberID);
 		add(vcard, "DESC", this.description);
-		add(vcard, "EMAIL", new String[] { "HOME", "USERID" }, new String[] { null, this.homeEmail });
+		add(vcard, "EMAIL", new String[]{"HOME", "USERID"}, new String[]{null, this.homeEmail});
 
-		add(vcard, "EMAIL", new String[] { "WORK", "USERID" }, new String[] { null, this.workEmail });
+		add(vcard, "EMAIL", new String[]{"WORK", "USERID"}, new String[]{null, this.workEmail});
 
-		add(vcard, "PHOTO", new String[] { "TYPE", "BINVAL" }, new String[] { this.photoType, this.photoVal });
+		add(vcard, "PHOTO", new String[]{"TYPE", "BINVAL"}, new String[]{this.photoType, this.photoVal});
 
 		return vcard;
-	}
-
-	public void setBday(String bday) {
-		this.bday = bday;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
-
-	public void setHomeAddressCtry(String homeAddressCtry) {
-		this.homeAddressCtry = homeAddressCtry;
-	}
-
-	public void setHomeAddressLocality(String homeAddressLocality) {
-		this.homeAddressLocality = homeAddressLocality;
-	}
-
-	public void setHomeAddressPCode(String homeAddressPCode) {
-		this.homeAddressPCode = homeAddressPCode;
-	}
-
-	public void setHomeAddressRegion(String homeAddressRegion) {
-		this.homeAddressRegion = homeAddressRegion;
-	}
-
-	public void setHomeAddressStreet(String homeAddressStreet) {
-		this.homeAddressStreet = homeAddressStreet;
-	}
-
-	public void setHomeEmail(String homeEmail) {
-		this.homeEmail = homeEmail;
-	}
-
-	public void setHomeTelFax(String homeTelFax) {
-		this.homeTelFax = homeTelFax;
-	}
-
-	public void setHomeTelMsg(String homeTelMsg) {
-		this.homeTelMsg = homeTelMsg;
-	}
-
-	public void setHomeTelVoice(String homeTelVoice) {
-		this.homeTelVoice = homeTelVoice;
-	}
-
-	public void setJabberID(String jabberID) {
-		this.jabberID = jabberID;
-	}
-
-	public void setNameFamily(String nameFamily) {
-		this.nameFamily = nameFamily;
-	}
-
-	public void setNameGiven(String nameGiven) {
-		this.nameGiven = nameGiven;
-	}
-
-	public void setNameMiddle(String nameMiddle) {
-		this.nameMiddle = nameMiddle;
-	}
-
-	public void setNickName(String nickName) {
-		this.nickName = nickName;
-	}
-
-	public void setOrgName(String orgName) {
-		this.orgName = orgName;
-	}
-
-	public void setOrgUnit(String orgUnit) {
-		this.orgUnit = orgUnit;
-	}
-
-	public void setPhotoType(String photoType) {
-		this.photoType = photoType;
-	}
-
-	public void setPhotoVal(String photoVal) {
-		this.photoVal = photoVal;
-	}
-
-	public void setRole(String role) {
-		this.role = role;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
-	public void setWorkAddressCtry(String workAddressCtry) {
-		this.workAddressCtry = workAddressCtry;
-	}
-
-	public void setWorkAddressLocality(String workAddressLocality) {
-		this.workAddressLocality = workAddressLocality;
-	}
-
-	public void setWorkAddressPCode(String workAddressPCode) {
-		this.workAddressPCode = workAddressPCode;
-	}
-
-	public void setWorkAddressRegion(String workAddressRegion) {
-		this.workAddressRegion = workAddressRegion;
-	}
-
-	public void setWorkAddressStreet(String workAddressStreet) {
-		this.workAddressStreet = workAddressStreet;
-	}
-
-	public void setWorkEmail(String workEmail) {
-		this.workEmail = workEmail;
-	}
-
-	public void setWorkTelFax(String workTelFax) {
-		this.workTelFax = workTelFax;
-	}
-
-	public void setWorkTelMsg(String workTelMsg) {
-		this.workTelMsg = workTelMsg;
-	}
-
-	public void setWorkTelVoice(String workTelVoice) {
-		this.workTelVoice = workTelVoice;
 	}
 }

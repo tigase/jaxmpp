@@ -1,10 +1,13 @@
 /*
+ * Room.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,11 +20,6 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.muc;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -33,7 +31,18 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
+
 public class Room {
+
+	public enum State {
+		joined,
+		not_joined,
+		requested
+	}
 
 	private final long id;
 	private final Logger log = Logger.getLogger(this.getClass().getName());
@@ -77,9 +86,7 @@ public class Room {
 	}
 
 	public void setLastMessageDate(Date date) {
-		if (lastMessageDate == null || date == null || lastMessageDate.getTime() < date.getTime()) {
-			this.lastMessageDate = date;
-		}
+		this.lastMessageDate = date;
 	}
 
 	public String getNickname() {
@@ -161,12 +168,6 @@ public class Room {
 	@Override
 	public String toString() {
 		return "Room{" + "id=" + id + ", nickname=" + nickname + ", roomJid=" + roomJid + ", state=" + state + '}';
-	}
-
-	public enum State {
-		joined,
-		not_joined,
-		requested
 	}
 
 }

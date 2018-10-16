@@ -1,10 +1,13 @@
 /*
+ * Jaxmpp.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,24 +20,13 @@
  */
 package tigase.jaxmpp.gwt.client;
 
-import java.util.Date;
-import java.util.logging.Level;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Cookies;
-
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.Connector;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.JaxmppCore;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.JaxmppCore.LoggedInHandler.LoggedInEvent;
-import tigase.jaxmpp.core.client.PacketWriter;
-import tigase.jaxmpp.core.client.Processor;
-import tigase.jaxmpp.core.client.ResponseManager;
-import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
@@ -54,7 +46,11 @@ import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 import tigase.jaxmpp.gwt.client.connectors.WebSocketConnector;
 
-public class Jaxmpp extends JaxmppCore {
+import java.util.Date;
+import java.util.logging.Level;
+
+public class Jaxmpp
+		extends JaxmppCore {
 
 	private final static String COOKIE_RID_KEY = "jaxmpp-rid";
 
@@ -122,26 +118,27 @@ public class Jaxmpp extends JaxmppCore {
 						JID jid = sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID);
 						try {
 							GWT.log("Checking if server lived");
-							modulesManager.getModule(PingModule.class).ping(JID.jidInstance(jid.getDomain()),
-									new AsyncCallback() {
+							modulesManager.getModule(PingModule.class)
+									.ping(JID.jidInstance(jid.getDomain()), new AsyncCallback() {
 
-								@Override
-								public void onError(Stanza responseStanza, ErrorCondition error) throws XMLException {
-								}
+										@Override
+										public void onError(Stanza responseStanza, ErrorCondition error)
+												throws XMLException {
+										}
 
-								@Override
-								public void onSuccess(Stanza responseStanza) throws XMLException {
-								}
+										@Override
+										public void onSuccess(Stanza responseStanza) throws XMLException {
+										}
 
-								@Override
-								public void onTimeout() throws JaxmppException {
-									try {
-										disconnect();
-									} catch (JaxmppException e) {
-										onException(e);
-									}
-								}
-							});
+										@Override
+										public void onTimeout() throws JaxmppException {
+											try {
+												disconnect();
+											} catch (JaxmppException e) {
+												onException(e);
+											}
+										}
+									});
 						} catch (Exception e) {
 							try {
 								onException(new JaxmppException(e));
@@ -181,7 +178,7 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void execute(final Runnable r) {
-		if (r != null)
+		if (r != null) {
 			Scheduler.get().scheduleDeferred(new ScheduledCommand() {
 
 				@Override
@@ -189,6 +186,7 @@ public class Jaxmpp extends JaxmppCore {
 					r.run();
 				}
 			});
+		}
 	}
 
 	/**
@@ -213,8 +211,9 @@ public class Jaxmpp extends JaxmppCore {
 		// if (RosterModule.getRosterStore(sessionObject) == null)
 		// RosterModule.setRosterStore(sessionObject, new RosterStore());
 
-		if (ResponseManager.getResponseManager(sessionObject) == null)
+		if (ResponseManager.getResponseManager(sessionObject) == null) {
 			ResponseManager.setResponseManager(sessionObject, new ResponseManager());
+		}
 
 		super.init();
 

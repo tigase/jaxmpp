@@ -1,11 +1,25 @@
-package tigase.jaxmpp.core.client.xmpp.modules.streammng;
+/*
+ * StreamManagementModule.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+package tigase.jaxmpp.core.client.xmpp.modules.streammng;
 
 import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.SessionObject.Scope;
@@ -26,7 +40,15 @@ import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.S
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.StreamResumedHandler.StreamResumedEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule.UnacknowledgedHandler.UnacknowledgedEvent;
 
-public class StreamManagementModule implements XmppModule, ContextAware {
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class StreamManagementModule
+		implements XmppModule, ContextAware {
 
 	public static final String INCOMING_STREAM_H_KEY = "urn:xmpp:sm:3#INCOMING_STREAM_H";
 	public static final String INCOMING_STREAM_H_LAST_SENT_KEY = "urn:xmpp:sm:3#INCOMING_STREAM_H_LAST_SENT";
@@ -50,21 +72,6 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 	private final JaxmppCore jaxmpp;
 	private final LinkedList<Element> outgoingQueue = new LinkedList<Element>();
 	private Context context;
-
-	public StreamManagementModule(JaxmppCore jaxmpp) {
-		log = Logger.getLogger(this.getClass().getName());
-		this.jaxmpp = jaxmpp;
-
-		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
-				new Connector.StanzaSendingHandler() {
-
-					@Override
-					public void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException {
-						processOutgoingElement(stanza);
-					}
-				});
-
-	}
 
 	public static long getResumptionTime(final SessionObject sessionObject, long defaultValue) {
 		try {
@@ -109,6 +116,21 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 
 		sessionObject.setProperty(OUTGOING_STREAM_H_KEY, null);
 		sessionObject.setProperty(INCOMING_STREAM_H_KEY, null);
+		sessionObject.setProperty(INCOMING_STREAM_H_LAST_SENT_KEY, null);
+	}
+
+	public StreamManagementModule(JaxmppCore jaxmpp) {
+		log = Logger.getLogger(this.getClass().getName());
+		this.jaxmpp = jaxmpp;
+
+		jaxmpp.getEventBus().addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class, new Connector.StanzaSendingHandler() {
+
+			@Override
+			public void onStanzaSending(SessionObject sessionObject, Element stanza) throws JaxmppException {
+				processOutgoingElement(stanza);
+			}
+		});
+
 	}
 
 	public void addStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
@@ -171,8 +193,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			context.getSessionObject().setProperty(key, v);
 		}
 		++v.value;
-		if (v.value < 0)
+		if (v.value < 0) {
 			v.value = 0;
+		}
 		return v.value;
 	}
 
@@ -240,6 +263,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
 		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		context.getSessionObject().setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
+		context.getSessionObject().setProperty(OUTGOING_STREAM_H_KEY, null);
+		context.getSessionObject().setProperty(INCOMING_STREAM_H_KEY, null);
+		context.getSessionObject().setProperty(INCOMING_STREAM_H_LAST_SENT_KEY, null);
 
 		XMPPException.ErrorCondition condition = ErrorCondition.unexpected_request;
 		for (Element element2 : errors) {
@@ -260,7 +286,8 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		}
 
 		if (!notSentElements.isEmpty()) {
-			UnacknowledgedEvent eventNotSentElements = new UnacknowledgedEvent(context.getSessionObject(), notSentElements);
+			UnacknowledgedEvent eventNotSentElements = new UnacknowledgedEvent(context.getSessionObject(),
+																			   notSentElements);
 			context.getEventBus().fire(eventNotSentElements);
 		}
 	}
@@ -269,21 +296,18 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		if (!isAckEnabled(context.getSessionObject())) {
 			if (XMLNS.equals(element.getXMLNS())) {
 				try {
-					if ("resumed".equals(element.getName()) && element.getXMLNS() != null
-							&& XMLNS.endsWith(element.getXMLNS())) {
+					if ("resumed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 						processResumed(element);
-					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null
-							&& XMLNS.endsWith(element.getXMLNS())) {
+					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 						processFailed(element);
-					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null
-							&& XMLNS.endsWith(element.getXMLNS())) {
+					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 						processStreamManagementEnabled(element);
 					}
 					return true;
 				} catch (JaxmppException ex) {
 					// this should not happed
-					log.log(Level.SEVERE, "exception processing stream management incoming stanza = " + element.getAsString(),
-							ex);
+					log.log(Level.SEVERE,
+							"exception processing stream management incoming stanza = " + element.getAsString(), ex);
 				}
 			}
 			return false;
@@ -299,12 +323,13 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 					processAckRequest(element);
 				} catch (JaxmppException ex) {
 					// this should not happed
-					log.log(Level.SEVERE, "exception processing stream management incoming stanza = " + element.getAsString(),
-							ex);
+					log.log(Level.SEVERE,
+							"exception processing stream management incoming stanza = " + element.getAsString(), ex);
 				}
 				return true;
-			} else
+			} else {
 				return false;
+			}
 		}
 
 		incrementAckHValue(INCOMING_STREAM_H_KEY);
@@ -313,11 +338,12 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 	}
 
 	public void processOutgoingElement(final Element element) throws JaxmppException {
-		if (!isAckEnabled(context.getSessionObject()))
+		if (!isAckEnabled(context.getSessionObject())) {
 			return;
-		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null
-				&& XMLNS.endsWith(element.getXMLNS()))
+		}
+		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null && XMLNS.endsWith(element.getXMLNS())) {
 			return;
+		}
 
 		synchronized (this.outgoingQueue) {
 			incrementAckHValue(OUTGOING_STREAM_H_KEY);
@@ -412,8 +438,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 
 		final long now = (new Date()).getTime();
 
-		if (lr != null && now - lr < 1000)
+		if (lr != null && now - lr < 1000) {
 			return;
+		}
 
 		Element request = ElementFactory.create("r", null, XMLNS);
 		// context.getWriter().write(request);
@@ -427,8 +454,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
 		resume.setAttribute("previd", (String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
 
-		if (log.isLoggable(Level.INFO))
+		if (log.isLoggable(Level.INFO)) {
 			log.info("Stream resumption");
+		}
 
 		context.getWriter().write(resume);
 	}
@@ -437,8 +465,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		Number value = getAckHValue(INCOMING_STREAM_H_KEY);
 		Number lastSent = getAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY);
 
-		if (value.longValue() == lastSent.longValue())
+		if (value.longValue() == lastSent.longValue()) {
 			return;
+		}
 
 		setAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY, value.longValue());
 		Element response = ElementFactory.create("a", null, XMLNS);
@@ -453,8 +482,9 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			context.getSessionObject().setProperty(key, v);
 		}
 		v.value = value == null ? 0 : value;
-		if (v.value < 0)
+		if (v.value < 0) {
 			v.value = 0;
+		}
 	}
 
 	@Override
@@ -462,11 +492,13 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		this.context = context;
 	}
 
-	public interface StreamManagementEnabledHandler extends EventHandler {
+	public interface StreamManagementEnabledHandler
+			extends EventHandler {
 
 		void onStreamManagementEnabled(SessionObject sessionObject, Boolean resume, String resumeId);
 
-		class StreamManagementEnabledEvent extends JaxmppEvent<StreamManagementEnabledHandler> {
+		class StreamManagementEnabledEvent
+				extends JaxmppEvent<StreamManagementEnabledHandler> {
 
 			private Boolean resume;
 			private String resumeId;
@@ -479,7 +511,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamManagementEnabledHandler handler) {
+			public void dispatch(StreamManagementEnabledHandler handler) {
 				handler.onStreamManagementEnabled(sessionObject, resume, resumeId);
 			}
 
@@ -502,11 +534,13 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		}
 	}
 
-	public interface StreamManagementFailedHandler extends EventHandler {
+	public interface StreamManagementFailedHandler
+			extends EventHandler {
 
 		void onStreamManagementFailed(SessionObject sessionObject, ErrorCondition condition);
 
-		class StreamManagementFailedEvent extends JaxmppEvent<StreamManagementFailedHandler> {
+		class StreamManagementFailedEvent
+				extends JaxmppEvent<StreamManagementFailedHandler> {
 
 			private ErrorCondition condition;
 
@@ -516,18 +550,20 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamManagementFailedHandler handler) {
+			public void dispatch(StreamManagementFailedHandler handler) {
 				handler.onStreamManagementFailed(sessionObject, condition);
 			}
 
 		}
 	}
 
-	public interface StreamResumedHandler extends EventHandler {
+	public interface StreamResumedHandler
+			extends EventHandler {
 
 		void onStreamResumed(SessionObject sessionObject, Long h, String previd) throws JaxmppException;
 
-		class StreamResumedEvent extends JaxmppEvent<StreamResumedHandler> {
+		class StreamResumedEvent
+				extends JaxmppEvent<StreamResumedHandler> {
 
 			private Long h;
 
@@ -540,7 +576,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(StreamResumedHandler handler) throws JaxmppException {
+			public void dispatch(StreamResumedHandler handler) throws JaxmppException {
 				handler.onStreamResumed(sessionObject, h, previd);
 			}
 
@@ -563,11 +599,13 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		}
 	}
 
-	public interface UnacknowledgedHandler extends EventHandler {
+	public interface UnacknowledgedHandler
+			extends EventHandler {
 
 		void onUnacknowledged(SessionObject sessionObject, List<Element> elements) throws JaxmppException;
 
-		class UnacknowledgedEvent extends JaxmppEvent<UnacknowledgedHandler> {
+		class UnacknowledgedEvent
+				extends JaxmppEvent<UnacknowledgedHandler> {
 
 			private List<Element> elements;
 
@@ -577,7 +615,7 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 			}
 
 			@Override
-			protected void dispatch(UnacknowledgedHandler handler) throws JaxmppException {
+			public void dispatch(UnacknowledgedHandler handler) throws JaxmppException {
 				handler.onUnacknowledged(sessionObject, elements);
 			}
 
@@ -592,7 +630,8 @@ public class StreamManagementModule implements XmppModule, ContextAware {
 		}
 	}
 
-	public static class MutableLong extends Number {
+	public static class MutableLong
+			extends Number {
 
 		private static final long serialVersionUID = 1L;
 

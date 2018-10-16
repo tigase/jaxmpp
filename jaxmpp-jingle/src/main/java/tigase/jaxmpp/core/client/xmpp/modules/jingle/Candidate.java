@@ -1,10 +1,13 @@
 /*
+ * Candidate.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,18 +29,11 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionEndpoint;
 
 /**
- * 
  * @author andrzej
  */
-public class Candidate extends ElementWrapper implements ConnectionEndpoint {
-
-	public static enum Type {
-
-		assisted,
-		direct,
-		proxy,
-		tunnel
-	}
+public class Candidate
+		extends ElementWrapper
+		implements ConnectionEndpoint {
 
 	// private String cid;
 	// private String host;
@@ -50,8 +46,15 @@ public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 	public static final String JID_ATTR = "jid";
 	public static final String PORT_ATTR = "port";
 	public static final String PRIORITY_ATTR = "priority";
-
 	public static final String TYPE_ATTR = "type";
+
+	public enum Type {
+
+		assisted,
+		direct,
+		proxy,
+		tunnel
+	}
 
 	public Candidate(Element elem) throws JaxmppException {
 		super(elem);
@@ -60,7 +63,8 @@ public class Candidate extends ElementWrapper implements ConnectionEndpoint {
 		}
 	}
 
-	public Candidate(String cid, String host, Integer port, JID jid, Integer priority, Type type) throws JaxmppException {
+	public Candidate(String cid, String host, Integer port, JID jid, Integer priority, Type type)
+			throws JaxmppException {
 		super(ElementFactory.create("candidate"));
 		// this.cid = cid;
 		// this.host = host;

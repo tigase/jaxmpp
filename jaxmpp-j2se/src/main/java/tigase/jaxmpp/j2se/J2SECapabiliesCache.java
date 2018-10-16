@@ -1,10 +1,13 @@
 /*
+ * J2SECapabiliesCache.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2013 "Andrzej Wójcik" <andrzej.wojcik@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,20 +20,16 @@
  */
 package tigase.jaxmpp.j2se;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import tigase.jaxmpp.core.client.xmpp.modules.capabilities.CapabilitiesCache;
 import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.Identity;
 
+import java.util.*;
+
 /**
- * 
  * @author andrzej
  */
-public class J2SECapabiliesCache implements CapabilitiesCache {
+public class J2SECapabiliesCache
+		implements CapabilitiesCache {
 
 	Map<String, Set<String>> features = new HashMap<String, Set<String>>();
 

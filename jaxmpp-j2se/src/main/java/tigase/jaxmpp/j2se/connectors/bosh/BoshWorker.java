@@ -1,10 +1,13 @@
 /*
+ * BoshWorker.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,15 +20,6 @@
  */
 package tigase.jaxmpp.j2se.connectors.bosh;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.*;
-import java.util.Queue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import tigase.jaxmpp.core.client.Connector;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
@@ -35,7 +29,17 @@ import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
 
-public abstract class BoshWorker implements BoshRequest {
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.*;
+import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public abstract class BoshWorker
+		implements BoshRequest {
 
 	private final Element body;
 	private final DomBuilderHandler domHandler;
@@ -55,8 +59,9 @@ public abstract class BoshWorker implements BoshRequest {
 
 		this.body = body;
 		this.rid = body.getAttribute("rid");
-		if (this.rid == null)
+		if (this.rid == null) {
 			throw new RuntimeException("rid must be defined");
+		}
 	}
 
 	@Override
@@ -83,20 +88,23 @@ public abstract class BoshWorker implements BoshRequest {
 
 	@Override
 	public void run() {
-		if (terminated)
+		if (terminated) {
 			return;
+		}
 		try {
 			try {
 				URL url = sessionObject.getProperty(BoshConnector.URL_KEY);
-				if (url == null)
+				if (url == null) {
 					throw new JaxmppException(BoshConnector.URL_KEY + " is not set!");
+				}
 
 				if (sessionObject.getProperty(Connector.PROXY_HOST) != null) {
 					final String proxyHost = sessionObject.getProperty(Connector.PROXY_HOST);
 					final int proxyPort = sessionObject.getProperty(Connector.PROXY_PORT);
 					Proxy.Type proxyType = sessionObject.getProperty(Connector.PROXY_TYPE);
-					if (proxyType == null)
+					if (proxyType == null) {
 						proxyType = Proxy.Type.HTTP;
+					}
 
 					log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
 
@@ -119,8 +127,9 @@ public abstract class BoshWorker implements BoshRequest {
 				String b = body.getAsString();
 				// System.out.println("S: " + b);
 
-				if (!conn.getDoOutput())
+				if (!conn.getDoOutput()) {
 					conn.setDoOutput(true);
+				}
 				OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
 				wr.write(b);
 				wr.flush();
@@ -160,8 +169,9 @@ public abstract class BoshWorker implements BoshRequest {
 					}
 				}
 
-				if (log.isLoggable(Level.FINEST))
+				if (log.isLoggable(Level.FINEST)) {
 					log.finest("Received: " + responseData);
+				}
 
 				if (responseCode != 200) {
 					onError(responseCode, responseData, null, null);
@@ -194,8 +204,9 @@ public abstract class BoshWorker implements BoshRequest {
 				}
 
 			} catch (SocketException e) {
-				if (terminated)
+				if (terminated) {
 					return;
+				}
 				onError(0, null, null, e);
 			} catch (Exception e) {
 				log.log(Level.WARNING, "Connection error ", e);
@@ -209,8 +220,9 @@ public abstract class BoshWorker implements BoshRequest {
 	@Override
 	public void terminate() {
 		terminated = true;
-		if (conn != null)
+		if (conn != null) {
 			conn.disconnect();
+		}
 	}
 
 	@Override

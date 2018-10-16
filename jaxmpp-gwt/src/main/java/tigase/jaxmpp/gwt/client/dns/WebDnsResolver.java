@@ -1,10 +1,13 @@
 /*
+ * WebDnsResolver.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc. <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -25,44 +28,24 @@ import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 
 /**
- *
  * @author andrzej
  */
-public class WebDnsResolver implements ContextAware {
+public class WebDnsResolver
+		implements ContextAware {
 
-	public static interface DomainResolutionCallback {
-		
-		void onUrlResolved(String domain, String url);
-		
-		void onUrlFailed();
-		
-	};
-	
 	public static final String WEB_DNS_RESOLVER_URL_KEY = "WebDnsResolver#URL_KEY";
-	
-	private DnsResult dnsResult;
+
 	private Context context;
-	
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
-	}
-	
-	public boolean isEnabled() {
-		return context.getSessionObject().getProperty(WEB_DNS_RESOLVER_URL_KEY) != null;
-	}
-	
-	public String getResolverUrl() {
-		return (String) context.getSessionObject().getProperty(WEB_DNS_RESOLVER_URL_KEY);
-	}
-	
-	public void getHostForDomain(final String domain, String hostname, final DomainResolutionCallback hostResolutionCallback) {
-	
+	private DnsResult dnsResult;
+
+	public void getHostForDomain(final String domain, String hostname,
+								 final DomainResolutionCallback hostResolutionCallback) {
+
 		if (dnsResult != null && dnsResult.getDomain().equals(domain) && dnsResult.hasMore()) {
 			selectHost(domain, hostname, hostResolutionCallback);
 			return;
 		}
-		
+
 		resolveDomain(domain, new com.google.gwt.user.client.rpc.AsyncCallback<DnsResult>() {
 			@Override
 			public void onFailure(Throwable caught) {
@@ -73,19 +56,37 @@ public class WebDnsResolver implements ContextAware {
 			@Override
 			public void onSuccess(DnsResult result) {
 				dnsResult = result;
-				
+
 				selectHost(domain, null, hostResolutionCallback);
 			}
 		});
-	} 
-	
+	}
+
+	public String getResolverUrl() {
+		return (String) context.getSessionObject().getProperty(WEB_DNS_RESOLVER_URL_KEY);
+	}
+
 	public void hostFailure(String url) {
 		if (dnsResult != null) {
 			dnsResult.connectionFailed(url);
 		}
 	}
-	
-	private void selectHost(final String domain, final String hostname, final DomainResolutionCallback hostResolutionCallback) {
+
+	public boolean isEnabled() {
+		return context.getSessionObject().getProperty(WEB_DNS_RESOLVER_URL_KEY) != null;
+	}
+
+	private void resolveDomain(String domain, com.google.gwt.user.client.rpc.AsyncCallback<DnsResult> callback) {
+		String url = getResolverUrl();
+		// adding parameters for resolver to process
+		url += "?version=2";
+		url += "&domain=" + URL.encodeQueryString(domain);
+		JsonpRequestBuilder builder = new JsonpRequestBuilder();
+		builder.requestObject(url, callback);
+	}
+
+	private void selectHost(final String domain, final String hostname,
+							final DomainResolutionCallback hostResolutionCallback) {
 		String boshUrl = null;
 		if (hostname != null) {
 			boshUrl = dnsResult.getUrlForHost(hostname);
@@ -114,12 +115,11 @@ public class WebDnsResolver implements ContextAware {
 						}
 						if (url != null) {
 							hostResolutionCallback.onUrlResolved(domain, url);
-						}
-						else {
+						} else {
 							hostResolutionCallback.onUrlFailed();
 						}
 					}
-					
+
 				});
 				return;
 			}
@@ -127,31 +127,35 @@ public class WebDnsResolver implements ContextAware {
 		boolean secure = "https:".equals(Window.Location.getProtocol());
 		while (boshUrl == null && dnsResult.hasMore()) {
 			boshUrl = dnsResult.next();
-			
+
 			boolean secureUrl = boshUrl.startsWith("https://") || boshUrl.startsWith("wss://");
 //			if (secure != secureUrl) {
 //				dnsResult.connectionFailed(boshUrl);
 //				boshUrl = null;
 //				continue;
 //			}
-			
+
 			if (!WebSocket.isSupported() && (boshUrl.startsWith("ws://") || boshUrl.startsWith("wss://"))) {
 				dnsResult.connectionFailed(boshUrl);
 				boshUrl = null;
 			}
 		}
-		
+
 		if (boshUrl != null) {
 			hostResolutionCallback.onUrlResolved(domain, boshUrl);
 		}
 	}
-	
-	private void resolveDomain(String domain, com.google.gwt.user.client.rpc.AsyncCallback<DnsResult> callback) {
-		String url = getResolverUrl();
-		// adding parameters for resolver to process
-		url += "?version=2";
-		url += "&domain=" + URL.encodeQueryString(domain);
-		JsonpRequestBuilder builder = new JsonpRequestBuilder();
-		builder.requestObject(url, callback);		
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
+	public interface DomainResolutionCallback {
+
+		void onUrlFailed();
+
+		void onUrlResolved(String domain, String url);
+
 	}
 }

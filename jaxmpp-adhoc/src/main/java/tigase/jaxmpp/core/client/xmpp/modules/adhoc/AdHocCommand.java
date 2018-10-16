@@ -1,10 +1,13 @@
 /*
+ * AdHocCommand.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,48 +25,45 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 
 /**
  * Base interface for implementing own ad-hoc commands.
- * 
+ *
  * @author bmalkow
- * 
  */
 public interface AdHocCommand {
 
 	/**
 	 * Returns features what are implemented by command.
-	 * 
+	 *
 	 * @return array of features
 	 */
 	String[] getFeatures();
 
 	/**
 	 * Return human readable name of command.
-	 * 
+	 *
 	 * @return name of command
 	 */
 	String getName();
 
 	/**
 	 * Return node name of command.
-	 * 
+	 *
 	 * @return node name
 	 */
 	String getNode();
 
 	/**
 	 * Main method to handle ad-hoc requests.
-	 * 
-	 * @param request
-	 *            ad-hoc command request
-	 * @param response
-	 *            response
+	 *
+	 * @param request ad-hoc command request
+	 * @param response response
 	 */
 	void handle(AdHocRequest request, AdHocResponse response) throws JaxmppException;
 
 	/**
 	 * This method allows to authorization sender.
-	 * 
-	 * @param jid
-	 *            JID of method caller.
+	 *
+	 * @param jid JID of method caller.
+	 *
 	 * @return <code>true</code> if jid is allowed to call command.
 	 */
 	boolean isAllowed(JID jid);

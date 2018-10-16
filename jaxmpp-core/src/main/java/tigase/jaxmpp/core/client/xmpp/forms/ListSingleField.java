@@ -1,10 +1,13 @@
 /*
+ * ListSingleField.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,11 +20,11 @@
  */
 package tigase.jaxmpp.core.client.xmpp.forms;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+
+import java.util.List;
 
 /**
  * Implementation of list-single field type.
@@ -33,7 +36,8 @@ import tigase.jaxmpp.core.client.xml.XMLException;
  * the form-processing entity and MUST NOT insert new options.</blockquote>
  * </p>
  */
-public class ListSingleField extends AbstractField<String> {
+public class ListSingleField
+		extends AbstractField<String> {
 
 	ListSingleField(Element element) throws XMLException {
 		super("list-single", element);
@@ -41,16 +45,15 @@ public class ListSingleField extends AbstractField<String> {
 
 	/**
 	 * Adds option to field.
-	 * 
-	 * @param label
-	 *            label of option
-	 * @param value
-	 *            value of option
+	 *
+	 * @param label label of option
+	 * @param value value of option
 	 */
 	public void addOption(String label, String value) throws XMLException {
 		Element o = ElementFactory.create("option");
-		if (label != null)
+		if (label != null) {
 			o.setAttribute("label", label);
+		}
 		o.addChild(ElementFactory.create("value", value, null));
 		addChild(o);
 	}
@@ -60,10 +63,11 @@ public class ListSingleField extends AbstractField<String> {
 	 */
 	public void clearOptions() throws XMLException {
 		List<Element> lls = getChildren("option");
-		if (lls != null)
+		if (lls != null) {
 			for (Element element : lls) {
 				removeChild(element);
 			}
+		}
 	}
 
 	/**

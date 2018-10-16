@@ -1,10 +1,13 @@
 /*
+ * GwtSessionObject.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +20,13 @@
  */
 package tigase.jaxmpp.gwt.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.json.client.JSONObject;
+import tigase.jaxmpp.core.client.AbstractSessionObject;
+import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xml.XMLException;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -24,41 +34,29 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.json.client.JSONObject;
-
-import tigase.jaxmpp.core.client.AbstractSessionObject;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.XMLException;
-
-public class GwtSessionObject extends AbstractSessionObject {
-
-	public static final class RestoringSessionException extends Exception {
-		public RestoringSessionException(String message) {
-			super(message);
-		}
-	}
+public class GwtSessionObject
+		extends AbstractSessionObject {
 
 	private static Logger log = Logger.getLogger(GwtSessionObject.class.getName());
 
 	private static native JavaScriptObject decodeJson(String str) /*-{
-																	try {
-																	return JSON.parse(str);
-																	} catch (ex) {
-																	return {};
-																	}
-																	}-*/;
+        try {
+            return JSON.parse(str);
+        } catch (ex) {
+            return {};
+        }
+    }-*/;
 
 	private static native String encodeJson(JavaScriptObject obj) /*-{
-																	return JSON.stringify(obj);
-																	}-*/;
+        return JSON.stringify(obj);
+    }-*/;
 
 	private static JID getJID(JSONObject object, String key) {
 		try {
 			String v = getString(object, key);
-			if (v != null)
+			if (v != null) {
 				return JID.jidInstance(v);
+			}
 			return null;
 		} catch (Exception e) {
 			log.warning("Can't create JID instance: " + e.getMessage());
@@ -69,8 +67,9 @@ public class GwtSessionObject extends AbstractSessionObject {
 	private static Long getLong(JSONObject object, String key) {
 		try {
 			String v = getString(object, key);
-			if (v != null)
+			if (v != null) {
 				return Long.valueOf(v);
+			}
 			return null;
 		} catch (Exception e) {
 			log.warning("Can't create Long instance: " + e.getMessage());
@@ -144,8 +143,9 @@ public class GwtSessionObject extends AbstractSessionObject {
 			// log("not serialized/deserialized keys", "" + allKeys.size());
 			for (String key : allKeys) {
 				Entry e = properties.get(key);
-				if (e.scope == Scope.stream)
+				if (e.scope == Scope.stream) {
 					continue;
+				}
 				Object val = e.value;
 				// log(key, e.scope.name(), val != null ?
 				// val.getClass().toString() : "null", val != null ?
@@ -155,6 +155,14 @@ public class GwtSessionObject extends AbstractSessionObject {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (JaxmppException ex) {
 			Logger.getLogger(GwtSessionObject.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public static final class RestoringSessionException
+			extends Exception {
+
+		public RestoringSessionException(String message) {
+			super(message);
 		}
 	}
 

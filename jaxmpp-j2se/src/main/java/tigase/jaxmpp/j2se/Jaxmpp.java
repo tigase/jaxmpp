@@ -1,10 +1,13 @@
 /*
+ * Jaxmpp.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,9 +26,18 @@ import tigase.jaxmpp.core.client.SessionObject.Scope;
 import tigase.jaxmpp.core.client.XmppSessionLogic.SessionListener;
 import tigase.jaxmpp.core.client.connector.ConnectorWrapper;
 import tigase.jaxmpp.core.client.connector.StreamError;
+import tigase.jaxmpp.core.client.eventbus.Event;
+import tigase.jaxmpp.core.client.eventbus.EventHandler;
+import tigase.jaxmpp.core.client.eventbus.EventListener;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.AuthModule;
 import tigase.jaxmpp.core.client.xmpp.modules.auth.SaslModule;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramPlusMechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramSHA256Mechanism;
+import tigase.jaxmpp.core.client.xmpp.modules.auth.scram.ScramSHA256PlusMechanism;
 import tigase.jaxmpp.core.client.xmpp.modules.streammng.StreamManagementModule;
 import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat;
 import tigase.jaxmpp.j2se.connectors.bosh.BoshConnector;
@@ -37,25 +49,20 @@ import tigase.jaxmpp.j2se.xmpp.modules.auth.saslmechanisms.ExternalMechanism;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 
 /**
  * Main library class for using in standalone, Android and other J2SE compatible
  * application.
  */
-public class Jaxmpp extends JaxmppCore {
+public class Jaxmpp
+		extends JaxmppCore {
 
 	public static final String CONNECTOR_TYPE = "connectorType";
 	public static final String EXCEPTION_KEY = "jaxmpp#ThrowedException";
 	public static final String LOGIN_TIMEOUT_KEY = "LOGIN_TIMEOUT_KEY";
-	public static final String SYNCHRONIZED_MODE = "jaxmpp#synchronized";
-	private static final Executor DEFAULT_EXECUTOR = new Executor() {
-
-		@Override
-		public synchronized void execute(Runnable command) {
-			(new Thread(command)).start();
-		}
-	};
+	private static final Executor DEFAULT_EXECUTOR = Executors.newSingleThreadExecutor();
 
 	static {
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
@@ -67,6 +74,94 @@ public class Jaxmpp extends JaxmppCore {
 	private Timer timer = null;
 
 	// private FileTransferManager fileTransferManager;
+
+	public static void waitForDisconnectFinish(final Jaxmpp jaxmpp, final long timeout) throws JaxmppException {
+		final EventListener eventListener = new EventListener() {
+
+			@Override
+			public void onEvent(Event<? extends EventHandler> event) {
+				if (event instanceof Connector.DisconnectedHandler.DisconnectedEvent) {
+					wakeUp();
+				}
+			}
+
+			private void wakeUp() {
+				synchronized (jaxmpp) {
+					jaxmpp.notify();
+				}
+			}
+		};
+		try {
+			jaxmpp.getEventBus().addListener(eventListener);
+
+			if (jaxmpp.getConnector().getState() != Connector.State.disconnected) {
+				synchronized (jaxmpp) {
+					jaxmpp.wait(timeout);
+				}
+				Thread.sleep(50);
+			}
+			final SessionObject sessionObject = jaxmpp.getSessionObject();
+			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
+				sessionObject.setProperty(EXCEPTION_KEY, null);
+				JaxmppException e = new JaxmppException(r);
+				throw e;
+			}
+		} catch (InterruptedException e) {
+			throw new JaxmppException(e);
+		} finally {
+			jaxmpp.getEventBus().remove(eventListener);
+		}
+	}
+
+	public static void waitForLoginFinish(final Jaxmpp jaxmpp, final long timeout) throws JaxmppException {
+		final EventListener eventListener = new EventListener() {
+
+			@Override
+			public void onEvent(Event<? extends EventHandler> event) {
+				if (event instanceof Connector.DisconnectedHandler.DisconnectedEvent) {
+					wakeUp();
+				} else if (event instanceof ResourceBinderModule.ResourceBindSuccessHandler.ResourceBindSuccessEvent) {
+					wakeUp();
+//				} else if (event instanceof Connector.ErrorHandler.ErrorEvent) {
+//					wakeUp();
+				} else if (event instanceof AuthModule.AuthFailedHandler.AuthFailedEvent) {
+					wakeUp();
+				} else if (event instanceof StreamManagementModule.StreamResumedHandler.StreamResumedEvent) {
+					wakeUp();
+				}
+			}
+
+			private void wakeUp() {
+				synchronized (jaxmpp) {
+					jaxmpp.notify();
+				}
+			}
+		};
+		if (!jaxmpp.isConnected()) {
+			try {
+				jaxmpp.getEventBus().addListener(eventListener);
+
+				final SessionObject sessionObject = jaxmpp.getSessionObject();
+				synchronized (jaxmpp) {
+					if (sessionObject.getProperty(EXCEPTION_KEY) == null && !jaxmpp.isConnected()) {
+						jaxmpp.wait(timeout);
+					}
+				}
+				Thread.sleep(50);
+				if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
+					JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
+					sessionObject.setProperty(EXCEPTION_KEY, null);
+					JaxmppException e = new JaxmppException(r);
+					throw e;
+				}
+			} catch (InterruptedException e) {
+				throw new JaxmppException(e);
+			} finally {
+				jaxmpp.getEventBus().remove(eventListener);
+			}
+		}
+	}
 
 	public Jaxmpp() {
 		super();
@@ -87,7 +182,8 @@ public class Jaxmpp extends JaxmppCore {
 	}
 
 	protected Connector createConnector() throws JaxmppException {
-		if (sessionObject.getProperty(CONNECTOR_TYPE) == null || "socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+		if (sessionObject.getProperty(CONNECTOR_TYPE) == null ||
+				"socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using SocketConnector");
 			return new SocketConnector(context);
 		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
@@ -96,8 +192,9 @@ public class Jaxmpp extends JaxmppCore {
 		} else if ("websocket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
 			log.info("Using WebSocketConnector");
 			return new WebSocketConnector(context);
-		} else
+		} else {
 			throw new JaxmppException("Unknown connector type");
+		}
 	}
 
 	@Override
@@ -109,38 +206,18 @@ public class Jaxmpp extends JaxmppCore {
 		disconnect(snc, true);
 	}
 
-	public void disconnect(boolean snc, boolean resetStreamManagement) throws JaxmppException {
+	public void disconnect(Boolean snc, boolean resetStreamManagement) throws JaxmppException {
 		try {
 			if (this.connector != null) {
-				Boolean sync = this.sessionObject.getProperty(SYNCHRONIZED_MODE);
-				sync = snc || (sync != null && sync);
-				Connector.DisconnectedHandler handler = null;
-				if (sync) {
-					handler = new Connector.DisconnectedHandler() {
-						@Override
-						public void onDisconnected(SessionObject sessionObject) {
-							synchronized (Jaxmpp.this) {
-								Jaxmpp.this.notifyAll();
-							}
-						}
-					};
-					this.eventBus.addHandler(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
-				}
 				try {
 					this.connector.stop();
 				} catch (XMLException e) {
 					throw new JaxmppException(e);
 				}
-				if (sync) {
-					synchronized (Jaxmpp.this) {
-						if (getConnector().getState() != Connector.State.disconnected)
-							Jaxmpp.this.wait();
-					}
-					this.eventBus.remove(Connector.DisconnectedHandler.DisconnectedEvent.class, handler);
+				if (snc != null && snc) {
+					waitForDisconnectFinish(this, 0);
 				}
 			}
-		} catch (InterruptedException e) {
-			throw new JaxmppException(e);
 		} finally {
 			if (resetStreamManagement) {
 				StreamManagementModule.reset(sessionObject);
@@ -151,8 +228,9 @@ public class Jaxmpp extends JaxmppCore {
 
 	@Override
 	public void execute(Runnable runnable) {
-		if (runnable != null)
+		if (runnable != null) {
 			executor.execute(runnable);
+		}
 	}
 
 	/**
@@ -172,50 +250,19 @@ public class Jaxmpp extends JaxmppCore {
 	 * Sets custom {@linkplain Executor} for processing incoming stanzas in
 	 * modules.
 	 *
-	 * @param executor
-	 *            executor
+	 * @param executor executor
 	 */
 	public void setExecutor(Executor executor) {
-		if (executor == null)
+		if (executor == null) {
 			this.executor = DEFAULT_EXECUTOR;
-		else
+		} else {
 			this.executor = executor;
-	}
-
-	@Override
-	protected void init() {
-		// if (PresenceModule.getPresenceStore(sessionObject) == null)
-		// PresenceModule.setPresenceStore(sessionObject, new
-		// J2SEPresenceStore());
-
-		// if (RosterModule.getRosterStore(sessionObject) == null)
-		// RosterModule.setRosterStore(sessionObject, new RosterStore());
-
-		if (ResponseManager.getResponseManager(sessionObject) == null)
-			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
-
-		super.init();
-
-		setExecutor(DEFAULT_EXECUTOR);
-
-		this.connector = this.connectorWrapper;
-
-		this.processor = new Processor(this.modulesManager, context);
-
-		modulesInit();
+		}
 	}
 
 	// public FileTransferManager getFileTransferManager() {
 	// return fileTransferManager;
 	// }
-
-	@Override
-	/**
-	 * Connects to server in sync mode.
-	 */
-	public void login() throws JaxmppException {
-		login(true);
-	}
 
 	// public void initFileTransferManager(boolean experimental) throws
 	// JaxmppException {
@@ -262,19 +309,60 @@ public class Jaxmpp extends JaxmppCore {
 	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
 	// }
 
+	@Override
+	protected void init() {
+		// if (PresenceModule.getPresenceStore(sessionObject) == null)
+		// PresenceModule.setPresenceStore(sessionObject, new
+		// J2SEPresenceStore());
+
+		// if (RosterModule.getRosterStore(sessionObject) == null)
+		// RosterModule.setRosterStore(sessionObject, new RosterStore());
+
+		if (ResponseManager.getResponseManager(sessionObject) == null) {
+			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
+		}
+
+		super.init();
+
+		setExecutor(DEFAULT_EXECUTOR);
+
+		this.connector = this.connectorWrapper;
+
+		this.processor = new Processor(this.modulesManager, context);
+
+		modulesInit();
+
+		SaslModule saslModule = getModule(SaslModule.class);
+		if (saslModule != null) {
+			saslModule.addMechanism(new ScramMechanism(), true);
+			saslModule.addMechanism(new ScramPlusMechanism(), true);
+			saslModule.addMechanism(new ScramSHA256Mechanism(), true);
+			saslModule.addMechanism(new ScramSHA256PlusMechanism(), true);
+		}
+	}
+
+	public void login(boolean sync) throws JaxmppException {
+		try {
+			login();
+
+			if (sync) {
+				waitForLoginFinish(this, 0);
+			}
+		} catch (JaxmppException ex) {
+			throw ex;
+		}
+	}
+
 	/**
 	 * Connects to server.
-	 *
-	 * @param sync
-	 *            <code>true</code> to start method in sync mode. In sync mode
-	 *            whole connecting process will be done in this method.
 	 */
-	public synchronized void login(boolean sync) throws JaxmppException {
+	public synchronized void login() throws JaxmppException {
 		synchronized (this) {
-			if (timer != null)
+			if (timer != null) {
 				timer.cancel();
+			}
 
-			timer = new Timer(true);
+			timer = new Timer("JaxmppJ2SETimer", true);
 			timer.schedule(new CheckTimeoutsTask(), 30 * 1000, 30 * 1000);
 		}
 		this.modulesManager.initIfRequired();
@@ -322,29 +410,11 @@ public class Jaxmpp extends JaxmppCore {
 		try {
 			this.sessionLogic.beforeStart();
 			this.connector.start();
-			this.sessionObject.setProperty(SYNCHRONIZED_MODE, Boolean.valueOf(sync));
-			if (sync) {
-				loginTimeoutTask = new LoginTimeoutTask();
-				Long delay = sessionObject.getProperty(LOGIN_TIMEOUT_KEY);
-				log.finest("Starting LoginTimeoutTask");
-				timer.schedule(loginTimeoutTask, delay == null ? 1000 * 60 * 5 : delay);
-				synchronized (Jaxmpp.this) {
-					Jaxmpp.this.wait();
-					log.finest("Waked up");
-					Jaxmpp.this.wait(512);
-				}
-
-				if (loginTimeoutTask != null) {
-					log.finest("Canceling LoginTimeoutTask");
-					loginTimeoutTask.cancel();
-					loginTimeoutTask = null;
-				}
-			}
 			if (sessionObject.getProperty(EXCEPTION_KEY) != null) {
 				JaxmppException r = sessionObject.getProperty(EXCEPTION_KEY);
 				sessionObject.setProperty(EXCEPTION_KEY, null);
 				JaxmppException e = new JaxmppException(r.getMessage(), r.getCause());
-				throw r;
+				throw e;
 			}
 		} catch (JaxmppException e) {
 			// onException(e);
@@ -368,8 +438,9 @@ public class Jaxmpp extends JaxmppCore {
 	protected void onConnectorStopped() {
 		super.onConnectorStopped();
 		synchronized (this) {
-			if (timer != null)
+			if (timer != null) {
 				timer.cancel();
+			}
 			timer = null;
 		}
 	}
@@ -377,61 +448,55 @@ public class Jaxmpp extends JaxmppCore {
 	@Override
 	protected void onException(JaxmppException e) throws JaxmppException {
 		log.log(Level.FINE, "Catching exception", e);
-		sessionObject.setProperty(EXCEPTION_KEY, e);
+		synchronized (Jaxmpp.this) {
+			sessionObject.setProperty(EXCEPTION_KEY, e);
+		}
 		try {
 			connector.stop();
 		} catch (Exception e1) {
 			log.log(Level.FINE, "Disconnecting error", e1);
 		}
 		synchronized (Jaxmpp.this) {
-//			Jaxmpp.this.notify();
 			if (timer != null) {
 				timer.cancel();
 				timer = null;
 			}
+			this.notify();
 		}
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
 	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
-		}
 		eventBus.fire(new LoggedInEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamError(StreamError condition, Throwable caught) throws JaxmppException {
-		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) != Boolean.TRUE) {
-			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.notify();
-			}
-		}
-
-		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
-		synchronized (Jaxmpp.this) {
-			Jaxmpp.this.notify();
-		}
 		eventBus.fire(new LoggedInHandler.LoggedInEvent(sessionObject));
 	}
 
 	@Override
 	protected void onStreamTerminated() throws JaxmppException {
-		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) == null
-				|| !(Boolean) sessionObject.getProperty(Connector.RECONNECTING_KEY)) {
-			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.notify();
-			}
-		}
+		// Removed as it breaks blocking mode of login()/disconnect() methods !!!!!!
+		// This worked fine in 3.1 but in 3.2 due to separate thread on which events
+		// are fired this breaks blocking mode.
+		// Do we need this notify at all? As DisconnectedEvent will be fired at the end
+		// of processing and it will fire notify.
+//		if (sessionObject.getProperty(Connector.RECONNECTING_KEY) != Boolean.TRUE) {
+//			synchronized (Jaxmpp.this) {
+//				Jaxmpp.this.notify();
+//			}
+//		}
 		// XXX eventBus.fire(new LoggedOutEvent(sessionObject));
 	}
 
-	private class CheckTimeoutsTask extends TimerTask {
+	private class CheckTimeoutsTask
+			extends TimerTask {
 
 		@Override
 		public void run() {
@@ -442,16 +507,6 @@ public class Jaxmpp extends JaxmppCore {
 			}
 		}
 
-	}
-
-	private class LoginTimeoutTask extends TimerTask {
-
-		@Override
-		public void run() {
-			synchronized (Jaxmpp.this) {
-				Jaxmpp.this.notify();
-			}
-		}
 	}
 
 }

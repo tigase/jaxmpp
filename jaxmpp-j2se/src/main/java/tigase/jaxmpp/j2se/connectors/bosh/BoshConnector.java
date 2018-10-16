@@ -1,10 +1,13 @@
 /*
+ * BoshConnector.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,20 +20,20 @@
  */
 package tigase.jaxmpp.j2se.connectors.bosh;
 
-import java.net.URL;
-import java.util.logging.Level;
-
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.connector.AbstractBoshConnector;
 import tigase.jaxmpp.core.client.connector.BoshRequest;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.xml.DomBuilderHandler;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
-public class BoshConnector extends AbstractBoshConnector {
+import java.net.URL;
+import java.util.logging.Level;
+
+public class BoshConnector
+		extends AbstractBoshConnector {
 
 	public static final String URL_KEY = "bosh#url";
 
@@ -43,7 +46,7 @@ public class BoshConnector extends AbstractBoshConnector {
 	}
 
 	@Override
-	protected void processSendData(final Element element) throws XMLException, JaxmppException {
+	protected void processSendData(final Element element) throws JaxmppException {
 		BoshRequest worker = new BoshWorker(domHandler, parser, context.getSessionObject(), element) {
 
 			@Override
@@ -66,24 +69,29 @@ public class BoshConnector extends AbstractBoshConnector {
 
 		addToRequests(worker);
 
-		if (log.isLoggable(Level.FINEST))
+		if (log.isLoggable(Level.FINEST)) {
 			log.finest("Send: " + element.getAsString());
-
-		(new Thread(worker)).start();
+		}
+		Thread t = new Thread(worker);
+		t.setDaemon(true);
+		t.start();
 	}
 
 	@Override
-	public void start() throws XMLException, JaxmppException {
+	public void start() throws JaxmppException {
 		try {
 			String u = context.getSessionObject().getProperty(AbstractBoshConnector.BOSH_SERVICE_URL_KEY);
-			if (u == null)
+			if (u == null) {
 				throw new JaxmppException("BOSH service URL not defined!");
+			}
 			URL url = new URL(u);
 			context.getSessionObject().setProperty(URL_KEY, url);
 			super.start();
 		} catch (JaxmppException e) {
+			fireOnError(0, null, null, e, context.getSessionObject());
 			throw e;
 		} catch (Exception e) {
+			fireOnError(0, null, null, e, context.getSessionObject());
 			throw new JaxmppException(e);
 		}
 	}

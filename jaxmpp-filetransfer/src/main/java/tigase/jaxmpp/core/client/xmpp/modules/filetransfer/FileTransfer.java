@@ -1,10 +1,13 @@
 /*
+ * FileTransfer.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2004-2013 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,17 +20,18 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.filetransfer;
 
-import java.util.Date;
-
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.core.client.xmpp.modules.connection.ConnectionSession;
 
-public class FileTransfer extends ConnectionSession {
+import java.util.Date;
+
+public class FileTransfer
+		extends ConnectionSession {
 
 	private String fileMimeType;
-	private String filename;
 	private long fileSize;
+	private String filename;
 	private Date lastModified;
 
 	private long transferredBytes = 0;
@@ -40,21 +44,26 @@ public class FileTransfer extends ConnectionSession {
 		return fileMimeType;
 	}
 
-	public Date getFileModification() {
-		return lastModified;
+	public void setFileMimeType(String mimeType) {
+		this.fileMimeType = mimeType;
 	}
 
-	public String getFilename() {
-		return filename;
+	public Date getFileModification() {
+		return lastModified;
 	}
 
 	public long getFileSize() {
 		return fileSize;
 	}
 
+	public String getFilename() {
+		return filename;
+	}
+
 	public Double getProgress() {
-		if (getFileSize() == 0)
+		if (getFileSize() == 0) {
 			return null;
+		}
 		return ((double) transferredBytes * 100) / getFileSize();
 	}
 
@@ -67,10 +76,6 @@ public class FileTransfer extends ConnectionSession {
 		this.fileSize = fileSize;
 		this.fileMimeType = mimeType;
 		this.lastModified = lastModified;
-	}
-
-	public void setFileMimeType(String mimeType) {
-		this.fileMimeType = mimeType;
 	}
 
 	@Override

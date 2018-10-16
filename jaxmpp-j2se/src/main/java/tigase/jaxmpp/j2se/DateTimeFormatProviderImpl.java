@@ -1,10 +1,13 @@
 /*
+ * DateTimeFormatProviderImpl.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,6 +20,8 @@
  */
 package tigase.jaxmpp.j2se;
 
+import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -25,13 +30,12 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import tigase.jaxmpp.core.client.xmpp.utils.DateTimeFormat.DateTimeFormatProvider;
-
-public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
+public class DateTimeFormatProviderImpl
+		implements DateTimeFormatProvider {
 
 	private static final String DATE = "(\\d\\d\\d\\d)-(\\d\\d)-(\\d\\d)";
 
-	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)";
+	private static final String TIME = "(\\d\\d):(\\d\\d):(\\d\\d)(\\.(\\d+))?";
 
 	private static final String TIME_ZONE = "(([+-]\\d\\d:?\\d\\d)|Z)";
 
@@ -53,7 +57,7 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 		this.dateTimePattern = Pattern.compile("^" + DATE + "T" + TIME + TIME_ZONE + "?$");
 		this.datePattern = Pattern.compile("^" + DATE + "$");
 		this.timePattern = Pattern.compile("^" + TIME + TIME_ZONE + "?$");
-		this.dateTimeFormatUTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		this.dateTimeFormatUTC = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 		this.dateTimeFormatUTC.setTimeZone(timeZoneUTC);
 
 		this.dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -99,7 +103,20 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 			int hh = Integer.valueOf(m.group(4));
 			int mm = Integer.valueOf(m.group(5));
 			int ss = Integer.valueOf(m.group(6));
-			String tzValue = m.group(7);
+			String msStr = m.group(8);
+			int ms = 0;
+			if (msStr != null && !msStr.isEmpty()) {
+				if (msStr.length() > 3) {
+					msStr = msStr.substring(0, 3);
+					ms = Integer.valueOf(msStr);
+				} else {
+					ms = Integer.valueOf(msStr);
+					for (int i=0; i<3-msStr.length(); i++) {
+						ms = ms * 10;
+					}
+				}
+			}
+			String tzValue = m.group(9);
 			TimeZone tz;
 			if (tzValue.equals("Z")) {
 				tz = timeZoneUTC;
@@ -109,6 +126,7 @@ public class DateTimeFormatProviderImpl implements DateTimeFormatProvider {
 			Calendar calendar = Calendar.getInstance(tz);
 			calendar.clear();
 			calendar.set(yyyy, MM - 1, dd, hh, mm, ss);
+			calendar.set(Calendar.MILLISECOND, ms);
 			return calendar;
 		}
 

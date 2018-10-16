@@ -1,7 +1,25 @@
-package tigase.jaxmpp.core.client.xmpp.stream;
+/*
+ * XmppStreamsManager.java
+ *
+ * Tigase XMPP Client Library
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. Look for COPYING file in the top folder.
+ * If not, see http://www.gnu.org/licenses/.
+ */
 
-import java.util.HashMap;
-import java.util.Set;
+package tigase.jaxmpp.core.client.xmpp.stream;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.JID;
@@ -12,20 +30,17 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xmpp.DefaultXMPPStream;
 
+import java.util.HashMap;
+import java.util.Set;
+
 public class XmppStreamsManager {
 
 	public static final String DEFAULT_XMPP_STREAM_KEY = "DEFAULT_XMPP_STREAM_KEY";
 
 	private static final String XMPP_STREAMS_MANAGER_KEY = "STREAMS_MANAGER_KEY";
-
-	public static XmppStreamsManager getStreamsManager(SessionObject sessionObject) {
-		return sessionObject.getProperty(XMPP_STREAMS_MANAGER_KEY);
-	}
-
-	public static void setStreamsManager(SessionObject sessionObject, XmppStreamsManager streamsManager) {
-		sessionObject.setProperty(Scope.user, XMPP_STREAMS_MANAGER_KEY, streamsManager);
-	}
-
+	private final HashMap<JID, XMPPStream> registeredStreams = new HashMap<JID, XMPPStream>();
+	private Context context;
+	private DefaultXMPPStream defaultStream;
 	private final ClearedHandler clearedHandler = new ClearedHandler() {
 
 		@Override
@@ -37,11 +52,13 @@ public class XmppStreamsManager {
 		}
 	};
 
-	private Context context;
+	public static XmppStreamsManager getStreamsManager(SessionObject sessionObject) {
+		return sessionObject.getProperty(XMPP_STREAMS_MANAGER_KEY);
+	}
 
-	private DefaultXMPPStream defaultStream;
-
-	private final HashMap<JID, XMPPStream> registeredStreams = new HashMap<JID, XMPPStream>();
+	public static void setStreamsManager(SessionObject sessionObject, XmppStreamsManager streamsManager) {
+		sessionObject.setProperty(Scope.user, XMPP_STREAMS_MANAGER_KEY, streamsManager);
+	}
 
 	public DefaultXMPPStream getDefaultStream() {
 		return defaultStream;
@@ -56,8 +73,9 @@ public class XmppStreamsManager {
 	}
 
 	public void setContext(Context context) {
-		if (this.context != null)
+		if (this.context != null) {
 			this.context.getEventBus().remove(ClearedHandler.ClearedEvent.class, clearedHandler);
+		}
 		this.context = context;
 		if (this.context != null) {
 			this.context.getEventBus().addHandler(ClearedHandler.ClearedEvent.class, clearedHandler);
@@ -75,8 +93,9 @@ public class XmppStreamsManager {
 		if (to != null) {
 			outputStream = this.registeredStreams.get(JID.jidInstance(to));
 		}
-		if (outputStream == null)
+		if (outputStream == null) {
 			outputStream = defaultStream;
+		}
 		outputStream.write(stanza);
 	}
 

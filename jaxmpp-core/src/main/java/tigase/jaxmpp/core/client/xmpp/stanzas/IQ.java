@@ -1,10 +1,13 @@
 /*
+ * IQ.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,17 +20,17 @@
  */
 package tigase.jaxmpp.core.client.xmpp.stanzas;
 
-import java.util.List;
-
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.List;
+
 /**
  * Representation of IQ stanza.
- * 
  */
-public class IQ extends Stanza {
+public class IQ
+		extends Stanza {
 
 	public static final IQ create() throws JaxmppException {
 		return Stanza.createIQ();
@@ -35,13 +38,14 @@ public class IQ extends Stanza {
 
 	IQ(Element element) throws XMLException {
 		super(element);
-		if (!"iq".equals(element.getName()))
+		if (!"iq".equals(element.getName())) {
 			throw new RuntimeException("Wrong element name: " + element.getName());
+		}
 	}
 
 	/**
 	 * Return &lt;query/&gt; child element.
-	 * 
+	 *
 	 * @return <code>null</code> is &lt;query/&gt; doesn't exists
 	 */
 	public Element getQuery() throws XMLException {

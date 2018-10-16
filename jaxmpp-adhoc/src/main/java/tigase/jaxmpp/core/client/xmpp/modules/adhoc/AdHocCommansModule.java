@@ -1,10 +1,13 @@
 /*
+ * AdHocCommansModule.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2012 "Bartosz Małkowski" <bartosz.malkowski@tigase.org>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,17 +20,7 @@
  */
 package tigase.jaxmpp.core.client.xmpp.modules.adhoc;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
-
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.JID;
-import tigase.jaxmpp.core.client.SessionObject;
-import tigase.jaxmpp.core.client.UIDGenerator;
-import tigase.jaxmpp.core.client.XMPPException;
+import tigase.jaxmpp.core.client.*;
 import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.criteria.Criteria;
 import tigase.jaxmpp.core.client.criteria.ElementCriteria;
@@ -47,98 +40,34 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+
 /**
  * Module to handle ad-hoc commands.
- * 
+ *
  * @author bmalkow
  */
 
-public class AdHocCommansModule extends AbstractIQModule {
+public class AdHocCommansModule
+		extends AbstractIQModule {
 
-	/**
-	 * Callback to handle result of ad-hoc command.
-	 * 
-	 */
-	public static abstract class AdHocCommansAsyncCallback implements AsyncCallback {
-
-		private Element command;
-
-		private IQ response;
-
-		/**
-		 * Return &lt;command xmlns='http://jabber.org/protocol/commands' /&gt;
-		 * element of returned stanza.
-		 * 
-		 * @return return command element.
-		 */
-		protected Element getCommand() {
-			return command;
-		}
-
-		/**
-		 * Reutrns IQ stanza with response.
-		 * 
-		 * @return IQ stanza
-		 */
-		protected IQ getResponse() {
-			return response;
-		}
-
-		/**
-		 * Method called when response of ad-hoc command is received.
-		 * 
-		 * @param sessionid
-		 *            ID of session. May be <code>null</code>.
-		 * @param node
-		 *            node
-		 * @param status
-		 *            status of command execution
-		 * @param data
-		 *            Data Form
-		 */
-		protected abstract void onResponseReceived(String sessionid, String node, State status, JabberDataElement data)
-				throws JaxmppException;
-
-		/**
-		 * {@inheritDoc}
-		 */
-		@Override
-		public void onSuccess(final Stanza responseStanza) throws JaxmppException {
-			this.response = (IQ) responseStanza;
-			this.command = responseStanza.getChildrenNS("command", "http://jabber.org/protocol/commands");
-
-			if (this.command != null) {
-				String sessionid = this.command.getAttribute("sessionid");
-				String node = this.command.getAttribute("node");
-				State status = this.command.getAttribute("status") == null ? null
-						: State.valueOf(this.command.getAttribute("status"));
-
-				JabberDataElement data = new JabberDataElement(this.command.getChildrenNS("x", "jabber:x:data"));
-
-				onResponseReceived(sessionid, node, status, data);
-			}
-
-		}
-	}
-
-	public static final Criteria CRIT = ElementCriteria.name("iq").add(
-			ElementCriteria.name("command", new String[] { "xmlns" }, new String[] { "http://jabber.org/protocol/commands" }));
-
+	public static final Criteria CRIT = ElementCriteria.name("iq")
+			.add(ElementCriteria.name("command", new String[]{"xmlns"},
+									  new String[]{"http://jabber.org/protocol/commands"}));
 	private final static String XMLNS = "http://jabber.org/protocol/commands";
+	private final String[] FEATURES = {"http://jabber.org/protocol/commands"};
+	private final Map<String, AdHocCommand> commands = new HashMap<String, AdHocCommand>();
+	private final Map<String, Session> sessions = new HashMap<String, Session>();
+	private NodeDetailsCallback commandDiscoveryCallback;
+	private DiscoveryModule discoveryModule;
 
 	static String generateSessionId() {
 		return UIDGenerator.next() + UIDGenerator.next();
 	}
-
-	private NodeDetailsCallback commandDiscoveryCallback;
-
-	private final Map<String, AdHocCommand> commands = new HashMap<String, AdHocCommand>();
-
-	private DiscoveryModule discoveryModule;
-
-	private final String[] FEATURES = { "http://jabber.org/protocol/commands" };
-
-	private final Map<String, Session> sessions = new HashMap<String, Session>();
 
 	@Override
 	public void beforeRegister() {
@@ -151,12 +80,14 @@ public class AdHocCommansModule extends AbstractIQModule {
 		this.commandDiscoveryCallback = new NodeDetailsCallback() {
 
 			@Override
-			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node)
+					throws JaxmppException {
 				return AdHocCommansModule.this.getCommandFeatures(sessionObject, requestStanza, node);
 			}
 
 			@Override
-			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node)
+					throws JaxmppException {
 				return AdHocCommansModule.this.getCommandIdentity(sessionObject, requestStanza, node);
 			}
 
@@ -169,12 +100,14 @@ public class AdHocCommansModule extends AbstractIQModule {
 		discoveryModule.setNodeCallback(XMLNS, new NodeDetailsCallback() {
 
 			@Override
-			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+			public String[] getFeatures(SessionObject sessionObject, IQ requestStanza, String node)
+					throws JaxmppException {
 				return null;
 			}
 
 			@Override
-			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node) throws JaxmppException {
+			public Identity getIdentity(SessionObject sessionObject, IQ requestStanza, String node)
+					throws JaxmppException {
 				return AdHocCommansModule.this.getModuleIdentity(sessionObject, requestStanza, node);
 			}
 
@@ -187,17 +120,12 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 	/**
 	 * Calls ad-hoc command on remote resource.
-	 * 
-	 * @param toJID
-	 *            remote ad-hoc command executor.
-	 * @param node
-	 *            node
-	 * @param action
-	 *            action
-	 * @param data
-	 *            Data Form
-	 * @param asyncCallback
-	 *            callback
+	 *
+	 * @param toJID remote ad-hoc command executor.
+	 * @param node node
+	 * @param action action
+	 * @param data Data Form
+	 * @param asyncCallback callback
 	 */
 	public void execute(JID toJID, String node, Action action, JabberDataElement data, AsyncCallback asyncCallback)
 			throws JaxmppException {
@@ -207,8 +135,9 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 		Element command = ElementFactory.create("command", null, "http://jabber.org/protocol/commands");
 		command.setAttribute("node", node);
-		if (action != null)
+		if (action != null) {
 			command.setAttribute("action", action.name());
+		}
 
 		if (data != null) {
 			command.addChild(data.createSubmitableElement(XDataType.submit));
@@ -223,10 +152,11 @@ public class AdHocCommansModule extends AbstractIQModule {
 			throws JaxmppException {
 		final AdHocCommand command = this.commands.get(commandNodeName);
 
-		if (command == null)
+		if (command == null) {
 			throw new XMPPException(ErrorCondition.item_not_found);
-		else if (!command.isAllowed(requestStanza.getFrom()))
+		} else if (!command.isAllowed(requestStanza.getFrom())) {
 			throw new XMPPException(ErrorCondition.forbidden);
+		}
 
 		return command.getFeatures();
 	}
@@ -235,10 +165,11 @@ public class AdHocCommansModule extends AbstractIQModule {
 			throws JaxmppException {
 		final AdHocCommand command = this.commands.get(commandNodeName);
 
-		if (command == null)
+		if (command == null) {
 			throw new XMPPException(ErrorCondition.item_not_found);
-		else if (!command.isAllowed(requestStanza.getFrom()))
+		} else if (!command.isAllowed(requestStanza.getFrom())) {
 			throw new XMPPException(ErrorCondition.forbidden);
+		}
 
 		Identity identity = new Identity();
 		identity.setCategory("automation");
@@ -270,8 +201,9 @@ public class AdHocCommansModule extends AbstractIQModule {
 		final JID jid = requestStanza.getTo();
 		ArrayList<Item> result = new ArrayList<DiscoveryModule.Item>();
 		for (AdHocCommand command : this.commands.values()) {
-			if (!command.isAllowed(requestStanza.getFrom()))
+			if (!command.isAllowed(requestStanza.getFrom())) {
 				continue;
+			}
 			Item it = new Item();
 			it.setJid(jid);
 			it.setName(command.getName());
@@ -279,7 +211,7 @@ public class AdHocCommansModule extends AbstractIQModule {
 			result.add(it);
 		}
 
-		return result.toArray(new Item[] {});
+		return result.toArray(new Item[]{});
 	}
 
 	@Override
@@ -293,11 +225,13 @@ public class AdHocCommansModule extends AbstractIQModule {
 		final String requestedNode = command.getAttribute("node");
 		final String sessionid = command.getAttribute("sessionid");
 		final AdHocCommand commandHandler = this.commands.get(requestedNode);
-		if (commandHandler == null)
+		if (commandHandler == null) {
 			throw new XMPPException(ErrorCondition.item_not_found, "Ad-Hoc Command not found");
+		}
 
-		if (!commandHandler.isAllowed(element.getFrom()))
+		if (!commandHandler.isAllowed(element.getFrom())) {
 			throw new XMPPException(ErrorCondition.forbidden);
+		}
 
 		final Action action;
 		{
@@ -331,18 +265,20 @@ public class AdHocCommansModule extends AbstractIQModule {
 		Session session = request.getSession(false);
 
 		switch (state) {
-		case canceled:
-		case completed:
-			if (session != null) {
-				if (log.isLoggable(Level.FINE))
-					log.fine("Session " + session.getSessionId() + " is removed");
-				this.sessions.remove(session.getSessionId());
-			}
-			break;
-		case executing:
-			if (session != null)
-				session.setDefaultAction(response.getDefaultAction());
-			break;
+			case canceled:
+			case completed:
+				if (session != null) {
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Session " + session.getSessionId() + " is removed");
+					}
+					this.sessions.remove(session.getSessionId());
+				}
+				break;
+			case executing:
+				if (session != null) {
+					session.setDefaultAction(response.getDefaultAction());
+				}
+				break;
 		}
 
 		final Element result = XmlTools.makeResult(element);
@@ -372,13 +308,85 @@ public class AdHocCommansModule extends AbstractIQModule {
 
 	/**
 	 * Registers new ad-hoc command.
-	 * 
-	 * @param command
-	 *            command to register
+	 *
+	 * @param command command to register
 	 */
 	public void register(final AdHocCommand command) {
 		final String node = command.getNode();
 		this.commands.put(node, command);
 		discoveryModule.setNodeCallback(node, commandDiscoveryCallback);
+	}
+
+	public void unregister(final AdHocCommand command) {
+		final String node = command.getNode();
+		this.commands.remove(node);
+		discoveryModule.removeNodeCallback(node);
+	}
+
+	/**
+	 * Callback to handle result of ad-hoc command.
+	 */
+	public static abstract class AdHocCommansAsyncCallback
+			implements AsyncCallback {
+
+		private Element command;
+
+		private IQ response;
+
+		/**
+		 * Return &lt;command xmlns='http://jabber.org/protocol/commands' /&gt;
+		 * element of returned stanza.
+		 *
+		 * @return return command element.
+		 */
+		protected Element getCommand() {
+			return command;
+		}
+
+		/**
+		 * Reutrns IQ stanza with response.
+		 *
+		 * @return IQ stanza
+		 */
+		protected IQ getResponse() {
+			return response;
+		}
+
+		/**
+		 * Method called when response of ad-hoc command is received.
+		 *
+		 * @param sessionid ID of session. May be <code>null</code>.
+		 * @param node node
+		 * @param status status of command execution
+		 * @param data Data Form
+		 */
+		protected abstract void onResponseReceived(String sessionid, String node, State status, JabberDataElement data)
+				throws JaxmppException;
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void onSuccess(final Stanza responseStanza) throws JaxmppException {
+			this.response = (IQ) responseStanza;
+			this.command = responseStanza.getChildrenNS("command", "http://jabber.org/protocol/commands");
+
+			if (this.command != null) {
+				String sessionid = this.command.getAttribute("sessionid");
+				String node = this.command.getAttribute("node");
+				State status = this.command.getAttribute("status") == null
+							   ? null
+							   : State.valueOf(this.command.getAttribute("status"));
+
+				JabberDataElement data = null;
+				Element x = this.command.getChildrenNS("x", "jabber:x:data");
+				if (x != null) {
+					data = new JabberDataElement(x);
+				}
+
+				onResponseReceived(sessionid, node, status, data);
+			}
+
+		}
 	}
 }

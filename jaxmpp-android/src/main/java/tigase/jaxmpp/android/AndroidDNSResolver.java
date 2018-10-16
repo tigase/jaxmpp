@@ -1,10 +1,13 @@
 /*
+ * AndroidDNSResolver.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2013-2014 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,106 +20,101 @@
  */
 package tigase.jaxmpp.android;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Record;
-import org.xbill.DNS.SRVRecord;
-import org.xbill.DNS.TextParseException;
-import org.xbill.DNS.Type;
-
+import android.util.Log;
+import org.minidns.hla.DnssecResolverApi;
+import org.minidns.hla.SrvResolverResult;
+import org.minidns.hla.SrvType;
+import org.minidns.record.SRV;
+import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DnsResolver;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector.Entry;
 
-public class AndroidDNSResolver implements DnsResolver {
+import java.io.IOException;
+import java.util.*;
 
-	private static Entry resolveSRV(String domain) {
-		String hostName = null;
-		int hostPort = -1;
-		int priority = Integer.MAX_VALUE;
-		int weight = 0;
-		Lookup lookup;
+public class AndroidDNSResolver
+		implements DnsResolver {
 
-		try {
-			lookup = new Lookup(domain, Type.SRV);
-			Record recs[] = lookup.run();
-			if (recs == null) {
-				return null;
-			}
-			for (Record rec : recs) {
-				SRVRecord record = (SRVRecord) rec;
-				if (record != null && record.getTarget() != null) {
-					int _weight = (int) (record.getWeight() * record.getWeight() * Math.random());
-					if (record.getPriority() < priority) {
-						priority = record.getPriority();
-						weight = _weight;
-						hostName = record.getTarget().toString();
-						hostPort = record.getPort();
-					} else if (record.getPriority() == priority) {
-						if (_weight > weight) {
-							priority = record.getPriority();
-							weight = _weight;
-							hostName = record.getTarget().toString();
-							hostPort = record.getPort();
-						}
-					}
-				}
-			}
-		} catch (TextParseException e) {
-		} catch (NullPointerException e) {
-		}
-		if (hostName == null) {
-			return null;
-		} else if (hostName.endsWith(".")) {
-			hostName = hostName.substring(0, hostName.length() - 1);
-		}
-		return new Entry(hostName, hostPort);
-	}
+	private static final String TAG = "AndroidDNSResolver";
 
-	private final HashMap<String, Entry> cache = new HashMap<String, Entry>();
+	private final HashMap<String, List<Entry>> cache = new HashMap<String, List<Entry>>();
 
 	private long lastAccess = -1;
 
-	public AndroidDNSResolver() {
-	}
-
 	@Override
 	public List<Entry> resolve(final String hostname) {
-		ArrayList<Entry> result = new ArrayList<Entry>();
+		Log.v(TAG, "Resolving domain " + hostname);
+
 		synchronized (cache) {
-			long now = (new Date()).getTime();
-			if (now - lastAccess > 1000 * 60 * 10) {
+			final long now = (new Date()).getTime();
+			if (now - lastAccess > 1000 * 30) {
+				Log.v(TAG, "Clearing cache");
 				cache.clear();
 			}
-			lastAccess = now;
 			if (cache.containsKey(hostname)) {
-				Entry address = cache.get(hostname);
-				if (address != null) {
-					result.add(address);
-					return result;
+				List<Entry> cached = cache.get(hostname);
+				if (cached != null) {
+					Log.v(TAG, "Found record for domain " + hostname + " in cache: " + cached);
+					return cached;
 				}
 			}
 		}
+		final ArrayList<Entry> result = new ArrayList<Entry>();
 
 		try {
-			Entry rr = resolveSRV("_xmpp-client._tcp." + hostname);
+			ArrayList<Entry> rr = resolveSRV(hostname);
 
-			if (rr == null) {
-				rr = new Entry(hostname, 5222);
+			if (rr.isEmpty()) {
+				rr.add(new Entry(hostname, 5222));
+				Log.v(TAG, "Nothing found. Using default entry " + rr);
 			}
 
 			synchronized (cache) {
+				Log.v(TAG, "Adding entry do cache: " + hostname + "->" + rr);
 				cache.put(hostname, rr);
+				lastAccess = (new Date()).getTime();
 			}
 
-			result.add(rr);
+			result.addAll(rr);
 		} catch (Exception e) {
-			result.add(new Entry(hostname, 5222));
+			Log.w(TAG, "Something goes wrong during resolving DNS entry for domain " + hostname, e);
+			result.add(new SocketConnector.Entry(hostname, 5222));
 		}
+
 		return result;
 	}
 
+	private ArrayList<Entry> resolveSRV(final String domain) throws IOException {
+		Log.v(TAG, "Looking for DNS record of domain " + domain);
+		final ArrayList<Entry> result = new ArrayList<Entry>();
+
+		SrvResolverResult resolverResult = DnssecResolverApi.INSTANCE.resolveSrv(SrvType.xmpp_client, domain);
+
+		if (!resolverResult.wasSuccessful()) {
+			Log.v(TAG, "Requesting DNS not successful. (" + resolverResult.getResponseCode() + ")");
+			return result;
+		}
+//			if (!result.isAuthenticData) {
+//				Log.v(TAG, "Response was not secured with DNSSEC.")
+//				return null
+//			}
+
+		Set<SRV> srvRecords = resolverResult.getAnswersOrEmptySet();
+
+		if (srvRecords.isEmpty()) {
+			Log.v(TAG, "DNS response is empty");
+			return result;
+		}
+		Log.v(TAG, "DNS response: " + srvRecords);
+
+		for (SRV srv : srvRecords) {
+			String hostName = srv.target.toString();
+			int hostPort = srv.port;
+
+			result.add(new Entry(hostName, hostPort));
+		}
+
+		Log.v(TAG, "Returning " + result);
+		return result;
+	}
 }

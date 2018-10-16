@@ -1,10 +1,13 @@
 /*
+ * ConnectionConfiguration.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -22,9 +25,8 @@ import tigase.jaxmpp.core.client.xmpp.modules.auth.CredentialsCallback;
 
 /**
  * Connection configuration object.
- * 
+ * <p>
  * It is wrapper around {@linkplain SessionObject}.
- * 
  */
 public abstract class ConnectionConfiguration {
 
@@ -36,9 +38,8 @@ public abstract class ConnectionConfiguration {
 
 	/**
 	 * Set credentials callback;
-	 * 
-	 * @param credentialsCallback
-	 *            callback
+	 *
+	 * @param credentialsCallback callback
 	 */
 	public void setCredentialsCallback(CredentialsCallback credentialsCallback) {
 		sessionObject.setUserProperty(AuthModule.CREDENTIALS_CALLBACK, credentialsCallback);
@@ -47,9 +48,8 @@ public abstract class ConnectionConfiguration {
 	/**
 	 * Set logical name of XMPP server. Usually it is equals to hostname of
 	 * users JID and is set automatically.
-	 * 
-	 * @param domainName
-	 *            logical name of XMPP server.
+	 *
+	 * @param domainName logical name of XMPP server.
 	 */
 	public void setDomain(String domainName) {
 		sessionObject.setUserProperty(SessionObject.DOMAIN_NAME, domainName);
@@ -57,9 +57,8 @@ public abstract class ConnectionConfiguration {
 
 	/**
 	 * Set XMPP resource.
-	 * 
-	 * @param resource
-	 *            resource
+	 *
+	 * @param resource resource
 	 */
 	public void setResource(String resource) {
 		sessionObject.setUserProperty(SessionObject.RESOURCE, resource);
@@ -67,9 +66,8 @@ public abstract class ConnectionConfiguration {
 
 	/**
 	 * Set users JabberID.
-	 * 
-	 * @param jid
-	 *            JabberID
+	 *
+	 * @param jid JabberID
 	 */
 	public void setUserJID(BareJID jid) {
 		sessionObject.setUserProperty(SessionObject.USER_BARE_JID, jid);
@@ -77,9 +75,8 @@ public abstract class ConnectionConfiguration {
 
 	/**
 	 * Set users JabberID.
-	 * 
-	 * @param jid
-	 *            JabberID
+	 *
+	 * @param jid JabberID
 	 */
 	public void setUserJID(String jid) {
 		setUserJID(BareJID.bareJIDInstance(jid));
@@ -87,10 +84,8 @@ public abstract class ConnectionConfiguration {
 
 	/**
 	 * Set users password.
-	 * 
-	 * @param password
-	 *            password. If <code>null</code> then ANONYMOUS authentication
-	 *            will be used.
+	 *
+	 * @param password password. If <code>null</code> then ANONYMOUS authentication will be used.
 	 */
 	public void setUserPassword(String password) {
 		sessionObject.setUserProperty(SessionObject.PASSWORD, password);

@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>tigase-jaxmpp</artifactId>
 		<groupId>tigase</groupId>
-		<version>3.1.6-SNAPSHOT</version>
+		<version>3.2.0</version>
 	</parent>
 	<artifactId>jaxmpp-android</artifactId>
 	<packaging>aar</packaging>
@@ -26,11 +26,6 @@
 			<groupId>${project.groupId}</groupId>
 			<artifactId>jaxmpp-core</artifactId>
 			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>tigase</groupId>
-			<artifactId>tigase-xmltools</artifactId>
-			<version>3.4.5</version>
 		</dependency>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -56,10 +51,11 @@
 			<optional>true</optional>
 		</dependency>
 		<dependency>
-			<groupId>dnsjava</groupId>
-			<artifactId>dnsjava</artifactId>
-			<version>2.1.7</version>
+			<groupId>org.minidns</groupId>
+			<artifactId>minidns-hla</artifactId>
+			<version>0.3.2</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -75,7 +71,7 @@
 					<resourceDirectory>${project.basedir}/res</resourceDirectory>
 					<nativeLibrariesDirectory>${project.basedir}/src/main/native</nativeLibrariesDirectory>
 					<sdk>
-						<platform>14</platform>
+						<platform>25</platform>
 					</sdk>
 					<undeployBeforeDeploy>true</undeployBeforeDeploy>
 				</configuration>

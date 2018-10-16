@@ -1,10 +1,13 @@
 /*
+ * AsyncCallback.java
+ *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2014 Tigase, Inc.
+ * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
+ * the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,20 +29,18 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  * Main interface for callback of all <a
  * href='http://xmpp.org/rfcs/rfc6120.html#stanzas-semantics-iq'>IQ</a>
  * asynchronous request-response mechanism.
- * 
+ *
  * @author bmalkow
- * 
  */
 public interface AsyncCallback {
 
 	/**
 	 * Called when received response has type {@linkplain StanzaType#error
 	 * error}.
-	 * 
-	 * @param responseStanza
-	 *            received IQ stanza
-	 * @param error
-	 *            error condition
+	 *
+	 * @param responseStanza received IQ stanza
+	 * @param error error condition
+	 *
 	 * @throws JaxmppException
 	 */
 	void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException;
@@ -47,16 +48,16 @@ public interface AsyncCallback {
 	/**
 	 * Called when received response has type {@linkplain StanzaType#result
 	 * result}.
-	 * 
-	 * @param responseStanza
-	 *            received stanza
+	 *
+	 * @param responseStanza received stanza
+	 *
 	 * @throws JaxmppException
 	 */
 	void onSuccess(Stanza responseStanza) throws JaxmppException;
 
 	/**
 	 * Called when response wasn't received in given time.
-	 * 
+	 *
 	 * @throws JaxmppException
 	 */
 	void onTimeout() throws JaxmppException;
