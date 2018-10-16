@@ -1,25 +1,65 @@
 [[releaseNotes]]
-= JaXMPP V3.1.3 Release Notes
-:author: Daniel Wisnewski (daniel@tigase.org)
-:version: v3.1.3
-:date: 21-04-2016 11:00
+= JaXMPP V3.2.0 Release Notes
+:author: Wojciech Kapcia
+:version: v3.2.0
+:date: 16-10-2018 11:00
 
 :toc:
 :numbered:
-:website: http://www.tigase.org
+:website: http://www.tigase.net
 
-Tigase JaXMPP v3.1.3 has been released!  Please review the change notes below to see what has changed since our last release.
+Tigase JaXMPP v3.2.0 has been released! Please review the change notes below to see what has changed since our last release.
 
 == Changes
-- link:https://projects.tigase.org/issues/4288[#4288] Login and Disconnect methods have been changed in blocking mode.
-- link:https://projects.tigase.org/issues/4288[#4398] Removed JDK8 specific features not supported by GWT to prevent errors.
-- link:https://projects.tigase.org/issues/4369[#4369] Support for link:http://xmpp.org/extensions/xep-0313.html[XEP-0313: Message Archive Management] has now been added within Jaxmpp-MAM module.
-- +jaxmpp-chat+ module now included within the +jaxmpp-j2se-singlejar+ module.
+
+- https://tigase.tech/issues/4369[#4369]: Support for link:http://xmpp.org/extensions/xep-0313.html[XEP-0313: Message Archive Management] has now been added within Jaxmpp-MAM module.
+- Implementation of http://xmpp.org/extensions/xep-0357.html[XEP-0357: Push Notifications]
 - SCRAM-SHA-1 and SCRAM-SHA-1-PLUS are now enabled by default for Authorization.
+- https://tigase.tech/issues/4280[#4280]: added support for http://xmpp.org/extensions/xep-0352.html[XEP-0352: Client State Indication]
+- https://tigase.tech/issues/5950[#5950]: added support for http://xmpp.org/extensions/xep-0363.html[XEP-0363: HTTP File Upload]
+- https://tigase.tech/issues/5223[#5223]: in-band registration to use XMPP Data Forms XEP-0004
+- https://tigase.tech/issues/4288[#4288]: Login and Disconnect methods have been changed in blocking mode.
+- https://tigase.tech/issues/4398[#4398]: Removed JDK8 specific features not supported by GWT to prevent errors.
+- https://tigase.tech/issues/4762[#4762]: added support for handling WebSocket PONG frames
+- https://tigase.tech/issues/7387[#7387]: added support for PubSub notifications about node removal and association/dissociation to the collection node
 
 == Fixes
 
-- link:https://projects.tigase.org/issues/4317[#4317] Fixed NPE if receiver of file transfer is not connected or disconnected.
-- link:https://projects.tigase.org/issues/4318[#4318] Fixed NPE when initiating SOCKS5 transfer.
-- #4378 Fixed exceptions occuring when a server-initiated disconnection could lead to an invalid connector state.
-- #4378 Fixed issue with invalid connector state when connecting using Websocket Protocol over TCP.
+- https://tigase.tech/issues/4317[#4317]: fixed NPE if receiver of file transfer is not connected or disconnected in SOCKS5.
+- https://tigase.tech/issues/4318[#4318]: added checking if destination file is set when file transfer is accepted.
+- https://tigase.tech/issues/4378[#4378]: fixed exceptions occuring when a server-initiated disconnection could lead to an invalid connector state, fix issue with invalid connector state when connecting using Websocket Protocol over TCP.
+- https://tigase.tech/issues/8104[#8104]: fixing issue with parsing timestamp
+- https://tigase.tech/issues/8033[#8033]: added thread safety to ExtensionsChain implementation
+- https://tigase.tech/issues/2654[#2654]: improve DNS resolution for local addresses
+- https://tigase.tech/issues/7793[#7793]: fixing possible NPE in UnifiedRegistrationForm when value for a fiels is null
+- https://tigase.tech/issues/7649[#7649]: improving GWT code for sites hosted on HTTPS enabled servers
+- https://tigase.tech/issues/7525[#7525]: added method for retrieving error text from error stanzas
+- https://tigase.tech/issues/6330[#6330]: fixes for AdHocCommansAsyncCallback not calling onResponseReceived() if there is no data form in the response and for ElementWrapper which failed to set GwtElement value
+- https://tigase.tech/issues/6330[#6330]: added event for notification about PubSub node configuration change
+- https://tigase.tech/issues/6212[#6212], https://tigase.tech/issues/6232[#6232]: fixing issue introduced by recent changes in sending authcid and authzid during authentication
+- https://tigase.tech/issues/6212[#6212]: improvements to SASL implementations
+- https://tigase.tech/issues/5749[#5749]: fix issue with login to jabber.org, says incorrect password, even though password is correct
+- https://tigase.tech/issues/1590[#1590]: add support for subscription pre-approval in RosterModule and RosterItem
+- https://tigase.tech/issues/5669[#5669]: removed firing ErrorEvent by connectors if exception is thrown in start() method within the same thread
+- https://tigase.tech/issues/5624[#5624]: fixed possible lock if Jaxmpp::login() method throws an exception and login(true) was called
+- https://tigase.tech/issues/5582[#5582]: fixing race condition during Jaxmpp login leading to a thread being permanently locked
+- https://tigase.tech/issues/5584[#5584]: MAM module not being called for incoming messages
+- https://tigase.tech/issues/5588[#5588]: fixed issue with messages without from causing NPE in MessegeModule
+- https://tigase.tech/issues/5527[#5527]: added support for connection using plain SSL instead of STARTTLS
+- https://tigase.tech/issues/5529[#5529]: fixed handling of see-other-host in ConnectionManager for GWT
+- https://tigase.tech/issues/5318[#5318]: added implementation for GwtElement::removeChild() method
+- https://tigase.tech/issues/5421[#5421]: fixed issue with handling PONG WebSocket frames with payload
+- https://tigase.tech/issues/4961[#4961]: fix JaXMPP problems on Android
+- https://tigase.tech/issues/4733[#4733]: fixed issue with comparision of elements with XMLNS
+- https://tigase.tech/issues/4732[#4732]: minor fix in MessageArchiveManagementModule
+- https://tigase.tech/issues/4460[#4460]: fixed issue with retrieving PubSub node configuration
+- https://tigase.tech/issues/4728[#4728]: fix minor issue with element equals() method
+- https://tigase.tech/issues/4348[#4348]: fixed issues with Jaxmpp state and reconnecting
+- https://tigase.tech/issues/4348[#4348]: changed DEFAULT_SOCKET_TIMEOUT to 0 as value bigger than zero causes issues for long connections without any activity
+- https://tigase.tech/issues/4460[#4460]: improved usage of events with callbacks called after all handlers processed event
+- https://tigase.tech/issues/4266[#4266]: fixing issue with reconnection after disconnection by client
+- https://tigase.tech/issues/4505[#4505]: fix handling of badly encoded channel binding data
+- https://tigase.tech/issues/4398[#4398]: remove used JDK8 specific features which are not supported by GWT
+- https://tigase.tech/issues/4291[#4291]: ContactChangedPresenceEvent has show "online" for unavailable presence
+- https://tigase.tech/issues/4266[#4266]: fixed issue with blocking disconnection
+- https://tigase.tech/issues/4124[#4124]: fixed issue with support for see-other-host with WebSocket in GWT version
