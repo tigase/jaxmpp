@@ -134,10 +134,12 @@
 		</profile>
 	</profiles>
 
+
 	<scm>
-		<developerConnection>scm:git:https://repository.tigase.org/git/jaxmpp2.git</developerConnection>
-    <tag>HEAD</tag>
-  </scm>
+		<connection>scm:git:https://git.tigase.tech/jaxmpp2.git</connection>
+		<developerConnection>scm:git:https://git.tigase.tech/jaxmpp2.git</developerConnection>
+		<url>https://tigase.tech/projects/jaxmpp2/repository</url>
+	</scm>
 
 	<build>
 		<plugins>
@@ -286,12 +288,12 @@
 		<repository>
 			<id>tigase</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/release</url>
+			<url>https://maven-repo.tigase.net/repository/release</url>
 		</repository>
 		<repository>
 			<id>tigase-snapshot</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/snapshot</url>
+			<url>https://maven-repo.tigase.net/repository/snapshot</url>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
@@ -301,12 +303,12 @@
 		<repository>
 			<id>tigase</id>
 			<name>Tigase repository</name>
-			<url>http://maven-repo.tigase.org/repository/release</url>
+			<url>https://maven-repo.tigase.net/repository/release</url>
 		</repository>
 		<snapshotRepository>
 			<id>tigase-snapshot</id>
 			<name>Tigase snapshot repository</name>
-			<url>http://maven-repo.tigase.org/repository/snapshot</url>
+			<url>https://maven-repo.tigase.net/repository/snapshot</url>
 		</snapshotRepository>
 	</distributionManagement>
 
