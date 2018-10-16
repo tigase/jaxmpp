@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>tigase</groupId>
 		<artifactId>tigase-jaxmpp</artifactId>
-		<version>3.2.0</version>
+		<version>3.2.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-gwt-singlejar</artifactId>
 	<packaging>jar</packaging>
