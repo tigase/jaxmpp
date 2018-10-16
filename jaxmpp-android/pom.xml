@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>tigase-jaxmpp</artifactId>
 		<groupId>tigase</groupId>
-		<version>3.2.0</version>
+		<version>3.3.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-android</artifactId>
 	<packaging>aar</packaging>
