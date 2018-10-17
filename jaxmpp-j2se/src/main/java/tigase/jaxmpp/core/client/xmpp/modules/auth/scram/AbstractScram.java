@@ -174,6 +174,9 @@ public abstract class AbstractScram
 				++data.stage;
 				return Base64.encode((data.cb + data.clientFirstMessageBare).getBytes(UTF_CHARSET));
 			} else if (data.stage == 1) {
+				if (input == null) {
+					throw new ClientSaslException("Unexpected empty input!");
+				}
 				final String serverFirstMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_FIRST_MESSAGE.matcher(serverFirstMessage);
 				if (!r.matches()) {
@@ -220,6 +223,9 @@ public abstract class AbstractScram
 				++data.stage;
 				return Base64.encode(clientFinalMessage.toString().getBytes(UTF_CHARSET));
 			} else if (data.stage == 2) {
+				if (input == null) {
+					throw new ClientSaslException("Unexpected empty input!");
+				}
 				final String serverLastMessage = new String(Base64.decode(input));
 				Matcher r = SERVER_LAST_MESSAGE.matcher(serverLastMessage);
 				if (!r.matches()) {
