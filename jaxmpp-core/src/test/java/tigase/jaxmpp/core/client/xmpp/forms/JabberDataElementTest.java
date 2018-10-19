@@ -23,11 +23,13 @@ package tigase.jaxmpp.core.client.xmpp.forms;
 import org.junit.Test;
 import tigase.jaxmpp.core.client.JID;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementBuilder;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class JabberDataElementTest {
 
@@ -184,6 +186,104 @@ public class JabberDataElementTest {
 		TextSingleField field = x.addTextSingleField("public", "once");
 		assertEquals("text-single", field.getAttribute("type"));
 		assertEquals("text-single", field.getType());
+	}
+
+	@Test
+	public void testFormAccessAsMultiple() throws Exception {
+		JabberDataElement x = new JabberDataElement(XDataType.form);
+		x.addHiddenField("public", "maybe");
+
+		assertEquals(0, x.getRowsCount());
+
+		try {
+			assertEquals("c2@c", x.getField(0, "jid2").getFieldValue().toString());
+			fail();
+		} catch (IndexOutOfBoundsException e) {
+		}
+	}
+
+	@Test
+	public void testMultipleItemsCreate() throws Exception {
+		final JabberDataElement x = new JabberDataElement(XDataType.form);
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@a")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@a")).setLabel("Col2");
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@b")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@b")).setLabel("Col2");
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@c")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@c")).setLabel("Col2");
+
+		x.cleanUpForm();
+		// ---
+
+		Element r = x.getFirstChild("reported");
+		assertEquals("reported", r.getName());
+		assertEquals(2, r.getChildren().size());
+
+		assertEquals("jid1", r.getChildren().get(0).getAttribute("var"));
+		assertEquals("jid2", r.getChildren().get(1).getAttribute("var"));
+
+		assertEquals("Col1", r.getChildren().get(0).getAttribute("label"));
+		assertEquals("Col2", r.getChildren().get(1).getAttribute("label"));
+
+		List<Element> items = x.getChildren("item");
+		assertEquals(3, items.size());
+
+		assertEquals("jid1", items.get(0).getChildren().get(0).getAttribute("var"));
+		assertEquals("jid2", items.get(0).getChildren().get(1).getAttribute("var"));
+
+		assertEquals("c1@a", items.get(0).getChildren().get(0).getFirstChild().getValue());
+		assertEquals("c2@a", items.get(0).getChildren().get(1).getFirstChild().getValue());
+		assertEquals("c1@b", items.get(1).getChildren().get(0).getFirstChild().getValue());
+		assertEquals("c2@b", items.get(1).getChildren().get(1).getFirstChild().getValue());
+		assertEquals("c1@c", items.get(2).getChildren().get(0).getFirstChild().getValue());
+		assertEquals("c2@c", items.get(2).getChildren().get(1).getFirstChild().getValue());
+	}
+
+	@Test
+	public void testMultipleItemsRead() throws Exception {
+		final JabberDataElement x = new JabberDataElement(XDataType.form);
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@a")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@a")).setLabel("Col2");
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@b")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@b")).setLabel("Col2");
+
+		x.addRow();
+		x.addJidSingleField("jid1", JID.jidInstance("c1@c")).setLabel("Col1");
+		x.addJidSingleField("jid2", JID.jidInstance("c2@c")).setLabel("Col2");
+
+		x.cleanUpForm();
+
+		assertEquals(3, x.getRowsCount());
+
+		assertEquals("c1@a", x.getField(0, "jid1").getFieldValue().toString());
+		assertEquals("c2@a", x.getField(0, "jid2").getFieldValue().toString());
+		assertEquals("c1@b", x.getField(1, "jid1").getFieldValue().toString());
+		assertEquals("c2@b", x.getField(1, "jid2").getFieldValue().toString());
+		assertEquals("c1@c", x.getField(2, "jid1").getFieldValue().toString());
+		assertEquals("c2@c", x.getField(2, "jid2").getFieldValue().toString());
+
+		assertEquals("Col1", x.getField(0, "jid1").getLabel());
+		assertEquals("Col2", x.getField(0, "jid2").getLabel());
+		assertEquals("Col1", x.getField(1, "jid1").getLabel());
+		assertEquals("Col2", x.getField(1, "jid2").getLabel());
+		assertEquals("Col1", x.getField(2, "jid1").getLabel());
+		assertEquals("Col2", x.getField(2, "jid2").getLabel());
+
+		try {
+			assertEquals("c2@c", x.getField(31, "jid2").getFieldValue().toString());
+			fail();
+		} catch (IndexOutOfBoundsException e) {
+		}
 	}
 
 	@Test

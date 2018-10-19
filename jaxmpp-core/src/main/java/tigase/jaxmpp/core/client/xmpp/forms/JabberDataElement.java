@@ -40,9 +40,14 @@ public class JabberDataElement
 
 	private final ArrayList<AbstractField<?>> fields = new ArrayList<AbstractField<?>>();
 	private final Map<String, AbstractField<?>> fieldsMap = new HashMap<String, AbstractField<?>>();
+	private Element currentRowItem;
 
 	private static AbstractField<?> create(Element element) throws XMLException {
 		final String type = element.getAttribute("type");
+		return create(type, element);
+	}
+
+	private static AbstractField<?> create(final String type, Element element) throws XMLException {
 		if ("boolean".equals(type)) {
 			return new BooleanField(element);
 		} else if ("fixed".equals(type)) {
@@ -144,7 +149,13 @@ public class JabberDataElement
 			this.fieldsMap.put(var, f);
 		}
 		this.fields.add(f);
-		addChild(f);
+
+		if (currentRowItem != null) {
+			addToReported(f);
+			currentRowItem.addChild(f);
+		} else {
+			addChild(f);
+		}
 	}
 
 	/**
@@ -255,6 +266,14 @@ public class JabberDataElement
 		return result;
 	}
 
+	void addRow() throws XMLException {
+		if (currentRowItem == null) {
+			addChild(ElementFactory.create("reported"));
+		}
+		currentRowItem = ElementFactory.create("item");
+		addChild(currentRowItem);
+	}
+
 	/**
 	 * Adds text-multi field to form.
 	 *
@@ -303,6 +322,32 @@ public class JabberDataElement
 		return result;
 	}
 
+	private void addToReported(final AbstractField<?> field) throws XMLException {
+		Element r = getFirstChild("reported");
+		if (r == null) {
+			r = ElementFactory.create("reported");
+			addChild(r);
+		}
+
+		Element dec = findReportedField(r, field.getVar());
+		if (dec == null) {
+			dec = ElementFactory.create("field");
+			r.addChild(dec);
+			dec.setAttribute("var", field.getVar());
+			dec.setAttribute("type", field.getType());
+		}
+		if (field.getLabel() != null) {
+			dec.setAttribute("label", field.getLabel());
+		}
+
+	}
+
+	public void cleanUpForm() throws XMLException {
+		if (currentRowItem != null) {
+			updateReported();
+		}
+	}
+
 	/**
 	 * Creates {@linkplain Element XML Element} contains only values of fields.
 	 *
@@ -316,6 +361,27 @@ public class JabberDataElement
 		return e;
 	}
 
+	private Element findReportedField(Element reportedElement, String var) throws XMLException {
+		for (Element child : reportedElement.getChildren()) {
+			String v = child.getAttribute("var");
+			if (var != null && var.equals(v)) {
+				return child;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public String getAsString() throws XMLException {
+
+		if (currentRowItem != null) {
+			updateReported();
+
+		}
+
+		return super.getAsString();
+	}
+
 	/**
 	 * Returns field with given name.
 	 *
@@ -326,6 +392,19 @@ public class JabberDataElement
 	@SuppressWarnings("unchecked")
 	public <X extends AbstractField<?>> X getField(final String var) {
 		return (X) this.fieldsMap.get(var);
+	}
+
+	public <X extends AbstractField<?>> X getField(int row, final String var) throws XMLException {
+		Element reported = getFirstChild("reported");
+		Element e = getChildren("item").get(row);
+
+		Element fe = findReportedField(e, var);
+		Element fd = findReportedField(reported, var);
+
+		AbstractField<?> f = create(fd.getAttribute("type"), fe);
+		f.setLabel(fd.getAttribute("label"));
+
+		return (X) f;
 	}
 
 	/**
@@ -355,6 +434,10 @@ public class JabberDataElement
 		setChildElementValue("instructions", instructions);
 	}
 
+	public int getRowsCount() throws XMLException {
+		return getChildren("item").size();
+	}
+
 	/**
 	 * Returns title.
 	 *
@@ -381,6 +464,21 @@ public class JabberDataElement
 	public XDataType getType() throws XMLException {
 		String x = getAttribute("type");
 		return x == null ? null : XDataType.valueOf(x);
+	}
+
+	private void updateReported() throws XMLException {
+		final Element r = getFirstChild("reported");
+		if (r == null) {
+			return;
+		}
+
+		for (Element item : getChildren("item")) {
+			for (Element field : item.getChildren("field")) {
+				Element rf = findReportedField(r, field.getAttribute("var"));
+				rf.setAttribute("label", field.getAttribute("label"));
+				field.removeAttribute("label");
+			}
+		}
 	}
 
 }
