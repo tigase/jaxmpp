@@ -18,6 +18,7 @@
  * along with this program. Look for COPYING file in the top folder.
  * If not, see http://www.gnu.org/licenses/.
  */
+package tigase.jaxmpp.core.client.xmpp.modules.chat.xep0184;
 
 import tigase.jaxmpp.core.client.Context;
 import tigase.jaxmpp.core.client.SessionObject;
