@@ -2,7 +2,7 @@
  * XmppModule.java
  *
  * Tigase XMPP Client Library
- * Copyright (C) 2006-2017 "Tigase, Inc." <office@tigase.com>
+ * Copyright (C) 2004-2018 "Tigase, Inc." <office@tigase.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
