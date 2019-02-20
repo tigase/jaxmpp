@@ -66,13 +66,6 @@ public abstract class JaxmppCore {
 	protected final Logger log;
 	protected Connector connector;
 	protected Context context;
-	protected DefaultXMPPStream defaultXMPPStream = new DefaultXMPPStream() {
-
-		@Override
-		public void write(Element stanza) throws JaxmppException {
-			connector.send(stanza);
-		}
-	};
 	protected EventBus eventBus;
 	protected XmppModulesManager modulesManager;
 	protected Processor processor;
@@ -82,13 +75,19 @@ public abstract class JaxmppCore {
 	protected XmppStreamsManager streamsManager;
 	protected PacketWriter writer = new DefaultPacketWriter();
 	private StreamManagementModule ackModule;
+	protected DefaultXMPPStream defaultXMPPStream = new DefaultXMPPStream() {
+
+		@Override
+		public void write(Element stanza) throws JaxmppException {
+			connector.send(stanza);
+			if (ackModule != null) {
+				ackModule.processOutgoingElement(stanza);
+			}
+		}
+	};
 
 	public JaxmppCore() {
 		this.log = Logger.getLogger(this.getClass().getName());
-	}
-
-	protected EventBus createEventBus() {
-		return new DefaultEventBus();
 	}
 
 	/**
@@ -96,17 +95,17 @@ public abstract class JaxmppCore {
 	 */
 	public abstract void disconnect() throws JaxmppException;
 
-	// public Chat createChat(JID jid) throws JaxmppException {
-	// return
-	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
-	// }
-
 	/**
 	 * Executes task in executor. Used to handle received stanzas.
 	 *
 	 * @param runnable task to execute.
 	 */
 	public abstract void execute(Runnable runnable);
+
+	// public Chat createChat(JID jid) throws JaxmppException {
+	// return
+	// (this.modulesManager.getModule(MessageModule.class)).createChat(jid);
+	// }
 
 	public <T extends Property> T get(Class<T> property) {
 		return (T) properties.get(property);
@@ -187,6 +186,16 @@ public abstract class JaxmppCore {
 		return sessionObject;
 	}
 
+	/**
+	 * Returns connection state.
+	 *
+	 * @return <code>true</code> if XMPP connection is established.
+	 */
+	public boolean isConnected() {
+		return this.connector != null && this.connector.getState() == State.connected &&
+				this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
+	}
+
 	// /**
 	// * Returns {@link PresenceStore}.
 	// *
@@ -195,6 +204,80 @@ public abstract class JaxmppCore {
 	// public PresenceStore getPresence() {
 	// return PresenceModule.getPresenceStore(sessionObject);
 	// }
+
+	/**
+	 * Returns connection security state.
+	 *
+	 * @return <code>true</code> if connection is established and secured.
+	 */
+	public boolean isSecure() {
+		return connector.isSecure();
+	}
+
+	/**
+	 * Whitespace ping.
+	 *
+	 * @throws JaxmppException
+	 */
+	public void keepalive() throws JaxmppException {
+		if (sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null) {
+			this.connector.keepalive();
+		}
+	}
+
+	// /**
+	// * Returns {@link RosterStore}.
+	// *
+	// * @return {@link RosterStore}.
+	// */
+	// public RosterStore getRoster() {
+	// return RosterModule.getRosterStore(sessionObject);
+	// }
+
+	/**
+	 * Connects to XMPP server.
+	 */
+	public abstract void login() throws JaxmppException;
+
+	/**
+	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
+	 * connection.
+	 *
+	 * @param stanza IQ stanza to send.
+	 * @param asyncCallback callback to handle response for sent IQ stanza.
+	 */
+	public void send(IQ stanza, AsyncCallback asyncCallback) throws JaxmppException {
+		this.writer.write(stanza, asyncCallback);
+	}
+
+	/**
+	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
+	 * connection.
+	 *
+	 * @param stanza IQ stanza to send.
+	 * @param timeout maximum time to wait for response in miliseconds.
+	 * @param asyncCallback asyncCallback callback to handle response for sent IQ stanza.
+	 */
+	public void send(IQ stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+		this.writer.write(stanza, timeout, asyncCallback);
+	}
+
+	/**
+	 * Sends stanza to XMPP Server in current connection.
+	 *
+	 * @param stanza stanza to send.
+	 */
+	public void send(Stanza stanza) throws JaxmppException {
+		this.writer.write(stanza);
+	}
+
+	public <T extends Property> T set(T property) {
+		return (T) this.properties.put((Class<Property>) property.getPropertyClass(), property);
+	}
+
+	protected EventBus createEventBus() {
+		return new DefaultEventBus();
+	}
 
 	protected void init() {
 		if (this.eventBus == null) {
@@ -317,60 +400,15 @@ public abstract class JaxmppCore {
 			}
 		});
 
-		eventBus.addHandler(Connector.StateChangedHandler.StateChangedEvent.class,
-							new Connector.StateChangedHandler() {
-								@Override
-								public void onStateChanged(SessionObject sessionObject, State oldState,
-														   State newState) throws JaxmppException {
-									JaxmppCore.this.onConnectorStateChanged(sessionObject, oldState, newState);
-								}
-							});
+		eventBus.addHandler(Connector.StateChangedHandler.StateChangedEvent.class, new Connector.StateChangedHandler() {
+			@Override
+			public void onStateChanged(SessionObject sessionObject, State oldState, State newState)
+					throws JaxmppException {
+				JaxmppCore.this.onConnectorStateChanged(sessionObject, oldState, newState);
+			}
+		});
 
 	}
-
-	/**
-	 * Returns connection state.
-	 *
-	 * @return <code>true</code> if XMPP connection is established.
-	 */
-	public boolean isConnected() {
-		return this.connector != null && this.connector.getState() == State.connected &&
-				this.sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null;
-	}
-
-	// /**
-	// * Returns {@link RosterStore}.
-	// *
-	// * @return {@link RosterStore}.
-	// */
-	// public RosterStore getRoster() {
-	// return RosterModule.getRosterStore(sessionObject);
-	// }
-
-	/**
-	 * Returns connection security state.
-	 *
-	 * @return <code>true</code> if connection is established and secured.
-	 */
-	public boolean isSecure() {
-		return connector.isSecure();
-	}
-
-	/**
-	 * Whitespace ping.
-	 *
-	 * @throws JaxmppException
-	 */
-	public void keepalive() throws JaxmppException {
-		if (sessionObject.getProperty(ResourceBinderModule.BINDED_RESOURCE_JID) != null) {
-			this.connector.keepalive();
-		}
-	}
-
-	/**
-	 * Connects to XMPP server.
-	 */
-	public abstract void login() throws JaxmppException;
 
 	protected void modulesInit() {
 		this.ackModule = this.modulesManager.register(new StreamManagementModule(this));
@@ -412,14 +450,12 @@ public abstract class JaxmppCore {
 	protected abstract void onResourceBindSuccess(JID bindedJID) throws JaxmppException;
 
 	protected void onStanzaReceived(StreamPacket stanza) {
-		final Runnable r = this.processor.process(stanza);
 		try {
-			if (ackModule.processIncomingStanza(stanza)) {
-				return;
-			}
+			ackModule.processIncomingStanza(stanza);
 		} catch (XMLException e) {
 			log.log(Level.WARNING, "Problem on counting", e);
 		}
+		final Runnable r = this.processor.process(stanza);
 		execute(r);
 	}
 
@@ -452,42 +488,6 @@ public abstract class JaxmppCore {
 				execute(r);
 			}
 		}
-	}
-
-	/**
-	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
-	 * connection.
-	 *
-	 * @param stanza IQ stanza to send.
-	 * @param asyncCallback callback to handle response for sent IQ stanza.
-	 */
-	public void send(IQ stanza, AsyncCallback asyncCallback) throws JaxmppException {
-		this.writer.write(stanza, asyncCallback);
-	}
-
-	/**
-	 * Sends IQ <code>type='get'</code> stanza to XMPP Server in current
-	 * connection.
-	 *
-	 * @param stanza IQ stanza to send.
-	 * @param timeout maximum time to wait for response in miliseconds.
-	 * @param asyncCallback asyncCallback callback to handle response for sent IQ stanza.
-	 */
-	public void send(IQ stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
-		this.writer.write(stanza, timeout, asyncCallback);
-	}
-
-	/**
-	 * Sends stanza to XMPP Server in current connection.
-	 *
-	 * @param stanza stanza to send.
-	 */
-	public void send(Stanza stanza) throws JaxmppException {
-		this.writer.write(stanza);
-	}
-
-	public <T extends Property> T set(T property) {
-		return (T) this.properties.put((Class<Property>) property.getPropertyClass(), property);
 	}
 
 	/**

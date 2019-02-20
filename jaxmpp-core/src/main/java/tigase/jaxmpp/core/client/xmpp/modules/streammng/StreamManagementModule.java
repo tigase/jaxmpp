@@ -65,9 +65,9 @@ public class StreamManagementModule
 	 */
 	public final static String STREAM_MANAGEMENT_TURNED_ON_KEY = "urn:xmpp:sm:3#STREAM_MANAGEMENT_TURNED_ON";
 	public static final String XMLNS = "urn:xmpp:sm:3";
+	protected static final Logger log = Logger.getLogger(StreamManagementModule.class.getName());
 	private final static String LAST_REQUEST_TIMESTAMP_KEY = "urn:xmpp:sm:3#lastRequestTimestamp";
 	private static final String SM_ACK_ENABLED_KEY = "urn:xmpp:sm:3#SM_ACK_ENABLED";
-	protected final Logger log;
 	private final Criteria crit = ElementCriteria.xmlns(XMLNS);
 	private final JaxmppCore jaxmpp;
 	private final LinkedList<Element> outgoingQueue = new LinkedList<Element>();
@@ -108,6 +108,7 @@ public class StreamManagementModule
 	}
 
 	public static void reset(SessionObject sessionObject) {
+		log.fine("Reset.");
 		sessionObject.setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUME_KEY, null);
 		sessionObject.setProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY, null);
@@ -120,19 +121,18 @@ public class StreamManagementModule
 	}
 
 	public StreamManagementModule(JaxmppCore jaxmpp) {
-		log = Logger.getLogger(this.getClass().getName());
 		this.jaxmpp = jaxmpp;
 
-		jaxmpp.getEventBus()
-				.addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
-							new Connector.StanzaSendingHandler() {
-
-								@Override
-								public void onStanzaSending(SessionObject sessionObject, Element stanza)
-										throws JaxmppException {
-									processOutgoingElement(stanza);
-								}
-							});
+//		jaxmpp.getEventBus()
+//				.addHandler(Connector.StanzaSendingHandler.StanzaSendingEvent.class,
+//							new Connector.StanzaSendingHandler() {
+//
+//								@Override
+//								public void onStanzaSending(SessionObject sessionObject, Element stanza)
+//										throws JaxmppException {
+//									processOutgoingElement(stanza);
+//								}
+//							});
 
 	}
 
@@ -165,10 +165,174 @@ public class StreamManagementModule
 			log.info("Enabling stream management");
 		}
 		Element request = ElementFactory.create("enable", null, XMLNS);
-
 		request.setAttribute("resume", "true");
-
 		context.getWriter().write(request);
+		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
+	}
+
+	@Override
+	public Criteria getCriteria() {
+		return ElementCriteria.xmlns(XMLNS);
+	}
+
+	@Override
+	public String[] getFeatures() {
+		return new String[]{XMLNS};
+	}
+
+	@Override
+	public void process(Element element) throws JaxmppException {
+		final boolean enabled = isStreamManagementTurnedOn(context.getSessionObject());
+
+		switch (element.getName()) {
+			case "r":
+				sendAck(true);
+				break;
+			case "a":
+				processAckAnswer(element);
+				break;
+			case "enabled":
+				processStreamManagementEnabled(element);
+				break;
+			case "resumed":
+				processResumed(element);
+				break;
+			case "failed":
+				processFailed(element);
+				break;
+			default:
+				throw new XMPPException(ErrorCondition.unexpected_request,
+										"Unknown element '" + element.getName() + "'.");
+		}
+	}
+
+	public void removeStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
+		this.context.getEventBus().remove(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
+	}
+
+	public void removeStreamManagementFailedHandler(StreamManagementFailedHandler handler) {
+		this.context.getEventBus().remove(StreamManagementFailedHandler.StreamManagementFailedEvent.class, handler);
+	}
+
+	public void removeStreamResumedHandler(StreamResumedHandler handler) {
+		this.context.getEventBus().remove(StreamResumedHandler.StreamResumedEvent.class, handler);
+	}
+
+	public void removeUnacknowledgedHandler(UnacknowledgedHandler handler) {
+		this.context.getEventBus().remove(UnacknowledgedHandler.UnacknowledgedEvent.class, handler);
+	}
+
+	/**
+	 * Request acknowledgement of received stanzas.
+	 */
+	public void request(final boolean force) throws JaxmppException {
+		if (!force && outgoingQueue.size() == 0) {
+			return;
+		}
+
+		Long lr = context.getSessionObject().getProperty(LAST_REQUEST_TIMESTAMP_KEY);
+		final long now = (new Date()).getTime();
+
+		if (!force && (lr != null && now - lr < 3000)) {
+			return;
+		}
+
+		Element request = ElementFactory.create("r", null, XMLNS);
+		// context.getWriter().write(request);
+		jaxmpp.getConnector().send(request);
+		context.getSessionObject().setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
+
+		if (log.isLoggable(Level.FINE)) {
+			log.fine("Sent ACK request. queue=" + outgoingQueue.size());
+		}
+
+	}
+
+	public void resume() throws JaxmppException {
+		Element resume = ElementFactory.create("resume", null, XMLNS);
+
+		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
+		resume.setAttribute("previd", context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
+
+		if (log.isLoggable(Level.INFO)) {
+			log.info("Stream resumption");
+		}
+
+		context.getWriter().write(resume);
+	}
+
+	public void sendAck() throws JaxmppException {
+		sendAck(false);
+	}
+
+	public void sendAck(final boolean force) throws JaxmppException {
+		Number value = getAckHValue(INCOMING_STREAM_H_KEY);
+		Number lastSent = getAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY);
+
+		if (!force && value.longValue() == lastSent.longValue()) {
+			return;
+		}
+
+		if (log.isLoggable(Level.FINE)) {
+			log.fine("Sending ack. h=" + value + "; previously h=" + lastSent);
+		}
+
+		setAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY, value.longValue());
+		Element response = ElementFactory.create("a", null, XMLNS);
+		response.setAttribute("h", value.toString());
+		context.getWriter().write(response);
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
+	public void processIncomingStanza(Element element) throws XMLException {
+		if (!isAckEnabled(context.getSessionObject())) {
+			return;
+		}
+		if (element.getXMLNS() != null && element.getXMLNS().equals(XMLNS)) {
+			return;
+		}
+
+		long v = incrementAckHValue(INCOMING_STREAM_H_KEY);
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Increase incoming counter. value=" + v);
+		}
+	}
+
+	public void processOutgoingElement(final Element element) throws JaxmppException {
+		if (!isAckEnabled(context.getSessionObject())) {
+			return;
+		}
+		if (element.getXMLNS() != null && XMLNS.equals(element.getXMLNS())) {
+			return;
+		}
+
+		synchronized (this.outgoingQueue) {
+			long v = incrementAckHValue(OUTGOING_STREAM_H_KEY);
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("Increase outgoing counter. value=" + v);
+			}
+
+			outgoingQueue.offer(element);
+		}
+//		if (outgoingQueue.size() > 3) {
+//			Runnable r = new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					try {
+//						request();
+//						sendAck(false);
+//					} catch (JaxmppException e) {
+//						log.log(Level.WARNING, "Can't send ACK request!");
+//					}
+//				}
+//			};
+//			jaxmpp.execute(r);
+//		}
 	}
 
 	private Number getAckHValue(String key) {
@@ -178,16 +342,6 @@ public class StreamManagementModule
 			context.getSessionObject().setProperty(key, v);
 		}
 		return v;
-	}
-
-	@Override
-	public Criteria getCriteria() {
-		return crit;
-	}
-
-	@Override
-	public String[] getFeatures() {
-		return null;
 	}
 
 	private long incrementAckHValue(String key) {
@@ -203,38 +357,15 @@ public class StreamManagementModule
 		return v.value;
 	}
 
-	@Override
-	public void process(Element element) throws JaxmppException {
-		final boolean enabled = isStreamManagementTurnedOn(context.getSessionObject());
-
-		throw new JaxmppException("Should be processed already");
-	}
-
 	private void processAckAnswer(Element element) throws XMLException {
 		String hs = element.getAttribute("h");
 		try {
 			long oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
 			long newH = Long.parseLong(hs);
 
-			log.fine("Current h=" + oldH + "; received h=" + newH);
+			log.fine("Expected h=" + oldH + "; received h=" + newH);
 
 			if (oldH >= newH) {
-				// ArrayList<Element> notSentElements = new
-				// ArrayList<Element>();
-				// synchronized (this.outgoingQueue) {
-				// for (int i = 0; i < oldH - newH; i++) {
-				// if (!outgoingQueue.isEmpty()) {
-				// Element ee = this.outgoingQueue.removeLast();
-				// notSentElements.add(0, ee);
-				// }
-				// }
-				// this.outgoingQueue.clear();
-				// }
-				// UnacknowledgedEvent event = new
-				// UnacknowledgedEvent(context.getSessionObject(),
-				// notSentElements);
-				// context.getEventBus().fire(event);
-				// } else {
 				synchronized (this.outgoingQueue) {
 					oldH = getAckHValue(OUTGOING_STREAM_H_KEY).longValue();
 					long left = oldH - newH;
@@ -252,16 +383,10 @@ public class StreamManagementModule
 
 	}
 
-	private void processAckRequest(Element element) throws JaxmppException {
-		Number value = getAckHValue(INCOMING_STREAM_H_KEY);
-		setAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY, value.longValue());
-		Element response = ElementFactory.create("a", null, XMLNS);
-		response.setAttribute("h", value.toString());
-		context.getWriter().write(response);
-	}
-
 	private void processFailed(Element element) throws JaxmppException {
 		List<Element> errors = element.getChildrenNS(XMPPException.XMLNS);
+
+		log.fine("Failed. Reset.");
 
 		context.getSessionObject().setProperty(STREAM_MANAGEMENT_TURNED_ON_KEY, Boolean.FALSE);
 		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.FALSE);
@@ -289,87 +414,12 @@ public class StreamManagementModule
 			outgoingQueue.clear();
 		}
 
+		log.warning("ACK failed. Not confirmed elements: " + notSentElements.size());
+
 		if (!notSentElements.isEmpty()) {
 			UnacknowledgedEvent eventNotSentElements = new UnacknowledgedEvent(context.getSessionObject(),
 																			   notSentElements);
 			context.getEventBus().fire(eventNotSentElements);
-		}
-	}
-
-	public boolean processIncomingStanza(Element element) throws XMLException {
-		if (!isAckEnabled(context.getSessionObject())) {
-			if (XMLNS.equals(element.getXMLNS())) {
-				try {
-					if ("resumed".equals(element.getName()) && element.getXMLNS() != null &&
-							XMLNS.endsWith(element.getXMLNS())) {
-						processResumed(element);
-					} else if ("failed".equals(element.getName()) && element.getXMLNS() != null &&
-							XMLNS.endsWith(element.getXMLNS())) {
-						processFailed(element);
-					} else if ("enabled".equals(element.getName()) && element.getXMLNS() != null &&
-							XMLNS.endsWith(element.getXMLNS())) {
-						processStreamManagementEnabled(element);
-					}
-					return true;
-				} catch (JaxmppException ex) {
-					// this should not happed
-					log.log(Level.SEVERE,
-							"exception processing stream management incoming stanza = " + element.getAsString(), ex);
-				}
-			}
-			return false;
-		}
-
-		if (XMLNS.equals(element.getXMLNS())) {
-
-			if ("a".equals(element.getName())) {
-				processAckAnswer(element);
-				return true;
-			} else if ("r".equals(element.getName())) {
-				try {
-					processAckRequest(element);
-				} catch (JaxmppException ex) {
-					// this should not happed
-					log.log(Level.SEVERE,
-							"exception processing stream management incoming stanza = " + element.getAsString(), ex);
-				}
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		incrementAckHValue(INCOMING_STREAM_H_KEY);
-
-		return false;
-	}
-
-	public void processOutgoingElement(final Element element) throws JaxmppException {
-		if (!isAckEnabled(context.getSessionObject())) {
-			return;
-		}
-		if (("r".equals(element.getName()) || "a".equals(element.getName())) && element.getXMLNS() != null &&
-				XMLNS.endsWith(element.getXMLNS())) {
-			return;
-		}
-
-		synchronized (this.outgoingQueue) {
-			incrementAckHValue(OUTGOING_STREAM_H_KEY);
-			outgoingQueue.offer(element);
-		}
-		if (outgoingQueue.size() > 3) {
-			Runnable r = new Runnable() {
-
-				@Override
-				public void run() {
-					try {
-						request();
-					} catch (JaxmppException e) {
-						log.log(Level.WARNING, "Can't send ACK request!");
-					}
-				}
-			};
-			jaxmpp.execute(r);
 		}
 	}
 
@@ -387,6 +437,8 @@ public class StreamManagementModule
 					this.outgoingQueue.removeFirst();
 				}
 			}
+
+			log.fine("Resumed. New outgoing counter is " + newH);
 			setAckHValue(OUTGOING_STREAM_H_KEY, newH);
 			List<Element> unacked = new ArrayList<Element>(this.outgoingQueue);
 			this.outgoingQueue.clear();
@@ -423,68 +475,6 @@ public class StreamManagementModule
 		context.getEventBus().fire(event);
 	}
 
-	public void removeStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
-		this.context.getEventBus().remove(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
-	}
-
-	public void removeStreamManagementFailedHandler(StreamManagementFailedHandler handler) {
-		this.context.getEventBus().remove(StreamManagementFailedHandler.StreamManagementFailedEvent.class, handler);
-	}
-
-	public void removeStreamResumedHandler(StreamResumedHandler handler) {
-		this.context.getEventBus().remove(StreamResumedHandler.StreamResumedEvent.class, handler);
-	}
-
-	public void removeUnacknowledgedHandler(UnacknowledgedHandler handler) {
-		this.context.getEventBus().remove(UnacknowledgedHandler.UnacknowledgedEvent.class, handler);
-	}
-
-	/**
-	 * Request acknowledgement of received stanzas.
-	 */
-	public void request() throws JaxmppException {
-		Long lr = context.getSessionObject().getProperty(LAST_REQUEST_TIMESTAMP_KEY);
-
-		final long now = (new Date()).getTime();
-
-		if (lr != null && now - lr < 1000) {
-			return;
-		}
-
-		Element request = ElementFactory.create("r", null, XMLNS);
-		// context.getWriter().write(request);
-		jaxmpp.getConnector().send(request);
-		context.getSessionObject().setProperty(LAST_REQUEST_TIMESTAMP_KEY, now);
-	}
-
-	public void resume() throws JaxmppException {
-		Element resume = ElementFactory.create("resume", null, XMLNS);
-
-		resume.setAttribute("h", getAckHValue(INCOMING_STREAM_H_KEY).toString());
-		resume.setAttribute("previd",
-							(String) context.getSessionObject().getProperty(STREAM_MANAGEMENT_RESUMPTION_ID_KEY));
-
-		if (log.isLoggable(Level.INFO)) {
-			log.info("Stream resumption");
-		}
-
-		context.getWriter().write(resume);
-	}
-
-	public void sendAck() throws JaxmppException {
-		Number value = getAckHValue(INCOMING_STREAM_H_KEY);
-		Number lastSent = getAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY);
-
-		if (value.longValue() == lastSent.longValue()) {
-			return;
-		}
-
-		setAckHValue(INCOMING_STREAM_H_LAST_SENT_KEY, value.longValue());
-		Element response = ElementFactory.create("a", null, XMLNS);
-		response.setAttribute("h", value.toString());
-		context.getWriter().write(response);
-	}
-
 	private void setAckHValue(String key, Long value) {
 		MutableLong v = context.getSessionObject().getProperty(key);
 		if (v == null) {
@@ -495,11 +485,6 @@ public class StreamManagementModule
 		if (v.value < 0) {
 			v.value = 0;
 		}
-	}
-
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
 	}
 
 	public interface StreamManagementEnabledHandler
@@ -645,7 +630,7 @@ public class StreamManagementModule
 
 		private static final long serialVersionUID = 1L;
 
-		private long value;
+		private long value = 0;
 
 		@Override
 		public double doubleValue() {

@@ -164,30 +164,6 @@ public class SocketConnector
 		this.context = context;
 	}
 
-	private void closeSocket() {
-		if (socket.isConnected()) {
-			try {
-				socket.close();
-			} catch (IOException ex) {
-				log.log(Level.FINEST, "Problem with closing socket (oid=" + SocketConnector.this.hashCode() + ")", ex);
-			}
-		}
-	}
-
-	private X509Certificate[] convertChain(org.bouncycastle.tls.Certificate certificates)
-			throws CertificateException, IOException {
-		X509Certificate[] result = new X509Certificate[certificates.getLength()];
-
-		for (int i = 0; i < certificates.getLength(); i++) {
-			TlsCertificate cert = certificates.getCertificateAt(i);
-			java.security.cert.Certificate jsCert = CertificateFactory.getInstance("X.509")
-					.generateCertificate(new ByteArrayInputStream(cert.getEncoded()));
-			result[i] = (X509Certificate) jsCert;
-		}
-
-		return result;
-	}
-
 	@Override
 	public XmppSessionLogic createSessionLogic(XmppModulesManager modulesManager, PacketWriter writer) {
 		if (context.getSessionObject().getProperty(InBandRegistrationModule.IN_BAND_REGISTRATION_MODE_KEY) ==
@@ -199,46 +175,373 @@ public class SocketConnector
 		}
 	}
 
-	private Socket createSocket(Entry serverHost) throws IOException {
-		Socket socket;
-		InetAddress x = InetAddress.getByName(serverHost.getHostname());
-		log.info("Opening connection to " + x + ":" + serverHost.getPort());
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public State getState() {
+		if (this.context == null) {
+			return State.disconnected;
+		}
+		State st = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		return st == null ? State.disconnected : st;
+	}
 
-		if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
-			final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
-			final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
-			Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
-			if (proxyType == null) {
-				proxyType = Proxy.Type.HTTP;
+	/**
+	 * Returns true when stream is compressed
+	 *
+	 * @return
+	 */
+	@Override
+	public boolean isCompressed() {
+		return context.getSessionObject().getProperty(COMPRESSED_KEY) == Boolean.TRUE;
+	}
+
+	@Override
+	public boolean isSecure() {
+		return context.getSessionObject().getProperty(ENCRYPTED_KEY) == Boolean.TRUE;
+	}
+
+	@Override
+	public void keepalive() throws JaxmppException {
+		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE) {
+			return;
+		}
+		if (getState() == State.connected) {
+			send(new byte[]{32});
+		}
+	}
+
+	public void onTLSStanza(Element elem) throws JaxmppException {
+		if (elem.getName().equals("proceed")) {
+			proceedTLS();
+		} else if (elem.getName().equals("failure")) {
+			log.info("TLS Failure");
+		}
+	}
+
+	/**
+	 * Handles result of requesting stream compression
+	 *
+	 * @param elem
+	 *
+	 * @throws JaxmppException
+	 */
+	public void onZLibStanza(Element elem) throws JaxmppException {
+		if (elem.getName().equals("compressed") && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
+			proceedZLib();
+		} else if (elem.getName().equals("failure")) {
+			log.info("ZLIB Failure");
+		}
+	}
+
+	public void processElement(Element elem) throws JaxmppException {
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Recv (oid=" + SocketConnector.this.hashCode() + "): " + elem.getAsString());
+		}
+		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
+			onTLSStanza(elem);
+		} else if (elem != null && elem.getXMLNS() != null &&
+				"http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
+			onZLibStanza(elem);
+		} else {
+			onResponse(elem);
+		}
+	}
+
+	@Override
+	public void restartStream() throws JaxmppException {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<stream:stream ");
+
+		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
+		String to;
+		Boolean seeOtherHost = context.getSessionObject().getProperty(SEE_OTHER_HOST_KEY);
+		if (from != null && (seeOtherHost == null || seeOtherHost)) {
+			to = from.getDomain();
+			sb.append("from='").append(from.toString()).append("' ");
+		} else {
+			to = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
+		}
+
+		if (to != null) {
+			sb.append("to='").append(to).append("' ");
+		}
+
+		sb.append("xmlns='jabber:client' ");
+		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
+		sb.append("version='1.0'>");
+
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Restarting XMPP Stream");
+		}
+		send(sb.toString().getBytes(UTF_CHARSET));
+		context.getEventBus().fire(new StreamRestartedHandler.StreamRestaredEvent(context.getSessionObject()));
+	}
+
+	public void send(byte[] buffer) throws JaxmppException {
+		synchronized (ioMutex) {
+			if (writer != null) {
+				try {
+					if (log.isLoggable(Level.FINEST)) {
+						log.finest("Send (oid=" + SocketConnector.this.hashCode() + "): " + new String(buffer));
+					}
+					writer.write(buffer);
+					writer.flush();
+				} catch (IOException e) {
+					throw new JaxmppException(e);
+
+				}
+			}
+		}
+	}
+
+	@Override
+	public void send(Element stanza) throws JaxmppException {
+		synchronized (ioMutex) {
+			if (writer != null) {
+				try {
+					String t = stanza.getAsString();
+					if (log.isLoggable(Level.FINEST)) {
+						log.finest("Send (oid=" + SocketConnector.this.hashCode() + "): " + t);
+					}
+
+					try {
+						context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
+					} catch (Exception e) {
+					}
+					writer.write(t.getBytes(UTF_CHARSET));
+				} catch (IOException e) {
+					terminateAllWorkers();
+					throw new JaxmppException(e);
+				}
+			}
+		}
+		try {
+			Thread.sleep(2);
+		} catch (InterruptedException e) {
+			log.warning("Thread can't sleep. Insomnia?");
+		}
+	}
+
+	@Override
+	public void start() throws JaxmppException {
+		log.fine("Start connector (oid=" + SocketConnector.this.hashCode() + ").");
+		if (timer != null) {
+			try {
+				timer.cancel();
+			} catch (Exception e) {
+			}
+		}
+		timer = new Timer("SocketConnectorTimer", true);
+
+		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
+			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
+		} else if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY) == null) {
+			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, DEFAULT_HOSTNAME_VERIFIER);
+		}
+
+		setStage(State.connecting);
+
+		try {
+			ArrayList<Entry> hosts = new ArrayList<>();
+			Entry serverHost = getHostFromSessionObject();
+			if (serverHost != null) {
+				log.info("DNS entry stored in session object: " + serverHost);
+				hosts.add(serverHost);
+			}
+			if (hosts.isEmpty()) {
+				String x = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
+				log.info("Resolving SRV record of domain '" + x + "'");
+				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
+				if (dnsResolver != null) {
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Using resolver provided by user: " + dnsResolver);
+					}
+					hosts.addAll(dnsResolver.resolve(x));
+				} else {
+					if (log.isLoggable(Level.FINE)) {
+						log.fine("Using built-in resolver");
+					}
+					hosts.addAll(DNSResolver.resolve(x));
+				}
+
 			}
 
-			log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 
-			SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
-			Proxy proxy = new Proxy(proxyType, addr);
-			socket = new Socket(proxy);
+			if (log.isLoggable(Level.FINER)) {
+				log.finer("Preparing connection to " + hosts);
+			}
+
+			for (Entry host : hosts) {
+				try {
+					socket = createSocket(host);
+					break;
+				} catch (java.net.NoRouteToHostException | UnknownHostException e) {
+					log.fine(e.getMessage() + ". Trying next.");
+				}
+			}
+
+			if (socket == null) {
+				throw new JaxmppException("Cannot create socket.");
+			}
+
+			writer = socket.getOutputStream();
+			reader = new TextStreamReader(socket.getInputStream());
+			worker = new Worker(this) {
+
+				@Override
+				protected Reader getReader() {
+					return SocketConnector.this.reader;
+				}
+
+				@Override
+				protected void onErrorInThread(Exception e) throws JaxmppException {
+					SocketConnector.this.onErrorInThread(e);
+				}
+
+				@Override
+				protected void onStreamStart(Map<String, String> attribs) {
+					SocketConnector.this.onStreamStart(attribs);
+				}
+
+				@Override
+				protected void onStreamTerminate() throws JaxmppException {
+					SocketConnector.this.onStreamTerminate();
+				}
+
+				@Override
+				protected void processElement(Element elem) throws JaxmppException {
+					SocketConnector.this.processElement(elem);
+				}
+
+				@Override
+				protected void workerTerminated() {
+					SocketConnector.this.workerTerminated(this);
+				}
+
+			};
+			log.finest("Starting worker...");
+
+			Boolean plainSSL = context.getSessionObject().getProperty(USE_PLAIN_SSL_KEY);
+			if (plainSSL != null && plainSSL) {
+				proceedTLS();
+				worker.start();
+			} else {
+				worker.start();
+				restartStream();
+			}
+
+			setStage(State.connected);
+
+			this.pingTask = new TimerTask() {
+
+				@Override
+				public void run() {
+					Thread t = new Thread() {
+						@Override
+						public void run() {
+							try {
+								keepalive();
+							} catch (JaxmppException e) {
+								log.log(Level.SEVERE, "Can't ping!", e);
+							}
+						}
+					};
+					t.setDaemon(true);
+					t.start();
+				}
+			};
+
+			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null ||
+					((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
+				Integer defaultDelay = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+				defaultDelay = defaultDelay == null ? -1 : defaultDelay - 1000 * 5;
+
+				Integer delay = getTimeout(KEEP_ALIVE_DELAY_KEY, defaultDelay);
+
+				if (log.isLoggable(Level.CONFIG)) {
+					log.config("Whitespace ping period is setted to " + delay + "ms");
+				}
+
+				if (delay != null) {
+					timer.schedule(pingTask, delay, delay);
+				}
+			}
+
+			fireOnConnected(context.getSessionObject());
+		} catch (Exception e) {
+			terminateAllWorkers();
+			//onError(null, e);
+			throw new JaxmppException(e);
+		}
+	}
+
+	public void startTLS() throws JaxmppException {
+		if (writer != null) {
+			try {
+				log.fine("Start TLS (oid=" + SocketConnector.this.hashCode() + ")");
+				Element e = ElementFactory.create("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
+				send(e);
+			} catch (Exception e) {
+				throw new JaxmppException(e);
+			}
+		}
+	}
+
+	/**
+	 * Sends <compress/> stanza to start stream compression using ZLIB
+	 *
+	 * @throws JaxmppException
+	 */
+	public void startZLib() throws JaxmppException {
+		if (writer != null) {
+			try {
+				log.fine("Start ZLIB (oid=" + SocketConnector.this.hashCode() + ")");
+				Element e = ElementFactory.create("compress", null, "http://jabber.org/protocol/compress");
+				e.addChild(ElementFactory.create("method", "zlib", null));
+				send(e);
+			} catch (Exception e) {
+				throw new JaxmppException(e);
+			}
+		}
+	}
+
+	@Override
+	public void stop() throws JaxmppException {
+		if (getState() == State.disconnected) {
+			return;
+		}
+		setStage(State.disconnecting);
+		try {
+			terminateStream();
+		} catch (Exception e) {
+			log.log(Level.WARNING, "Problem on terminating stream", e);
+			setStage(State.disconnected);
+		} finally {
+			terminateAllWorkers();
+		}
+	}
+
+	@Override
+	@Deprecated
+	public void stop(boolean terminate) throws JaxmppException {
+		if (terminate) {
+			log.finest("Terminating all workers immediatelly (oid=" + SocketConnector.this.hashCode() + ")");
+			try {
+				if (this.pingTask != null) {
+					this.pingTask.cancel();
+					this.pingTask = null;
+				}
+				closeSocket();
+			} finally {
+				setStage(State.disconnected);
+				context = null;
+			}
 		} else {
-			socket = new Socket();
+			stop();
 		}
-
-		// if
-		// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
-		// == null
-		// || ((Boolean)
-		// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
-		// {
-		// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
-		// }
-		Integer soTimeout = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
-		if (soTimeout != null) {
-			socket.setSoTimeout(soTimeout);
-		}
-		socket.setKeepAlive(false);
-		socket.setTcpNoDelay(true);
-		// writer = new BufferedOutputStream(socket.getOutputStream());
-		socket.connect(new InetSocketAddress(x, serverHost.getPort()));
-
-		return socket;
 	}
 
 	protected void fireOnConnected(SessionObject sessionObject) throws JaxmppException {
@@ -339,16 +642,6 @@ public class SocketConnector
 		}
 	}
 
-	private Entry getHostFromSessionObject() {
-		String serverHost = context.getSessionObject().getProperty(SERVER_HOST);
-		Integer port = context.getSessionObject().getProperty(SERVER_PORT);
-		if (serverHost == null) {
-			return null;
-		}
-		return new Entry(serverHost, port == null ? 5222 : port);
-
-	}
-
 	protected String getHostname() {
 		final String hostname;
 		if (context.getSessionObject().getProperty(SessionObject.USER_BARE_JID) != null) {
@@ -366,27 +659,6 @@ public class SocketConnector
 		return result == null ? new KeyManager[0] : result;
 	}
 
-	private java.security.cert.Certificate getPeerCertificate(SSLSession session) throws SSLPeerUnverifiedException {
-		java.security.cert.Certificate[] certificates = session.getPeerCertificates();
-
-		if (certificates == null || certificates.length == 0) {
-			return null;
-		}
-		return certificates[0];
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public State getState() {
-		if (this.context == null) {
-			return State.disconnected;
-		}
-		State st = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
-		return st == null ? State.disconnected : st;
-	}
-
 	/**
 	 * Returns timeout value.
 	 *
@@ -399,31 +671,6 @@ public class SocketConnector
 		Integer v = context.getSessionObject().getProperty(propertyName);
 		int result = v == null ? defaultValue : v.intValue();
 		return result < 0 ? null : result;
-	}
-
-	/**
-	 * Returns true when stream is compressed
-	 *
-	 * @return
-	 */
-	@Override
-	public boolean isCompressed() {
-		return context.getSessionObject().getProperty(COMPRESSED_KEY) == Boolean.TRUE;
-	}
-
-	@Override
-	public boolean isSecure() {
-		return context.getSessionObject().getProperty(ENCRYPTED_KEY) == Boolean.TRUE;
-	}
-
-	@Override
-	public void keepalive() throws JaxmppException {
-		if (context.getSessionObject().getProperty(DISABLE_KEEPALIVE_KEY) == Boolean.TRUE) {
-			return;
-		}
-		if (getState() == State.connected) {
-			send(new byte[]{32});
-		}
 	}
 
 	protected void onError(Element response, Throwable caught) throws JaxmppException {
@@ -487,27 +734,187 @@ public class SocketConnector
 
 	}
 
-	public void onTLSStanza(Element elem) throws JaxmppException {
-		if (elem.getName().equals("proceed")) {
-			proceedTLS();
-		} else if (elem.getName().equals("failure")) {
-			log.info("TLS Failure");
+	protected void proceedTLS() throws JaxmppException {
+		if (context.getSessionObject().getProperty(USE_BOUNCYCASTLE_KEY) == Boolean.TRUE) {
+			proceedBCTLS();
+		} else {
+			proceedJCETLS();
 		}
 	}
 
 	/**
-	 * Handles result of requesting stream compression
-	 *
-	 * @param elem
+	 * Method activates stream compression by replacing reader and writer fields values and restarting XMPP stream
 	 *
 	 * @throws JaxmppException
 	 */
-	public void onZLibStanza(Element elem) throws JaxmppException {
-		if (elem.getName().equals("compressed") && "http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
-			proceedZLib();
-		} else if (elem.getName().equals("failure")) {
-			log.info("ZLIB Failure");
+	protected void proceedZLib() throws JaxmppException {
+		log.fine("Proceeding ZLIB");
+		try {
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
+
+			writer = null;
+			reader = null;
+			log.fine("Start ZLIB compression");
+
+			Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION, false);
+			try {
+				// on Android platform Deflater has field named flushParm which
+				// can force flushing data to socket for us
+				Field f = compressor.getClass().getDeclaredField("flushParm");
+				if (f != null) {
+					f.setAccessible(true);
+					f.setInt(compressor, 2); // Z_SYNC_FLUSH
+					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
+				}
+			} catch (NoSuchFieldException ex) {
+
+				// if we do not have field we are on standard Java VM
+				try {
+					// try to create flushable DeflaterOutputStream but it
+					// exists
+					// only on Java 7 so we access it using reflection for
+					// compatibility
+					Constructor<DeflaterOutputStream> flushable = DeflaterOutputStream.class.getConstructor(
+							OutputStream.class, Deflater.class, boolean.class);
+
+					// we need wrap DeflaterOutputStream to flush it every time
+					// we are
+					// writing to it
+					writer = new OutputStreamFlushWrap(
+							flushable.newInstance(socket.getOutputStream(), compressor, true));
+
+				} catch (NoSuchMethodException ex1) {
+					// if we do not find constructor from Java 7 we use flushing
+					// algorithm which was working fine on Java 6
+					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
+						@Override
+						public void write(byte[] data) throws IOException {
+							super.write(data);
+							super.write(EMPTY_BYTEARRAY);
+							super.def.setLevel(Deflater.NO_COMPRESSION);
+							super.deflate();
+							super.def.setLevel(Deflater.BEST_COMPRESSION);
+							super.deflate();
+						}
+					};
+				}
+			}
+
+			Inflater decompressor = new Inflater(false);
+			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
+			reader = new TextStreamReader(is);
+
+			context.getSessionObject().setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
+			log.info("ZLIB compression started");
+
+			restartStream();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Can't establish compressed connection", e);
+			onError(null, e);
+		} finally {
+			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
 		}
+	}
+
+	protected void setStage(State state) throws JaxmppException {
+		if (this.context == null) {
+			return;
+		}
+		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
+		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
+		if (s != state) {
+			this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_TIMESTAMP_KEY, new Date());
+			log.fine("Connector (oid=" + SocketConnector.this.hashCode() + ") state changed: " + s + "->" + state);
+			context.getEventBus().fire(new StateChangedEvent(context.getSessionObject(), s, state));
+			if (state == State.disconnected) {
+				fireOnTerminate(context.getSessionObject());
+			}
+		}
+	}
+
+	private void closeSocket() {
+		if (socket.isConnected()) {
+			try {
+				socket.close();
+			} catch (IOException ex) {
+				log.log(Level.FINEST, "Problem with closing socket (oid=" + SocketConnector.this.hashCode() + ")", ex);
+			}
+		}
+	}
+
+	private X509Certificate[] convertChain(org.bouncycastle.tls.Certificate certificates)
+			throws CertificateException, IOException {
+		X509Certificate[] result = new X509Certificate[certificates.getLength()];
+
+		for (int i = 0; i < certificates.getLength(); i++) {
+			TlsCertificate cert = certificates.getCertificateAt(i);
+			java.security.cert.Certificate jsCert = CertificateFactory.getInstance("X.509")
+					.generateCertificate(new ByteArrayInputStream(cert.getEncoded()));
+			result[i] = (X509Certificate) jsCert;
+		}
+
+		return result;
+	}
+
+	private Socket createSocket(Entry serverHost) throws IOException {
+		Socket socket;
+		InetAddress x = InetAddress.getByName(serverHost.getHostname());
+		log.info("Opening connection to " + x + ":" + serverHost.getPort());
+
+		if (context.getSessionObject().getProperty(Connector.PROXY_HOST) != null) {
+			final String proxyHost = context.getSessionObject().getProperty(Connector.PROXY_HOST);
+			final int proxyPort = context.getSessionObject().getProperty(Connector.PROXY_PORT);
+			Proxy.Type proxyType = context.getSessionObject().getProperty(Connector.PROXY_TYPE);
+			if (proxyType == null) {
+				proxyType = Proxy.Type.HTTP;
+			}
+
+			log.info("Using " + proxyType + " proxy: " + proxyHost + ":" + proxyPort);
+
+			SocketAddress addr = new InetSocketAddress(proxyHost, proxyPort);
+			Proxy proxy = new Proxy(proxyType, addr);
+			socket = new Socket(proxy);
+		} else {
+			socket = new Socket();
+		}
+
+		// if
+		// (context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)
+		// == null
+		// || ((Boolean)
+		// context.getSessionObject().getProperty(DISABLE_SOCKET_TIMEOUT_KEY)).booleanValue())
+		// {
+		// socket.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
+		// }
+		Integer soTimeout = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
+		if (soTimeout != null) {
+			socket.setSoTimeout(soTimeout);
+		}
+		socket.setKeepAlive(false);
+		socket.setTcpNoDelay(true);
+		// writer = new BufferedOutputStream(socket.getOutputStream());
+		socket.connect(new InetSocketAddress(x, serverHost.getPort()));
+
+		return socket;
+	}
+
+	private Entry getHostFromSessionObject() {
+		String serverHost = context.getSessionObject().getProperty(SERVER_HOST);
+		Integer port = context.getSessionObject().getProperty(SERVER_PORT);
+		if (serverHost == null) {
+			return null;
+		}
+		return new Entry(serverHost, port == null ? 5222 : port);
+
+	}
+
+	private java.security.cert.Certificate getPeerCertificate(SSLSession session) throws SSLPeerUnverifiedException {
+		java.security.cert.Certificate[] certificates = session.getPeerCertificates();
+
+		if (certificates == null || certificates.length == 0) {
+			return null;
+		}
+		return certificates[0];
 	}
 
 	private void proceedBCTLS() throws JaxmppException {
@@ -711,102 +1118,6 @@ public class SocketConnector
 		}
 	}
 
-	protected void proceedTLS() throws JaxmppException {
-		if (context.getSessionObject().getProperty(USE_BOUNCYCASTLE_KEY) == Boolean.TRUE) {
-			proceedBCTLS();
-		} else {
-			proceedJCETLS();
-		}
-	}
-
-	/**
-	 * Method activates stream compression by replacing reader and writer fields values and restarting XMPP stream
-	 *
-	 * @throws JaxmppException
-	 */
-	protected void proceedZLib() throws JaxmppException {
-		log.fine("Proceeding ZLIB");
-		try {
-			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
-
-			writer = null;
-			reader = null;
-			log.fine("Start ZLIB compression");
-
-			Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION, false);
-			try {
-				// on Android platform Deflater has field named flushParm which
-				// can force flushing data to socket for us
-				Field f = compressor.getClass().getDeclaredField("flushParm");
-				if (f != null) {
-					f.setAccessible(true);
-					f.setInt(compressor, 2); // Z_SYNC_FLUSH
-					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor);
-				}
-			} catch (NoSuchFieldException ex) {
-
-				// if we do not have field we are on standard Java VM
-				try {
-					// try to create flushable DeflaterOutputStream but it
-					// exists
-					// only on Java 7 so we access it using reflection for
-					// compatibility
-					Constructor<DeflaterOutputStream> flushable = DeflaterOutputStream.class.getConstructor(
-							OutputStream.class, Deflater.class, boolean.class);
-
-					// we need wrap DeflaterOutputStream to flush it every time
-					// we are
-					// writing to it
-					writer = new OutputStreamFlushWrap(
-							flushable.newInstance(socket.getOutputStream(), compressor, true));
-
-				} catch (NoSuchMethodException ex1) {
-					// if we do not find constructor from Java 7 we use flushing
-					// algorithm which was working fine on Java 6
-					writer = new DeflaterOutputStream(socket.getOutputStream(), compressor) {
-						@Override
-						public void write(byte[] data) throws IOException {
-							super.write(data);
-							super.write(EMPTY_BYTEARRAY);
-							super.def.setLevel(Deflater.NO_COMPRESSION);
-							super.deflate();
-							super.def.setLevel(Deflater.BEST_COMPRESSION);
-							super.deflate();
-						}
-					};
-				}
-			}
-
-			Inflater decompressor = new Inflater(false);
-			final InflaterInputStream is = new InflaterInputStream(socket.getInputStream(), decompressor);
-			reader = new TextStreamReader(is);
-
-			context.getSessionObject().setProperty(Scope.stream, Connector.COMPRESSED_KEY, true);
-			log.info("ZLIB compression started");
-
-			restartStream();
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Can't establish compressed connection", e);
-			onError(null, e);
-		} finally {
-			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
-		}
-	}
-
-	public void processElement(Element elem) throws JaxmppException {
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Recv (oid=" + SocketConnector.this.hashCode() + "): " + elem.getAsString());
-		}
-		if (elem != null && elem.getXMLNS() != null && elem.getXMLNS().equals("urn:ietf:params:xml:ns:xmpp-tls")) {
-			onTLSStanza(elem);
-		} else if (elem != null && elem.getXMLNS() != null &&
-				"http://jabber.org/protocol/compress".equals(elem.getXMLNS())) {
-			onZLibStanza(elem);
-		} else {
-			onResponse(elem);
-		}
-	}
-
 	private void reconnect(final String newHost) {
 		log.info("See other host: " + newHost);
 		try {
@@ -826,317 +1137,6 @@ public class SocketConnector
 			// start();
 		} catch (JaxmppException e) {
 			log.log(Level.WARNING, "Error on recconnect", e);
-		}
-	}
-
-	@Override
-	public void restartStream() throws JaxmppException {
-		StringBuilder sb = new StringBuilder();
-		sb.append("<stream:stream ");
-
-		final BareJID from = context.getSessionObject().getProperty(SessionObject.USER_BARE_JID);
-		String to;
-		Boolean seeOtherHost = context.getSessionObject().getProperty(SEE_OTHER_HOST_KEY);
-		if (from != null && (seeOtherHost == null || seeOtherHost)) {
-			to = from.getDomain();
-			sb.append("from='").append(from.toString()).append("' ");
-		} else {
-			to = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
-		}
-
-		if (to != null) {
-			sb.append("to='").append(to).append("' ");
-		}
-
-		sb.append("xmlns='jabber:client' ");
-		sb.append("xmlns:stream='http://etherx.jabber.org/streams' ");
-		sb.append("version='1.0'>");
-
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Restarting XMPP Stream");
-		}
-		send(sb.toString().getBytes(UTF_CHARSET));
-		context.getEventBus().fire(new StreamRestartedHandler.StreamRestaredEvent(context.getSessionObject()));
-	}
-
-	public void send(byte[] buffer) throws JaxmppException {
-		synchronized (ioMutex) {
-			if (writer != null) {
-				try {
-					if (log.isLoggable(Level.FINEST)) {
-						log.finest("Send (oid=" + SocketConnector.this.hashCode() + "): " + new String(buffer));
-					}
-					writer.write(buffer);
-					writer.flush();
-				} catch (IOException e) {
-					throw new JaxmppException(e);
-
-				}
-			}
-		}
-	}
-
-	@Override
-	public void send(Element stanza) throws JaxmppException {
-		synchronized (ioMutex) {
-			if (writer != null) {
-				try {
-					String t = stanza.getAsString();
-					if (log.isLoggable(Level.FINEST)) {
-						log.finest("Send (oid=" + SocketConnector.this.hashCode() + "): " + t);
-					}
-
-					try {
-						context.getEventBus().fire(new StanzaSendingEvent(context.getSessionObject(), stanza));
-					} catch (Exception e) {
-					}
-					writer.write(t.getBytes(UTF_CHARSET));
-				} catch (IOException e) {
-					terminateAllWorkers();
-					throw new JaxmppException(e);
-				}
-			}
-		}
-		try {
-			Thread.sleep(2);
-		} catch (InterruptedException e) {
-			log.warning("Thread can't sleep. Insomnia?");
-		}
-	}
-
-	protected void setStage(State state) throws JaxmppException {
-		if (this.context == null) {
-			return;
-		}
-		State s = this.context.getSessionObject().getProperty(CONNECTOR_STAGE_KEY);
-		this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_KEY, state);
-		if (s != state) {
-			this.context.getSessionObject().setProperty(Scope.stream, CONNECTOR_STAGE_TIMESTAMP_KEY, new Date());
-			log.fine("Connector (oid=" + SocketConnector.this.hashCode() + ") state changed: " + s + "->" + state);
-			context.getEventBus().fire(new StateChangedEvent(context.getSessionObject(), s, state));
-			if (state == State.disconnected) {
-				fireOnTerminate(context.getSessionObject());
-			}
-		}
-	}
-
-	@Override
-	public void start() throws JaxmppException {
-		log.fine("Start connector (oid=" + SocketConnector.this.hashCode() + ").");
-		if (timer != null) {
-			try {
-				timer.cancel();
-			} catch (Exception e) {
-			}
-		}
-		timer = new Timer("SocketConnectorTimer", true);
-
-		if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_DISABLED_KEY) == Boolean.TRUE) {
-			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, null);
-		} else if (context.getSessionObject().getProperty(HOSTNAME_VERIFIER_KEY) == null) {
-			context.getSessionObject().setProperty(HOSTNAME_VERIFIER_KEY, DEFAULT_HOSTNAME_VERIFIER);
-		}
-
-		setStage(State.connecting);
-
-		try {
-			ArrayList<Entry> hosts = new ArrayList<>();
-			Entry serverHost = getHostFromSessionObject();
-			if (serverHost != null) {
-				log.info("DNS entry stored in session object: " + serverHost);
-				hosts.add(serverHost);
-			}
-			if (hosts.isEmpty()) {
-				String x = context.getSessionObject().getProperty(SessionObject.DOMAIN_NAME);
-				log.info("Resolving SRV record of domain '" + x + "'");
-				DnsResolver dnsResolver = UniversalFactory.createInstance(DnsResolver.class.getName());
-				if (dnsResolver != null) {
-					if (log.isLoggable(Level.FINE)) {
-						log.fine("Using resolver provided by user: " + dnsResolver);
-					}
-					hosts.addAll(dnsResolver.resolve(x));
-				} else {
-					if (log.isLoggable(Level.FINE)) {
-						log.fine("Using built-in resolver");
-					}
-					hosts.addAll(DNSResolver.resolve(x));
-				}
-
-			}
-
-			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.FALSE);
-
-			if (log.isLoggable(Level.FINER)) {
-				log.finer("Preparing connection to " + hosts);
-			}
-
-			for (Entry host : hosts) {
-				try {
-					socket = createSocket(host);
-					break;
-				} catch (java.net.NoRouteToHostException | UnknownHostException e) {
-					log.fine(e.getMessage() + ". Trying next.");
-				}
-			}
-
-			if (socket == null) {
-				throw new JaxmppException("Cannot create socket.");
-			}
-
-			writer = socket.getOutputStream();
-			reader = new TextStreamReader(socket.getInputStream());
-			worker = new Worker(this) {
-
-				@Override
-				protected Reader getReader() {
-					return SocketConnector.this.reader;
-				}
-
-				@Override
-				protected void onErrorInThread(Exception e) throws JaxmppException {
-					SocketConnector.this.onErrorInThread(e);
-				}
-
-				@Override
-				protected void onStreamStart(Map<String, String> attribs) {
-					SocketConnector.this.onStreamStart(attribs);
-				}
-
-				@Override
-				protected void onStreamTerminate() throws JaxmppException {
-					SocketConnector.this.onStreamTerminate();
-				}
-
-				@Override
-				protected void processElement(Element elem) throws JaxmppException {
-					SocketConnector.this.processElement(elem);
-				}
-
-				@Override
-				protected void workerTerminated() {
-					SocketConnector.this.workerTerminated(this);
-				}
-
-			};
-			log.finest("Starting worker...");
-
-			Boolean plainSSL = context.getSessionObject().getProperty(USE_PLAIN_SSL_KEY);
-			if (plainSSL != null && plainSSL) {
-				proceedTLS();
-				worker.start();
-			} else {
-				worker.start();
-				restartStream();
-			}
-
-			setStage(State.connected);
-
-			this.pingTask = new TimerTask() {
-
-				@Override
-				public void run() {
-					Thread t = new Thread() {
-						@Override
-						public void run() {
-							try {
-								keepalive();
-							} catch (JaxmppException e) {
-								log.log(Level.SEVERE, "Can't ping!", e);
-							}
-						}
-					};
-					t.setDaemon(true);
-					t.start();
-				}
-			};
-
-			if (context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == null ||
-					((Boolean) context.getSessionObject().getProperty(EXTERNAL_KEEPALIVE_KEY) == false)) {
-				Integer defaultDelay = getTimeout(PLAIN_SOCKET_TIMEOUT_KEY, DEFAULT_SOCKET_TIMEOUT);
-				defaultDelay = defaultDelay == null ? -1 : defaultDelay - 1000 * 5;
-
-				Integer delay = getTimeout(KEEP_ALIVE_DELAY_KEY, defaultDelay);
-
-				if (log.isLoggable(Level.CONFIG)) {
-					log.config("Whitespace ping period is setted to " + delay + "ms");
-				}
-
-				if (delay != null) {
-					timer.schedule(pingTask, delay, delay);
-				}
-			}
-
-			fireOnConnected(context.getSessionObject());
-		} catch (Exception e) {
-			terminateAllWorkers();
-			//onError(null, e);
-			throw new JaxmppException(e);
-		}
-	}
-
-	public void startTLS() throws JaxmppException {
-		if (writer != null) {
-			try {
-				log.fine("Start TLS (oid=" + SocketConnector.this.hashCode() + ")");
-				Element e = ElementFactory.create("starttls", null, "urn:ietf:params:xml:ns:xmpp-tls");
-				send(e.getAsString().getBytes(UTF_CHARSET));
-			} catch (Exception e) {
-				throw new JaxmppException(e);
-			}
-		}
-	}
-
-	/**
-	 * Sends <compress/> stanza to start stream compression using ZLIB
-	 *
-	 * @throws JaxmppException
-	 */
-	public void startZLib() throws JaxmppException {
-		if (writer != null) {
-			try {
-				log.fine("Start ZLIB (oid=" + SocketConnector.this.hashCode() + ")");
-				Element e = ElementFactory.create("compress", null, "http://jabber.org/protocol/compress");
-				e.addChild(ElementFactory.create("method", "zlib", null));
-				send(e.getAsString().getBytes(UTF_CHARSET));
-			} catch (Exception e) {
-				throw new JaxmppException(e);
-			}
-		}
-	}
-
-	@Override
-	public void stop() throws JaxmppException {
-		if (getState() == State.disconnected) {
-			return;
-		}
-		setStage(State.disconnecting);
-		try {
-			terminateStream();
-		} catch (Exception e) {
-			log.log(Level.WARNING, "Problem on terminating stream", e);
-			setStage(State.disconnected);
-		} finally {
-			terminateAllWorkers();
-		}
-	}
-
-	@Override
-	@Deprecated
-	public void stop(boolean terminate) throws JaxmppException {
-		if (terminate) {
-			log.finest("Terminating all workers immediatelly (oid=" + SocketConnector.this.hashCode() + ")");
-			try {
-				if (this.pingTask != null) {
-					this.pingTask.cancel();
-					this.pingTask = null;
-				}
-				closeSocket();
-			} finally {
-				setStage(State.disconnected);
-				context = null;
-			}
-		} else {
-			stop();
 		}
 	}
 
