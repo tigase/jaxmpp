@@ -91,6 +91,16 @@
 			<artifactId>jaxmpp-xep0013_flexible_offline</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>tigase</groupId>
+			<artifactId>jaxmpp-push</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>tigase</groupId>
+			<artifactId>jaxmpp-workgroup</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

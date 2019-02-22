@@ -111,7 +111,6 @@ public class SocketConnector
 	 * Instance of empty byte array used to force flush of compressed stream
 	 */
 	private final static byte[] EMPTY_BYTEARRAY = new byte[0];
-	public static final String KEEP_ALIVE_DELAY_KEY = "KEEP_ALIVE_DELAY_KEY";
 	private final Object ioMutex = new Object();
 	private final Logger log;
 	private Timer closeTimer;
