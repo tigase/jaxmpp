@@ -89,6 +89,7 @@
 		<module>jaxmpp-all</module>
 		<module>jaxmpp-j2se</module>
 		<module>jaxmpp-push</module>
+		<module>jaxmpp-workgroup</module>
 	</modules>
 
 	<profiles>
