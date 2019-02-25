@@ -52,7 +52,7 @@ public abstract class UIDGenerator {
 
 		private int[] k1 = new int[32];
 
-		private long l = 5;
+		private long l = 22;
 
 		private int[] v = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 						   0, 0, 0};
@@ -60,17 +60,6 @@ public abstract class UIDGenerator {
 		public UIDGenerator35() {
 			for (int i = 0; i < k1.length; i++) {
 				k1[i] = ((int) (Math.random() * 6173)) % k1.length;
-			}
-		}
-
-		private void inc(final int p) {
-			if (p >= l) {
-				++l;
-			}
-			v[p] = v[p] + 1;
-			if (v[p] >= ELEMENTS.length()) {
-				v[p] = 0;
-				inc(p + 1);
 			}
 		}
 
@@ -91,6 +80,17 @@ public abstract class UIDGenerator {
 
 			}
 			return t;
+		}
+
+		private void inc(final int p) {
+			if (p >= l) {
+				++l;
+			}
+			v[p] = v[p] + 1;
+			if (v[p] >= ELEMENTS.length()) {
+				v[p] = 0;
+				inc(p + 1);
+			}
 		}
 	}
 

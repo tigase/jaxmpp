@@ -66,7 +66,7 @@ public class AdHocCommansModule
 	private DiscoveryModule discoveryModule;
 
 	static String generateSessionId() {
-		return UIDGenerator.next() + UIDGenerator.next();
+		return UIDGenerator.next();
 	}
 
 	@Override

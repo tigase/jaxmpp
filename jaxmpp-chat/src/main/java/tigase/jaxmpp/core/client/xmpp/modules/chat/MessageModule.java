@@ -135,7 +135,7 @@ public class MessageModule
 	}
 
 	protected String generateThreadID() {
-		return UIDGenerator.next() + UIDGenerator.next() + UIDGenerator.next();
+		return UIDGenerator.next();
 	}
 
 	public AbstractChatManager getChatManager() {
