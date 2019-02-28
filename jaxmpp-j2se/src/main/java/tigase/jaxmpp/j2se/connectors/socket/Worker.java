@@ -27,11 +27,9 @@ import tigase.jaxmpp.j2se.xml.J2seElement;
 import tigase.xml.SimpleParser;
 import tigase.xml.SingletonFactory;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static tigase.jaxmpp.j2se.connectors.socket.SocketConnector.DEFAULT_SOCKET_BUFFER_SIZE;
 
@@ -94,10 +92,6 @@ public abstract class Worker
 	public void interrupt() {
 		super.interrupt();
 		log.log(Level.FINE, "Worker Interrupted");
-		final String trace = Arrays.stream(Thread.currentThread().getStackTrace())
-				.map(ste -> ste.getClassName() + "." + ste.getMethodName() + ":" + ste.getLineNumber())
-				.collect(Collectors.joining(" > "));
-		log.log(Level.FINEST, "Worker Interrupted, trace: " + trace);
 	}
 
 	protected abstract void onErrorInThread(Exception e) throws JaxmppException;
