@@ -582,6 +582,21 @@ public class PubSubModule
 	 */
 	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, AsyncCallback callback)
 			throws JaxmppException {
+		publishItem(pubSubJID, nodeName, itemId, payload, null, callback);
+	}
+
+	/**
+	 * Publish item in PubSub service.
+	 *
+	 * @param pubSubJID PubSub service address.
+	 * @param nodeName name of node.
+	 * @param itemId ID of item to be published. If <code>null</code> then Service will generate unique item ID.
+	 * @param payload element to be publish.
+	 * @param publishOptions node configuration required for publication
+	 * @param callback request callback.
+	 */
+	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, JabberDataElement publishOptions, AsyncCallback callback)
+			throws JaxmppException {
 		IQ iq = IQ.create();
 		if (pubSubJID != null) {
 			iq.setTo(JID.jidInstance(pubSubJID));
@@ -599,6 +614,12 @@ public class PubSubModule
 		publish.addChild(item);
 
 		item.addChild(payload);
+
+		if (publishOptions != null) {
+			Element publishOptionsEl = ElementFactory.create("publish-options");
+			publishOptionsEl.addChild(publishOptions.createSubmitableElement(XDataType.submit));
+			pubsub.addChild(publishOptionsEl);
+		}
 
 		write(iq, callback);
 	}
