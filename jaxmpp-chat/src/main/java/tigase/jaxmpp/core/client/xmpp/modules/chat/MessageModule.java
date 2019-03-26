@@ -196,6 +196,9 @@ public class MessageModule
 	Chat process(Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error &&
 				message.getType() != StanzaType.headline) {
+			if (message.getType() == StanzaType.groupchat) {
+				return null;
+			}
 			message = executeBeforeMessageProcess(message, null);
 			if (message != null && fireReceivedEvent) {
 				fireEvent(new MessageReceivedHandler.MessageReceivedEvent(context.getSessionObject(), message, null));

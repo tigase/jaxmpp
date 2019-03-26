@@ -417,7 +417,7 @@ public class MucModule
 		String nickname = from.getResource();
 
 		Room room = this.roomsManager.get(roomJid);
-		if (room == null) {
+		if (room == null || (message.getTo() != null && message.getTo().getResource() == null)) {
 			return;
 		}
 		// throw new XMPPException(ErrorCondition.service_unavailable);
