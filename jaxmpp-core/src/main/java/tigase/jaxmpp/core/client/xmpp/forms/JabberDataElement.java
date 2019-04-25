@@ -27,10 +27,8 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of Data Form.
@@ -68,6 +66,31 @@ public class JabberDataElement
 			return new TextPrivateField(element);
 		} else {
 			return new TextSingleField(element);
+		}
+	}
+
+	public static String[] getFieldValueAsStringArray(AbstractField field) throws XMLException {
+		switch (field.getType()) {
+			case "boolean":
+				return new String[]{String.valueOf(((BooleanField) field).getFieldValue())};
+			case "fixed":
+				return new String[]{((FixedField) field).getFieldValue()};
+			case "hidden":
+				return new String[]{((HiddenField) field).getFieldValue()};
+			case "jid-multi":
+				return Arrays.stream(((JidMultiField) field).getFieldValue()).map(JID::toString).toArray(String[]::new);
+			case "jid-single":
+				return new String[]{((JidSingleField) field).getFieldValue().toString()};
+			case "list-multi":
+				return ((ListMultiField) field).getFieldValue();
+			case "list-single":
+				return new String[]{((ListSingleField) field).getFieldValue()};
+			case "text-multi":
+				return ((TextMultiField) field).getFieldValue();
+			case "text-private":
+				return new String[]{((TextPrivateField) field).getFieldValue()};
+			default:
+				return new String[]{((TextSingleField) field).getFieldValue()};
 		}
 	}
 
@@ -414,6 +437,10 @@ public class JabberDataElement
 	 */
 	public ArrayList<AbstractField<?>> getFields() {
 		return fields;
+	}
+
+	public List<AbstractField<?>> getFields(boolean includeHidden) {
+		return fields.stream().filter(field -> !(includeHidden || field instanceof HiddenField)).collect(Collectors.toList());
 	}
 
 	/**

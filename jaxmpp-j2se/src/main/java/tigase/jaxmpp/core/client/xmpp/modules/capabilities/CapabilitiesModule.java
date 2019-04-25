@@ -27,6 +27,8 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.AbstractField;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.SoftwareVersionModule;
@@ -47,6 +49,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CapabilitiesModule
@@ -54,8 +58,9 @@ public class CapabilitiesModule
 
 	public final static String NODE_NAME_KEY = "NODE_NAME_KEY";
 	public static final String VERIFICATION_STRING_KEY = "XEP115VerificationString";
+	public final static String charsetName = "UTF-8";
 	private final static String ALGORITHM = "SHA-1";
-	private final Logger log = Logger.getLogger(this.getClass().getName());
+	private static final Logger log = Logger.getLogger(CapabilitiesModule.class.getName());
 	private CapabilitiesCache cache;
 	private Context context;
 	private DiscoveryModule discoveryModule;
@@ -63,7 +68,56 @@ public class CapabilitiesModule
 
 	// private final XmppModulesManager modulesManager;
 
+	private static MessageDigest addValues(String[] features, MessageDigest md) throws UnsupportedEncodingException {
+		if (features != null) {
+			Arrays.sort(features);
+
+			for (String f : features) {
+				md.update(f.getBytes(charsetName));
+				md.update((byte) '<');
+			}
+		}
+		return md;
+	}
+
+	public static String generateVerificationString(String[] identities, String[] features,
+													JabberDataElement extensions) {
+		try {
+			log.log(Level.FINEST, "Generating caps for identities: {0}, features: {1}, extensions: {2}",
+					new String[]{Arrays.toString(identities), Arrays.toString(features), String.valueOf(extensions)});
+			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
+
+			md = addValues(identities, md);
+			md = addValues(features, md);
+
+			if (extensions != null) {
+				final List<AbstractField<?>> fields = extensions.getFields(false);
+				if (fields != null) {
+					md.update(extensions.getField("FORM_TYPE").getFieldValue().toString().getBytes(charsetName));
+					md.update((byte) '<');
+					fields.sort(AbstractField.VAR_COMPARATOR);
+					for (AbstractField field : fields) {
+						md.update(field.getVar().getBytes(charsetName));
+						md.update((byte) '<');
+						final String[] values = JabberDataElement.getFieldValueAsStringArray(field);
+						addValues(values, md);
+					}
+				}
+			}
+
+			byte[] digest = md.digest();
+			return Base64.encode(digest);
+		} catch (XMLException | NoSuchAlgorithmException | UnsupportedEncodingException e) {
+			log.warning("Cannot calculate verification string.");
+		}
+		return null;
+	}
+
 	public CapabilitiesModule() {
+	}
+
+	public String generateVerificationString(String[] identities, String[] features) {
+		return generateVerificationString(identities, features, null);
 	}
 
 	@Override
@@ -124,55 +178,6 @@ public class CapabilitiesModule
 	public void beforeUnregister() {
 	}
 
-	private String calculateVerificationString() {
-		String category = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_CATEGORY_KEY);
-		String type = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_TYPE_KEY);
-		String nme = context.getSessionObject().getProperty(SoftwareVersionModule.NAME_KEY);
-		String v = context.getSessionObject().getProperty(SoftwareVersionModule.VERSION_KEY);
-
-		String identity = category + "/" + type + "//" + nme + " " + v;
-
-		String ver = generateVerificationString(new String[]{identity}, context.getModuleProvider()
-				.getAvailableFeatures()
-				.toArray(new String[]{}));
-
-		String oldVer = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
-		if (oldVer != null && !oldVer.equals(ver)) {
-			discoveryModule.removeNodeCallback(getNodeName() + "#" + oldVer);
-		}
-
-		context.getSessionObject().setProperty(VERIFICATION_STRING_KEY, ver);
-		discoveryModule.setNodeCallback(getNodeName() + "#" + ver, nodeDetailsCallback);
-
-		return ver;
-	}
-
-	public final String generateVerificationString(String[] identities, String[] features) {
-		try {
-			MessageDigest md = MessageDigest.getInstance(ALGORITHM);
-
-			for (String id : identities) {
-				md.update(id.getBytes("UTF-8"));
-				md.update((byte) '<');
-			}
-
-			Arrays.sort(features);
-
-			for (String f : features) {
-				md.update(f.getBytes("UTF-8"));
-				md.update((byte) '<');
-			}
-
-			byte[] digest = md.digest();
-			return Base64.encode(digest);
-		} catch (NoSuchAlgorithmException e) {
-			log.warning("Cannot calculate verification string.");
-		} catch (UnsupportedEncodingException e) {
-			log.warning("Cannot calculate verification string.");
-		}
-		return null;
-	}
-
 	public CapabilitiesCache getCache() {
 		return cache;
 	}
@@ -189,6 +194,15 @@ public class CapabilitiesModule
 	@Override
 	public String[] getFeatures() {
 		return new String[]{"http://jabber.org/protocol/caps"};
+	}
+
+	@Override
+	public void process(Element element) throws JaxmppException {
+	}
+
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
 	}
 
 	protected String getNodeName() {
@@ -253,6 +267,11 @@ public class CapabilitiesModule
 			}
 
 			@Override
+			public void onTimeout() throws JaxmppException {
+				System.out.println("Error disco#info request: timeout");
+			}
+
+			@Override
 			protected void onInfoReceived(final String node, Collection<Identity> identities,
 										  final Collection<String> features) throws XMLException {
 				String name = "?";
@@ -269,21 +288,30 @@ public class CapabilitiesModule
 					cache.store(node, name, category, type, features);
 				}
 			}
-
-			@Override
-			public void onTimeout() throws JaxmppException {
-				System.out.println("Error disco#info request: timeout");
-			}
 		});
 
 	}
 
-	@Override
-	public void process(Element element) throws JaxmppException {
-	}
+	private String calculateVerificationString() {
+		String category = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_CATEGORY_KEY);
+		String type = context.getSessionObject().getProperty(DiscoveryModule.IDENTITY_TYPE_KEY);
+		String nme = context.getSessionObject().getProperty(SoftwareVersionModule.NAME_KEY);
+		String v = context.getSessionObject().getProperty(SoftwareVersionModule.VERSION_KEY);
 
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
+		String identity = category + "/" + type + "//" + nme + " " + v;
+
+		String ver = generateVerificationString(new String[]{identity}, context.getModuleProvider()
+				.getAvailableFeatures()
+				.toArray(new String[]{}));
+
+		String oldVer = context.getSessionObject().getProperty(VERIFICATION_STRING_KEY);
+		if (oldVer != null && !oldVer.equals(ver)) {
+			discoveryModule.removeNodeCallback(getNodeName() + "#" + oldVer);
+		}
+
+		context.getSessionObject().setProperty(VERIFICATION_STRING_KEY, ver);
+		discoveryModule.setNodeCallback(getNodeName() + "#" + ver, nodeDetailsCallback);
+
+		return ver;
 	}
 }

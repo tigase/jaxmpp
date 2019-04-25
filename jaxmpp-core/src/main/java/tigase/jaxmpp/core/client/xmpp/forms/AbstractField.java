@@ -25,6 +25,8 @@ import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.ElementWrapper;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.Comparator;
+
 /**
  * Abstract class to implement fields.
  *
@@ -33,6 +35,14 @@ import tigase.jaxmpp.core.client.xml.XMLException;
 public abstract class AbstractField<T>
 		extends ElementWrapper
 		implements Field<T> {
+
+	public static Comparator<AbstractField> VAR_COMPARATOR = Comparator.comparing(abstractField -> {
+		try {
+			return abstractField.getVar();
+		} catch (XMLException e) {
+			return "";
+		}
+	});
 
 	AbstractField(String elementType, Element element) throws XMLException {
 		super(element);

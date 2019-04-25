@@ -21,6 +21,9 @@
 package tigase.jaxmpp.core.client.xmpp.modules.capabilities;
 
 import org.junit.Test;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 
 import static org.junit.Assert.assertEquals;
 
@@ -35,6 +38,29 @@ public class CapabilitiesModuleTest {
 																"http://jabber.org/protocol/disco#info",
 																"http://jabber.org/protocol/disco#items",
 																"http://jabber.org/protocol/muc"}));
+	}
+
+	@Test
+	public void generateVerificationStringComplexExample() throws XMLException {
+		String[] features = new String[]{"http://jabber.org/protocol/caps", "http://jabber.org/protocol/disco#info",
+										 "http://jabber.org/protocol/disco#items", "http://jabber.org/protocol/muc"};
+
+		final String psi_en = "client/pc/en/Psi 0.11";
+		final String psi_el = "client/pc/el/Ψ 0.11";
+		String[] identities = new String[]{psi_en, psi_el};
+
+		final JabberDataElement jde = new JabberDataElement(XDataType.result);
+
+		jde.addFORM_TYPE("urn:xmpp:dataforms:softwareinfo");
+		jde.addTextMultiField("ip_version", "ipv4", "ipv6");
+		jde.addTextMultiField("os", "Mac");
+		jde.addTextMultiField("os_version", "10.5.1");
+		jde.addTextMultiField("software", "Psi");
+		jde.addTextMultiField("software_version", "0.11");
+
+		final String s = CapabilitiesModule.generateVerificationString(identities, features, jde);
+		assertEquals("q07IKJEyjvHSyhy//CH0CxmKi8w=", s);
+
 	}
 
 }
