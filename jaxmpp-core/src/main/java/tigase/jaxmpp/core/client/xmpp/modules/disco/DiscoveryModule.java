@@ -44,6 +44,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.disco.DiscoveryModule.ServerFeatur
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
+import tigase.jaxmpp.core.client.xmpp.utils.RSM;
 
 import java.util.*;
 
@@ -200,13 +201,24 @@ public class DiscoveryModule
 		getItems(jid, (AsyncCallback) callback);
 	}
 
+	public void getItems(JID jid, RSM rsm, DiscoItemsAsyncCallback callback) throws JaxmppException {
+		getItems(jid, null, rsm, (AsyncCallback) callback);
+	}
+
 	public void getItems(JID jid, String node, AsyncCallback callback) throws JaxmppException {
+		getItems(jid, node, null, callback);
+	}
+	
+	public void getItems(JID jid, String node, RSM rsm, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		iq.setTo(jid);
 		iq.setType(StanzaType.get);
 		Element query = ElementFactory.create("query", null, ITEMS_XMLNS);
 		if (node != null) {
 			query.setAttribute("node", node);
+		}
+		if (rsm != null) {
+			query.addChild(rsm.toElement());
 		}
 		iq.addChild(query);
 
@@ -436,6 +448,10 @@ public class DiscoveryModule
 	public static abstract class DiscoItemsAsyncCallback
 			implements AsyncCallback {
 
+		public void onInfoReceived(String attribute, ArrayList<Item> items, RSM rsm) throws XMLException {
+			onInfoReceived(attribute, items);
+		}
+
 		public abstract void onInfoReceived(String attribute, ArrayList<Item> items) throws XMLException;
 
 		@Override
@@ -452,7 +468,13 @@ public class DiscoveryModule
 				to.setNode(i.getAttribute("node"));
 				items.add(to);
 			}
-			onInfoReceived(query.getAttribute("node"), items);
+			Element rsmEl = query.getFirstChild("set");
+			RSM rsm = null;
+			if (rsmEl != null) {
+				rsm = new RSM();
+				rsm.fromElement(rsmEl);
+			}
+			onInfoReceived(query.getAttribute("node"), items, rsm);
 		}
 
 	}
