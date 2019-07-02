@@ -14,3 +14,5 @@ Tigase Team <team@tigase.net>
 include::text/Release_Notes.asciidoc[]
 
 include::text/Tigase_JaXMPP-General_overview.asciidoc[]
+
+include::text/Examples.asciidoc[]

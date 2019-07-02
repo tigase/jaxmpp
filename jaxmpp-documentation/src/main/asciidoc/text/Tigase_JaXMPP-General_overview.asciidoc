@@ -11,6 +11,3 @@ image::images/tiger-looking-left-small.png[]
 
 image::images/architecture.png[]
 
-== Usage
-
-Currently available on link::https://projects.tigase.org/projects/jaxmpp2/wiki[Projects wiki page]
