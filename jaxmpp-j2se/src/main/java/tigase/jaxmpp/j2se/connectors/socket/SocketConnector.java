@@ -1031,22 +1031,19 @@ public class SocketConnector
 			context.getSessionObject().setProperty(Scope.stream, DISABLE_KEEPALIVE_KEY, Boolean.TRUE);
 			TrustManager[] trustManagers = context.getSessionObject().getProperty(TRUST_MANAGERS_KEY);
 			final SSLSocketFactory factory;
-			final SSLEngine sslEngine;
 			if (trustManagers == null) {
 				if (context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY) != null) {
 					factory = context.getSessionObject().getProperty(SSL_SOCKET_FACTORY_KEY);
 				} else {
 					factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 				}
-				sslEngine = null;
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
 				ctx.init(getKeyManagers(), trustManagers, new SecureRandom());
 				factory = ctx.getSocketFactory();
-				sslEngine = ctx.createSSLEngine();
 			}
 
-			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, socket.getInetAddress().getHostAddress(),
+			SSLSocket s1 = (SSLSocket) factory.createSocket(socket, getHostname(),
 															socket.getPort(), true);
 
 			// if
