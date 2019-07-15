@@ -28,6 +28,9 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Representation chat with specified interlocutor.
  */
@@ -42,6 +45,9 @@ public class Chat {
 	private MessageModule messageModule;
 
 	private String threadId;
+
+
+
 
 	/**
 	 * Creates new chat representation object.

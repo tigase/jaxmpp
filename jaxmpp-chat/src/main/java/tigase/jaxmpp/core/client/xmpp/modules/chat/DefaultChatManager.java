@@ -111,7 +111,7 @@ class DefaultChatManager
 
 	@Override
 	public Chat getChat(JID jid, String threadId) {
-		return findChat(jid, threadId);
+		return findChatByBareJID(jid, threadId);
 	}
 
 	@Override

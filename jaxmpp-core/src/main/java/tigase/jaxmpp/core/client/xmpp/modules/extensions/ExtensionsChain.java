@@ -21,6 +21,7 @@
 
 package tigase.jaxmpp.core.client.xmpp.modules.extensions;
 
+import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 
 import java.util.*;
@@ -44,29 +45,35 @@ public class ExtensionsChain {
 		this.extensions = Collections.unmodifiableCollection(tmp);
 	}
 
-	public Element executeAfterReceiveChain(final Element element) {
+	public Element executeAfterReceiveChain(final Element element) throws JaxmppException {
 		Iterator<Extension> it = getExtensionIterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
 			Extension x = it.next();
 			try {
 				e = x.afterReceive(e);
+			} catch (JaxmppException ex) {
+				throw ex;
 			} catch (Exception ex) {
 				log.log(Level.WARNING, "Problem on calling afterReceive: " + ex.getMessage(), ex);
+				throw new JaxmppException("Problem on calling afterReceive: " + ex.getMessage(), ex);
 			}
 		}
 		return e;
 	}
 
-	public Element executeBeforeSendChain(final Element element) {
+	public Element executeBeforeSendChain(final Element element) throws JaxmppException {
 		Iterator<Extension> it = getExtensionIterator();
 		Element e = element;
 		while (it.hasNext() && e != null) {
 			Extension x = it.next();
 			try {
 				e = x.beforeSend(e);
+			} catch (JaxmppException ex) {
+				throw ex;
 			} catch (Exception ex) {
 				log.log(Level.WARNING, "Problem on calling beforeSend: " + ex.getMessage(), ex);
+				throw new JaxmppException("Problem on calling beforeSend: " + ex.getMessage(), ex);
 			}
 		}
 		return e;
@@ -91,10 +98,6 @@ public class ExtensionsChain {
 		return null;
 	}
 
-	private synchronized Iterator<Extension> getExtensionIterator() {
-		return this.extensions.iterator();
-	}
-
 	public Collection<String> getFeatures() {
 		HashSet<String> result = new HashSet<String>();
 		Iterator<Extension> it = getExtensionIterator();
@@ -113,6 +116,10 @@ public class ExtensionsChain {
 		ArrayList<Extension> tmp = new ArrayList<>(extensions);
 		tmp.remove(f);
 		this.extensions = Collections.unmodifiableCollection(tmp);
+	}
+
+	private synchronized Iterator<Extension> getExtensionIterator() {
+		return this.extensions.iterator();
 	}
 
 }

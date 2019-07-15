@@ -90,6 +90,7 @@
 		<module>jaxmpp-j2se</module>
 		<module>jaxmpp-push</module>
 		<module>jaxmpp-workgroup</module>
+		<module>jaxmpp-omemo</module>
 	</modules>
 
 	<profiles>

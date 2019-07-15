@@ -70,27 +70,30 @@ public abstract class AbstractStanzaExtendableModule<T extends Stanza>
 	}
 
 	@Override
-	protected void write(Element stanza) throws JaxmppException {
+	protected Element write(Element stanza) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
 		if (s != null) {
 			context.getWriter().write(s);
 		}
+		return s;
 	}
 
 	@Override
-	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+	protected Element write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
 		if (s != null) {
 			context.getWriter().write(s, asyncCallback);
 		}
+		return s;
 	}
 
 	@Override
-	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+	protected Element write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		Element s = extensionsChain.executeBeforeSendChain(stanza);
 		if (s != null) {
 			context.getWriter().write(s, timeout, asyncCallback);
 		}
+		return s;
 	}
 
 }

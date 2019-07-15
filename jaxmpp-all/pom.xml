@@ -119,6 +119,11 @@
         </dependency>
         <dependency>
             <groupId>tigase</groupId>
+            <artifactId>jaxmpp-omemo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tigase</groupId>
             <artifactId>jaxmpp-mam</artifactId>
             <version>${project.version}</version>
         </dependency>

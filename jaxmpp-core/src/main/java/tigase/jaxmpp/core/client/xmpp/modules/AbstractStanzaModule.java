@@ -76,7 +76,7 @@ public abstract class AbstractStanzaModule<T extends Stanza>
 	/**
 	 * Method for processing incoming stanza.
 	 *
-	 * @param element incoming stanza
+	 * @param stanza incoming stanza
 	 */
 	public abstract void process(T stanza) throws JaxmppException;
 
@@ -85,16 +85,19 @@ public abstract class AbstractStanzaModule<T extends Stanza>
 		this.context = context;
 	}
 
-	protected void write(Element stanza) throws JaxmppException {
+	protected Element write(Element stanza) throws JaxmppException {
 		context.getWriter().write(stanza);
+		return stanza;
 	}
 
-	protected void write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
+	protected Element write(Element stanza, AsyncCallback asyncCallback) throws JaxmppException {
 		context.getWriter().write(stanza, asyncCallback);
+		return stanza;
 	}
 
-	protected void write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
+	protected Element write(Element stanza, Long timeout, AsyncCallback asyncCallback) throws JaxmppException {
 		context.getWriter().write(stanza, timeout, asyncCallback);
+		return stanza;
 	}
 
 }

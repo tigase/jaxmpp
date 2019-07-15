@@ -68,6 +68,16 @@ public class MessageModule
 
 	private MucModule mucModule;
 
+	private final static Message wrap(Element e) throws JaxmppException {
+		if (e == null) {
+			return null;
+		} else if (e instanceof Message) {
+			return (Message) e;
+		} else {
+			return (Message) Message.create(e);
+		}
+	}
+
 	public MessageModule() {
 		AbstractChatManager cm = UniversalFactory.createInstance(AbstractChatManager.class.getName());
 		this.chatManager = cm != null ? cm : new DefaultChatManager();
@@ -118,26 +128,6 @@ public class MessageModule
 		return chat;
 	}
 
-	protected Message executeBeforeMessageProcess(final Message element, Chat chat) {
-		Iterator<Extension> it = getExtensionChain().getExtension().iterator();
-		Message e = element;
-		while (it.hasNext() && e != null) {
-			Extension x = it.next();
-			if (x instanceof MessageModuleExtension) {
-				try {
-					e = ((MessageModuleExtension) x).beforeMessageProcess(element, chat);
-				} catch (Exception ex) {
-					log.warning("Problem on calling executeBeforeMessageProcess: " + ex.getMessage());
-				}
-			}
-		}
-		return e;
-	}
-
-	protected String generateThreadID() {
-		return UIDGenerator.next();
-	}
-
 	public AbstractChatManager getChatManager() {
 		return chatManager;
 	}
@@ -167,17 +157,6 @@ public class MessageModule
 		return getFeaturesWithExtensions(null);
 	}
 
-	protected boolean isMessageHandledByMUC(JID from) {
-		if (this.mucModule == null || from == null) {
-			return false;
-		}
-
-		final BareJID roomJid = from.getBareJid();
-		boolean result = mucModule.isRoomRegistered(roomJid);
-		return result;
-
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -192,6 +171,68 @@ public class MessageModule
 		}
 		process(message, interlocutorJid, true);
 	}
+
+	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 *
+	 * @param body message to send.
+	 *
+	 * @return
+	 */
+	public Message sendMessage(Chat chat, String body) throws JaxmppException {
+		Message msg = chat.createMessage(body);
+		return wrap(write(msg));
+	}
+
+	/**
+	 * Sends message in passed chat.
+	 *
+	 * @param msg message stanza to send.
+	 *
+	 * @return
+	 */
+	public Message sendMessage(Message msg) throws JaxmppException {
+		return wrap(write(msg));
+	}
+
+	/**
+	 * Sends message in passed chat. It uses correct interlocutor JID and
+	 * thread-id.
+	 *
+	 * @param body message to send.
+	 *
+	 * @return
+	 */
+	public Message sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws JaxmppException {
+		Message msg = chat.createMessage(body);
+		if (additionalElems != null) {
+			for (Element child : additionalElems) {
+				msg.addChild(child);
+			}
+		}
+		return wrap(write(msg));
+	}
+
+	/**
+	 * Sends message. It does not create chat object.
+	 *
+	 * @param toJID recipient's JID
+	 * @param subject subject of message
+	 * @param message message
+	 */
+	public Message sendMessage(JID toJID, String subject, String message) throws JaxmppException {
+		Message msg = Message.create();
+		msg.setSubject(subject);
+		msg.setBody(message);
+		msg.setTo(toJID);
+		msg.setId(UIDGenerator.next());
+
+		return wrap(write(msg));
+	}
+
+	public Message writeMessage(Message msg) throws JaxmppException {
+		return wrap(write(msg));	}
 
 	Chat process(Message message, final JID interlocutorJid, final boolean fireReceivedEvent) throws JaxmppException {
 		if (message.getType() != StanzaType.chat && message.getType() != StanzaType.error &&
@@ -235,67 +276,35 @@ public class MessageModule
 		return chat;
 	}
 
-	/**
-	 * Sends message in passed chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 *
-	 * @param body message to send.
-	 *
-	 * @return
-	 */
-	public Message sendMessage(Chat chat, String body) throws JaxmppException {
-		Message msg = chat.createMessage(body);
-		write(msg);
-		return msg;
-	}
-
-	/**
-	 * Sends message in passed chat.
-	 *
-	 * @param msg message stanza to send.
-	 *
-	 * @return
-	 */
-	public Message sendMessage(Message msg) throws JaxmppException {
-		write(msg);
-		return msg;
-	}
-
-	/**
-	 * Sends message in passed chat. It uses correct interlocutor JID and
-	 * thread-id.
-	 *
-	 * @param body message to send.
-	 *
-	 * @return
-	 */
-	public Message sendMessage(Chat chat, String body, List<? extends Element> additionalElems) throws JaxmppException {
-		Message msg = chat.createMessage(body);
-		if (additionalElems != null) {
-			for (Element child : additionalElems) {
-				msg.addChild(child);
+	protected Message executeBeforeMessageProcess(final Message element, Chat chat) {
+		Iterator<Extension> it = getExtensionChain().getExtension().iterator();
+		Message e = element;
+		while (it.hasNext() && e != null) {
+			Extension x = it.next();
+			if (x instanceof MessageModuleExtension) {
+				try {
+					e = ((MessageModuleExtension) x).beforeMessageProcess(element, chat);
+				} catch (Exception ex) {
+					log.warning("Problem on calling executeBeforeMessageProcess: " + ex.getMessage());
+				}
 			}
 		}
-		write(msg);
-		return msg;
+		return e;
 	}
 
-	/**
-	 * Sends message. It does not create chat object.
-	 *
-	 * @param toJID recipient's JID
-	 * @param subject subject of message
-	 * @param message message
-	 */
-	public Message sendMessage(JID toJID, String subject, String message) throws JaxmppException {
-		Message msg = Message.create();
-		msg.setSubject(subject);
-		msg.setBody(message);
-		msg.setTo(toJID);
-		msg.setId(UIDGenerator.next());
+	protected String generateThreadID() {
+		return UIDGenerator.next();
+	}
 
-		write(msg);
-		return msg;
+	protected boolean isMessageHandledByMUC(JID from) {
+		if (this.mucModule == null || from == null) {
+			return false;
+		}
+
+		final BareJID roomJid = from.getBareJid();
+		boolean result = mucModule.isRoomRegistered(roomJid);
+		return result;
+
 	}
 
 	protected boolean update(final Chat chat, final JID fromJid, final String threadId) throws JaxmppException {
@@ -318,10 +327,6 @@ public class MessageModule
 		}
 
 		return changed;
-	}
-
-	public void writeMessage(Message msg) throws JaxmppException {
-		write(msg);
 	}
 
 	public interface ChatClosedHandler

@@ -301,6 +301,7 @@ public class PubSubModule
 	 */
 	public void deleteNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
+		if(pubSubJID!=null)
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub#owner");
@@ -894,6 +895,7 @@ public class PubSubModule
 										SubscriptionFilterExtension filterExt, AsyncCallback callback)
 			throws JaxmppException {
 		final IQ iq = IQ.create();
+		if(pubSubJID!=null)
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.get);
 		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
@@ -1150,6 +1152,7 @@ public class PubSubModule
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
 			throws JaxmppException {
 		final IQ iq = IQ.create();
+		if(pubSubJID!=null)
 		iq.setTo(JID.jidInstance(pubSubJID));
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
@@ -1345,7 +1348,7 @@ public class PubSubModule
 		void onNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName,
 									String itemId, Element payload, Date delayTime, String itemType);
 
-		class NotificationReceivedEvent
+		public class NotificationReceivedEvent
 				extends JaxmppEvent<NotificationReceivedHandler> {
 
 			private Date delayTime;

@@ -1,0 +1,22 @@
+apply plugin: 'java'
+
+sourceCompatibility = defaultSourceCompatibility
+targetCompatibility = defaultTargetCompatibility
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile project(':jaxmpp-j2se')
+    compile project(':jaxmpp-chat')
+    compile project(':jaxmpp-presence')
+    compile project(':jaxmpp-pubsub')
+    compile project(':jaxmpp-roster')
+    compile 'org.whispersystems:signal-protocol-java:2.7.0'
+}
