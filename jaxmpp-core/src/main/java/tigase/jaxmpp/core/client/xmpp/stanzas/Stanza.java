@@ -28,13 +28,17 @@ import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
 import tigase.jaxmpp.core.client.xml.XMLException;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract representation of Stanza.
  */
 public abstract class Stanza
 		extends StreamPacket {
+
+	private final Set<String> flags = new HashSet<>();
 
 	public static boolean canBeConverted(final Element element) throws XMLException {
 		if (element instanceof Stanza) {
@@ -83,6 +87,18 @@ public abstract class Stanza
 
 	Stanza(Element element) {
 		super(element);
+	}
+
+	public boolean hasFlag(String flag) {
+		return this.flags.contains(flag);
+	}
+
+	public void addFlag(String flag) {
+		this.flags.add(flag);
+	}
+
+	public void removeFlag(String flag) {
+		this.flags.remove(flag);
 	}
 
 	/**

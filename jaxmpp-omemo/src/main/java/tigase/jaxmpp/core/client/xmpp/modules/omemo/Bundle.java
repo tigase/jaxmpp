@@ -2,9 +2,11 @@ package tigase.jaxmpp.core.client.xmpp.modules.omemo;
 
 import org.whispersystems.libsignal.IdentityKey;
 import org.whispersystems.libsignal.InvalidKeyException;
+import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.ecc.Curve;
 import org.whispersystems.libsignal.ecc.ECPublicKey;
 import org.whispersystems.libsignal.state.PreKeyBundle;
+import tigase.jaxmpp.core.client.BareJID;
 import tigase.jaxmpp.core.client.Base64;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
@@ -18,9 +20,11 @@ public class Bundle
 		extends ElementWrapper {
 
 	private final Integer deviceId;
+	private final BareJID jid;
 
-	public Bundle(Integer deviceId, Element element) throws JaxmppException {
+	public Bundle(BareJID jid, Integer deviceId, Element element) throws JaxmppException {
 		super(element);
+		this.jid = jid;
 		this.deviceId = deviceId;
 		if (!element.getName().equals("bundle") || !element.getXMLNS().equals(OmemoModule.XMLNS)) {
 			throw new JaxmppException("Invalid bundle!");
@@ -29,6 +33,14 @@ public class Bundle
 
 	public Integer getDeviceId() {
 		return deviceId;
+	}
+
+	public BareJID getJid() {
+		return jid;
+	}
+
+	public SignalProtocolAddress getAddress() {
+		return new SignalProtocolAddress(this.jid.toString(), deviceId);
 	}
 
 	@Override

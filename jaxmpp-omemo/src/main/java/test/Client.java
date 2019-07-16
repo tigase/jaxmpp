@@ -154,7 +154,6 @@ public class Client {
 		logger.addHandler(handler);
 		logger.setLevel(Level.ALL);
 
-
 		final Jaxmpp jaxmpp = new Jaxmpp();
 		jaxmpp.getSessionObject()
 				.setProperty(SessionObject.Scope.user, SocketConnector.COMPRESSION_DISABLED_KEY, Boolean.TRUE);
@@ -477,6 +476,11 @@ public class Client {
 		@Override
 		public void storeSession(XmppOMEMOSession session) {
 			this.sesssions.put(session.getJid(), session);
+		}
+
+		@Override
+		public void removeSession(XmppOMEMOSession session) {
+			this.sesssions.remove(session.getJid());
 		}
 
 		@Override

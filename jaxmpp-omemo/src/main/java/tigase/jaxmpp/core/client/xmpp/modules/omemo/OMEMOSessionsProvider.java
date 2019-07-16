@@ -8,6 +8,8 @@ public interface OMEMOSessionsProvider {
 
 	void storeSession(XmppOMEMOSession session);
 
+	void removeSession(XmppOMEMOSession session);
+
 	boolean isOMEMORequired(BareJID jid);
 
 	void setOMEMORequired(BareJID jid, boolean required);

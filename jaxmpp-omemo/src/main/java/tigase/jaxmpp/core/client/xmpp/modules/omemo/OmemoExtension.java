@@ -23,15 +23,19 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class OmemoExtension
 		implements Extension {
 
+	public static final String OMEMO_ERROR_FLAG = OmemoModule.XMLNS + "#ERROR";
 	private final static String ALGORITHM_NAME = "AES";
 	private final static String CIPHER_NAME = "AES/GCM/NoPadding";
 	private final static int KEY_SIZE = 128;
 	private final static boolean AUTHTAG = true;
 	private final OmemoModule module;
+	private Logger log = Logger.getLogger(this.getClass().getName());
 
 	private static byte[] generateKey() throws NoSuchAlgorithmException {
 		KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM_NAME);
@@ -102,6 +106,7 @@ public class OmemoExtension
 		final byte[] encryptedKey = extractKey(encKeyElement);
 		if (encryptedKey == null) {
 			Message m = (Message) Message.create(ElementFactory.create(stanza));
+			m.addFlag(OMEMO_ERROR_FLAG);
 			m.setBody("Message is not encrypted for this device.");
 			return m;
 		}
@@ -147,52 +152,64 @@ public class OmemoExtension
 			}
 			result.setSecured(true);
 		} catch (InvalidMessageException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (LegacyMessageException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (DuplicateMessageException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (NoSessionException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (UntrustedIdentityException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (BadPaddingException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (InvalidAlgorithmParameterException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		} catch (Exception e) {
-			e.printStackTrace();
-			result.setBody(new String(e.getMessage()));
+			log.log(Level.WARNING, "Problem on processing OMEMO data", e);
+			result.addFlag(OMEMO_ERROR_FLAG);
+			result.setBody(e.getMessage());
 			result.setType(StanzaType.error);
 		}
 
@@ -249,6 +266,7 @@ public class OmemoExtension
 		XmppOMEMOSession s = module.getOMEMOSession(jid);
 		if (s == null) {
 			s = module.createOMEMOSession(jid);
+			module.addOwnKeysToSession(s);
 		}
 		return s;
 	}

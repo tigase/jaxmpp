@@ -85,7 +85,7 @@ public abstract class KeysRetriever {
 					try {
 						for (Item item : items) {
 							if (item.getId().equals(OmemoModule.CURRENT)) {
-								result.add(new Bundle(new Integer(id), item.getPayload()));
+								result.add(new Bundle(jid, new Integer(id), item.getPayload()));
 							}
 						}
 						if (result.size() == count) {

@@ -35,6 +35,7 @@ public class OmemoModule
 	public final static String DEVICELIST_NODE = XMLNS + ".devicelist";
 	public static final String AUTOCREATE_OMEMO_SESSION = XMLNS + "#AUTOCREATE_OMEMO_SESSION";
 	final static String BUNDLES_NODE = XMLNS + ".bundles:";
+	private final boolean addOwnKeys = true;
 	private final Random rnd = new SecureRandom();
 	private Context context;
 	private OmemoExtension extension = new OmemoExtension(this);
@@ -90,7 +91,7 @@ public class OmemoModule
 										pubSubJID.getBareJid().equals(context.getSessionObject().getUserBareJid()) &&
 										nodeName.startsWith(BUNDLES_NODE) && itemId.equals(CURRENT)) {
 									try {
-										processOwnDevicesBundle(payload, nodeName);
+										processOwnDevicesBundle(pubSubJID.getBareJid(), payload, nodeName);
 									} catch (Exception e) {
 										log.log(Level.WARNING, "Cannot handle DeviceList event", e);
 									}
@@ -236,30 +237,41 @@ public class OmemoModule
 			public void onSuccess(List<Bundle> b1) {
 				bundles.addAll(b1);
 
-				try {
-//					getKeys(context.getSessionObject().getUserBareJid(), new KeysRetrieverHandler() {
-//						@Override
-//						public void onError() {
-//							handler.onError();
-//						}
-//
-//						@Override
-//						public void onSuccess(List<Bundle> b2) {
-//							bundles.addAll(b2);
+				if (addOwnKeys) {
+					runAddOwnKeys();
+				} else {
+					create();
+				}
+			}
 
-							XmppOMEMOSession session = null;
-							try {
-								session = createOMEMOSession(jid, bundles);
-								handler.onSessionCreated(session);
-							}  catch (XMLException e) {
-								e.printStackTrace();
-								handler.onError();
-							} catch (UntrustedIdentityException e) {
-								e.printStackTrace();
-								handler.onError();
-							}
-//						}
-//					});
+			private void create() {
+				XmppOMEMOSession session = null;
+				try {
+					session = createOMEMOSession(jid, bundles);
+					handler.onSessionCreated(session);
+				} catch (XMLException e) {
+					e.printStackTrace();
+					handler.onError();
+				} catch (UntrustedIdentityException e) {
+					e.printStackTrace();
+					handler.onError();
+				}
+			}
+
+			private void runAddOwnKeys() {
+				try {
+					getKeys(context.getSessionObject().getUserBareJid(), new KeysRetrieverHandler() {
+						@Override
+						public void onError() {
+							handler.onError();
+						}
+
+						@Override
+						public void onSuccess(List<Bundle> b2) {
+							bundles.addAll(b2);
+							create();
+						}
+					});
 				} catch (Exception e) {
 					handler.onError();
 				}
@@ -309,7 +321,7 @@ public class OmemoModule
 		return getSignalProtocolStore(context.getSessionObject()).isOMEMORequired(jid);
 	}
 
-	XmppOMEMOSession getOMEMOSession(BareJID jid, boolean createIfNotExists) {
+	public XmppOMEMOSession getOMEMOSession(BareJID jid, boolean createIfNotExists) {
 		XmppOMEMOSession sess = getSignalProtocolStore(context.getSessionObject()).getSession(jid);
 
 		if (sess != null) {
@@ -331,20 +343,17 @@ public class OmemoModule
 		return iv;
 	}
 
-	XmppOMEMOSession createOMEMOSession(BareJID jid, List<Bundle> bundles)
+	void addBundesToSession(XmppOMEMOSession session, Collection<Bundle> bundles)
 			throws XMLException, UntrustedIdentityException {
 		final SignalProtocolStore store = OmemoModule.getSignalProtocolStore(context.getSessionObject());
-		XmppOMEMOSession session = createOMEMOSession(jid);
 		for (Bundle b : bundles) {
 			try {
+				final SignalProtocolAddress address = b.getAddress();
 				PreKeyBundle bundle = b.getPreKeyBundle();
 				List<PreKeyBundle> preKeys = b.getPreKeys();
-				int deviceid = b.getDeviceId();
 				PreKeyBundle preKey = preKeys.get(rnd.nextInt(preKeys.size()));
 
 				System.out.println(b.getDeviceId() + " :: " + b.getPreKeyBundle().getIdentityKey().getFingerprint());
-
-				final SignalProtocolAddress address = new SignalProtocolAddress(jid.toString(), deviceid);
 
 				final PreKeyBundle preKeyBundle = new PreKeyBundle(0, address.getDeviceId(), preKey.getPreKeyId(),
 																   preKey.getPreKey(), bundle.getSignedPreKeyId(),
@@ -362,7 +371,34 @@ public class OmemoModule
 				log.warning("Invalid key. Skipping.");
 			}
 		}
+	}
+
+	XmppOMEMOSession createOMEMOSession(BareJID jid, List<Bundle> bundles)
+			throws XMLException, UntrustedIdentityException {
+		XmppOMEMOSession session = createOMEMOSession(jid);
+		addBundesToSession(session, bundles);
 		return session;
+	}
+
+	void addOwnKeysToSession(final XmppOMEMOSession session) {
+		try {
+			getKeys(context.getSessionObject().getUserBareJid(), new KeysRetrieverHandler() {
+				@Override
+				public void onError() {
+				}
+
+				@Override
+				public void onSuccess(List<Bundle> b2) {
+					try {
+						addBundesToSession(session, b2);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		} catch (JaxmppException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private XmppOMEMOSession createFromOMEMOStore(final BareJID jid) {
@@ -373,11 +409,19 @@ public class OmemoModule
 		}
 
 		XmppOMEMOSession result = createOMEMOSession(jid);
-
 		for (Integer id : store.getSubDeviceSessions(jid.toString())) {
 			SignalProtocolAddress address = new SignalProtocolAddress(jid.toString(), id);
 			SessionCipher sessionCipher = new SessionCipher(store, store, store, store, address);
 			result.addDeviceCipher(address, sessionCipher);
+		}
+		if (addOwnKeys) {
+			final BareJID ownJid = context.getSessionObject().getUserBareJid();
+			for (Integer id : store.getSubDeviceSessions(ownJid.toString())) {
+				SignalProtocolAddress address = new SignalProtocolAddress(ownJid.toString(), id);
+				SessionCipher sessionCipher = new SessionCipher(store, store, store, store, address);
+				result.addDeviceCipher(address, sessionCipher);
+			}
+
 		}
 
 		return result;
@@ -465,7 +509,8 @@ public class OmemoModule
 		return result;
 	}
 
-	private void processOwnDevicesBundle(Element payload, String nodeName) throws JaxmppException, InvalidKeyException {
+	private void processOwnDevicesBundle(BareJID jid, Element payload, String nodeName)
+			throws JaxmppException, InvalidKeyException {
 		JaXMPPSignalProtocolStore store = getSignalProtocolStore(context.getSessionObject());
 		if (store == null) {
 			log.warning("No OMEMO Store in SessionObject!");
@@ -473,7 +518,7 @@ public class OmemoModule
 		}
 		final int deviceId = Integer.valueOf(nodeName.substring(BUNDLES_NODE.length()));
 
-		Bundle b = new Bundle(deviceId, payload);
+		Bundle b = new Bundle(jid, deviceId, payload);
 
 		SignalProtocolAddress addr = new SignalProtocolAddress(context.getSessionObject().getUserBareJid().toString(),
 															   deviceId);

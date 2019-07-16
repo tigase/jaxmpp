@@ -21,6 +21,15 @@ public class XmppOMEMOSession {
 		this.eventBus = eventBus;
 	}
 
+	public boolean hasCiphers() {
+		for (SignalProtocolAddress signalProtocolAddress : deviceCiphers.keySet()) {
+			if (signalProtocolAddress.getName().equals(jid.toString())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public Map<SignalProtocolAddress, SessionCipher> getDeviceCiphers() {
 		return deviceCiphers;
 	}
