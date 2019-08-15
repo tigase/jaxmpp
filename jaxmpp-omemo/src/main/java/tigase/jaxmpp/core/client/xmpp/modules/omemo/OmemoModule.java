@@ -541,6 +541,37 @@ public class OmemoModule
 			log.info("This device (" + deviceId + ") is not published. Preparing to publish.");
 			publishOwnKeys(store, publishedList);
 		}
+
+		ArrayList<Integer> unknownIdentities = new ArrayList<>();
+
+		for (Integer id : publishedList) {
+			if (id == deviceId) {
+				continue;
+			}
+			IdentityKey identity = store.getIdentity(
+					new SignalProtocolAddress(context.getSessionObject().getUserBareJid().toString(), id));
+
+			if (identity == null) {
+				unknownIdentities.add(id);
+			}
+		}
+
+		if (!unknownIdentities.isEmpty()) {
+			KeysRetriever kr = new KeysRetriever(context, context.getSessionObject().getUserBareJid()) {
+				@Override
+				void finish(List<Bundle> bundles) {
+					for (Bundle bundle : bundles) {
+						try {
+							store.saveIdentity(bundle.getAddress(), bundle.getPreKeyBundle().getIdentityKey());
+						} catch (Exception e) {
+							log.log(Level.WARNING, "Cannot save identity " + bundle.getAddress(), e);
+						}
+					}
+				}
+			};
+			kr.retrieve(unknownIdentities);
+		}
+
 	}
 
 	public interface CreateOMEMOSessionHandler {

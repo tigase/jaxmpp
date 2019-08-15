@@ -26,6 +26,10 @@ public abstract class KeysRetriever {
 		this.pubsub = context.getModuleProvider().getModule(PubSubModule.class);
 	}
 
+	public void retrieve(Collection<Integer> deviceIds) throws JaxmppException {
+		getKeysOfDevices(deviceIds);
+	}
+
 	public void retrieve() throws JaxmppException {
 		pubsub.retrieveItem(jid, OmemoModule.DEVICELIST_NODE, new PubSubModule.RetrieveItemsAsyncCallback() {
 			@Override
@@ -64,10 +68,10 @@ public abstract class KeysRetriever {
 
 	abstract void finish(List<Bundle> bundles);
 
-	private void getKeysOfDevices(final Collection<String> devicesId) throws JaxmppException {
+	private void getKeysOfDevices(final Collection<?> devicesId) throws JaxmppException {
 		final int count = devicesId.size();
 		final ArrayList<Bundle> result = new ArrayList<>();
-		for (final String id : devicesId) {
+		for (final Object id : devicesId) {
 			pubsub.retrieveItem(jid, OmemoModule.BUNDLES_NODE + id, new PubSubModule.RetrieveItemsAsyncCallback() {
 				@Override
 				public void onTimeout() throws JaxmppException {
@@ -85,7 +89,7 @@ public abstract class KeysRetriever {
 					try {
 						for (Item item : items) {
 							if (item.getId().equals(OmemoModule.CURRENT)) {
-								result.add(new Bundle(jid, new Integer(id), item.getPayload()));
+								result.add(new Bundle(jid, new Integer(id.toString()), item.getPayload()));
 							}
 						}
 						if (result.size() == count) {
