@@ -205,7 +205,7 @@ public class InBandRegistrationModule
 				public void onSuccess(Stanza responseStanza) throws JaxmppException {
 					UnifiedRegistrationForm form;
 					try {
-						form = new UnifiedRegistrationForm((IQ) responseStanza);
+						form = new UnifiedRegistrationForm((IQ) IQ.create(ElementFactory.create(responseStanza)));
 					} catch (Exception e) {
 						log.log(Level.WARNING, "Cannot create unified registration form", e);
 						form = null;

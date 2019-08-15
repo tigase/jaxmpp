@@ -177,26 +177,6 @@ public class Jaxmpp
 		init();
 	}
 
-	protected void checkTimeouts() throws JaxmppException {
-		ResponseManager.getResponseManager(sessionObject).checkTimeouts();
-	}
-
-	protected Connector createConnector() throws JaxmppException {
-		if (sessionObject.getProperty(CONNECTOR_TYPE) == null ||
-				"socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using SocketConnector");
-			return new SocketConnector(context);
-		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using BOSHConnector");
-			return new BoshConnector(context);
-		} else if ("websocket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
-			log.info("Using WebSocketConnector");
-			return new WebSocketConnector(context);
-		} else {
-			throw new JaxmppException("Unknown connector type");
-		}
-	}
-
 	@Override
 	public void disconnect() throws JaxmppException {
 		disconnect(false);
@@ -257,87 +237,6 @@ public class Jaxmpp
 			this.executor = DEFAULT_EXECUTOR;
 		} else {
 			this.executor = executor;
-		}
-	}
-
-	// public FileTransferManager getFileTransferManager() {
-	// return fileTransferManager;
-	// }
-
-	// public void initFileTransferManager(boolean experimental) throws
-	// JaxmppException {
-	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-	// if (capsModule != null && capsModule.getCache() == null) {
-	// capsModule.setCache(new J2SECapabiliesCache());
-	// }
-	//
-	// fileTransferManager = new FileTransferManager();
-	// fileTransferManager.setContext(getContext());
-	// fileTransferManager.setJaxmpp(this);
-	//
-	// getModulesManager().register(new FileTransferModule(getContext()));
-	// getModulesManager().register(new Socks5BytestreamsModule(getContext()));
-	//
-	// if (experimental) {
-	// getModulesManager().register(new JingleModule(getContext()));
-	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-	// }
-	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-	// }
-
-	// public FileTransferManager getFileTransferManager() {
-	// return fileTransferManager;
-	// }
-
-	// public void initFileTransferManager(boolean experimental) throws
-	// JaxmppException {
-	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
-	// if (capsModule != null && capsModule.getCache() == null) {
-	// capsModule.setCache(new J2SECapabiliesCache());
-	// }
-	//
-	// fileTransferManager = new FileTransferManager();
-	// fileTransferManager.setContext(context);
-	// fileTransferManager.setJaxmpp(this);
-	//
-	// getModulesManager().register(new FileTransferModule(sessionObject));
-	// getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
-	// if (experimental) {
-	// getModulesManager().register(new JingleModule(sessionObject));
-	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
-	// }
-	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
-	// }
-
-	@Override
-	protected void init() {
-		// if (PresenceModule.getPresenceStore(sessionObject) == null)
-		// PresenceModule.setPresenceStore(sessionObject, new
-		// J2SEPresenceStore());
-
-		// if (RosterModule.getRosterStore(sessionObject) == null)
-		// RosterModule.setRosterStore(sessionObject, new RosterStore());
-
-		if (ResponseManager.getResponseManager(sessionObject) == null) {
-			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
-		}
-
-		super.init();
-
-		setExecutor(DEFAULT_EXECUTOR);
-
-		this.connector = this.connectorWrapper;
-
-		this.processor = new Processor(this.modulesManager, context);
-
-		modulesInit();
-
-		SaslModule saslModule = getModule(SaslModule.class);
-		if (saslModule != null) {
-			saslModule.addMechanism(new ScramMechanism(), true);
-			saslModule.addMechanism(new ScramPlusMechanism(), true);
-			saslModule.addMechanism(new ScramSHA256Mechanism(), true);
-			saslModule.addMechanism(new ScramSHA256PlusMechanism(), true);
 		}
 	}
 
@@ -423,6 +322,107 @@ public class Jaxmpp
 			JaxmppException e = new JaxmppException(e1);
 			// onException(e);
 			throw e;
+		}
+	}
+
+	// public FileTransferManager getFileTransferManager() {
+	// return fileTransferManager;
+	// }
+
+	// public void initFileTransferManager(boolean experimental) throws
+	// JaxmppException {
+	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+	// if (capsModule != null && capsModule.getCache() == null) {
+	// capsModule.setCache(new J2SECapabiliesCache());
+	// }
+	//
+	// fileTransferManager = new FileTransferManager();
+	// fileTransferManager.setContext(getContext());
+	// fileTransferManager.setJaxmpp(this);
+	//
+	// getModulesManager().register(new FileTransferModule(getContext()));
+	// getModulesManager().register(new Socks5BytestreamsModule(getContext()));
+	//
+	// if (experimental) {
+	// getModulesManager().register(new JingleModule(getContext()));
+	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+	// }
+	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	// }
+
+	// public FileTransferManager getFileTransferManager() {
+	// return fileTransferManager;
+	// }
+
+	// public void initFileTransferManager(boolean experimental) throws
+	// JaxmppException {
+	// CapabilitiesModule capsModule = getModule(CapabilitiesModule.class);
+	// if (capsModule != null && capsModule.getCache() == null) {
+	// capsModule.setCache(new J2SECapabiliesCache());
+	// }
+	//
+	// fileTransferManager = new FileTransferManager();
+	// fileTransferManager.setContext(context);
+	// fileTransferManager.setJaxmpp(this);
+	//
+	// getModulesManager().register(new FileTransferModule(sessionObject));
+	// getModulesManager().register(new Socks5BytestreamsModule(sessionObject));
+	// if (experimental) {
+	// getModulesManager().register(new JingleModule(sessionObject));
+	// fileTransferManager.addNegotiator(new JingleFileTransferNegotiator());
+	// }
+	// fileTransferManager.addNegotiator(new Socks5FileTransferNegotiator());
+	// }
+
+	protected void checkTimeouts() throws JaxmppException {
+		ResponseManager.getResponseManager(sessionObject).checkTimeouts();
+	}
+
+	protected Connector createConnector() throws JaxmppException {
+		if (sessionObject.getProperty(CONNECTOR_TYPE) == null ||
+				"socket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using SocketConnector");
+			return new SocketConnector(context);
+		} else if ("bosh".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using BOSHConnector");
+			return new BoshConnector(context);
+		} else if ("websocket".equals(sessionObject.getProperty(CONNECTOR_TYPE))) {
+			log.info("Using WebSocketConnector");
+			return new WebSocketConnector(context);
+		} else {
+			throw new JaxmppException("Unknown connector type");
+		}
+	}
+
+	@Override
+	protected void init() {
+		// if (PresenceModule.getPresenceStore(sessionObject) == null)
+		// PresenceModule.setPresenceStore(sessionObject, new
+		// J2SEPresenceStore());
+
+		// if (RosterModule.getRosterStore(sessionObject) == null)
+		// RosterModule.setRosterStore(sessionObject, new RosterStore());
+
+		if (ResponseManager.getResponseManager(sessionObject) == null) {
+			ResponseManager.setResponseManager(sessionObject, new ThreadSafeResponseManager());
+		}
+
+		super.init();
+
+		setExecutor(DEFAULT_EXECUTOR);
+
+		this.connector = this.connectorWrapper;
+
+		this.processor = new Processor(this.modulesManager, context);
+
+		modulesInit();
+
+		SaslModule saslModule = getModule(SaslModule.class);
+		if (saslModule != null) {
+			saslModule.addMechanism(new ScramMechanism(), true);
+			saslModule.addMechanism(new ScramPlusMechanism(), true);
+			saslModule.addMechanism(new ScramSHA256Mechanism(), true);
+			saslModule.addMechanism(new ScramSHA256PlusMechanism(), true);
 		}
 	}
 

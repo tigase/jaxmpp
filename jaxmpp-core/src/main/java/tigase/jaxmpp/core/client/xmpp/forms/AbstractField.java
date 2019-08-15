@@ -36,13 +36,26 @@ public abstract class AbstractField<T>
 		extends ElementWrapper
 		implements Field<T> {
 
-	public static Comparator<AbstractField> VAR_COMPARATOR = Comparator.comparing(abstractField -> {
-		try {
-			return abstractField.getVar();
-		} catch (XMLException e) {
-			return "";
+	public static final Comparator<AbstractField> VAR_COMPARATOR = new Comparator<AbstractField>() {
+		@Override
+		public int compare(AbstractField o1, AbstractField o2) {
+			try {
+				String v1 = o1.getVar();
+				String v2 = o2.getVar();
+				return v1.compareTo(v2);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		}
-	});
+	};
+
+//			Comparator.comparing(abstractField -> {
+//		try {
+//			return abstractField.getVar();
+//		} catch (XMLException e) {
+//			return "";
+//		}
+//	});
 
 	AbstractField(String elementType, Element element) throws XMLException {
 		super(element);
