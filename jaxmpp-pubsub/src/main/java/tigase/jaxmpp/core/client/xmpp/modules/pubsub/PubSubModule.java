@@ -301,8 +301,9 @@ public class PubSubModule
 	 */
 	public void deleteNode(BareJID pubSubJID, String nodeName, AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
-		if(pubSubJID!=null)
-		iq.setTo(JID.jidInstance(pubSubJID));
+		if (pubSubJID != null) {
+			iq.setTo(JID.jidInstance(pubSubJID));
+		}
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, "http://jabber.org/protocol/pubsub#owner");
 		iq.addChild(pubsub);
@@ -337,19 +338,6 @@ public class PubSubModule
 	public void deleteSubscription(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)
 			throws JaxmppException {
 		setSubscription(pubSubJID, nodeName, subscriberJID, Subscription.none, callback);
-	}
-
-	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId,
-											Element payload, Date delayTime) throws JaxmppException {
-		final NotificationReceivedEvent event = new NotificationReceivedEvent(context.getSessionObject());
-		event.setMessage(message);
-		event.setPubSubJID(message.getFrom());
-		event.setNodeName(nodeName);
-		event.setItemId(itemId);
-		event.setPayload(payload);
-		event.setDelayTime(delayTime);
-		event.setItemType(itemType);
-		fireEvent(event);
 	}
 
 	@Override
@@ -596,8 +584,8 @@ public class PubSubModule
 	 * @param publishOptions node configuration required for publication
 	 * @param callback request callback.
 	 */
-	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload, JabberDataElement publishOptions, AsyncCallback callback)
-			throws JaxmppException {
+	public void publishItem(BareJID pubSubJID, String nodeName, String itemId, Element payload,
+							JabberDataElement publishOptions, AsyncCallback callback) throws JaxmppException {
 		IQ iq = IQ.create();
 		if (pubSubJID != null) {
 			iq.setTo(JID.jidInstance(pubSubJID));
@@ -699,21 +687,6 @@ public class PubSubModule
 		retrieveAffiliations(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, callback);
 	}
 
-	protected void retrieveAffiliations(BareJID pubSubJID, String nodeName, String xmlns, AsyncCallback callback)
-			throws JaxmppException {
-		final IQ iq = IQ.create();
-		iq.setTo(JID.jidInstance(pubSubJID));
-		iq.setType(StanzaType.get);
-		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
-		iq.addChild(pubsub);
-
-		final Element affiliations = ElementFactory.create("affiliations");
-		affiliations.setAttribute("node", nodeName);
-		pubsub.addChild(affiliations);
-
-		write(iq, callback);
-	}
-
 	/**
 	 * Gets ALL published items from node.
 	 *
@@ -762,7 +735,9 @@ public class PubSubModule
 	public void retrieveItem(BareJID pubSubJID, String nodeName, String itemId, Integer maxItems,
 							 AsyncCallback callback) throws JaxmppException {
 		final IQ iq = IQ.create();
-		iq.setTo(JID.jidInstance(pubSubJID));
+		if (pubSubJID != null) {
+			iq.setTo(JID.jidInstance(pubSubJID));
+		}
 		iq.setType(StanzaType.get);
 		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
@@ -889,35 +864,6 @@ public class PubSubModule
 	public void retrieveSubscription(BareJID pubSubJID, String nodeName, AsyncCallback callback)
 			throws JaxmppException {
 		retrieveSubscription(pubSubJID, nodeName, PUBSUB_OWNER_XMLNS, null, callback);
-	}
-
-	protected void retrieveSubscription(BareJID pubSubJID, String nodeName, String xmlns,
-										SubscriptionFilterExtension filterExt, AsyncCallback callback)
-			throws JaxmppException {
-		final IQ iq = IQ.create();
-		if(pubSubJID!=null)
-		iq.setTo(JID.jidInstance(pubSubJID));
-		iq.setType(StanzaType.get);
-		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
-		iq.addChild(pubsub);
-
-		final Element subscriptions = ElementFactory.create("subscriptions");
-		subscriptions.setAttribute("node", nodeName);
-		pubsub.addChild(subscriptions);
-
-		if (filterExt != null) {
-			Element filter = ElementFactory.create("filter", null, "tigase:pubsub:1");
-
-			if (filterExt.getJidContains() != null) {
-				Element f = ElementFactory.create("jid", null, null);
-				f.setAttribute("contains", filterExt.getJidContains());
-				filter.addChild(f);
-			}
-
-			subscriptions.addChild(filter);
-		}
-
-		write(iq, callback);
 	}
 
 	/**
@@ -1152,8 +1098,9 @@ public class PubSubModule
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, AsyncCallback callback)
 			throws JaxmppException {
 		final IQ iq = IQ.create();
-		if(pubSubJID!=null)
-		iq.setTo(JID.jidInstance(pubSubJID));
+		if (pubSubJID != null) {
+			iq.setTo(JID.jidInstance(pubSubJID));
+		}
 		iq.setType(StanzaType.set);
 		final Element pubsub = ElementFactory.create("pubsub", null, PUBSUB_XMLNS);
 		iq.addChild(pubsub);
@@ -1177,6 +1124,64 @@ public class PubSubModule
 	public void unsubscribe(BareJID pubSubJID, String nodeName, JID subscriberJID, PubSubAsyncCallback callback)
 			throws JaxmppException {
 		unsubscribe(pubSubJID, nodeName, subscriberJID, (AsyncCallback) callback);
+	}
+
+	protected void fireNotificationReceived(Message message, String nodeName, String itemType, String itemId,
+											Element payload, Date delayTime) throws JaxmppException {
+		final NotificationReceivedEvent event = new NotificationReceivedEvent(context.getSessionObject());
+		event.setMessage(message);
+		event.setPubSubJID(message.getFrom());
+		event.setNodeName(nodeName);
+		event.setItemId(itemId);
+		event.setPayload(payload);
+		event.setDelayTime(delayTime);
+		event.setItemType(itemType);
+		fireEvent(event);
+	}
+
+	protected void retrieveAffiliations(BareJID pubSubJID, String nodeName, String xmlns, AsyncCallback callback)
+			throws JaxmppException {
+		final IQ iq = IQ.create();
+		iq.setTo(JID.jidInstance(pubSubJID));
+		iq.setType(StanzaType.get);
+		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
+		iq.addChild(pubsub);
+
+		final Element affiliations = ElementFactory.create("affiliations");
+		affiliations.setAttribute("node", nodeName);
+		pubsub.addChild(affiliations);
+
+		write(iq, callback);
+	}
+
+	protected void retrieveSubscription(BareJID pubSubJID, String nodeName, String xmlns,
+										SubscriptionFilterExtension filterExt, AsyncCallback callback)
+			throws JaxmppException {
+		final IQ iq = IQ.create();
+		if (pubSubJID != null) {
+			iq.setTo(JID.jidInstance(pubSubJID));
+		}
+		iq.setType(StanzaType.get);
+		final Element pubsub = ElementFactory.create("pubsub", null, xmlns);
+		iq.addChild(pubsub);
+
+		final Element subscriptions = ElementFactory.create("subscriptions");
+		subscriptions.setAttribute("node", nodeName);
+		pubsub.addChild(subscriptions);
+
+		if (filterExt != null) {
+			Element filter = ElementFactory.create("filter", null, "tigase:pubsub:1");
+
+			if (filterExt.getJidContains() != null) {
+				Element f = ElementFactory.create("jid", null, null);
+				f.setAttribute("contains", filterExt.getJidContains());
+				filter.addChild(f);
+			}
+
+			subscriptions.addChild(filter);
+		}
+
+		write(iq, callback);
 	}
 
 	public interface NodeConfigurationChangeNotificationReceivedHandler
@@ -1231,7 +1236,7 @@ public class PubSubModule
 	public interface NotificationCollectionChildrenChangedHandler
 			extends EventHandler {
 
-		public enum Action {
+		enum Action {
 			associate,
 			dissociate
 		}
@@ -1298,7 +1303,7 @@ public class PubSubModule
 	public interface NotificationNodeDeletedHander
 			extends EventHandler {
 
-		public enum Action {
+		enum Action {
 			associate,
 			dissociate
 		}
@@ -1348,7 +1353,7 @@ public class PubSubModule
 		void onNotificationReceived(SessionObject sessionObject, Message message, JID pubSubJID, String nodeName,
 									String itemId, Element payload, Date delayTime, String itemType);
 
-		public class NotificationReceivedEvent
+		class NotificationReceivedEvent
 				extends JaxmppEvent<NotificationReceivedHandler> {
 
 			private Date delayTime;
@@ -1476,8 +1481,6 @@ public class PubSubModule
 	public static abstract class AffiliationsRetrieveAsyncCallback
 			extends PubSubAsyncCallback {
 
-		protected abstract void onRetrieve(IQ response, String node, Collection<AffiliationElement> affiliations);
-
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
@@ -1497,12 +1500,12 @@ public class PubSubModule
 
 			onRetrieve((IQ) responseStanza, node, affiliationWrappers);
 		}
+
+		protected abstract void onRetrieve(IQ response, String node, Collection<AffiliationElement> affiliations);
 	}
 
 	public static abstract class NodeConfigurationAsyncCallback
 			extends PubSubAsyncCallback {
-
-		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JabberDataElement form);
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -1525,6 +1528,8 @@ public class PubSubModule
 				log.log(Level.WARNING, "Processing node configuration error", e);
 			}
 		}
+
+		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JabberDataElement form);
 
 	}
 
@@ -1553,13 +1558,6 @@ public class PubSubModule
 
 	public static abstract class RetrieveItemsAsyncCallback
 			extends PubSubAsyncCallback {
-
-		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
-
-		protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items, Integer count,
-								  Integer firstIndex, String first, String last) {
-			onRetrieve(responseStanza, nodeName, items);
-		}
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -1605,6 +1603,13 @@ public class PubSubModule
 			onRetrieve((IQ) responseStanza, nodeName, result, count, firstIndex, first, last);
 		}
 
+		protected abstract void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items);
+
+		protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items, Integer count,
+								  Integer firstIndex, String first, String last) {
+			onRetrieve(responseStanza, nodeName, items);
+		}
+
 		public static class Item {
 
 			private final String id;
@@ -1632,8 +1637,6 @@ public class PubSubModule
 	public static abstract class SubscriptionAsyncCallback
 			extends PubSubAsyncCallback {
 
-		protected abstract void onSubscribe(IQ response, SubscriptionElement subscriptionElement);
-
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			Element pubsub = responseStanza.getChildrenNS("pubsub", PUBSUB_XMLNS);
@@ -1643,6 +1646,8 @@ public class PubSubModule
 
 			onSubscribe((IQ) responseStanza, subWrapper);
 		}
+
+		protected abstract void onSubscribe(IQ response, SubscriptionElement subscriptionElement);
 	}
 
 	public static class SubscriptionElement
@@ -1714,8 +1719,6 @@ public class PubSubModule
 	public static abstract class SubscriptionOptionsAsyncCallback
 			extends PubSubAsyncCallback {
 
-		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JID jid, JabberDataElement form);
-
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
 			try {
@@ -1739,12 +1742,12 @@ public class PubSubModule
 			}
 		}
 
+		protected abstract void onReceiveConfiguration(IQ responseStanza, String node, JID jid, JabberDataElement form);
+
 	}
 
 	public static abstract class SubscriptionsRetrieveAsyncCallback
 			extends PubSubAsyncCallback {
-
-		protected abstract void onRetrieve(IQ response, String node, Collection<SubscriptionElement> subscriptions);
 
 		@Override
 		public void onSuccess(Stanza responseStanza) throws JaxmppException {
@@ -1765,6 +1768,8 @@ public class PubSubModule
 
 			onRetrieve((IQ) responseStanza, node, subscriptionWrappers);
 		}
+
+		protected abstract void onRetrieve(IQ response, String node, Collection<SubscriptionElement> subscriptions);
 	}
 
 }

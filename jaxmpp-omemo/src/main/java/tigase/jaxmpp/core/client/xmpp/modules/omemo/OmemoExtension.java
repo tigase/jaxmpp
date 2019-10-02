@@ -15,13 +15,11 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,8 +28,8 @@ public class OmemoExtension
 		implements Extension {
 
 	public static final String OMEMO_ERROR_FLAG = OmemoModule.XMLNS + "#ERROR";
-	private final static String ALGORITHM_NAME = "AES";
-	private final static String CIPHER_NAME = "AES/GCM/NoPadding";
+	public final static String CIPHER_NAME = "AES/GCM/NoPadding";
+	public final static String ALGORITHM_NAME = "AES";
 	private final static int KEY_SIZE = 128;
 	private final static boolean AUTHTAG = true;
 	private final OmemoModule module;
@@ -135,9 +133,7 @@ public class OmemoExtension
 
 			SecretKeySpec keySpec = new SecretKeySpec(key, ALGORITHM_NAME);
 
-			Cipher cipher = Cipher.getInstance(CIPHER_NAME, "BC");
-			AlgorithmParameterSpec ivSpec = new IvParameterSpec(iv);
-			cipher.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+			final Cipher cipher = module.getCipherFactory().cipherInstance(Cipher.DECRYPT_MODE, keySpec, iv);
 
 //			Cipher cipher = Cipher.getInstance(CIPHER_NAME);
 //			GCMParameterSpec ivSpec = new GCMParameterSpec(KEY_SIZE, iv);
@@ -299,9 +295,7 @@ public class OmemoExtension
 
 		final SecretKeySpec secretKey = new SecretKeySpec(keyData, ALGORITHM_NAME);
 
-		Cipher cipher = Cipher.getInstance(CIPHER_NAME, "BC");
-		AlgorithmParameterSpec ivSpec = new IvParameterSpec(iv);
-		cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
+		final Cipher cipher = module.getCipherFactory().cipherInstance(Cipher.ENCRYPT_MODE, secretKey, iv);
 
 //		Cipher cipher = Cipher.getInstance(CIPHER_NAME);
 //		AlgorithmParameterSpec ivSpec = new GCMParameterSpec(KEY_SIZE, module.generateIV());

@@ -61,6 +61,11 @@ public class MultiJaxmpp {
 //		});
 	}
 
+	public void reset() {
+		jaxmpps.clear();
+		eventBus.clear();
+	}
+
 	/**
 	 * Register implementation of {@linkplain JaxmppCore}
 	 *

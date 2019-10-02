@@ -68,12 +68,11 @@ public class Jaxmpp
 		DateTimeFormat.setProvider(new DateTimeFormatProviderImpl());
 	}
 
-	private final ConnectorWrapper connectorWrapper = new ConnectorWrapper();
 	private Executor executor;
 	private TimerTask loginTimeoutTask;
-	private Timer timer = null;
 
 	// private FileTransferManager fileTransferManager;
+	private Timer timer = null;
 
 	public static void waitForDisconnectFinish(final Jaxmpp jaxmpp, final long timeout) throws JaxmppException {
 		final EventListener eventListener = new EventListener() {
@@ -165,6 +164,7 @@ public class Jaxmpp
 
 	public Jaxmpp() {
 		super();
+		this.connector = new ConnectorWrapper();
 		this.eventBus = new ThreadSafeEventBus();
 		this.sessionObject = new J2SESessionObject();
 		init();
@@ -172,6 +172,7 @@ public class Jaxmpp
 
 	public Jaxmpp(SessionObject sessionObject) {
 		super();
+		this.connector = new ConnectorWrapper();
 		this.eventBus = new ThreadSafeEventBus();
 		this.sessionObject = sessionObject;
 		init();
@@ -266,7 +267,7 @@ public class Jaxmpp
 		}
 		this.modulesManager.initIfRequired();
 
-		final Connector.State state = this.connectorWrapper.getState();
+		final Connector.State state = this.connector.getState();
 		if (state != Connector.State.disconnected) {
 			log.info("Cannot login, because Connector.State is " + state);
 			throw new JaxmppException("Connector is not in disconnected state");
@@ -279,9 +280,12 @@ public class Jaxmpp
 			this.sessionLogic = null;
 		}
 
-		synchronized (this.connectorWrapper) {
-			if (this.connectorWrapper.getConnector() != null) {
-				log.log(Level.FINEST, "Found previous instance of Connector = {0}", connectorWrapper.getConnector());
+		log.fine("state=" + state + " cr=" + (((ConnectorWrapper) this.connector).getConnector() != null));
+
+		synchronized (this.connector) {
+			if (((ConnectorWrapper) this.connector).getConnector() != null) {
+				log.log(Level.FINEST, "Found previous instance of Connector = {0}",
+						((ConnectorWrapper) connector).getConnector());
 				// There is no point in stopping old connector as it is not possible
 				// to reach this point if connector is not in disconnected state, but
 				// calling this code may in some cases lead to errors in further
@@ -294,7 +298,7 @@ public class Jaxmpp
 //				}
 //				this.connectorWrapper.setConnector(null);
 			}
-			this.connectorWrapper.setConnector(createConnector());
+			((ConnectorWrapper) this.connector).setConnector(createConnector());
 		}
 
 		this.sessionLogic = connector.createSessionLogic(modulesManager, this.writer);
@@ -411,8 +415,6 @@ public class Jaxmpp
 
 		setExecutor(DEFAULT_EXECUTOR);
 
-		this.connector = this.connectorWrapper;
-
 		this.processor = new Processor(this.modulesManager, context);
 
 		modulesInit();
@@ -468,6 +470,7 @@ public class Jaxmpp
 
 	@Override
 	protected void onResourceBindSuccess(JID bindedJID) throws JaxmppException {
+		log.log(Level.INFO, "Connected. Resource binded.");
 		eventBus.fire(new LoggedInEvent(sessionObject));
 	}
 
@@ -477,6 +480,7 @@ public class Jaxmpp
 
 	@Override
 	protected void onStreamResumed(Long h, String previd) throws JaxmppException {
+		log.log(Level.INFO, "Connected. Stream resumed.");
 		eventBus.fire(new LoggedInHandler.LoggedInEvent(sessionObject));
 	}
 

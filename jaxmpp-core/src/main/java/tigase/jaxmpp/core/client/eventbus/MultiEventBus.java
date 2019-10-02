@@ -43,6 +43,13 @@ public class MultiEventBus
 		};
 	}
 
+	public void clear() {
+		for (EventBus bus : buses) {
+			this.buses.remove(commonListener);
+		}
+		this.buses.clear();
+	}
+
 	/**
 	 * Adds {@link EventBus} to collector. All events from this {@link EventBus}
 	 * will be dispatched to handlers registered in this {@link MultiEventBus}

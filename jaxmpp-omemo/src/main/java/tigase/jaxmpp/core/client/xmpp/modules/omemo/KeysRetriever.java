@@ -9,15 +9,32 @@ import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubErrorCondition;
 import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class KeysRetriever {
 
 	private final Context context;
 	private final BareJID jid;
 	private final PubSubModule pubsub;
+
+	public static Collection<Integer> getDeviceIDsFromPayload(
+			Collection<PubSubModule.RetrieveItemsAsyncCallback.Item> items) {
+		final HashSet<Integer> ids = new HashSet<>();
+		try {
+			for (PubSubModule.RetrieveItemsAsyncCallback.Item item : items) {
+				Element list = item.getPayload();
+				if (list != null && list.getName().equals("list") && list.getXMLNS().equals(OmemoModule.XMLNS)) {
+					List<Element> devices = list.getChildren("device");
+					for (Element device : devices) {
+						ids.add(Integer.valueOf(device.getAttribute("id")));
+					}
+				}
+			}
+		} catch (JaxmppException e) {
+			e.printStackTrace();
+		}
+		return ids;
+	}
 
 	public KeysRetriever(Context context, BareJID jid) {
 		this.context = context;
@@ -35,24 +52,14 @@ public abstract class KeysRetriever {
 			@Override
 			public void onTimeout() throws JaxmppException {
 				System.out.println("ERROR: timeout");
-
+				error();
 			}
 
 			@Override
 			protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
 				try {
-					for (Item item : items) {
-						Element list = item.getPayload();
-						if (list != null && list.getName().equals("list") &&
-								list.getXMLNS().equals(OmemoModule.XMLNS)) {
-							ArrayList<String> ids = new ArrayList<>();
-							List<Element> devices = list.getChildren("device");
-							for (Element device : devices) {
-								ids.add(device.getAttribute("id"));
-							}
-							getKeysOfDevices(ids);
-						}
-					}
+					Collection<Integer> ids = getDeviceIDsFromPayload(items);
+					getKeysOfDevices(ids);
 				} catch (JaxmppException e) {
 					e.printStackTrace();
 				}
@@ -62,38 +69,59 @@ public abstract class KeysRetriever {
 			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
 								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
 				System.out.println("ERROR: " + pubSubErrorCondition);
+				error();
 			}
 		});
 	}
 
 	abstract void finish(List<Bundle> bundles);
 
+	abstract void error();
+
 	private void getKeysOfDevices(final Collection<?> devicesId) throws JaxmppException {
 		final int count = devicesId.size();
 		final ArrayList<Bundle> result = new ArrayList<>();
+		final Set<Object> requests = new HashSet<>();
+		requests.addAll(devicesId);
 		for (final Object id : devicesId) {
 			pubsub.retrieveItem(jid, OmemoModule.BUNDLES_NODE + id, new PubSubModule.RetrieveItemsAsyncCallback() {
 				@Override
 				public void onTimeout() throws JaxmppException {
-
+					log.fine("Request for device " + jid + "#" + id + " timeout");
+					synchronized (context) {
+						requests.remove(id);
+						if (requests.isEmpty()) {
+							finish(result);
+						}
+					}
 				}
 
 				@Override
 				protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
 									  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-
+					log.fine("Request for device " + jid + "#" + id + " error: " + errorCondition);
+					synchronized (context) {
+						requests.remove(id);
+						if (requests.isEmpty()) {
+							finish(result);
+						}
+					}
 				}
 
 				@Override
 				protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
+					log.fine("Request for device " + jid + "#" + id + " success.");
 					try {
 						for (Item item : items) {
 							if (item.getId().equals(OmemoModule.CURRENT)) {
 								result.add(new Bundle(jid, new Integer(id.toString()), item.getPayload()));
 							}
 						}
-						if (result.size() == count) {
-							finish(result);
+						synchronized (context) {
+							requests.remove(id);
+							if (requests.isEmpty()) {
+								finish(result);
+							}
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
