@@ -167,7 +167,6 @@ public class StreamManagementModule
 		Element request = ElementFactory.create("enable", null, XMLNS);
 		request.setAttribute("resume", "true");
 		context.getWriter().write(request);
-		context.getSessionObject().setProperty(Scope.stream, SM_ACK_ENABLED_KEY, Boolean.TRUE);
 	}
 
 	@Override
