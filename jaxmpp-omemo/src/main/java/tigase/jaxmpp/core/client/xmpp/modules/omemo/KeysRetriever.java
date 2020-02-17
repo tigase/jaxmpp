@@ -10,12 +10,15 @@ import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 public abstract class KeysRetriever {
 
 	private final Context context;
 	private final BareJID jid;
 	private final PubSubModule pubsub;
+
+	private Logger log = Logger.getLogger(this.getClass().getName());
 
 	public static Collection<Integer> getDeviceIDsFromPayload(
 			Collection<PubSubModule.RetrieveItemsAsyncCallback.Item> items) {
@@ -48,6 +51,7 @@ public abstract class KeysRetriever {
 	}
 
 	public void retrieve() throws JaxmppException {
+		log.fine("Checking devicelist of " + jid);
 		pubsub.retrieveItem(jid, OmemoModule.DEVICELIST_NODE, new PubSubModule.RetrieveItemsAsyncCallback() {
 			@Override
 			public void onTimeout() throws JaxmppException {
@@ -59,7 +63,8 @@ public abstract class KeysRetriever {
 			protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
 				try {
 					Collection<Integer> ids = getDeviceIDsFromPayload(items);
-					getKeysOfDevices(ids);
+					log.finer("Found " + ids.size() + " devices.");
+					retrieve(ids);
 				} catch (JaxmppException e) {
 					e.printStackTrace();
 				}
@@ -74,11 +79,12 @@ public abstract class KeysRetriever {
 		});
 	}
 
-	abstract void finish(List<Bundle> bundles);
+	abstract protected void finish(List<Bundle> bundles);
 
-	abstract void error();
+	protected abstract void error();
 
 	private void getKeysOfDevices(final Collection<?> devicesId) throws JaxmppException {
+		log.finer("Checking bundles for devices " + devicesId);
 		final int count = devicesId.size();
 		final ArrayList<Bundle> result = new ArrayList<>();
 		final Set<Object> requests = new HashSet<>();

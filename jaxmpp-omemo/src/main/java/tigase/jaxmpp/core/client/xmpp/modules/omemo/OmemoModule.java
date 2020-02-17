@@ -186,14 +186,14 @@ public class OmemoModule
 		KeysRetriever keysRetriever = new KeysRetriever(context, jid) {
 
 			@Override
-			void finish(List<Bundle> bundles) {
+			protected void finish(List<Bundle> bundles) {
 				if (handler != null) {
 					handler.onSuccess(bundles);
 				}
 			}
 
 			@Override
-			void error() {
+			protected void error() {
 				handler.onError();
 			}
 
@@ -329,7 +329,7 @@ public class OmemoModule
 	}
 
 	byte[] generateIV() {
-		byte[] iv = new byte[16];
+		byte[] iv = new byte[12];
 		rnd.nextBytes(iv);
 		return iv;
 	}
@@ -568,11 +568,7 @@ public class OmemoModule
 			KeysRetriever kr = new KeysRetriever(context, context.getSessionObject().getUserBareJid()) {
 
 				@Override
-				void error() {
-				}
-
-				@Override
-				void finish(List<Bundle> bundles) {
+				protected void finish(List<Bundle> bundles) {
 					for (Bundle bundle : bundles) {
 						try {
 							store.saveIdentity(bundle.getAddress(), bundle.getPreKeyBundle().getIdentityKey());
@@ -580,6 +576,10 @@ public class OmemoModule
 							log.log(Level.WARNING, "Cannot save identity " + bundle.getAddress(), e);
 						}
 					}
+				}
+
+				@Override
+				protected void error() {
 				}
 			};
 			kr.retrieve(unknownIdentities);
