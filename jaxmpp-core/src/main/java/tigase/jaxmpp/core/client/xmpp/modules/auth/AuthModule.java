@@ -68,12 +68,16 @@ public class AuthModule
 	public static boolean isAuthAvailable(final SessionObject sessionObject) throws XMLException {
 		final Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
 
-		boolean saslSupported =
-				features != null && features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl") != null;
-		boolean nonSaslSupported =
-				features != null && features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
+		if (features != null) {
+			final Element saslMechanisms = features.getChildrenNS("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
+			boolean saslSupported = saslMechanisms != null && !saslMechanisms.getChildren().isEmpty();
+			boolean nonSaslSupported = features.getChildrenNS("auth", "http://jabber.org/features/iq-auth") != null;
 
-		return saslSupported || nonSaslSupported;
+			Logger.getLogger(AuthModule.class.getName()).log(Level.FINE, "saslSupported" + saslSupported + ", nonSaslSupported: " + nonSaslSupported);
+			return saslSupported || nonSaslSupported;
+		} else {
+			return false;
+		}
 	}
 
 	public AuthModule() {

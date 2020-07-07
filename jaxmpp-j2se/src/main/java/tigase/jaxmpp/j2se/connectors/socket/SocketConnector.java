@@ -1075,7 +1075,8 @@ public class SocketConnector
 				}
 			} else {
 				SSLContext ctx = SSLContext.getInstance("TLS");
-				ctx.init(getKeyManagers(), trustManagers, new SecureRandom());
+				final KeyManager[] keyManagers = getKeyManagers();
+				ctx.init(keyManagers, trustManagers, new SecureRandom());
 				factory = ctx.getSocketFactory();
 			}
 
@@ -1128,11 +1129,11 @@ public class SocketConnector
 			if (hnv != null && hnv instanceof HostnameVerifier &&
 					!((HostnameVerifier) hnv).verify(hostname, s1.getSession())) {
 				throw new javax.net.ssl.SSLHandshakeException(
-						"Cerificate hostname doesn't match domain name you want to connect.");
+						"Certificate hostname doesn't match domain name you want to connect.");
 			} else if (hnv != null && hnv instanceof JaxmppHostnameVerifier &&
 					!((JaxmppHostnameVerifier) hnv).verify(hostname, getPeerCertificate(s1.getSession()))) {
 				throw new javax.net.ssl.SSLHandshakeException(
-						"Cerificate hostname doesn't match domain name you want to connect.");
+						"Certificate hostname doesn't match domain name you want to connect.");
 			}
 
 			socket = s1;

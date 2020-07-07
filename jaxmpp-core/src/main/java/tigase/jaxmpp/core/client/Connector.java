@@ -475,8 +475,7 @@ public interface Connector {
 
 			@Override
 			public String toString() {
-				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState + ", sessionObject=" +
-						sessionObject + '}';
+				return "StateChangedEvent{" + "oldState=" + oldState + ", newState=" + newState + '}';
 			}
 
 		}
