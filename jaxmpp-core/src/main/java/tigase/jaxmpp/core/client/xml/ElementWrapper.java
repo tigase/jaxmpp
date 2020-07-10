@@ -292,4 +292,13 @@ public class ElementWrapper
 			b.setValue(value);
 		}
 	}
+
+	@Override
+	public String toString() {
+		try {
+			return getAsString();
+		} catch (XMLException e) {
+			return "Building element failed: " + e + ", object: " + super.toString();
+		}
+	}
 }

@@ -324,10 +324,11 @@ public interface Connector {
 
 			@Override
 			public String toString() {
-				return "ErrorEvent{" + "condition=" + condition + ", sessionObject=" + sessionObject + ", caught=" +
-						caught + '}';
+				return "ErrorEvent{" + "condition=" + condition
+						+ ", caught=" + caught
+						+ ", sessionObject=" + sessionObject
+						+ '}';
 			}
-
 		}
 	}
 
@@ -530,7 +531,6 @@ public interface Connector {
 			public void dispatch(StreamTerminatedHandler handler) throws JaxmppException {
 				handler.onStreamTerminated(sessionObject);
 			}
-
 		}
 	}
 }
