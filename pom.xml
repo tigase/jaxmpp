@@ -158,9 +158,9 @@
 
 
 	<scm>
-		<connection>scm:git:https://git.tigase.tech/jaxmpp2.git</connection>
-		<developerConnection>scm:git:https://git.tigase.tech/jaxmpp2.git</developerConnection>
-		<url>https://tigase.tech/projects/jaxmpp2/repository</url>
+		<connection>scm:git:https://github.com/tigase/jaxmpp.git</connection>
+		<developerConnection>scm:git:https://github.com/tigase/jaxmpp.git</developerConnection>
+		<url>https://github.com/tigase/jaxmpp</url>
 	  <tag>HEAD</tag>
   </scm>
 
@@ -185,17 +185,17 @@
 							<source>
 								def version
 								try {
-								def command = project.properties.script
-								def process = command.execute()
-								process.waitFor()
+									def command = project.properties.script
+									def process = command.execute()
+									process.waitFor()
 
-								version = process.in.text.trim()
+									version = process.in.text.trim()
 								} catch (Exception e) {
-								version = '0'
+									version = '0'
 								}
-								println "setting revision to: " + version
+								log.info("setting revision to: " + version)
 
-								project.properties.setProperty( 'gitVersion' , version )
+								project.properties.setProperty('gitVersion', version)
 
 							</source>
 						</configuration>
