@@ -35,6 +35,7 @@ Additionally it supports many popular XEPs. Below is a list of some of the suppo
 * [XEP-0203: Delayed Delivery](https://xmpp.org/extensions/xep-0203.html)
 * [XEP-0249: Direct MUC Invitations](https://xmpp.org/extensions/xep-0249.html)
 * [XEP-0280: Message Carbons](https://xmpp.org/extensions/xep-0280.html)
+* [XEP-0305: XMPP Quickstart](https://xmpp.org/extensions/xep-0305.html)
 * [XEP-0313: Message Archive Management](https://xmpp.org/extensions/xep-0313.html)
 * [XEP-0357: Push Notifications](https://xmpp.org/extensions/xep-0357.html)
 * [XEP-0363: HTTP File Upload](https://xmpp.org/extensions/xep-0363.html)
