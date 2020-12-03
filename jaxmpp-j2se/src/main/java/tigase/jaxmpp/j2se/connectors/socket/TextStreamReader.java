@@ -22,6 +22,7 @@ package tigase.jaxmpp.j2se.connectors.socket;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -53,7 +54,8 @@ public class TextStreamReader
 		byte[] arr = buf.array();
 		int read = inputStream.read(arr, buf.position(), buf.remaining());
 		if (read >= 0) {
-			buf.position(buf.position() + read);
+			// jaxmpp2-9. Trying to solve error No virtual method position(I)Ljava/nio/ByteBuffer;
+			((Buffer)buf).position(buf.position() + read);
 		}
 		buf.flip();
 
