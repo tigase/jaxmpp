@@ -29,8 +29,8 @@ subprojects {
 		repositories {
 			maven {
 				credentials {
-					username "$tigaseMavenUser"
-					password "$tigaseMavenPassword"
+					username "tigaseMavenUser"
+					password "tigaseMavenPassword"
 				}
 				url "http://maven-repo.tigase.org/repository/snapshot"
 			}

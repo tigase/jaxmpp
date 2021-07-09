@@ -33,6 +33,7 @@ import tigase.jaxmpp.core.client.eventbus.JaxmppEvent;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementFactory;
+import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaExtendableModule;
 import tigase.jaxmpp.core.client.xmpp.modules.AbstractStanzaModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
@@ -42,7 +43,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 import java.util.List;
 
 public class MessageCarbonsModule
-		extends AbstractStanzaModule<Message> {
+		extends AbstractStanzaExtendableModule<Message> {
 
 	/**
 	 * XMLNS of <a href='http://xmpp.org/extensions/xep-0280.html'>Message

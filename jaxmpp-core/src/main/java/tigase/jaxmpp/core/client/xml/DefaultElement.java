@@ -71,7 +71,9 @@ public class DefaultElement
 
 	@Override
 	public Element addChild(Element child) throws XMLException {
-		child.setParent(this);
+		if (child.getParent() != this) {
+			child.setParent(this);
+		}
 		synchronized (children) {
 			children.add(child);
 		}

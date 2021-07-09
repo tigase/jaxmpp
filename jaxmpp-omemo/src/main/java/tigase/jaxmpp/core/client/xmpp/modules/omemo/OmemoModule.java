@@ -12,6 +12,8 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.ElementBuilder;
 import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.forms.JabberDataElement;
+import tigase.jaxmpp.core.client.xmpp.forms.XDataType;
 import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
 import tigase.jaxmpp.core.client.xmpp.modules.InitializingModule;
 import tigase.jaxmpp.core.client.xmpp.modules.ResourceBinderModule;
@@ -168,6 +170,13 @@ public class OmemoModule
 			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
 								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
 				log.warning("Cannot retrieve own device lists: " + errorCondition);
+				if (errorCondition == XMPPException.ErrorCondition.item_not_found) {
+					try {
+						publishOwnKeys(getSignalProtocolStore(context.getSessionObject()), new ArrayList<>());
+					} catch (Exception e) {
+						log.log(Level.WARNING, "Cannot publish own keys and device list", e);
+					}
+				}
 			}
 
 			@Override
@@ -446,7 +455,10 @@ public class OmemoModule
 					.up();
 		}
 
-		pubSub.publishItem(null, BUNDLES_NODE + id, CURRENT, bldr.getElement(),
+		final JabberDataElement options = new JabberDataElement(XDataType.submit);
+		options.addTextSingleField("pubsub#access_model", "open");
+
+		pubSub.publishItem(null, BUNDLES_NODE + id, CURRENT, bldr.getElement(), options,
 						   new PubSubModule.PublishAsyncCallback() {
 							   @Override
 							   public void onTimeout() throws JaxmppException {
@@ -481,7 +493,10 @@ public class OmemoModule
 				bldr.child("device").setAttribute("id", String.valueOf(id)).up();
 			}
 
-			pubSub.publishItem(null, DEVICELIST_NODE, CURRENT, bldr.getElement(),
+			final JabberDataElement options = new JabberDataElement(XDataType.submit);
+			options.addTextSingleField("pubsub#access_model", "open");
+
+			pubSub.publishItem(null, DEVICELIST_NODE, CURRENT, bldr.getElement(), options,
 							   new PubSubModule.PublishAsyncCallback() {
 								   @Override
 								   public void onPublish(String itemId) {
