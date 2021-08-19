@@ -52,6 +52,11 @@ public class ElementBuilder {
 		return this;
 	}
 
+	public ElementBuilder addChild(Element element) throws XMLException {
+		currentElement.addChild(element);
+		return this;
+	}
+
 	public Element getElement() {
 		return rootElement;
 	}
