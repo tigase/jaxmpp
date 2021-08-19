@@ -51,7 +51,16 @@ To build [Android](https://developer.android.com/) JaXMPP module just use `andro
 
     mvn package -Pandroid 
 
-Note, that `ANDROID_HOME` must be declared.
+Note, that following requirements has to be met:
+* Java 1.8 has to be used
+* Android sdk must be installed (e.g.: `brew install android-sdk`)
+* Proper tooling mus be installed (e.g.: `sdkmanager "platform-tools" "platforms;android-28"`)
+* `ANDROID_HOME` must be declared. (e.g.: `export ANDROID_HOME=/usr/local/Caskroom/android-sdk/4333796`)
+
+## Releasing
+
+* prepare release: `mvn -Pdist clean release:clean release:prepare`
+* perform: `mvn -Pdist release:perform`
 
 # Simple client
 
