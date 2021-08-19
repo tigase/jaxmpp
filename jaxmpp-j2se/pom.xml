@@ -24,7 +24,7 @@
     <parent>
         <groupId>tigase</groupId>
         <artifactId>tigase-jaxmpp</artifactId>
-        <version>3.4.0-SNAPSHOT</version>
+        <version>3.4.0</version>
     </parent>
     <artifactId>jaxmpp-j2se</artifactId>
     <packaging>jar</packaging>
