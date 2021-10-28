@@ -102,8 +102,11 @@ public class SaslModule
 		 * within the receiving entity; sent in reply to an &lt;auth/&gt element
 		 * or &lt;response/&gt element.
 		 */
-		temporary_auth_failure
-
+		temporary_auth_failure,
+		account_disabled,
+		credentials_expired,
+		encryption_required,
+		malformed_request
 	}
 
 	protected final Logger log;
