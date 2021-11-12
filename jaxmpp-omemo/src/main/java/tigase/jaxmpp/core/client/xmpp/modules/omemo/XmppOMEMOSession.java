@@ -9,10 +9,11 @@ import tigase.jaxmpp.core.client.eventbus.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class XmppOMEMOSession {
 
-	private final Map<SignalProtocolAddress, SessionCipher> deviceCiphers = new HashMap<>();
+	private final Map<SignalProtocolAddress, SessionCipher> deviceCiphers = new ConcurrentHashMap<>();
 	private final transient EventBus eventBus;
 	private final BareJID jid;
 
