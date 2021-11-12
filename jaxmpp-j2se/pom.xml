@@ -77,11 +77,6 @@
             <artifactId>bctls-jdk15on</artifactId>
             <version>1.57</version>
         </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.67</version>
-        </dependency>
     </dependencies>
 
     <build>
