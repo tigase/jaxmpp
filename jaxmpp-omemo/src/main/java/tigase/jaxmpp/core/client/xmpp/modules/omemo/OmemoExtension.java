@@ -34,8 +34,8 @@ public class OmemoExtension
 	public final static String ALGORITHM_NAME = "AES";
 	private final static int KEY_SIZE = 128;
 	private final static boolean AUTHTAG = true;
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 	private final OmemoModule module;
-	private Logger log = Logger.getLogger(this.getClass().getName());
 
 	private static byte[] generateKey() throws NoSuchAlgorithmException {
 		KeyGenerator generator = KeyGenerator.getInstance(ALGORITHM_NAME);
@@ -87,6 +87,59 @@ public class OmemoExtension
 
 	OmemoExtension(OmemoModule omemoModule) {
 		this.module = omemoModule;
+	}
+
+	@Override
+	public Element afterReceive(Element stanza) throws JaxmppException {
+		final Element encElement = stanza.getChildrenNS("encrypted", OmemoModule.XMLNS);
+		if (encElement != null && getFromJid(stanza) != null) {
+			return decryptMessage(ElementFactory.create(stanza));
+		}
+
+		if (stanza.findChild(new String[]{"message", "sent", "forwarded", "message", "encrypted"}) != null) {
+			return processMessageCarbon(stanza);
+		}
+
+		if (stanza.findChild(new String[]{"message", "result", "forwarded", "message", "encrypted"}) != null) {
+			return processMAMMessage(stanza);
+		}
+
+		return stanza;
+	}
+
+	@Override
+	public Element beforeSend(final Element stanza) throws JaxmppException {
+		final BareJID jid = getToJid(stanza);
+		final Element bd = stanza.getFirstChild("body");
+
+		final boolean encryptableStanza = bd != null && jid != null;
+
+		if (!encryptableStanza) {
+			return stanza;
+		}
+
+		final OMEMOEncryptableMessage.Encryption encryption = calculateEncryptionStatus(jid, stanza);
+		final XmppOMEMOSession session = module.getOMEMOSession(jid, encryption ==
+				OMEMOEncryptableMessage.Encryption.Required);
+
+		if (encryption == OMEMOEncryptableMessage.Encryption.Disabled) {
+			return stanza;
+		} else if (encryptableStanza && encryption == OMEMOEncryptableMessage.Encryption.Required && session == null) {
+			throw new CannotEncryptException();
+		} else if (!encryptableStanza || session == null) {
+			return stanza;
+		}
+
+		stanza.removeChild(bd);
+		stanza.addChild(ElementFactory.create("body", "Message is encrypted.", null));
+		try {
+			stanza.addChild(createEncryptedElement(bd, session));
+		} catch (Exception e) {
+			throw new JaxmppException(e);
+		}
+		stanza.addChild(ElementBuilder.create("store", "urn:xmpp:hints").getElement());
+
+		return new OMEMOMessage(true, stanza);
 	}
 
 	public Message decryptMessage(Element stanza) throws JaxmppException {
@@ -152,100 +205,16 @@ public class OmemoExtension
 			result.setType(StanzaType.error);
 		}
 
+		if (prekey) {
+			module.publishDeviceList();
+		}
+
 		return result;
-	}
-
-	@Override
-	public Element afterReceive(Element stanza) throws JaxmppException {
-		final Element encElement = stanza.getChildrenNS("encrypted", OmemoModule.XMLNS);
-		if (encElement != null && getFromJid(stanza) != null) {
-			return decryptMessage(ElementFactory.create(stanza));
-		}
-
-		if (stanza.findChild(new String[]{"message", "sent", "forwarded", "message", "encrypted"}) != null) {
-			return processMessageCarbon(stanza);
-		}
-
-		if (stanza.findChild(new String[]{"message", "result", "forwarded", "message", "encrypted"}) != null) {
-			return processMAMMessage(stanza);
-		}
-
-		return stanza;
-	}
-
-	@Override
-	public Element beforeSend(final Element stanza) throws JaxmppException {
-		final BareJID jid = getToJid(stanza);
-		final Element bd = stanza.getFirstChild("body");
-
-		final boolean encryptableStanza = bd != null && jid != null;
-
-		if (!encryptableStanza) {
-			return stanza;
-		}
-
-		final OMEMOEncryptableMessage.Encryption encryption = calculateEncryptionStatus(jid, stanza);
-		final XmppOMEMOSession session = module.getOMEMOSession(jid, encryption ==
-				OMEMOEncryptableMessage.Encryption.Required);
-
-		if (encryption == OMEMOEncryptableMessage.Encryption.Disabled) {
-			return stanza;
-		} else if (encryptableStanza && encryption == OMEMOEncryptableMessage.Encryption.Required && session == null) {
-			throw new CannotEncryptException();
-		} else if (!encryptableStanza || session == null) {
-			return stanza;
-		}
-
-		stanza.removeChild(bd);
-		stanza.addChild(ElementFactory.create("body", "Message is encrypted.", null));
-		try {
-			stanza.addChild(createEncryptedElement(bd, session));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new JaxmppException(e);
-		}
-		stanza.addChild(ElementBuilder.create("store", "urn:xmpp:hints").getElement());
-
-		return new OMEMOMessage(true, stanza);
 	}
 
 	@Override
 	public String[] getFeatures() {
 		return new String[]{OmemoModule.XMLNS};
-	}
-
-	private Element processMessageCarbon(Element stanza) throws JaxmppException {
-		Element inStanza = ElementFactory.create(stanza);
-		Element forwardedMessage = inStanza.findChild(new String[]{"message", "sent", "forwarded", "message"});
-
-		String body = forwardedMessage.getFirstChild("body") != null
-					  ? forwardedMessage.getFirstChild("body").getValue()
-					  : null;
-		System.out.println(body);
-
-		Message dcr = decryptMessage(forwardedMessage);
-		Element forwarded = forwardedMessage.getParent();
-		forwarded.removeChild(forwardedMessage);
-		forwarded.addChild(dcr);
-
-		return inStanza;
-	}
-
-	private Element processMAMMessage(Element stanza) throws JaxmppException {
-		Element inStanza = ElementFactory.create(stanza);
-		Element forwardedMessage = inStanza.findChild(new String[]{"message", "result", "forwarded", "message"});
-
-		String body = forwardedMessage.getFirstChild("body") != null
-					  ? forwardedMessage.getFirstChild("body").getValue()
-					  : null;
-		System.out.println(body);
-
-		Message dcr = decryptMessage(forwardedMessage);
-		Element forwarded = forwardedMessage.getParent();
-		forwarded.removeChild(forwardedMessage);
-		forwarded.addChild(dcr);
-
-		return inStanza;
 	}
 
 	private OMEMOEncryptableMessage.Encryption calculateEncryptionStatus(final BareJID jid, final Element stanza) {
@@ -258,34 +227,10 @@ public class OmemoExtension
 		}
 	}
 
-	private XmppOMEMOSession getOrCreateSession(BareJID jid) {
-		XmppOMEMOSession s = module.getOMEMOSession(jid);
-		if (s == null) {
-			s = module.createOMEMOSession(jid);
-			module.addOwnKeysToSession(s);
-		}
-		return s;
-	}
-
-	private byte[] extractKey(Element keyElement) throws XMLException {
-		if (keyElement == null || keyElement.getValue() == null) {
-			return null;
-		}
-		return Base64.decode(keyElement.getValue());
-	}
-
-	private boolean isPreKey(Element keyElement) throws XMLException {
-		if (keyElement == null) {
-			return false;
-		}
-		String a = keyElement.getAttribute("prekey");
-		return a != null && (a.equals("1") || a.equals("true"));
-	}
-
 	private Element createEncryptedElement(final Element body, final XmppOMEMOSession session)
-			throws XMLException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException,
-				   InvalidKeyException, BadPaddingException, IllegalBlockSizeException, UntrustedIdentityException,
-				   NoSuchProviderException {
+			throws JaxmppException, NoSuchAlgorithmException, NoSuchPaddingException,
+				   InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException,
+				   IllegalBlockSizeException, UntrustedIdentityException, NoSuchProviderException {
 		final String plaintext = body.getValue();
 
 		final SignalProtocolStore store = OmemoModule.getSignalProtocolStore(module.getSessionObject());
@@ -322,21 +267,87 @@ public class OmemoExtension
 			encryptedElement.child("key").setAttribute("rid", String.valueOf(addr.getDeviceId()));
 
 			CiphertextMessage m;
-			if (authtagPlusInnerKey != null) {
-				m = s.getValue().encrypt(authtagPlusInnerKey);
-			} else {
-				m = s.getValue().encrypt(secretKey.getEncoded());
-			}
-			if (m.getType() == CiphertextMessage.PREKEY_TYPE) {
-				encryptedElement.setAttribute("prekey", "true");
-			}
-			encryptedElement.setValue(Base64.encode(m.serialize()));
+			try {
+				if (authtagPlusInnerKey != null) {
+					m = s.getValue().encrypt(authtagPlusInnerKey);
+				} else {
+					m = s.getValue().encrypt(secretKey.getEncoded());
+				}
+				if (m.getType() == CiphertextMessage.PREKEY_TYPE) {
+					encryptedElement.setAttribute("prekey", "true");
+				}
+				encryptedElement.setValue(Base64.encode(m.serialize()));
 
-			encryptedElement.up();
+			} catch (java.lang.IllegalArgumentException e) {
+				log.warning("Cannot encrypt to " + s.getKey());
+			} catch (Exception e) {
+				throw new JaxmppException("Cannot encrypt to " + s.getKey() + ", remoteRegistrationId=" +
+												  s.getValue().getRemoteRegistrationId(), e);
+			} finally {
+				encryptedElement.up();
+			}
 		}
 
 		encryptedElement.child("iv").setValue(Base64.encode(iv)).up();
 		encryptedElement.up().child("payload").setValue(Base64.encode(ciphertext));
 		return encryptedElement.getElement();
+	}
+
+	private byte[] extractKey(Element keyElement) throws XMLException {
+		if (keyElement == null || keyElement.getValue() == null) {
+			return null;
+		}
+		return Base64.decode(keyElement.getValue());
+	}
+
+	private XmppOMEMOSession getOrCreateSession(BareJID jid) {
+		XmppOMEMOSession s = module.getOMEMOSession(jid);
+		if (s == null) {
+			s = module.createOMEMOSession(jid);
+			module.addOwnKeysToSession(s);
+		}
+		return s;
+	}
+
+	private boolean isPreKey(Element keyElement) throws XMLException {
+		if (keyElement == null) {
+			return false;
+		}
+		String a = keyElement.getAttribute("prekey");
+		return a != null && (a.equals("1") || a.equals("true"));
+	}
+
+	private Element processMAMMessage(Element stanza) throws JaxmppException {
+		Element inStanza = ElementFactory.create(stanza);
+		Element forwardedMessage = inStanza.findChild(new String[]{"message", "result", "forwarded", "message"});
+
+		String body = forwardedMessage.getFirstChild("body") != null
+					  ? forwardedMessage.getFirstChild("body").getValue()
+					  : null;
+		System.out.println(body);
+
+		Message dcr = decryptMessage(forwardedMessage);
+		Element forwarded = forwardedMessage.getParent();
+		forwarded.removeChild(forwardedMessage);
+		forwarded.addChild(dcr);
+
+		return inStanza;
+	}
+
+	private Element processMessageCarbon(Element stanza) throws JaxmppException {
+		Element inStanza = ElementFactory.create(stanza);
+		Element forwardedMessage = inStanza.findChild(new String[]{"message", "sent", "forwarded", "message"});
+
+		String body = forwardedMessage.getFirstChild("body") != null
+					  ? forwardedMessage.getFirstChild("body").getValue()
+					  : null;
+		System.out.println(body);
+
+		Message dcr = decryptMessage(forwardedMessage);
+		Element forwarded = forwardedMessage.getParent();
+		forwarded.removeChild(forwardedMessage);
+		forwarded.addChild(dcr);
+
+		return inStanza;
 	}
 }

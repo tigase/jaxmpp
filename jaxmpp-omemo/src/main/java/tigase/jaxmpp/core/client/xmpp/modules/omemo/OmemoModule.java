@@ -56,11 +56,11 @@ public class OmemoModule
 		}
 	};
 	private final boolean addOwnKeys = true;
+	private final OmemoExtension extension = new OmemoExtension(this);
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 	private final Random rnd = new SecureRandom();
 	private Context context;
 	private CipherFactory customCipherFactory;
-	private OmemoExtension extension = new OmemoExtension(this);
-	private Logger log = Logger.getLogger(this.getClass().getName());
 	private PubSubModule pubSub;
 
 	public static JaXMPPSignalProtocolStore getSignalProtocolStore(SessionObject sessionObject) {
@@ -69,34 +69,6 @@ public class OmemoModule
 
 	public static void setSignalProtocolStore(SessionObject sessionObject, JaXMPPSignalProtocolStore store) {
 		sessionObject.setProperty(SessionObject.Scope.user, XMLNS + "#SignalProtocolStore", store);
-	}
-
-	public CipherFactory getCustomCipherFactory() {
-		return customCipherFactory;
-	}
-
-	public void setCustomCipherFactory(CipherFactory customCipherFactory) {
-		this.customCipherFactory = customCipherFactory;
-	}
-
-	@Override
-	public Criteria getCriteria() {
-		return null;
-	}
-
-	@Override
-	public String[] getFeatures() {
-		return new String[]{XMLNS, DEVICELIST_NODE + "+notify"};
-	}
-
-	@Override
-	public void process(Element element) throws JaxmppException {
-
-	}
-
-	@Override
-	public void setContext(Context context) {
-		this.context = context;
 	}
 
 	@Override
@@ -128,27 +100,6 @@ public class OmemoModule
 							});
 	}
 
-	public void subscribeForDeviceList(BareJID jid) throws JaxmppException {
-		JID myJid = ResourceBinderModule.getBindedJID(this.context.getSessionObject());
-		this.pubSub.subscribe(jid, DEVICELIST_NODE, myJid, new PubSubModule.SubscriptionAsyncCallback() {
-			@Override
-			public void onTimeout() throws JaxmppException {
-				System.out.println("DEVICE LIST SUBSCRIPTION TIMEOUT");
-			}
-
-			@Override
-			protected void onSubscribe(IQ response, PubSubModule.SubscriptionElement subscriptionElement) {
-				System.out.println("DEVICE LIST SUBSCRIBE" + "");
-			}
-
-			@Override
-			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
-								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-				System.out.println("DEVICE LIST SUBSCRIPTION ERROR: " + pubSubErrorCondition);
-			}
-		});
-	}
-
 	@Override
 	public void beforeRegister() {
 
@@ -157,62 +108,6 @@ public class OmemoModule
 	@Override
 	public void beforeUnregister() {
 
-	}
-
-	public void publishDeviceList() throws JaxmppException {
-		this.pubSub.retrieveItem(null, OmemoModule.DEVICELIST_NODE, new PubSubModule.RetrieveItemsAsyncCallback() {
-			@Override
-			public void onTimeout() throws JaxmppException {
-				log.warning("Cannot retrieve own device lists: Timeout");
-			}
-
-			@Override
-			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
-								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-				log.warning("Cannot retrieve own device lists: " + errorCondition);
-				if (errorCondition == XMPPException.ErrorCondition.item_not_found) {
-					try {
-						publishOwnKeys(getSignalProtocolStore(context.getSessionObject()), new ArrayList<>());
-					} catch (Exception e) {
-						log.log(Level.WARNING, "Cannot publish own keys and device list", e);
-					}
-				}
-			}
-
-			@Override
-			protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
-				try {
-					Collection<Integer> ids = KeysRetriever.getDeviceIDsFromPayload(items);
-					publishOwnKeys(getSignalProtocolStore(context.getSessionObject()), ids);
-				} catch (Exception e) {
-					log.log(Level.WARNING, "Cannot publish own keys and device list", e);
-				}
-			}
-		});
-	}
-
-	public void getKeys(BareJID jid, final KeysRetrieverHandler handler) throws JaxmppException {
-		KeysRetriever keysRetriever = new KeysRetriever(context, jid) {
-
-			@Override
-			protected void finish(List<Bundle> bundles) {
-				if (handler != null) {
-					handler.onSuccess(bundles);
-				}
-			}
-
-			@Override
-			protected void error() {
-				handler.onError();
-			}
-
-		};
-		keysRetriever.retrieve();
-
-	}
-
-	public XmppOMEMOSession getOMEMOSession(BareJID jid) {
-		return getOMEMOSession(jid, context.getSessionObject().getProperty(AUTOCREATE_OMEMO_SESSION) == Boolean.TRUE);
 	}
 
 	public XmppOMEMOSession createOMEMOSession(BareJID jid) {
@@ -275,6 +170,19 @@ public class OmemoModule
 		});
 	}
 
+	@Override
+	public Criteria getCriteria() {
+		return null;
+	}
+
+	public CipherFactory getCustomCipherFactory() {
+		return customCipherFactory;
+	}
+
+	public void setCustomCipherFactory(CipherFactory customCipherFactory) {
+		this.customCipherFactory = customCipherFactory;
+	}
+
 	public Extension getExtension() {
 		return extension;
 //		return new Extension() {
@@ -313,8 +221,33 @@ public class OmemoModule
 //		};
 	}
 
-	public boolean isOMEMORequired(BareJID jid) {
-		return getSignalProtocolStore(context.getSessionObject()).isOMEMORequired(jid);
+	@Override
+	public String[] getFeatures() {
+		return new String[]{XMLNS, DEVICELIST_NODE + "+notify"};
+	}
+
+	public void getKeys(BareJID jid, final KeysRetrieverHandler handler) throws JaxmppException {
+		KeysRetriever keysRetriever = new KeysRetriever(context, jid) {
+
+			@Override
+			protected void error() {
+				handler.onError();
+			}
+
+			@Override
+			protected void finish(List<Bundle> bundles) {
+				if (handler != null) {
+					handler.onSuccess(bundles);
+				}
+			}
+
+		};
+		keysRetriever.retrieve();
+
+	}
+
+	public XmppOMEMOSession getOMEMOSession(BareJID jid) {
+		return getOMEMOSession(jid, context.getSessionObject().getProperty(AUTOCREATE_OMEMO_SESSION) == Boolean.TRUE);
 	}
 
 	public XmppOMEMOSession getOMEMOSession(BareJID jid, boolean createIfNotExists) {
@@ -329,21 +262,74 @@ public class OmemoModule
 		}
 	}
 
-	CipherFactory getCipherFactory() {
-		return customCipherFactory == null ? DEFAULT_CIPHER_FACTORY : customCipherFactory;
+	public boolean isOMEMORequired(BareJID jid) {
+		return getSignalProtocolStore(context.getSessionObject()).isOMEMORequired(jid);
 	}
 
-	SessionObject getSessionObject() {
-		return context.getSessionObject();
+	@Override
+	public void process(Element element) throws JaxmppException {
+
 	}
 
-	byte[] generateIV() {
-		byte[] iv = new byte[12];
-		rnd.nextBytes(iv);
-		return iv;
+	public void publishDeviceList() throws JaxmppException {
+		this.pubSub.retrieveItem(null, OmemoModule.DEVICELIST_NODE, new PubSubModule.RetrieveItemsAsyncCallback() {
+			@Override
+			public void onTimeout() throws JaxmppException {
+				log.warning("Cannot retrieve own device lists: Timeout");
+			}
+
+			@Override
+			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
+								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
+				log.warning("Cannot retrieve own device lists: " + errorCondition);
+				if (errorCondition == XMPPException.ErrorCondition.item_not_found) {
+					try {
+						publishOwnKeys(getSignalProtocolStore(context.getSessionObject()), new ArrayList<>());
+					} catch (Exception e) {
+						log.log(Level.WARNING, "Cannot publish own keys and device list", e);
+					}
+				}
+			}
+
+			@Override
+			protected void onRetrieve(IQ responseStanza, String nodeName, Collection<Item> items) {
+				try {
+					Collection<Integer> ids = KeysRetriever.getDeviceIDsFromPayload(items);
+					publishOwnKeys(getSignalProtocolStore(context.getSessionObject()), ids);
+				} catch (Exception e) {
+					log.log(Level.WARNING, "Cannot publish own keys and device list", e);
+				}
+			}
+		});
 	}
 
-	void addBundesToSession(XmppOMEMOSession session, Collection<Bundle> bundles)
+	@Override
+	public void setContext(Context context) {
+		this.context = context;
+	}
+
+	public void subscribeForDeviceList(BareJID jid) throws JaxmppException {
+		JID myJid = ResourceBinderModule.getBindedJID(this.context.getSessionObject());
+		this.pubSub.subscribe(jid, DEVICELIST_NODE, myJid, new PubSubModule.SubscriptionAsyncCallback() {
+			@Override
+			public void onTimeout() throws JaxmppException {
+				System.out.println("DEVICE LIST SUBSCRIPTION TIMEOUT");
+			}
+
+			@Override
+			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
+								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
+				System.out.println("DEVICE LIST SUBSCRIPTION ERROR: " + pubSubErrorCondition);
+			}
+
+			@Override
+			protected void onSubscribe(IQ response, PubSubModule.SubscriptionElement subscriptionElement) {
+				System.out.println("DEVICE LIST SUBSCRIBE" + "");
+			}
+		});
+	}
+
+	void addBundlesToSession(XmppOMEMOSession session, Collection<Bundle> bundles)
 			throws XMLException, UntrustedIdentityException {
 		final SignalProtocolStore store = OmemoModule.getSignalProtocolStore(context.getSessionObject());
 		for (Bundle b : bundles) {
@@ -355,9 +341,9 @@ public class OmemoModule
 
 				System.out.println(b.getDeviceId() + " :: " + b.getPreKeyBundle().getIdentityKey().getFingerprint());
 
-				final PreKeyBundle preKeyBundle = new PreKeyBundle(0, address.getDeviceId(), preKey.getPreKeyId(),
-																   preKey.getPreKey(), bundle.getSignedPreKeyId(),
-																   bundle.getSignedPreKey(),
+				final PreKeyBundle preKeyBundle = new PreKeyBundle(address.getDeviceId(), address.getDeviceId(),
+																   preKey.getPreKeyId(), preKey.getPreKey(),
+																   bundle.getSignedPreKeyId(), bundle.getSignedPreKey(),
 																   bundle.getSignedPreKeySignature(),
 																   bundle.getIdentityKey());
 
@@ -368,16 +354,10 @@ public class OmemoModule
 
 				session.addDeviceCipher(address, sessionCipher);
 			} catch (InvalidKeyException e) {
-				log.warning("Invalid key. Skipping.");
+				log.log(Level.WARNING,
+						"Invalid key " + b.getAddress() + " in bundle " + b.getWrappedElement().getAsString(), e);
 			}
 		}
-	}
-
-	XmppOMEMOSession createOMEMOSession(BareJID jid, List<Bundle> bundles)
-			throws XMLException, UntrustedIdentityException {
-		XmppOMEMOSession session = createOMEMOSession(jid);
-		addBundesToSession(session, bundles);
-		return session;
 	}
 
 	void addOwnKeysToSession(final XmppOMEMOSession session) {
@@ -385,20 +365,42 @@ public class OmemoModule
 			getKeys(context.getSessionObject().getUserBareJid(), new KeysRetrieverHandler() {
 				@Override
 				public void onError() {
+					log.log(Level.WARNING, "Cannot add own key to session. Error.");
 				}
 
 				@Override
 				public void onSuccess(List<Bundle> b2) {
 					try {
-						addBundesToSession(session, b2);
+						addBundlesToSession(session, b2);
 					} catch (Exception e) {
-						e.printStackTrace();
+						log.log(Level.WARNING, "Cannot add own key to session", e);
 					}
 				}
 			});
 		} catch (JaxmppException e) {
-			e.printStackTrace();
+			log.log(Level.WARNING, "Cannot add own key to session", e);
 		}
+	}
+
+	XmppOMEMOSession createOMEMOSession(BareJID jid, List<Bundle> bundles)
+			throws XMLException, UntrustedIdentityException {
+		XmppOMEMOSession session = createOMEMOSession(jid);
+		addBundlesToSession(session, bundles);
+		return session;
+	}
+
+	byte[] generateIV() {
+		byte[] iv = new byte[12];
+		rnd.nextBytes(iv);
+		return iv;
+	}
+
+	CipherFactory getCipherFactory() {
+		return customCipherFactory == null ? DEFAULT_CIPHER_FACTORY : customCipherFactory;
+	}
+
+	SessionObject getSessionObject() {
+		return context.getSessionObject();
 	}
 
 	private XmppOMEMOSession createFromOMEMOStore(final BareJID jid) {
@@ -425,100 +427,6 @@ public class OmemoModule
 		}
 
 		return result;
-	}
-
-	private void publishOwnKeys(final JaXMPPSignalProtocolStore store, final Collection<Integer> publishedDevicesId)
-			throws JaxmppException, InvalidKeyIdException {
-		final int id = store.getLocalRegistrationId();
-		ElementBuilder bldr = ElementBuilder.create("bundle", XMLNS);
-
-		for (SignedPreKeyRecord signedPreKey : store.loadSignedPreKeys()) {
-			bldr.child("signedPreKeyPublic")
-					.setAttribute("signedPreKeyId", String.valueOf(signedPreKey.getId()))
-					.setValue(Base64.encode(signedPreKey.getKeyPair().getPublicKey().serialize()))
-					.up();
-			bldr.child("signedPreKeySignature").setValue(Base64.encode(signedPreKey.getSignature())).up();
-		}
-
-		IdentityKeyPair identityKeyPair = store.getIdentityKeyPair();
-		bldr.child("identityKey").setValue(Base64.encode(identityKeyPair.getPublicKey().serialize())).up();
-
-		log.info("Publish key id: " + id + ": fingerprint: " +
-						 Hex.format(Hex.encode(identityKeyPair.getPublicKey().serialize(), 1), 8));
-
-		bldr.child("prekeys");
-
-		for (PreKeyRecord preKey : store.loadPreKeys()) {
-			bldr.child("preKeyPublic")
-					.setAttribute("preKeyId", String.valueOf(preKey.getId()))
-					.setValue(Base64.encode(preKey.getKeyPair().getPublicKey().serialize()))
-					.up();
-		}
-
-		final JabberDataElement options = new JabberDataElement(XDataType.submit);
-		options.addTextSingleField("pubsub#access_model", "open");
-
-		pubSub.publishItem(null, BUNDLES_NODE + id, CURRENT, bldr.getElement(), options,
-						   new PubSubModule.PublishAsyncCallback() {
-							   @Override
-							   public void onTimeout() throws JaxmppException {
-								   log.warning(
-										   "Bundle " + store.getLocalRegistrationId() + " is not published: Timeout");
-							   }
-
-							   @Override
-							   public void onPublish(String itemId) {
-								   updateDeviceList(store, publishedDevicesId);
-								   log.info("Bundle " + store.getLocalRegistrationId() + " published.");
-							   }
-
-							   @Override
-							   protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
-													 PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-								   log.warning("Bundle " + store.getLocalRegistrationId() + " is not published: " +
-													   errorCondition + ", " + pubSubErrorCondition);
-							   }
-						   });
-
-	}
-
-	private void updateDeviceList(JaXMPPSignalProtocolStore store, Collection<Integer> publishedIds) {
-		try {
-			final HashSet<Integer> deviceIdsToPublish = new HashSet<>();
-			deviceIdsToPublish.addAll(publishedIds);
-			deviceIdsToPublish.add(store.getLocalRegistrationId());
-			log.fine("Adding local device id" + store.getLocalRegistrationId() + " to published list.");
-			ElementBuilder bldr = ElementBuilder.create("list", XMLNS);
-			for (Integer id : deviceIdsToPublish) {
-				bldr.child("device").setAttribute("id", String.valueOf(id)).up();
-			}
-
-			final JabberDataElement options = new JabberDataElement(XDataType.submit);
-			options.addTextSingleField("pubsub#access_model", "open");
-
-			pubSub.publishItem(null, DEVICELIST_NODE, CURRENT, bldr.getElement(), options,
-							   new PubSubModule.PublishAsyncCallback() {
-								   @Override
-								   public void onPublish(String itemId) {
-									   log.info("Device list is published.");
-								   }
-
-								   @Override
-								   public void onTimeout() throws JaxmppException {
-									   log.warning("Device list is not published: Timeout");
-								   }
-
-								   @Override
-								   protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
-														 PubSubErrorCondition pubSubErrorCondition)
-										   throws JaxmppException {
-									   log.warning("Device list is not published: " + errorCondition + ", " +
-														   pubSubErrorCondition);
-								   }
-							   });
-		} catch (JaxmppException e) {
-			log.log(Level.WARNING, "Cannot update DeviceList", e);
-		}
 	}
 
 	private Collection<Integer> getDevicesId(Element payload) throws XMLException {
@@ -583,6 +491,10 @@ public class OmemoModule
 			KeysRetriever kr = new KeysRetriever(context, context.getSessionObject().getUserBareJid()) {
 
 				@Override
+				protected void error() {
+				}
+
+				@Override
 				protected void finish(List<Bundle> bundles) {
 					for (Bundle bundle : bundles) {
 						try {
@@ -592,14 +504,104 @@ public class OmemoModule
 						}
 					}
 				}
-
-				@Override
-				protected void error() {
-				}
 			};
 			kr.retrieve(unknownIdentities);
 		}
 
+	}
+
+	private void publishOwnKeys(final JaXMPPSignalProtocolStore store, final Collection<Integer> publishedDevicesId)
+			throws JaxmppException, InvalidKeyIdException {
+		final int id = store.getLocalRegistrationId();
+		ElementBuilder bldr = ElementBuilder.create("bundle", XMLNS);
+
+		for (SignedPreKeyRecord signedPreKey : store.loadSignedPreKeys()) {
+			bldr.child("signedPreKeyPublic")
+					.setAttribute("signedPreKeyId", String.valueOf(signedPreKey.getId()))
+					.setValue(Base64.encode(signedPreKey.getKeyPair().getPublicKey().serialize()))
+					.up();
+			bldr.child("signedPreKeySignature").setValue(Base64.encode(signedPreKey.getSignature())).up();
+		}
+
+		IdentityKeyPair identityKeyPair = store.getIdentityKeyPair();
+		bldr.child("identityKey").setValue(Base64.encode(identityKeyPair.getPublicKey().serialize())).up();
+
+		log.info("Publish key id: " + id + ": fingerprint: " +
+						 Hex.format(Hex.encode(identityKeyPair.getPublicKey().serialize(), 1), 8));
+
+		bldr.child("prekeys");
+
+		for (PreKeyRecord preKey : store.loadPreKeys()) {
+			bldr.child("preKeyPublic")
+					.setAttribute("preKeyId", String.valueOf(preKey.getId()))
+					.setValue(Base64.encode(preKey.getKeyPair().getPublicKey().serialize()))
+					.up();
+		}
+
+		final JabberDataElement options = new JabberDataElement(XDataType.submit);
+		options.addTextSingleField("pubsub#access_model", "open");
+
+		pubSub.publishItem(null, BUNDLES_NODE + id, CURRENT, bldr.getElement(), options,
+						   new PubSubModule.PublishAsyncCallback() {
+							   @Override
+							   public void onPublish(String itemId) {
+								   updateDeviceList(store, publishedDevicesId);
+								   log.info("Bundle " + store.getLocalRegistrationId() + " published.");
+							   }
+
+							   @Override
+							   public void onTimeout() throws JaxmppException {
+								   log.warning(
+										   "Bundle " + store.getLocalRegistrationId() + " is not published: Timeout");
+							   }
+
+							   @Override
+							   protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
+													 PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
+								   log.warning("Bundle " + store.getLocalRegistrationId() + " is not published: " +
+													   errorCondition + ", " + pubSubErrorCondition);
+							   }
+						   });
+
+	}
+
+	private void updateDeviceList(JaXMPPSignalProtocolStore store, Collection<Integer> publishedIds) {
+		try {
+			final HashSet<Integer> deviceIdsToPublish = new HashSet<>();
+			deviceIdsToPublish.addAll(publishedIds);
+			deviceIdsToPublish.add(store.getLocalRegistrationId());
+			log.fine("Adding local device id" + store.getLocalRegistrationId() + " to published list.");
+			ElementBuilder bldr = ElementBuilder.create("list", XMLNS);
+			for (Integer id : deviceIdsToPublish) {
+				bldr.child("device").setAttribute("id", String.valueOf(id)).up();
+			}
+
+			final JabberDataElement options = new JabberDataElement(XDataType.submit);
+			options.addTextSingleField("pubsub#access_model", "open");
+
+			pubSub.publishItem(null, DEVICELIST_NODE, CURRENT, bldr.getElement(), options,
+							   new PubSubModule.PublishAsyncCallback() {
+								   @Override
+								   public void onPublish(String itemId) {
+									   log.info("Device list is published.");
+								   }
+
+								   @Override
+								   public void onTimeout() throws JaxmppException {
+									   log.warning("Device list is not published: Timeout");
+								   }
+
+								   @Override
+								   protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
+														 PubSubErrorCondition pubSubErrorCondition)
+										   throws JaxmppException {
+									   log.warning("Device list is not published: " + errorCondition + ", " +
+														   pubSubErrorCondition);
+								   }
+							   });
+		} catch (JaxmppException e) {
+			log.log(Level.WARNING, "Cannot update DeviceList", e);
+		}
 	}
 
 	public interface CipherFactory {

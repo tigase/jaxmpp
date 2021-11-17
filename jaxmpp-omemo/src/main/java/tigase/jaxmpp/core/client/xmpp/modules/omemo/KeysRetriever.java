@@ -10,6 +10,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.pubsub.PubSubModule;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class KeysRetriever {
@@ -18,7 +19,7 @@ public abstract class KeysRetriever {
 	private final BareJID jid;
 	private final PubSubModule pubsub;
 
-	private Logger log = Logger.getLogger(this.getClass().getName());
+	private final Logger log = Logger.getLogger(this.getClass().getName());
 
 	public static Collection<Integer> getDeviceIDsFromPayload(
 			Collection<PubSubModule.RetrieveItemsAsyncCallback.Item> items) {
@@ -34,7 +35,7 @@ public abstract class KeysRetriever {
 				}
 			}
 		} catch (JaxmppException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		return ids;
 	}
@@ -55,7 +56,14 @@ public abstract class KeysRetriever {
 		pubsub.retrieveItem(jid, OmemoModule.DEVICELIST_NODE, new PubSubModule.RetrieveItemsAsyncCallback() {
 			@Override
 			public void onTimeout() throws JaxmppException {
-				System.out.println("ERROR: timeout");
+				log.log(Level.WARNING, "ERROR: timeout");
+				error();
+			}
+
+			@Override
+			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
+								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
+				log.log(Level.WARNING, "ERROR: " + pubSubErrorCondition);
 				error();
 			}
 
@@ -66,22 +74,16 @@ public abstract class KeysRetriever {
 					log.finer("Found " + ids.size() + " devices.");
 					retrieve(ids);
 				} catch (JaxmppException e) {
-					e.printStackTrace();
+					log.log(Level.WARNING, "Cannot retrieve keys ", e);
+					error();
 				}
-			}
-
-			@Override
-			protected void onEror(IQ response, XMPPException.ErrorCondition errorCondition,
-								  PubSubErrorCondition pubSubErrorCondition) throws JaxmppException {
-				System.out.println("ERROR: " + pubSubErrorCondition);
-				error();
 			}
 		});
 	}
 
-	abstract protected void finish(List<Bundle> bundles);
-
 	protected abstract void error();
+
+	abstract protected void finish(List<Bundle> bundles);
 
 	private void getKeysOfDevices(final Collection<?> devicesId) throws JaxmppException {
 		log.finer("Checking bundles for devices " + devicesId);
@@ -130,7 +132,8 @@ public abstract class KeysRetriever {
 							}
 						}
 					} catch (Exception e) {
-						e.printStackTrace();
+						log.log(Level.WARNING, "Cannot process data of " + jid + "#" + id, e);
+						error();
 					}
 				}
 			});
