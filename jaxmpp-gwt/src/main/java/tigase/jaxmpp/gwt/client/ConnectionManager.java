@@ -36,6 +36,7 @@ import tigase.jaxmpp.core.client.xmpp.utils.MutableBoolean;
 import tigase.jaxmpp.gwt.client.connectors.BoshConnector;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 import tigase.jaxmpp.gwt.client.dns.WebDnsResolver;
+import tigase.jaxmpp.gwt.client.dns.WellKnownHostMetaResolver;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,14 +49,17 @@ import static tigase.jaxmpp.core.client.Connector.RECONNECTING_KEY;
 public class ConnectionManager
 		implements StateChangedHandler, SeeOtherHostHandler, ContextAware {
 
+	public static final String WELL_KNOWN = "well-known";
+	public static final String DNS = "dns";
+	public static final String RESOLVER = "CONNECTION_URL_RESOLVER";
 	public static final String URL_ON_FAILURE = "host-on-dns-failure";
 	private static final Logger log = Logger.getLogger(ConnectionManager.class.getName());
 	private static final String SEE_OTHER_HOST_URI = "see-other-host-uri";
 	private static RegExp URL_PARSER = RegExp.compile("^([a-z]+)://([^:/]+)(:[0-9]+)*([^#]+)$");
 	private Context context;
 	private Jaxmpp jaxmpp;
-	private WebDnsResolver resolver = new WebDnsResolver();
-	private WebDnsResolver.DomainResolutionCallback webDnsCallback = null;
+	private Resolver resolver = null;
+	private ResolutionCallback resolverCallback = null;
 
 	public ConnectionManager() {
 	}
@@ -76,34 +80,36 @@ public class ConnectionManager
 		}
 
 		boolean seeHostIsUri = isUsableUrl(seeHost);
-		if (!resolver.isEnabled() || seeHostIsUri) {
-			if (seeHost == null) {
-				// no webbased DNS resolver set and no see other host so we have
-				// no other option but we need to fail
-				webDnsCallback.onUrlFailed();
-			} else {
-				if (!seeHostIsUri) {
-					MatchResult result = URL_PARSER.exec(boshUrl);
-					String newBoshUrl = result.getGroup(1) + "://" + seeHost +
-							(result.getGroup(3) != null ? result.getGroup(3) : "") + result.getGroup(4);
-
-					webDnsCallback.onUrlResolved(domain, newBoshUrl);
-				} else {
-					webDnsCallback.onUrlResolved(domain, seeHost);
-				}
-			}
+		if (seeHostIsUri) {
+			resolverCallback.onUrlResolved(domain, seeHost);
 			return;
 		}
 
-		resolver.getHostForDomain(domain, seeHost, webDnsCallback);
+		if (!resolver.isEnabled()) {
+			resolverCallback.onUrlFailed();
+			return;
+		}
+
+		if (seeHost != null && boshUrl != null) {
+			// lets check what we can do here..
+			MatchResult result = URL_PARSER.exec(boshUrl);
+			String newBoshUrl = result.getGroup(1) + "://" + seeHost +
+					(result.getGroup(3) != null ? result.getGroup(3) : "") + result.getGroup(4);
+
+			resolverCallback.onUrlResolved(domain, newBoshUrl);
+			return;
+		}
+
+		resolver.urlsForDomain(domain, resolverCallback);
 	}
 
 	public boolean initialize(final Jaxmpp jaxmpp_) throws JaxmppException {
 		if (this.jaxmpp == null) {
 			this.jaxmpp = jaxmpp_;
 		}
-		if (this.webDnsCallback == null) {
-			this.webDnsCallback = new WebDnsResolver.DomainResolutionCallback() {
+		
+		if (this.resolverCallback == null) {
+			this.resolverCallback = new ResolutionCallback() {
 				protected void loginWithUrl(String url) {
 					try {
 						jaxmpp.login(url);
@@ -143,6 +149,18 @@ public class ConnectionManager
 					loginWithUrl(url);
 				}
 			};
+		}
+
+		if (resolver == null) {
+			String resolverType = context.getSessionObject().getProperty(RESOLVER);
+			if (DNS.equals(resolverType)) {
+				resolver = new WebDnsResolver();
+			} else {
+				resolver = new WellKnownHostMetaResolver();
+			}
+			if (context != null) {
+				resolver.setContext(context);
+			}
 		}
 
 		if (context.getSessionObject().getProperty(BoshConnector.BOSH_SERVICE_URL_KEY) == null) {
@@ -221,8 +239,28 @@ public class ConnectionManager
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
-		resolver.setContext(context);
+		if (resolver != null) {
+			resolver.setContext(context);
+		}
 		context.getEventBus().addHandler(StateChangedHandler.StateChangedEvent.class, this);
 		context.getEventBus().addHandler(SeeOtherHostHandler.SeeOtherHostEvent.class, this);
+	}
+
+	public interface ResolutionCallback {
+
+		void onUrlFailed();
+
+		void onUrlResolved(String domain, String url);
+
+	}
+
+	public interface Resolver extends ContextAware {
+
+		boolean isEnabled();
+		
+		void urlsForDomain(String domain, ConnectionManager.ResolutionCallback callback);
+
+		void hostFailure(String url);
+
 	}
 }

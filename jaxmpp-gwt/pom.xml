@@ -32,7 +32,7 @@
 	<name>Tigase XMPP Client Library for GWT</name>
 
 	<properties>
-		<gwt.version>2.6.1</gwt.version>
+		<gwt.version>2.9.0</gwt.version>
 	</properties>
 
 	<dependencies>
@@ -116,4 +116,14 @@
 		</resources>
 	</build>
 
+	<repositories>
+		<repository>
+			<id>gwt-mobile-webkit</id>
+			<url>http://gwt-mobile-webkit.googlecode.com/svn/repo</url>
+		</repository>
+		<repository>
+			<id>tigase</id>
+			<url>https://maven-repo.tigase.org/repository/tigase</url>
+		</repository>
+	</repositories>
 </project>
