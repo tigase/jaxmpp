@@ -22,27 +22,25 @@ package tigase.jaxmpp.gwt.client.dns;
 
 import com.google.gwt.http.client.URL;
 import com.google.gwt.jsonp.client.JsonpRequestBuilder;
-import com.google.gwt.user.client.Window;
 import tigase.jaxmpp.core.client.Context;
-import tigase.jaxmpp.core.client.xmpp.modules.ContextAware;
+import tigase.jaxmpp.gwt.client.ConnectionManager;
 import tigase.jaxmpp.gwt.client.connectors.WebSocket;
 
 /**
  * @author andrzej
  */
 public class WebDnsResolver
-		implements ContextAware {
+		implements ConnectionManager.Resolver {
 
 	public static final String WEB_DNS_RESOLVER_URL_KEY = "WebDnsResolver#URL_KEY";
 
 	private Context context;
 	private DnsResult dnsResult;
 
-	public void getHostForDomain(final String domain, String hostname,
-								 final DomainResolutionCallback hostResolutionCallback) {
+	public void urlsForDomain(String domain, ConnectionManager.ResolutionCallback hostResolutionCallback) {
 
 		if (dnsResult != null && dnsResult.getDomain().equals(domain) && dnsResult.hasMore()) {
-			selectHost(domain, hostname, hostResolutionCallback);
+			selectHost(domain, hostResolutionCallback);
 			return;
 		}
 
@@ -57,7 +55,7 @@ public class WebDnsResolver
 			public void onSuccess(DnsResult result) {
 				dnsResult = result;
 
-				selectHost(domain, null, hostResolutionCallback);
+				selectHost(domain, hostResolutionCallback);
 			}
 		});
 	}
@@ -85,77 +83,43 @@ public class WebDnsResolver
 		builder.requestObject(url, callback);
 	}
 
-	private void selectHost(final String domain, final String hostname,
-							final DomainResolutionCallback hostResolutionCallback) {
-		String boshUrl = null;
-		if (hostname != null) {
-			boshUrl = dnsResult.getUrlForHost(hostname);
-			if (boshUrl == null) {
-				resolveDomain(hostname, new com.google.gwt.user.client.rpc.AsyncCallback<DnsResult>() {
+	private void selectHost(final String domain,
+							final ConnectionManager.ResolutionCallback hostResolutionCallback) {
+		resolveDomain(domain, new com.google.gwt.user.client.rpc.AsyncCallback<DnsResult>() {
 
-					@Override
-					public void onFailure(Throwable caught) {
-						hostResolutionCallback.onUrlFailed();
-					}
-
-					@Override
-					public void onSuccess(DnsResult result) {
-						String url = null;
-						if (WebSocket.isSupported()) {
-							int wsCount = result.getWebSocket().length();
-							if (wsCount > 0) {
-								url = result.getWebSocket().get(0).getUrl();
-							}
-						}
-						if (url == null) {
-							int boshCount = result.getBosh().length();
-							if (boshCount > 0) {
-								url = result.getBosh().get(0).getUrl();
-							}
-						}
-						if (url != null) {
-							hostResolutionCallback.onUrlResolved(domain, url);
-						} else {
-							hostResolutionCallback.onUrlFailed();
-						}
-					}
-
-				});
-				return;
+			@Override
+			public void onFailure(Throwable caught) {
+				hostResolutionCallback.onUrlFailed();
 			}
-		}
-		boolean secure = "https:".equals(Window.Location.getProtocol());
-		while (boshUrl == null && dnsResult.hasMore()) {
-			boshUrl = dnsResult.next();
 
-			boolean secureUrl = boshUrl.startsWith("https://") || boshUrl.startsWith("wss://");
-//			if (secure != secureUrl) {
-//				dnsResult.connectionFailed(boshUrl);
-//				boshUrl = null;
-//				continue;
-//			}
-
-			if (!WebSocket.isSupported() && (boshUrl.startsWith("ws://") || boshUrl.startsWith("wss://"))) {
-				dnsResult.connectionFailed(boshUrl);
-				boshUrl = null;
+			@Override
+			public void onSuccess(DnsResult result) {
+				String url = null;
+				if (WebSocket.isSupported()) {
+					int wsCount = result.getWebSocket().length();
+					if (wsCount > 0) {
+						url = result.getWebSocket().get(0).getUrl();
+					}
+				}
+				if (url == null) {
+					int boshCount = result.getBosh().length();
+					if (boshCount > 0) {
+						url = result.getBosh().get(0).getUrl();
+					}
+				}
+				if (url != null) {
+					hostResolutionCallback.onUrlResolved(domain, url);
+				} else {
+					hostResolutionCallback.onUrlFailed();
+				}
 			}
-		}
 
-		if (boshUrl != null) {
-			hostResolutionCallback.onUrlResolved(domain, boshUrl);
-		}
+		});
 	}
 
 	@Override
 	public void setContext(Context context) {
 		this.context = context;
 	}
-
-	public interface DomainResolutionCallback {
-
-		void onUrlFailed();
-
-		void onUrlResolved(String domain, String url);
-
-	}
+	
 }
