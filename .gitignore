@@ -27,3 +27,6 @@ jaxmpp-android/gen
 jaxmpp-gwt/gwt-unitCache
 docs
 jaxmpp-dist/dist
+
+jaxmpp-documentation/src/main/restructured/locale/pl/LC_MESSAGES/*.mo
+jaxmpp-documentation/src/main/restructured/_build/
