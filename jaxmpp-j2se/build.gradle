@@ -41,7 +41,7 @@ dependencies {
 	compile project(':jaxmpp-roster')
 	compile project(':jaxmpp-presence')
 	compile project(':jaxmpp-registration')
-	compile 'tigase:tigase-xmltools:4.0.0-SNAPSHOT'
+	compile 'tigase:tigase-xmltools:4.0.1'
 	compile 'org.bouncycastle:bctls-jdk15on:1.57'
 	compile 'org.bouncycastle:bcprov-jdk15on:1.57'
 

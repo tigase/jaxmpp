@@ -44,8 +44,8 @@ subprojects {
 allprojects {
 	repositories {
 		mavenLocal()
-		maven {url "http://maven-repo.tigase.org/repository/release"}
-		maven {url "http://maven-repo.tigase.org/repository/snapshot"}
+		maven {url "https://maven-repo.tigase.org/repository/release"}
+		maven {url "https://maven-repo.tigase.org/repository/snapshot"}
 		jcenter()
 	}
 }
