@@ -1,4 +1,4 @@
-|tiger looking left small|
+|logo|
 
 
 Design and implementation
@@ -15,6 +15,7 @@ Design
 
 |architecture|
 
+.. |logo| image:: images/logo_320.png
 .. |tiger looking left small| image:: images/tiger-looking-left-small.png
 .. |architecture| image:: images/architecture.png
 

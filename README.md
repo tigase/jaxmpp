@@ -2,6 +2,7 @@
   Tigase Java XMPP Client Library
 </h1>
 
+![](jaxmpp-documentation/src/main/restructured/images/logo_320.png)
 # What it is
 
 Tigase Java XMPP Client Library is an [XMPP](https://xmpp.org) client library written in a Java programming language. 
