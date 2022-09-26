@@ -205,6 +205,53 @@ public class StreamManagementModule
 		}
 	}
 
+	public void processIncomingStanza(Element element) throws XMLException {
+		if (!isAckEnabled(context.getSessionObject())) {
+			return;
+		}
+		if (!isElementCounted(element)) {
+			return;
+		}
+
+		long v = incrementAckHValue(INCOMING_STREAM_H_KEY);
+		if (log.isLoggable(Level.FINEST)) {
+			log.finest("Increase incoming counter. value=" + v);
+		}
+	}
+
+	public void processOutgoingElement(final Element element) throws JaxmppException {
+		if (!isAckEnabled(context.getSessionObject())) {
+			return;
+		}
+		if (!isElementCounted(element)) {
+			return;
+		}
+
+		synchronized (this.outgoingQueue) {
+			long v = incrementAckHValue(OUTGOING_STREAM_H_KEY);
+			if (log.isLoggable(Level.FINEST)) {
+				log.finest("Increase outgoing counter. value=" + v);
+			}
+
+			outgoingQueue.offer(element);
+		}
+//		if (outgoingQueue.size() > 3) {
+//			Runnable r = new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					try {
+//						request();
+//						sendAck(false);
+//					} catch (JaxmppException e) {
+//						log.log(Level.WARNING, "Can't send ACK request!");
+//					}
+//				}
+//			};
+//			jaxmpp.execute(r);
+//		}
+	}
+
 	public void removeStreamManagementEnabledHandler(StreamManagementEnabledHandler handler) {
 		this.context.getEventBus().remove(StreamManagementEnabledHandler.StreamManagementEnabledEvent.class, handler);
 	}
@@ -287,53 +334,6 @@ public class StreamManagementModule
 		this.context = context;
 	}
 
-	public void processIncomingStanza(Element element) throws XMLException {
-		if (!isAckEnabled(context.getSessionObject())) {
-			return;
-		}
-		if (element.getXMLNS() != null && element.getXMLNS().equals(XMLNS)) {
-			return;
-		}
-
-		long v = incrementAckHValue(INCOMING_STREAM_H_KEY);
-		if (log.isLoggable(Level.FINEST)) {
-			log.finest("Increase incoming counter. value=" + v);
-		}
-	}
-
-	public void processOutgoingElement(final Element element) throws JaxmppException {
-		if (!isAckEnabled(context.getSessionObject())) {
-			return;
-		}
-		if (element.getXMLNS() != null && XMLNS.equals(element.getXMLNS())) {
-			return;
-		}
-
-		synchronized (this.outgoingQueue) {
-			long v = incrementAckHValue(OUTGOING_STREAM_H_KEY);
-			if (log.isLoggable(Level.FINEST)) {
-				log.finest("Increase outgoing counter. value=" + v);
-			}
-
-			outgoingQueue.offer(element);
-		}
-//		if (outgoingQueue.size() > 3) {
-//			Runnable r = new Runnable() {
-//
-//				@Override
-//				public void run() {
-//					try {
-//						request();
-//						sendAck(false);
-//					} catch (JaxmppException e) {
-//						log.log(Level.WARNING, "Can't send ACK request!");
-//					}
-//				}
-//			};
-//			jaxmpp.execute(r);
-//		}
-	}
-
 	private Number getAckHValue(String key) {
 		MutableLong v = context.getSessionObject().getProperty(key);
 		if (v == null) {
@@ -354,6 +354,12 @@ public class StreamManagementModule
 			v.value = 0;
 		}
 		return v.value;
+	}
+
+	private boolean isElementCounted(Element element) throws XMLException {
+		return !(element.getXMLNS() != null && element.getXMLNS().equals(XMLNS)) &&
+				("message".equalsIgnoreCase(element.getName()) || "presence".equalsIgnoreCase(element.getName()) ||
+						"iq".equalsIgnoreCase(element.getName()));
 	}
 
 	private void processAckAnswer(Element element) throws XMLException {
@@ -536,7 +542,7 @@ public class StreamManagementModule
 		class StreamManagementFailedEvent
 				extends JaxmppEvent<StreamManagementFailedHandler> {
 
-			private ErrorCondition condition;
+			private final ErrorCondition condition;
 
 			public StreamManagementFailedEvent(SessionObject sessionObject, ErrorCondition condition) {
 				super(sessionObject);
