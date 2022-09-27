@@ -24,7 +24,7 @@
 	<parent>
 		<groupId>tigase</groupId>
 		<artifactId>tigase-jaxmpp</artifactId>
-		<version>3.6.0</version>
+		<version>3.6.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-mam</artifactId>
 	<packaging>jar</packaging>
@@ -68,7 +68,7 @@
         <dependency>
             <groupId>tigase</groupId>
             <artifactId>jaxmpp-chat</artifactId>
-            <version>3.6.0</version>
+            <version>3.6.1-SNAPSHOT</version>
         </dependency>
 	</dependencies>
 

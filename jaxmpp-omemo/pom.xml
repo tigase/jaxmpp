@@ -3,7 +3,7 @@
     <parent>
         <groupId>tigase</groupId>
         <artifactId>tigase-jaxmpp</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1-SNAPSHOT</version>
     </parent>
     <artifactId>jaxmpp-omemo</artifactId>
     <packaging>jar</packaging>

@@ -26,7 +26,7 @@
 	<artifactId>tigase-jaxmpp</artifactId>
 	<packaging>pom</packaging>
 	<name>Tigase XMPP Client Library</name>
-	<version>3.6.0</version>
+	<version>3.6.1-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
