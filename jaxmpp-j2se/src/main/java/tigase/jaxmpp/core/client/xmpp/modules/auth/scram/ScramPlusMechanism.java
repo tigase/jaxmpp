@@ -22,10 +22,16 @@
 package tigase.jaxmpp.core.client.xmpp.modules.auth.scram;
 
 import tigase.jaxmpp.core.client.SessionObject;
+import tigase.jaxmpp.core.client.xml.Element;
+import tigase.jaxmpp.core.client.xml.XMLException;
+import tigase.jaxmpp.core.client.xmpp.modules.StreamFeaturesModule;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
 import java.security.MessageDigest;
-import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class ScramPlusMechanism
 		extends AbstractScram {
@@ -38,14 +44,17 @@ public class ScramPlusMechanism
 		super(mechanismName, algorithm, clientKey, serverKey);
 	}
 
-	private byte[] calculateHash(final Certificate cert) {
+	private byte[] calculateHash(final X509Certificate cert) {
 		try {
-			final String usealgo;
-			final String algo = cert.getPublicKey().getAlgorithm();
-			if (algo.equals("MD5") || algo.equals("SHA-1")) {
+			String usealgo;
+			final String algo =  cert.getSigAlgName();
+			int withIdx = algo.indexOf("with");
+			if (withIdx <= 0) {
+				throw new RuntimeException("Unable to parse SigAlgName: " + algo);
+			}
+			usealgo = algo.substring(0, withIdx);
+			if (usealgo.equalsIgnoreCase("MD5") || usealgo.equalsIgnoreCase("SHA1")) {
 				usealgo = "SHA-256";
-			} else {
-				usealgo = algo;
 			}
 			final MessageDigest md = MessageDigest.getInstance(usealgo);
 			final byte[] der = cert.getEncoded();
@@ -62,7 +71,7 @@ public class ScramPlusMechanism
 			case tls_unique:
 				return sessionObject.getProperty(SocketConnector.TLS_SESSION_ID_KEY);
 			case tls_server_end_point:
-				Certificate peerCertificate = sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY);
+				X509Certificate peerCertificate = sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY);
 				return calculateHash(peerCertificate);
 			default:
 				return null;
@@ -71,19 +80,45 @@ public class ScramPlusMechanism
 
 	@Override
 	protected BindType getBindType(SessionObject sessionObject) {
-		if (sessionObject.getProperty(SocketConnector.TLS_SESSION_ID_KEY) != null) {
+		List<BindType> serverSupportedTypes = getServerBindTypes(sessionObject);
+		if (sessionObject.getProperty(SocketConnector.TLS_SESSION_ID_KEY) != null && serverSupportedTypes.contains(BindType.tls_unique)) {
 			return BindType.tls_unique;
-		} else if (sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY) != null) {
+		} else if (sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY) != null && serverSupportedTypes.contains(BindType.tls_server_end_point)) {
 			return BindType.tls_server_end_point;
 		} else {
 			return BindType.n;
 		}
 	}
 
+	protected List<BindType> getServerBindTypes(SessionObject sessionObject) {
+		try {
+			Element features = StreamFeaturesModule.getStreamFeatures(sessionObject);
+			if (features == null) {
+				return Collections.emptyList();
+			}
+			Element bindings = features.getChildrenNS("sasl-channel-binding", "urn:xmpp:sasl-cb:0");
+			if (bindings == null || bindings.getChildren() == null) {
+				return Collections.emptyList();
+			}
+			List<BindType> result = new ArrayList<>();
+			for (Element child : bindings.getChildren()) {
+				String type = child.getAttribute("type");
+				if (type != null) {
+					if ("tls-server-end-point".equals(type)) {
+						result.add(BindType.tls_server_end_point);
+					} else if ("tls-unique".equals(type)) {
+						result.add(BindType.tls_unique);
+					}
+				}
+			}
+			return result;
+		} catch (XMLException ex) {
+			return Collections.emptyList();
+		}
+	}
+
 	@Override
 	public boolean isAllowedToUse(SessionObject sessionObject) {
-		return (sessionObject.getProperty(SocketConnector.TLS_SESSION_ID_KEY) != null ||
-				sessionObject.getProperty(SocketConnector.TLS_PEER_CERTIFICATE_KEY) != null) &&
-				super.isAllowedToUse(sessionObject);
+		return getBindType(sessionObject) != BindType.n && super.isAllowedToUse(sessionObject);
 	}
 }
