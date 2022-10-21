@@ -29,6 +29,9 @@ import tigase.jaxmpp.core.client.SessionObject;
 import tigase.jaxmpp.j2se.J2SESessionObject;
 import tigase.jaxmpp.j2se.connectors.socket.SocketConnector;
 
+import java.util.Collections;
+import java.util.List;
+
 public class ScramPlusMechanismTest {
 
 	@Test
@@ -42,6 +45,12 @@ public class ScramPlusMechanismTest {
 			@Override
 			protected String randomString() {
 				return "SpiXKmhi57DBp5sdE5G3H3ms";
+			}
+
+			// override to force usage of tls_unique
+			@Override
+			protected List<BindType> getServerBindTypes(SessionObject sessionObject) {
+				return Collections.singletonList(BindType.tls_unique);
 			}
 		};
 
