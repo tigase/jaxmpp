@@ -1,3 +1,6 @@
+> # NOTE: Tigase JaXMPP has new home at [tigase.dev/tigase/_libraries/jaxmpp](https://tigase.dev/tigase/_libraries/jaxmpp/) - please submit all issues/pull-requests there!
+
+
 <h1 align="center">
   Tigase Java XMPP Client Library
 </h1>
