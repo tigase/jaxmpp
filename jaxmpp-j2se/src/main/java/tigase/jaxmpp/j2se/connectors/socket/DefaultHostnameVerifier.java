@@ -66,28 +66,21 @@ public class DefaultHostnameVerifier
 		if (!normalizedAltName.contains("*")) {
 			return hostname.equals(normalizedAltName);
 		}
-
-		if (normalizedAltName.startsWith("*.") &&
-				hostname.regionMatches(0, normalizedAltName, 2, normalizedAltName.length() - 2)) {
-			return true;
-		}
-
+		
 		int asteriskIdx = normalizedAltName.indexOf('*');
-		int dotIdx = normalizedAltName.indexOf('.');
-		if (asteriskIdx > dotIdx) {
-			return false;
-		}
+		if (asteriskIdx != -1) {
+			final String prefix = normalizedAltName.substring(0, asteriskIdx);
+			if (!prefix.isEmpty() && !hostname.startsWith(prefix)) {
+				return false;
+			}
 
-		if (!hostname.regionMatches(0, normalizedAltName, 0, asteriskIdx)) {
-			return false;
+			final String suffix = normalizedAltName.substring(asteriskIdx + 1);
+			if (!suffix.isEmpty() && !hostname.endsWith(suffix)) {
+				return hostname.equals(suffix.substring(1));
+			}
+			return hostname.substring(prefix.length(), hostname.length() - suffix.length()).indexOf('.') == -1;
 		}
-
-		int suffixLength = normalizedAltName.length() - (asteriskIdx + 1);
-		int suffixStart = hostname.length() - suffixLength;
-		if (hostname.indexOf('.', asteriskIdx) < suffixStart) {
-			return false; // wildcard '*' can't match a '.'
-		}
-		return hostname.regionMatches(suffixStart, normalizedAltName, asteriskIdx + 1, suffixLength);
+		return false;
 	}
 
 	@Override
