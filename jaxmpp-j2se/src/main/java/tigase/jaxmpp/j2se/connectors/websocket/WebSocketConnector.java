@@ -127,7 +127,7 @@ public class WebSocketConnector
 		socket.getOutputStream().write(buffer);
 		buffer = new byte[4096];
 		int read = 0;
-		Map<String, String> headers = new HashMap<String, String>();
+		Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
 		sb = new StringBuilder();
 		boolean eol = false;
 		boolean httpResponseOk = false;
