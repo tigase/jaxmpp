@@ -38,7 +38,11 @@
 		<sign-keypass>keypass</sign-keypass>
 		<sign-skip>true</sign-skip>
 		<verbose-log>false</verbose-log>
-		<tsa>${tsa-uri}</tsa>
+
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.release>11</maven.compiler.release>
+
 	</properties>
 
 	<inceptionYear>2006</inceptionYear>
@@ -204,7 +208,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5.2</version>
+				<version>3.3.1</version>
 				<configuration>
 				  <releaseProfiles>dist,docs</releaseProfiles>
 				  <tagNameFormat>@{project.version}</tagNameFormat>
@@ -214,17 +218,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.2</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-					<encoding>UTF-8</encoding>
-				</configuration>
+				<version>3.16.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.4.0</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -245,14 +244,30 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.4</version>
+				<version>3.12.0</version>
+				<configuration>
+					<doclint>all,-missing,-html</doclint>
+
+					<!-- "failOn*" configuration to be removed once JDK11's issue with "javadoc: error - The code
+                    being documented uses packages in the unnamed module, but the packages defined
+                    in https://docs.oracle.com/en/java/javase/11/docs/api/ are in named modules." is fixed
+                    Ref.: https://bugs.openjdk.java.net/browse/JDK-8212233
+
+                    For now, `source` has to be set to '8' to make it work under JDK11 (even though it's
+                    supposedly fixed)
+                    -->
+					<failOnError>false</failOnError>
+					<failOnWarnings>false</failOnWarnings>
+					<release combine.self="override" />
+					<detectJavaApiLink>false</detectJavaApiLink>
+				</configuration>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
-						<phase>install</phase>
 						<goals>
 							<goal>aggregate-jar</goal>
 						</goals>
+						<phase>generate-resources</phase>
 						<configuration>
 							<source>1.8</source>
 							<quiet>true</quiet>
@@ -261,48 +276,35 @@
 							<destDir>docs/javadoc</destDir>
 							<additionalparam>-Xdoclint:none</additionalparam>
 							<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
+
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jarsigner-plugin</artifactId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<id>sign</id>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<archiveDirectory>${project.basedir}</archiveDirectory>
-					<includes>
-						<include>target/tigase*.?ar</include>
-						<include>jars/tigase*.?ar</include>
-					</includes>
-					<processMainArtifact>false</processMainArtifact>
-					<processAttachedArtifacts>false</processAttachedArtifacts>
-					<tsa>${tsa-uri}</tsa>
-					<skip>${sign-skip}</skip>
-
-					<keystore>${sign-keystore}</keystore>
-					<alias>${sign-alias}</alias>
-					<storepass>${sign-storepass}</storepass>
-					<keypass>${sign-keypass}</keypass>
-					<verbose>${verbose-log}</verbose>
-				</configuration>
-			</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.6.0</version>
+					<configuration>
+						<testFailureIgnore>false</testFailureIgnore>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>3.8.0</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
