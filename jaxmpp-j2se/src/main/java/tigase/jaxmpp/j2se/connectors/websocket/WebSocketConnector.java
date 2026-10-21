@@ -108,7 +108,10 @@ public class WebSocketConnector
 	}
 
 	private void handshake(URI uri) throws IOException {
-		String wskey = UUID.randomUUID().toString();
+		// RFC 6455: base64 of 16 random bytes; strict servers reject anything else.
+		byte[] keyBytes = new byte[16];
+		random.nextBytes(keyBytes);
+		String wskey = Base64.encode(keyBytes);
 		StringBuilder sb = new StringBuilder();
 		sb.append("GET ").append(uri.getPath() != null ? uri.getPath() : "/").append(" HTTP/1.1").append(EOL);
 		sb.append("Host: ").append(uri.getHost());
