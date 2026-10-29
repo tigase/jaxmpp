@@ -261,25 +261,25 @@
 					<release combine.self="override" />
 					<detectJavaApiLink>false</detectJavaApiLink>
 				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>aggregate-jar</goal>
-						</goals>
-						<phase>generate-resources</phase>
-						<configuration>
-							<source>1.8</source>
-							<quiet>true</quiet>
-							<aggregate>true</aggregate>
-							<reportOutputDirectory>docs/javadoc</reportOutputDirectory>
-							<destDir>docs/javadoc</destDir>
-							<additionalparam>-Xdoclint:none</additionalparam>
-							<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>
+<!--				<executions>-->
+<!--					<execution>-->
+<!--						<id>attach-javadocs</id>-->
+<!--						<goals>-->
+<!--							<goal>aggregate-jar</goal>-->
+<!--						</goals>-->
+<!--						<phase>generate-resources</phase>-->
+<!--						<configuration>-->
+<!--							<source>1.8</source>-->
+<!--							<quiet>true</quiet>-->
+<!--							<aggregate>true</aggregate>-->
+<!--							<reportOutputDirectory>docs/javadoc</reportOutputDirectory>-->
+<!--							<destDir>docs/javadoc</destDir>-->
+<!--							<additionalparam>-Xdoclint:none</additionalparam>-->
+<!--							<finalName>${project.artifactId}-${project.version}-b${gitVersion}</finalName>-->
 
-						</configuration>
-					</execution>
-				</executions>
+<!--						</configuration>-->
+<!--					</execution>-->
+<!--				</executions>-->
 			</plugin>
 		</plugins>
 		<pluginManagement>
