@@ -25,7 +25,7 @@
 	<parent>
 		<artifactId>tigase-jaxmpp</artifactId>
 		<groupId>tigase</groupId>
-		<version>3.6.1</version>
+		<version>3.6.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>jaxmpp-android</artifactId>
 	<packaging>aar</packaging>
